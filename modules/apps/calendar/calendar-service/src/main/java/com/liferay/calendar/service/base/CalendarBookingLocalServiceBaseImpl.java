@@ -273,6 +273,23 @@ public abstract class CalendarBookingLocalServiceBaseImpl
 		return calendarBookingPersistence.fetchByUUID_G(uuid, groupId);
 	}
 
+	@Override
+	public CalendarBooking fetchCalendarBookingByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return calendarBookingPersistence.fetchByERC_G(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public CalendarBooking getCalendarBookingByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return calendarBookingPersistence.findByERC_G(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the calendar booking with the primary key.
 	 *
@@ -686,3 +703,4 @@ public abstract class CalendarBookingLocalServiceBaseImpl
 		CalendarBookingLocalServiceBaseImpl.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1831725609

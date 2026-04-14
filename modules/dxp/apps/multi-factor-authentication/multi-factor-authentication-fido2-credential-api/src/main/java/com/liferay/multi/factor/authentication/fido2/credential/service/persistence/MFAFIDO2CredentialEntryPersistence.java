@@ -120,47 +120,6 @@ public interface MFAFIDO2CredentialEntryPersistence
 			<MFAFIDO2CredentialEntry> orderByComparator);
 
 	/**
-	 * Returns the last mfafido2 credential entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching mfafido2 credential entry
-	 * @throws NoSuchMFAFIDO2CredentialEntryException if a matching mfafido2 credential entry could not be found
-	 */
-	public MFAFIDO2CredentialEntry findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<MFAFIDO2CredentialEntry> orderByComparator)
-		throws NoSuchMFAFIDO2CredentialEntryException;
-
-	/**
-	 * Returns the last mfafido2 credential entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching mfafido2 credential entry, or <code>null</code> if a matching mfafido2 credential entry could not be found
-	 */
-	public MFAFIDO2CredentialEntry fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<MFAFIDO2CredentialEntry> orderByComparator);
-
-	/**
-	 * Returns the mfafido2 credential entries before and after the current mfafido2 credential entry in the ordered set where userId = &#63;.
-	 *
-	 * @param mfaFIDO2CredentialEntryId the primary key of the current mfafido2 credential entry
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next mfafido2 credential entry
-	 * @throws NoSuchMFAFIDO2CredentialEntryException if a mfafido2 credential entry with the primary key could not be found
-	 */
-	public MFAFIDO2CredentialEntry[] findByUserId_PrevAndNext(
-			long mfaFIDO2CredentialEntryId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<MFAFIDO2CredentialEntry> orderByComparator)
-		throws NoSuchMFAFIDO2CredentialEntryException;
-
-	/**
 	 * Removes all the mfafido2 credential entries where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -262,47 +221,6 @@ public interface MFAFIDO2CredentialEntryPersistence
 		long credentialKeyHash,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<MFAFIDO2CredentialEntry> orderByComparator);
-
-	/**
-	 * Returns the last mfafido2 credential entry in the ordered set where credentialKeyHash = &#63;.
-	 *
-	 * @param credentialKeyHash the credential key hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching mfafido2 credential entry
-	 * @throws NoSuchMFAFIDO2CredentialEntryException if a matching mfafido2 credential entry could not be found
-	 */
-	public MFAFIDO2CredentialEntry findByCredentialKeyHash_Last(
-			long credentialKeyHash,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<MFAFIDO2CredentialEntry> orderByComparator)
-		throws NoSuchMFAFIDO2CredentialEntryException;
-
-	/**
-	 * Returns the last mfafido2 credential entry in the ordered set where credentialKeyHash = &#63;.
-	 *
-	 * @param credentialKeyHash the credential key hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching mfafido2 credential entry, or <code>null</code> if a matching mfafido2 credential entry could not be found
-	 */
-	public MFAFIDO2CredentialEntry fetchByCredentialKeyHash_Last(
-		long credentialKeyHash,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<MFAFIDO2CredentialEntry> orderByComparator);
-
-	/**
-	 * Returns the mfafido2 credential entries before and after the current mfafido2 credential entry in the ordered set where credentialKeyHash = &#63;.
-	 *
-	 * @param mfaFIDO2CredentialEntryId the primary key of the current mfafido2 credential entry
-	 * @param credentialKeyHash the credential key hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next mfafido2 credential entry
-	 * @throws NoSuchMFAFIDO2CredentialEntryException if a mfafido2 credential entry with the primary key could not be found
-	 */
-	public MFAFIDO2CredentialEntry[] findByCredentialKeyHash_PrevAndNext(
-			long mfaFIDO2CredentialEntryId, long credentialKeyHash,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<MFAFIDO2CredentialEntry> orderByComparator)
-		throws NoSuchMFAFIDO2CredentialEntryException;
 
 	/**
 	 * Removes all the mfafido2 credential entries where credentialKeyHash = &#63; from the database.
@@ -497,3 +415,4 @@ public interface MFAFIDO2CredentialEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-772136350

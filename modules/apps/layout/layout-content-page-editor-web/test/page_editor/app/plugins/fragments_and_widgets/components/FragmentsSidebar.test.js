@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {useMarketplaceConfiguration} from '@liferay/marketplace-js-components-web';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -22,6 +22,10 @@ jest.mock(
 	'../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/index',
 	() => ({
 		config: {
+			addFragmentCollectionURL: '/mockAddFragmentCollectionURL',
+			fragmentCollections: [{fragmentCollectionId: 1, name: 'Set Name'}],
+			fragmentPortletNamespace: 'FragmentPortlet',
+			fragmentsImportURL: '/mockFragmentsImportURL',
 			portletNamespace: 'FragmentSidebarPortlet',
 		},
 	})

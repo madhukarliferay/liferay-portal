@@ -5,8 +5,9 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {pagesAdminPagesTest} from '../../../fixtures/pagesAdminPagesTest';
@@ -18,8 +19,11 @@ import {reloadUntilVisible} from '../../../utils/reloadUntilVisible';
 import createSiteTemplate from './utils/createSiteTemplate';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
+	globalMenuPagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	loginTest(),
 	pageEditorPagesTest,
 	pagesAdminPagesTest,
@@ -33,7 +37,7 @@ test(
 	{tag: ['@LPD-49053', '@LPS-131903', '@LPS-132256']},
 	async ({
 		apiHelpers,
-		applicationsMenuPage,
+		globalMenuPage,
 		page,
 		pageEditorPage,
 		pagesAdminPage,
@@ -64,7 +68,7 @@ test(
 		const pageName: string = 'Page-' + getRandomString();
 
 		await productMenuPage.goToPages();
-		await pagesAdminPage.newButton.click();
+		await pagesAdminPage.clickNewButtonAndWaitForBlankTemplate();
 		await pagesAdminPage.addPage({
 			name: pageName,
 		});
@@ -73,17 +77,17 @@ test(
 
 		// Create a site using the site template
 
-		await applicationsMenuPage.goToSites();
+		await globalMenuPage.goToControlPanel('Sites');
 
 		const siteName: string = 'Site-' + getRandomString();
 
-		const siteId = await sitesPage.createSite({
+		const {externalReferenceCode, siteId} = await sitesPage.createSite({
 			isCustom: true,
 			siteName,
 			templateName: siteTemplateName,
 		});
 
-		apiHelpers.data.push({id: siteId, type: 'site'});
+		apiHelpers.data.push({id: externalReferenceCode, type: 'site'});
 
 		// Check the Edit button of the dropdown is not visible
 
@@ -112,9 +116,7 @@ test(
 
 		await page.goto(href);
 
-		expect(await page.title()).toBe(
-			`${pageName} - ${siteName} - Liferay DXP`
-		);
+		expect(await page.title()).toBe(`${pageName} - ${siteName} - Liferay`);
 
 		await page
 			.locator('.control-menu-nav-item')
@@ -147,8 +149,112 @@ test(
 
 		await pageEditorPage.goto(layout, `/${siteName.toLowerCase()}`);
 
-		expect(await page.title()).toBe(
-			`${pageName} - ${siteName} - Liferay DXP`
-		);
+		expect(await page.title()).toBe(`${pageName} - ${siteName} - Liferay`);
+	}
+);
+
+test(
+	'User cannot create child pages for pages derived from a site template',
+	{tag: '@LPD-70284'},
+	async ({
+		apiHelpers,
+		globalMenuPage,
+		page,
+		pagesAdminPage,
+		productMenuPage,
+		sitesPage,
+		uiElementsPage,
+	}) => {
+
+		// Create site template
+
+		const siteTemplateName = 'SiteTemplate-' + getRandomString();
+
+		const layoutSetPrototype = await createSiteTemplate({
+			apiHelpers,
+			layoutsUpdateable: false,
+			page,
+			productMenuPage,
+			templateName: siteTemplateName,
+		});
+
+		apiHelpers.data.push({
+			id: layoutSetPrototype.layoutSetPrototypeId,
+			type: 'layoutSetPrototype',
+		});
+
+		// Add new template page
+
+		const templatePageName = 'Test Page-' + getRandomString();
+		await productMenuPage.goToPages();
+		await pagesAdminPage.newTemplatePageButton.click();
+		await pagesAdminPage.addPage({name: templatePageName});
+		await uiElementsPage.publishButton.click();
+		await expect(
+			page.getByLabel(templatePageName, {exact: true})
+		).toBeVisible();
+
+		// Create site based on that template
+
+		await globalMenuPage.goToControlPanel('Sites');
+
+		const siteName = 'Site-' + getRandomString();
+
+		const {externalReferenceCode} = await sitesPage.createSite({
+			isCustom: true,
+			siteName,
+			templateName: siteTemplateName,
+		});
+
+		apiHelpers.data.push({id: externalReferenceCode, type: 'site'});
+
+		// Add new page on created site
+
+		await expect(async () => {
+			await productMenuPage.goToPages();
+
+			await expect(
+				page.getByLabel(templatePageName, {exact: true})
+			).toBeVisible();
+		}).toPass();
+
+		const pageName = 'Test Page-' + getRandomString();
+		await pagesAdminPage.clickNewButtonAndWaitForBlankTemplate();
+		await pagesAdminPage.addPage({
+			name: pageName,
+		});
+
+		await uiElementsPage.publishButton.click();
+
+		// Check that for the page created on template child pages cannot be added
+
+		await productMenuPage.goToPages();
+
+		const pageCreatedOnTemplate =
+			pagesAdminPage.getPageMenuItem(templatePageName);
+
+		await expect(pageCreatedOnTemplate).toBeVisible();
+		await expect(
+			pageCreatedOnTemplate.getByLabel('Add Child Page')
+		).toHaveCount(0);
+
+		// Check that for the page created on site child pages can be added
+
+		await expect(page.getByLabel(pageName, {exact: true})).toBeVisible();
+
+		const childPageName = 'Child Page-' + getRandomString();
+
+		await pagesAdminPage.createNewPage({
+			name: childPageName,
+			parent: pageName,
+		});
+
+		await productMenuPage.goToPages();
+
+		await pagesAdminPage.showChildPages(pageName);
+
+		await expect(
+			pagesAdminPage.getPageMenuItem(childPageName)
+		).toBeVisible();
 	}
 );

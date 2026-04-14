@@ -60,6 +60,18 @@ public class ObjectEntryFolderLocalServiceWrapper
 			description, labelMap, name, serviceContext);
 	}
 
+	@Override
+	public com.liferay.object.model.ObjectEntryFolder copyObjectEntryFolder(
+			long userId, long objectEntryFolderId,
+			long parentObjectEntryFolderId, boolean replace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryFolderLocalService.copyObjectEntryFolder(
+			userId, objectEntryFolderId, parentObjectEntryFolderId, replace,
+			serviceContext);
+	}
+
 	/**
 	 * Creates a new object entry folder with the primary key. Does not add the object entry folder to the database.
 	 *
@@ -261,6 +273,15 @@ public class ObjectEntryFolderLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectEntryFolder fetchObjectEntryFolder(
+		long groupId, long companyId, long parentObjectEntryFolderId,
+		String name) {
+
+		return _objectEntryFolderLocalService.fetchObjectEntryFolder(
+			groupId, companyId, parentObjectEntryFolderId, name);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectEntryFolder
 		fetchObjectEntryFolderByExternalReferenceCode(
 			String externalReferenceCode, long groupId, long companyId) {
@@ -382,6 +403,17 @@ public class ObjectEntryFolderLocalServiceWrapper
 			groupId, companyId, parentObjectEntryFolderId, start, end);
 	}
 
+	@Override
+	public java.util.List<com.liferay.object.model.ObjectEntryFolder>
+		getObjectEntryFoldersByExternalReferenceCode(
+			String externalReferenceCode, java.util.List<Long> groupIds,
+			long companyId) {
+
+		return _objectEntryFolderLocalService.
+			getObjectEntryFoldersByExternalReferenceCode(
+				externalReferenceCode, groupIds, companyId);
+	}
+
 	/**
 	 * Returns all the object entry folders matching the UUID and company.
 	 *
@@ -469,6 +501,18 @@ public class ObjectEntryFolderLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryFolderLocalService.getPersistedModel(primaryKeyObj);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectEntryFolder moveObjectEntryFolder(
+			long userId, long objectEntryFolderId,
+			long parentObjectEntryFolderId, boolean replace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryFolderLocalService.moveObjectEntryFolder(
+			userId, objectEntryFolderId, parentObjectEntryFolderId, replace,
+			serviceContext);
 	}
 
 	@Override
@@ -596,3 +640,4 @@ public class ObjectEntryFolderLocalServiceWrapper
 	private ObjectEntryFolderLocalService _objectEntryFolderLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:228768141

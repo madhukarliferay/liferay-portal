@@ -59,11 +59,13 @@ public class FileUtil {
 
 		try (FileOutputStream fileOutputStream = new FileOutputStream(
 				destinationFile);
+
 			FileChannel destinationChannel = fileOutputStream.getChannel()) {
 
 			for (File sourceFile : sourceFiles) {
 				try (FileInputStream fileInputStream = new FileInputStream(
 						sourceFile);
+
 					FileChannel sourceChannel = fileInputStream.getChannel()) {
 
 					sourceChannel.transferTo(
@@ -104,7 +106,13 @@ public class FileUtil {
 	public static File get(Project project, String url, File destinationFile)
 		throws IOException {
 
-		return get(project, url, destinationFile, false, true);
+		boolean tryLocalNetwork = false;
+
+		if (System.getenv("JENKINS_HOME") != null) {
+			tryLocalNetwork = true;
+		}
+
+		return get(project, url, destinationFile, false, tryLocalNetwork);
 	}
 
 	public static File get(

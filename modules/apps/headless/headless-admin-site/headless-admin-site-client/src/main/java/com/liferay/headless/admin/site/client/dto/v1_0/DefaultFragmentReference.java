@@ -19,7 +19,8 @@ import java.util.Objects;
  * @generated
  */
 @Generated("")
-public class DefaultFragmentReference implements Cloneable, Serializable {
+public class DefaultFragmentReference
+	extends FragmentReference implements Cloneable, Serializable {
 
 	public static DefaultFragmentReference toDTO(String json) {
 		return DefaultFragmentReferenceSerDes.toDTO(json);
@@ -79,3 +80,4 @@ public class DefaultFragmentReference implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1872597905

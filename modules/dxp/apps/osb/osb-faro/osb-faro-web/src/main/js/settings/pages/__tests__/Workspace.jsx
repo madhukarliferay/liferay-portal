@@ -11,6 +11,13 @@ import {Workspace} from '../Workspace';
 
 jest.unmock('react-dom');
 
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useParams: () => ({
+		groupId: '23'
+	})
+}));
+
 jest.mock('shared/actions/alerts', () => ({
 	actionTypes: {},
 	addAlert: jest.fn(() => ({meta: {}, payload: {}, type: 'addAlert'}))
@@ -61,9 +68,6 @@ describe('Workspace Settting', () => {
 
 		expect(getByLabelText('Workspace Name')).toBeDisabled();
 		expect(getByDisplayValue('Oregon, USA')).toBeDisabled();
-		expect(
-			getByLabelText(/Set a Friendly Workspace URL/, {selector: 'input'})
-		).toBeDisabled();
 		expect(
 			container.querySelector('.input-list-root input')
 		).toBeDisabled();

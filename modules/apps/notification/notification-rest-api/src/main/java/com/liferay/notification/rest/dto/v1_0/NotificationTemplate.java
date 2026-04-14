@@ -1071,9 +1071,7 @@ public class NotificationTemplate implements Serializable {
 			sb.append("\"editorType\": ");
 
 			sb.append("\"");
-
 			sb.append(editorType);
-
 			sb.append("\"");
 		}
 
@@ -1399,3 +1397,4 @@ public class NotificationTemplate implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1974663506

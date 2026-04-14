@@ -12,11 +12,8 @@ import com.liferay.portal.kernel.util.Validator;
 import java.io.File;
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +24,8 @@ public class YMLSourceProcessor extends BaseSourceProcessor {
 
 	@Override
 	protected List<String> doGetFileNames() throws IOException {
-		return getFileNames(new String[0], getIncludes());
+		return getFileNames(
+			new String[] {"**/templates/_scripts.tpl"}, getIncludes());
 	}
 
 	@Override
@@ -36,40 +34,27 @@ public class YMLSourceProcessor extends BaseSourceProcessor {
 	}
 
 	@Override
-	protected File format(
-			File file, String fileName, String absolutePath, String content)
-		throws Exception {
+	protected String postFormat(
+		String content, String originalReturnCharacter) {
 
-		Set<String> modifiedContents = new HashSet<>();
-		Set<String> modifiedMessages = new TreeSet<>();
-
-		String newContent = _preProcess(content);
-
-		newContent = format(
-			file, fileName, absolutePath, newContent, content,
-			new ArrayList<>(getSourceChecks()), modifiedContents,
-			modifiedMessages, 0);
-
-		newContent = _postProcess(newContent);
-
-		return processFormattedFile(
-			file, fileName, content, newContent, modifiedMessages);
-	}
-
-	private String _postProcess(String content) {
 		StringBuffer sb = new StringBuffer();
 
 		Matcher matcher = _dashPattern2.matcher(content);
 
 		while (matcher.find()) {
-			String firstLine = matcher.group(1);
-			String indent = matcher.group(2);
+			String firstLine = matcher.group(2);
+
+			if (matcher.group(3) != null) {
+				firstLine = matcher.group(2) + matcher.group(3);
+			}
+
+			String indent = matcher.group(4);
 
 			if (indent.length() <= firstLine.length()) {
 				continue;
 			}
 
-			String secondLine = matcher.group(2) + matcher.group(3);
+			String secondLine = matcher.group(4) + matcher.group(5);
 
 			String replacement =
 				firstLine + secondLine.substring(firstLine.length());
@@ -81,14 +66,29 @@ public class YMLSourceProcessor extends BaseSourceProcessor {
 		if (sb.length() > 0) {
 			matcher.appendTail(sb);
 
-			return sb.toString();
+			String newContent = sb.toString();
+
+			if (!content.equals(newContent)) {
+				newContent = postFormat(newContent, originalReturnCharacter);
+			}
+
+			return super.postFormat(
+				StringUtil.trim(newContent), originalReturnCharacter);
 		}
 
-		return content;
+		return super.postFormat(content, originalReturnCharacter);
 	}
 
-	private String _preProcess(String content) {
+	@Override
+	protected String preFormat(
+			File file, String fileName, String content,
+			Set<String> modifiedMessages, String originalReturnCharacter)
+		throws Exception {
+
 		StringBundler sb = new StringBundler();
+
+		content = super.preFormat(
+			file, fileName, content, modifiedMessages, originalReturnCharacter);
 
 		content = content.replaceAll("\\n +\\n", "\n\n");
 
@@ -103,22 +103,7 @@ public class YMLSourceProcessor extends BaseSourceProcessor {
 				continue;
 			}
 
-			Matcher matcher = _dashPattern1.matcher(line);
-
-			if (matcher.matches()) {
-				String indent = matcher.group(1);
-
-				sb.append(StringUtil.trimTrailing(indent));
-
-				sb.append("\n");
-				sb.append(indent.replaceFirst("-", " "));
-				sb.append(matcher.group(2));
-				sb.append("\n");
-
-				continue;
-			}
-
-			sb.append(line);
+			sb.append(_preFormatArray(line));
 			sb.append("\n");
 		}
 
@@ -129,12 +114,32 @@ public class YMLSourceProcessor extends BaseSourceProcessor {
 		return sb.toString();
 	}
 
+	private String _preFormatArray(String line) {
+		Matcher matcher = _dashPattern1.matcher(line);
+
+		if (!matcher.matches()) {
+			return line;
+		}
+
+		StringBundler sb = new StringBundler(3);
+
+		String indent = matcher.group(1);
+
+		sb.append(StringUtil.trimTrailing(indent));
+
+		sb.append("\n");
+		sb.append(
+			_preFormatArray(indent.replaceFirst("-", " ") + matcher.group(2)));
+
+		return sb.toString();
+	}
+
 	private static final String[] _INCLUDES = {
 		"**/templates/*.tpl", "**/*.yaml", "**/*.yml"
 	};
 
-	private static final Pattern _dashPattern1 = Pattern.compile("( +- +)(.+)");
+	private static final Pattern _dashPattern1 = Pattern.compile("( *- +)(.+)");
 	private static final Pattern _dashPattern2 = Pattern.compile(
-		"\n( *-)\n( +)(.+)");
+		"(\\A|\n)( *-)( +-)*\n( +)(.+)");
 
 }

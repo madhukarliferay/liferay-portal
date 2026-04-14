@@ -6,12 +6,16 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 
 export const test = mergeTests(
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	isolatedSiteTest,
 	loginTest(),
 	usersAndOrganizationsPagesTest
@@ -24,9 +28,11 @@ test(
 		test.setTimeout(180000);
 
 		await test.step('Create 22 users', async () => {
+			const promises = [];
 			for (let i = 0; i < 22; i++) {
-				await usersAndOrganizationsPage.createUser(apiHelpers);
+				promises.push(apiHelpers.headlessAdminUser.postUserAccount());
 			}
+			await Promise.all(promises);
 		});
 
 		await test.step('Check pagination 20 URL works', async () => {

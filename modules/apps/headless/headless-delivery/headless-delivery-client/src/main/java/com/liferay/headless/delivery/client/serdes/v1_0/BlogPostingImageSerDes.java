@@ -158,9 +158,7 @@ public class BlogPostingImageSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(blogPostingImage.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -451,3 +449,4 @@ public class BlogPostingImageSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:2053181737

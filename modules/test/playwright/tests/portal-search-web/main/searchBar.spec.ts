@@ -6,6 +6,7 @@
 import {Page, expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedLayoutTest} from '../../../fixtures/isolatedLayoutTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
@@ -17,6 +18,9 @@ import {pagesPagesTest} from '../../layout-admin-web/main/fixtures/pagesPagesTes
 
 export const test = mergeTests(
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	isolatedLayoutTest({type: 'portlet'}),
 	loginTest(),
 	productMenuPageTest,
@@ -25,7 +29,7 @@ export const test = mergeTests(
 	searchPageTest
 );
 
-test.describe('Search Bar with user input', () => {
+test.describe('Alerts and Search Inputs', () => {
 	test('Alert does not display on search page @LPD-39110', async ({page}) => {
 		await test.step('Check that an alert with message does not appear', async () => {
 			page.on('dialog', async (dialog) => {
@@ -49,9 +53,85 @@ test.describe('Search Bar with user input', () => {
 			await expect(page.getByText(/Questionable Text/)).toBeNull;
 		});
 	});
+
+	test('Alert does not display for custom placeholder text @LPD-77243', async ({
+		layout,
+		page,
+		searchPage,
+	}) => {
+		await test.step('Add search bar and results portlet to new page', async () => {
+			await page.goto('/web/guest' + layout.friendlyURL);
+
+			await searchPage.addPortlet('Search Bar', 'Search');
+
+			await searchPage.addPortlet('Search Results', 'Search');
+		});
+
+		await test.step('Disable suggestions and add placeholder text for search bar', async () => {
+			await searchPage.openSearchPortletConfiguration('Search Bar', 1);
+
+			await searchPage.selectPortletConfigurationsCheckbox([
+				{
+					label: 'Enable Suggestions',
+					value: false,
+				},
+			]);
+
+			await searchPage.fillPortletConfigurationsInput([
+				{
+					label: 'Placeholder Text',
+					value: 'test"><script>alert("test")</script>',
+				},
+			]);
+
+			await searchPage.savePortletConfiguration();
+		});
+
+		await test.step('Check that an alert with message does not appear', async () => {
+			page.on('dialog', async (dialog: any) => {
+				dialog.accept();
+
+				expect(dialog.message(), 'test').toBeNull();
+			});
+
+			await page.goto('/web/guest' + layout.friendlyURL);
+		});
+	});
 });
 
-test.describe('Search Bar directs to correct page', () => {
+test.describe('Redirect URL', () => {
+	test('Disregards manually input currentURL @LPD-68675', async ({
+		layout,
+		page,
+		searchPage,
+	}) => {
+		await test.step('Add search bar and results portlet to new page', async () => {
+			await page.goto('/web/guest' + layout.friendlyURL);
+
+			await searchPage.addPortlet('Search Bar', 'Search');
+
+			await searchPage.addPortlet('Search Results', 'Search');
+		});
+
+		await test.step('Navigate to page with faulty currentURL', async () => {
+			await page.goto(
+				'/web/guest' +
+					layout.friendlyURL +
+					'?currentURL=https%253a//example.com&q=test'
+			);
+		});
+
+		await test.step('Click on enter in search bar', async () => {
+			await searchPage.searchBarInputInMainContent.press('Enter');
+		});
+
+		await test.step('Assert the search page does not redirect to faulty currentURL', async () => {
+			await expect(page).not.toHaveURL(/^https.\/\/example.com\/\?/);
+
+			await expect(searchPage.searchResults).toBeVisible();
+		});
+	});
+
 	test('Retains impersonation parameter when suggestions is disabled @LPD-17509', async ({
 		apiHelpers,
 		layout,

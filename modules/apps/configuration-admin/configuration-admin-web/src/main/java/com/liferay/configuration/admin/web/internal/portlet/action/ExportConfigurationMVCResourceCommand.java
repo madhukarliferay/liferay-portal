@@ -23,12 +23,12 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.zip.ZipWriter;
 import com.liferay.portal.kernel.zip.ZipWriterFactory;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.portlet.PortletException;
 import jakarta.portlet.ResourceRequest;
@@ -92,8 +92,8 @@ public class ExportConfigurationMVCResourceCommand
 	}
 
 	protected Dictionary<String, Object> getProperties(
-			String languageId, String factoryPid, String pid, Scope scope,
-			Serializable scopePK)
+			Serializable companyId, String factoryPid, String languageId,
+			String pid, Scope scope, Serializable scopePK)
 		throws Exception {
 
 		Dictionary<String, Object> properties = new HashMapDictionary<>();
@@ -150,6 +150,10 @@ public class ExportConfigurationMVCResourceCommand
 		if (!Scope.SYSTEM.equals(scope)) {
 			properties.put(scope.getPropertyKey(), scopePK);
 
+			if (scope.equals(Scope.GROUP)) {
+				properties.put(Scope.COMPANY.getPropertyKey(), companyId);
+			}
+
 			if (FeatureFlagManagerUtil.isEnabled("LPS-155284")) {
 				_configurationExportImportProcessor.prepareForExport(
 					pid, properties);
@@ -202,7 +206,8 @@ public class ExportConfigurationMVCResourceCommand
 						curFileName,
 						ConfigurationExporter.getPropertiesAsBytes(
 							getProperties(
-								languageId, curFactoryPid, curPid,
+								themeDisplay.getCompanyId(), curFactoryPid,
+								languageId, curPid,
 								configurationScopeDisplayContext.getScope(),
 								configurationScopeDisplayContext.
 									getScopePK())));
@@ -217,7 +222,8 @@ public class ExportConfigurationMVCResourceCommand
 					curFileName,
 					ConfigurationExporter.getPropertiesAsBytes(
 						getProperties(
-							languageId, curFactoryPid, curPid,
+							themeDisplay.getCompanyId(), curFactoryPid,
+							languageId, curPid,
 							configurationScopeDisplayContext.getScope(),
 							configurationScopeDisplayContext.getScopePK())));
 			}
@@ -286,8 +292,8 @@ public class ExportConfigurationMVCResourceCommand
 				curFileName,
 				ConfigurationExporter.getPropertiesAsBytes(
 					getProperties(
-						languageId, factoryPid, curPid,
-						configurationScopeDisplayContext.getScope(),
+						themeDisplay.getCompanyId(), factoryPid, languageId,
+						curPid, configurationScopeDisplayContext.getScope(),
 						configurationScopeDisplayContext.getScopePK())));
 		}
 
@@ -322,7 +328,7 @@ public class ExportConfigurationMVCResourceCommand
 			resourceRequest, resourceResponse, fileName,
 			ConfigurationExporter.getPropertiesAsBytes(
 				getProperties(
-					languageId, factoryPid, pid,
+					themeDisplay.getCompanyId(), factoryPid, languageId, pid,
 					configurationScopeDisplayContext.getScope(),
 					configurationScopeDisplayContext.getScopePK())),
 			ContentTypes.TEXT_XML_UTF8);

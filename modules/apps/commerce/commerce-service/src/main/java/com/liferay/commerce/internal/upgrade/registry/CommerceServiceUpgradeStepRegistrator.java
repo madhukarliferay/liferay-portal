@@ -17,8 +17,9 @@ import com.liferay.commerce.internal.upgrade.v11_5_1.SupplierRoleUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v11_5_2.CommerceChannelRepositoryUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v13_0_3.CPConfigurationUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v13_0_5.CommerceReturnReasonConfigurationUpgradeProcess;
-import com.liferay.commerce.internal.upgrade.v13_0_6.CPDefinitionInventoryUpgradeProcess;
+import com.liferay.commerce.internal.upgrade.v13_0_7.CPDefinitionInventoryUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v14_0_0.ObjectDefinitionUpgradeProcess;
+import com.liferay.commerce.internal.upgrade.v15_0_3.OrderAdministratorRoleUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v1_2_0.CommerceSubscriptionUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v2_0_0.CommercePaymentMethodUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v2_1_0.CPDAvailabilityEstimateUpgradeProcess;
@@ -250,7 +251,7 @@ public class CommerceServiceUpgradeStepRegistrator
 				_classNameLocalService, _groupLocalService));
 
 		registry.register(
-			"4.5.1", "4.6.0", new DummyUpgradeProcess(),
+			"4.5.1", "4.6.0",
 			UpgradeProcessFactory.alterColumnType(
 				"CommerceShipment", "shippingOptionName", "TEXT"),
 			UpgradeProcessFactory.addColumns(
@@ -505,14 +506,11 @@ public class CommerceServiceUpgradeStepRegistrator
 			new BaseUuidUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{"CommerceOrderItem", "commerceOrderItemId"},
-						{"CommerceOrderNote", "commerceOrderNoteId"},
-						{"CommerceOrderType", "commerceOrderTypeId"},
-						{"CommerceOrderTypeRel", "commerceOrderTypeRelId"},
-						{"CommerceShipment", "commerceShipmentId"},
-						{"CommerceShipmentItem", "commerceShipmentItemId"}
+				protected String[] getTableNames() {
+					return new String[] {
+						"CommerceOrderItem", "CommerceOrderNote",
+						"CommerceOrderType", "CommerceOrderTypeRel",
+						"CommerceShipment", "CommerceShipmentItem"
 					};
 				}
 
@@ -523,13 +521,11 @@ public class CommerceServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{"CommerceOrder", "commerceOrderId"},
-						{"CommerceOrderItem", "commerceOrderItemId"},
-						{"CommerceOrderNote", "commerceOrderNoteId"},
-						{"CommerceOrderType", "commerceOrderTypeId"},
-						{"CommerceOrderTypeRel", "commerceOrderTypeRelId"}
+				protected String[] getTableNames() {
+					return new String[] {
+						"CommerceOrder", "CommerceOrderItem",
+						"CommerceOrderNote", "CommerceOrderType",
+						"CommerceOrderTypeRel"
 					};
 				}
 
@@ -849,14 +845,38 @@ public class CommerceServiceUpgradeStepRegistrator
 			new CommerceReturnReasonConfigurationUpgradeProcess(
 				_configurationAdmin));
 
-		registry.register(
-			"13.0.5", "13.0.6", new CPDefinitionInventoryUpgradeProcess());
+		registry.register("13.0.5", "13.0.6", new DummyUpgradeProcess());
 
 		registry.register(
-			"13.0.6", "14.0.0",
+			"13.0.6", "13.0.7", new CPDefinitionInventoryUpgradeProcess());
+
+		registry.register(
+			"13.0.7", "14.0.0",
 			new ObjectDefinitionUpgradeProcess(
 				_companyLocalService, _objectDefinitionLocalService,
 				_objectFieldLocalService, _objectRelationshipLocalService));
+
+		registry.register("14.0.0", "15.0.0", new DummyUpgradeProcess());
+
+		registry.register(
+			"15.0.0", "15.0.1",
+			new com.liferay.commerce.internal.upgrade.v15_0_1.
+				CommercePermissionUpgradeProcess(
+					_companyLocalService, _resourceActionLocalService,
+					_resourcePermissionLocalService, _roleLocalService));
+
+		registry.register(
+			"15.0.1", "15.0.2",
+			new com.liferay.commerce.internal.upgrade.v15_0_2.
+				CommercePermissionUpgradeProcess(
+					_resourceActionLocalService,
+					_resourcePermissionLocalService));
+
+		registry.register(
+			"15.0.2", "15.0.3",
+			new OrderAdministratorRoleUpgradeProcess(
+				_companyLocalService, _resourcePermissionLocalService,
+				_roleLocalService));
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce upgrade step registrator finished");

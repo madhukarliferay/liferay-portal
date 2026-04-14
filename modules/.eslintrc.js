@@ -33,7 +33,6 @@ const config = {
 		svg4everybody: true,
 		themeDisplay: true,
 	},
-	ignorePatterns: ['!*'],
 	overrides: [
 		{
 			env: {
@@ -62,6 +61,7 @@ const config = {
 		'@liferay/no-extraneous-dependencies': [
 			'error',
 			[
+				'@eslint/eslintrc',
 				'@testing-library/dom',
 				'@testing-library/jest-dom',
 				'@testing-library/react-hooks',
@@ -69,9 +69,11 @@ const config = {
 				'@testing-library/user-event',
 				'alloy-ui',
 				'buffer',
+				'execa',
 				'fs',
 				'path',
 				'process',
+				'url',
 				'~',
 			],
 		],

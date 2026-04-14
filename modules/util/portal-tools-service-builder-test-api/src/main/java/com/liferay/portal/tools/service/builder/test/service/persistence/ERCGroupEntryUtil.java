@@ -211,54 +211,6 @@ public class ERCGroupEntryUtil {
 	}
 
 	/**
-	 * Returns the last erc group entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching erc group entry
-	 * @throws NoSuchERCGroupEntryException if a matching erc group entry could not be found
-	 */
-	public static ERCGroupEntry findByUuid_Last(
-			String uuid, OrderByComparator<ERCGroupEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.exception.
-			NoSuchERCGroupEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last erc group entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching erc group entry, or <code>null</code> if a matching erc group entry could not be found
-	 */
-	public static ERCGroupEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<ERCGroupEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the erc group entries before and after the current erc group entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param ercGroupEntryId the primary key of the current erc group entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next erc group entry
-	 * @throws NoSuchERCGroupEntryException if a erc group entry with the primary key could not be found
-	 */
-	public static ERCGroupEntry[] findByUuid_PrevAndNext(
-			long ercGroupEntryId, String uuid,
-			OrderByComparator<ERCGroupEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.exception.
-			NoSuchERCGroupEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			ercGroupEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the erc group entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -453,61 +405,6 @@ public class ERCGroupEntryUtil {
 
 		return getPersistence().fetchByUuid_C_First(
 			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last erc group entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching erc group entry
-	 * @throws NoSuchERCGroupEntryException if a matching erc group entry could not be found
-	 */
-	public static ERCGroupEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<ERCGroupEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.exception.
-			NoSuchERCGroupEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last erc group entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching erc group entry, or <code>null</code> if a matching erc group entry could not be found
-	 */
-	public static ERCGroupEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<ERCGroupEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the erc group entries before and after the current erc group entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param ercGroupEntryId the primary key of the current erc group entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next erc group entry
-	 * @throws NoSuchERCGroupEntryException if a erc group entry with the primary key could not be found
-	 */
-	public static ERCGroupEntry[] findByUuid_C_PrevAndNext(
-			long ercGroupEntryId, String uuid, long companyId,
-			OrderByComparator<ERCGroupEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.exception.
-			NoSuchERCGroupEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			ercGroupEntryId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -762,3 +659,4 @@ public class ERCGroupEntryUtil {
 	private static volatile ERCGroupEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1912406200

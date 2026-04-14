@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {FrameLocator, Locator, Page} from '@playwright/test';
+import {FrameLocator, Locator, Page, expect} from '@playwright/test';
 
 import {ProductMenuPage} from '../product-navigation-control-menu-web/ProductMenuPage';
 
@@ -42,9 +42,11 @@ export class PortletConfigurationPermissionsPage {
 		this.productMenuPage = new ProductMenuPage(page);
 
 		this.clearLink = this.permissionsFrame.getByLabel('Clear');
-		this.ownerRoleCell = this.permissionsFrame.getByRole('cell', {
-			name: 'Owner',
-		});
+		this.ownerRoleCell = this.permissionsFrame
+			.getByRole('cell', {
+				name: 'Owner',
+			})
+			.first();
 		this.resultsBanner = this.permissionsFrame.getByText('Found for');
 		this.saveButton = this.permissionsFrame.getByRole('button', {
 			name: 'Save',
@@ -68,7 +70,10 @@ export class PortletConfigurationPermissionsPage {
 	async goToEditPagePermissions() {
 		const editPageLink = await this.editPageLink.getAttribute('href');
 		await this.page.goto(editPageLink);
-		await this.editPageOptionsMenu.click();
-		await this.permissionsMenuItem.click();
+
+		await expect(async () => {
+			await this.editPageOptionsMenu.click();
+			await this.permissionsMenuItem.click();
+		}).toPass();
 	}
 }

@@ -26,41 +26,49 @@ public class ContainerPageElementDefinition
 		return ContainerPageElementDefinitionSerDes.toDTO(json);
 	}
 
-	public FragmentImage getBackgroundFragmentImage() {
-		return backgroundFragmentImage;
+	public BackgroundImageValue getBackgroundImageValue() {
+		return backgroundImageValue;
 	}
 
-	public void setBackgroundFragmentImage(
-		FragmentImage backgroundFragmentImage) {
+	public void setBackgroundImageValue(
+		BackgroundImageValue backgroundImageValue) {
 
-		this.backgroundFragmentImage = backgroundFragmentImage;
+		this.backgroundImageValue = backgroundImageValue;
 	}
 
-	public void setBackgroundFragmentImage(
-		UnsafeSupplier<FragmentImage, Exception>
-			backgroundFragmentImageUnsafeSupplier) {
+	public void setBackgroundImageValue(
+		UnsafeSupplier<BackgroundImageValue, Exception>
+			backgroundImageValueUnsafeSupplier) {
 
 		try {
-			backgroundFragmentImage =
-				backgroundFragmentImageUnsafeSupplier.get();
+			backgroundImageValue = backgroundImageValueUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected FragmentImage backgroundFragmentImage;
+	protected BackgroundImageValue backgroundImageValue;
 
-	public String getContentVisibility() {
+	public ContentVisibility getContentVisibility() {
 		return contentVisibility;
 	}
 
-	public void setContentVisibility(String contentVisibility) {
+	public String getContentVisibilityAsString() {
+		if (contentVisibility == null) {
+			return null;
+		}
+
+		return contentVisibility.toString();
+	}
+
+	public void setContentVisibility(ContentVisibility contentVisibility) {
 		this.contentVisibility = contentVisibility;
 	}
 
 	public void setContentVisibility(
-		UnsafeSupplier<String, Exception> contentVisibilityUnsafeSupplier) {
+		UnsafeSupplier<ContentVisibility, Exception>
+			contentVisibilityUnsafeSupplier) {
 
 		try {
 			contentVisibility = contentVisibilityUnsafeSupplier.get();
@@ -70,7 +78,7 @@ public class ContainerPageElementDefinition
 		}
 	}
 
-	protected String contentVisibility;
+	protected ContentVisibility contentVisibility;
 
 	public String[] getCssClasses() {
 		return cssClasses;
@@ -93,49 +101,6 @@ public class ContainerPageElementDefinition
 
 	protected String[] cssClasses;
 
-	public String getCustomCSS() {
-		return customCSS;
-	}
-
-	public void setCustomCSS(String customCSS) {
-		this.customCSS = customCSS;
-	}
-
-	public void setCustomCSS(
-		UnsafeSupplier<String, Exception> customCSSUnsafeSupplier) {
-
-		try {
-			customCSS = customCSSUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String customCSS;
-
-	public CustomCSSViewport[] getCustomCSSViewports() {
-		return customCSSViewports;
-	}
-
-	public void setCustomCSSViewports(CustomCSSViewport[] customCSSViewports) {
-		this.customCSSViewports = customCSSViewports;
-	}
-
-	public void setCustomCSSViewports(
-		UnsafeSupplier<CustomCSSViewport[], Exception>
-			customCSSViewportsUnsafeSupplier) {
-
-		try {
-			customCSSViewports = customCSSViewportsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected CustomCSSViewport[] customCSSViewports;
-
 	public FragmentLink getFragmentLink() {
 		return fragmentLink;
 	}
@@ -156,27 +121,6 @@ public class ContainerPageElementDefinition
 	}
 
 	protected FragmentLink fragmentLink;
-
-	public FragmentStyle getFragmentStyle() {
-		return fragmentStyle;
-	}
-
-	public void setFragmentStyle(FragmentStyle fragmentStyle) {
-		this.fragmentStyle = fragmentStyle;
-	}
-
-	public void setFragmentStyle(
-		UnsafeSupplier<FragmentStyle, Exception> fragmentStyleUnsafeSupplier) {
-
-		try {
-			fragmentStyle = fragmentStyleUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected FragmentStyle fragmentStyle;
 
 	public FragmentViewport[] getFragmentViewports() {
 		return fragmentViewports;
@@ -318,4 +262,38 @@ public class ContainerPageElementDefinition
 		return ContainerPageElementDefinitionSerDes.toJSON(this);
 	}
 
+	public static enum ContentVisibility {
+
+		AUTO("Auto");
+
+		public static ContentVisibility create(String value) {
+			for (ContentVisibility contentVisibility : values()) {
+				if (Objects.equals(contentVisibility.getValue(), value) ||
+					Objects.equals(contentVisibility.name(), value)) {
+
+					return contentVisibility;
+				}
+			}
+
+			return null;
+		}
+
+		public String getValue() {
+			return _value;
+		}
+
+		@Override
+		public String toString() {
+			return _value;
+		}
+
+		private ContentVisibility(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
+	}
+
 }
+// LIFERAY-REST-BUILDER-HASH:1801250774

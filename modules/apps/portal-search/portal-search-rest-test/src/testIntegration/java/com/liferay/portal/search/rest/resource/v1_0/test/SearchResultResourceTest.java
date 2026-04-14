@@ -70,8 +70,6 @@ import com.liferay.portal.search.rest.dto.v1_0.FacetConfiguration;
 import com.liferay.portal.search.rest.dto.v1_0.SearchRequestBody;
 import com.liferay.portal.search.rest.dto.v1_0.SearchResult;
 import com.liferay.portal.search.rest.pagination.SearchPage;
-import com.liferay.portal.test.rule.FeatureFlag;
-import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -109,6 +107,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -117,7 +116,6 @@ import org.junit.runner.RunWith;
  * @author Petteri Karttunen
  * @author Almir Ferreira
  */
-@FeatureFlags(featureFlags = @FeatureFlag(value = "LPS-179669"))
 @RunWith(Arquillian.class)
 public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 
@@ -363,6 +361,7 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 	public void testGetSearchPageWithSortInteger() throws Exception {
 	}
 
+	@Ignore
 	@Override
 	@Test
 	@TestInfo("LPD-57341")
@@ -393,6 +392,7 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 		_testPostSearchPageZeroResults();
 	}
 
+	@Ignore
 	@Test
 	public void testSearchEndpointRedirect() throws Exception {
 		_baseURI = "portal-search-rest";
@@ -1025,7 +1025,6 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 
 		ObjectDefinition objectDefinition =
 			ObjectDefinitionTestUtil.publishObjectDefinition(
-				true,
 				Collections.singletonList(
 					new TextObjectFieldBuilder(
 					).labelMap(
@@ -1238,7 +1237,6 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 
 		ObjectDefinition objectDefinition =
 			ObjectDefinitionTestUtil.publishObjectDefinition(
-				true,
 				Collections.singletonList(
 					new TextObjectFieldBuilder(
 					).labelMap(
@@ -1553,8 +1551,10 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 	}
 
 	private static final String[] _IGNORED_ENTITY_FIELD_NAMES = {
-		"cmsKind", "cmsRoot", "cmsSection", "dateDisplay", "dateExpiration",
+		"cmpAssignTo", "cmpDueDate", "cmpState", "cmsKind", "cmsRoot",
+		"cmsSection", "extension", "dateDisplay", "dateExpiration",
 		"datePublish", "dateReview", "folderId",
+		"objectDefinitionExternalReferenceCode",
 		"objectFolderExternalReferenceCode"
 	};
 

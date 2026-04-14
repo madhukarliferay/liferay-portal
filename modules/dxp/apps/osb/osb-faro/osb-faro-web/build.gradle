@@ -20,15 +20,15 @@ dependencies {
 	compileInclude group: "org.apache.httpcomponents", name: "httpclient", version: "4.5.13"
 	compileInclude group: "org.apache.httpcomponents", name: "httpcore", version: "4.4.14"
 	compileOnly group: "com.liferay", name: "jakarta.ws.rs", version: "3.1.0.LIFERAY-PATCHED-2"
-	compileOnly group: "com.liferay", name: "org.apache.cxf.core", version: "3.5.11.JAKARTA-LIFERAY-PATCHED-1"
-	compileOnly group: "com.liferay", name: "org.apache.cxf.rt.frontend.jaxrs", version: "3.5.11.JAKARTA-LIFERAY-PATCHED-1"
+	compileOnly group: "com.liferay", name: "org.apache.cxf.core", version: "3.6.9.JAKARTA-LIFERAY-PATCHED-1"
+	compileOnly group: "com.liferay", name: "org.apache.cxf.rt.frontend.jaxrs", version: "3.6.9.JAKARTA-LIFERAY-PATCHED-1"
 	compileOnly group: "com.liferay.jakarta.portlet", name: "com.liferay.jakarta.portlet-api", version: "4.0.0"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly group: "jakarta.annotation", name: "jakarta.annotation-api", version: "2.1.1"
 	compileOnly group: "jakarta.mail", name: "jakarta.mail-api", version: "2.1.3"
 	compileOnly group: "jakarta.servlet", name: "jakarta.servlet-api", version: "6.0.0"
-	compileOnly group: "org.apache.commons", name: "commons-collections4", version: "4.4"
+	compileOnly group: "org.apache.commons", name: "commons-collections4", version: "4.5.0"
 	compileOnly group: "org.osgi", name: "org.osgi.core", version: "6.0.0"
 	compileOnly group: "org.osgi", name: "org.osgi.service.cm", version: "1.6.0"
 	compileOnly group: "org.osgi", name: "org.osgi.service.component.annotations", version: "1.4.0"
@@ -47,6 +47,7 @@ dependencies {
 	compileOnly project(":core:petra:petra-concurrent")
 	compileOnly project(":core:petra:petra-executor")
 	compileOnly project(":core:petra:petra-function")
+	compileOnly project(":core:petra:petra-io")
 	compileOnly project(":core:petra:petra-lang")
 	compileOnly project(":core:petra:petra-sql-dsl-api")
 	compileOnly project(":core:petra:petra-sql-dsl-spi")
@@ -55,10 +56,15 @@ dependencies {
 	compileOnly project(":dxp:apps:osb:osb-faro:osb-faro-contacts-api")
 	compileOnly project(":dxp:apps:osb:osb-faro:osb-faro-engine-client")
 	compileOnly project(":dxp:apps:osb:osb-faro:osb-faro-provisioning-client")
+	testImplementation group: "org.mockito", name: "mockito-core", version: "5.14.2"
 }
 
 generateJSPJava {
 	enabled = false
+}
+
+jarSources {
+	mustRunAfter packageRunWebpack
 }
 
 node {
@@ -112,4 +118,8 @@ packageRunWebpack {
 
 processResources {
 	dependsOn packageRunWebpack
+}
+
+tasks.named("copyCSS") {
+	dependsOn tasks.named("packageRunWebpack")
 }

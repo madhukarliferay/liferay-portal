@@ -11,7 +11,7 @@ import {Root, createRoot} from 'react-dom/client';
 import {SWRConfig} from 'swr';
 
 import {AppPropertiesContext} from './contexts/AppPropertiesContext';
-import AttachmentUploader from './features/attachment-uploader';
+import Attachments from './features/attachments';
 import Onboarding from './features/onboarding';
 import Project from './features/project';
 import Projects from './features/projects';
@@ -23,10 +23,8 @@ import swrCacheProvider from './utils/swrCacheProvider';
 
 import './main.css';
 
-const ELEMENT_ID = 'liferay-customer-custom-element';
-
 const AppRoutes = {
-	attachmentUploader: AttachmentUploader,
+	attachments: Attachments,
 	onboarding: Onboarding,
 	project: Project,
 	projects: Projects,
@@ -43,14 +41,15 @@ type Properties = {
 	articleWhatIsMyInstanceSizingValueURL: string | null;
 	createTicketURL: string | null;
 	featureFlags?: string[];
-	helpCenterURL: string | null;
 	importDate?: Date | null;
+	jiraFLSPortalURL: string | null;
+	jiraFLSProject: string | null;
+	jiraHCPortalURL: string | null;
 	submitSupportTicketURL: string | null;
 	theOverviewPageURL: string | null;
 };
 
 type APIs = {
-	gravatarAPI: string | null;
 	provisioningServerAPI: string | null;
 };
 
@@ -87,8 +86,6 @@ const CustomerPortalApp: React.FC<CustomerPortalAppProps> = ({
 					} as any
 				}
 			>
-				{properties.featureFlags?.includes('LPS-192494')}
-
 				<AppRouteComponent />
 			</AppPropertiesContext.Provider>
 		</ApolloProvider>
@@ -125,10 +122,12 @@ class CustomerPortalWebComponent extends HTMLElement {
 			featureFlags: (super.getAttribute('feature-flags') ?? '')
 				.split(',')
 				.map((featureflag) => featureflag.trim()),
-			helpCenterURL: super.getAttribute('help-center-url'),
 			importDate: super.getAttribute('import-date')
 				? new Date(super.getAttribute('import-date') as string)
 				: undefined,
+			jiraFLSPortalURL: super.getAttribute('jira-fls-portal-url'),
+			jiraFLSProject: super.getAttribute('jira-fls-project'),
+			jiraHCPortalURL: super.getAttribute('jira-hc-portal-url'),
 			submitSupportTicketURL: super.getAttribute(
 				'submit-support-ticket-url'
 			),
@@ -138,7 +137,6 @@ class CustomerPortalWebComponent extends HTMLElement {
 		};
 
 		const apis = {
-			gravatarAPI: super.getAttribute('gravatar-api'),
 			provisioningServerAPI: super.getAttribute(
 				'provisioning-server-api'
 			),
@@ -167,6 +165,18 @@ class CustomerPortalWebComponent extends HTMLElement {
 	}
 }
 
-if (!customElements.get(ELEMENT_ID)) {
-	customElements.define(ELEMENT_ID, CustomerPortalWebComponent);
+if (!customElements.get('liferay-customer-custom-element')) {
+	customElements.define(
+		'liferay-customer-custom-element',
+		CustomerPortalWebComponent
+	);
+}
+
+class CustomerPortalWebComponentTesting extends CustomerPortalWebComponent {}
+
+if (!customElements.get('liferay-customer-custom-element-testing')) {
+	customElements.define(
+		'liferay-customer-custom-element-testing',
+		CustomerPortalWebComponentTesting
+	);
 }

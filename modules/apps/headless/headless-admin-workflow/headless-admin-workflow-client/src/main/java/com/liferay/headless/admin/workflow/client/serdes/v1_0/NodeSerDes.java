@@ -80,9 +80,7 @@ public class NodeSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(node.getType());
-
 			sb.append("\"");
 		}
 
@@ -257,3 +255,4 @@ public class NodeSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-212028252

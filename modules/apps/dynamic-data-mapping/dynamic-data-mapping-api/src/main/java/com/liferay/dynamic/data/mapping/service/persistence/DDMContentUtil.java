@@ -209,54 +209,6 @@ public class DDMContentUtil {
 	}
 
 	/**
-	 * Returns the last ddm content in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content
-	 * @throws NoSuchContentException if a matching ddm content could not be found
-	 */
-	public static DDMContent findByUuid_Last(
-			String uuid, OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm content in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content, or <code>null</code> if a matching ddm content could not be found
-	 */
-	public static DDMContent fetchByUuid_Last(
-		String uuid, OrderByComparator<DDMContent> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm contents before and after the current ddm content in the ordered set where uuid = &#63;.
-	 *
-	 * @param contentId the primary key of the current ddm content
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm content
-	 * @throws NoSuchContentException if a ddm content with the primary key could not be found
-	 */
-	public static DDMContent[] findByUuid_PrevAndNext(
-			long contentId, String uuid,
-			OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			contentId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm contents where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -452,61 +404,6 @@ public class DDMContentUtil {
 	}
 
 	/**
-	 * Returns the last ddm content in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content
-	 * @throws NoSuchContentException if a matching ddm content could not be found
-	 */
-	public static DDMContent findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm content in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content, or <code>null</code> if a matching ddm content could not be found
-	 */
-	public static DDMContent fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<DDMContent> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm contents before and after the current ddm content in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param contentId the primary key of the current ddm content
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm content
-	 * @throws NoSuchContentException if a ddm content with the primary key could not be found
-	 */
-	public static DDMContent[] findByUuid_C_PrevAndNext(
-			long contentId, String uuid, long companyId,
-			OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			contentId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm contents where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -630,54 +527,6 @@ public class DDMContentUtil {
 	}
 
 	/**
-	 * Returns the last ddm content in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content
-	 * @throws NoSuchContentException if a matching ddm content could not be found
-	 */
-	public static DDMContent findByGroupId_Last(
-			long groupId, OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm content in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content, or <code>null</code> if a matching ddm content could not be found
-	 */
-	public static DDMContent fetchByGroupId_Last(
-		long groupId, OrderByComparator<DDMContent> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm contents before and after the current ddm content in the ordered set where groupId = &#63;.
-	 *
-	 * @param contentId the primary key of the current ddm content
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm content
-	 * @throws NoSuchContentException if a ddm content with the primary key could not be found
-	 */
-	public static DDMContent[] findByGroupId_PrevAndNext(
-			long contentId, long groupId,
-			OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			contentId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm contents where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -797,56 +646,6 @@ public class DDMContentUtil {
 
 		return getPersistence().fetchByCompanyId_First(
 			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm content in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content
-	 * @throws NoSuchContentException if a matching ddm content could not be found
-	 */
-	public static DDMContent findByCompanyId_Last(
-			long companyId, OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm content in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm content, or <code>null</code> if a matching ddm content could not be found
-	 */
-	public static DDMContent fetchByCompanyId_Last(
-		long companyId, OrderByComparator<DDMContent> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm contents before and after the current ddm content in the ordered set where companyId = &#63;.
-	 *
-	 * @param contentId the primary key of the current ddm content
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm content
-	 * @throws NoSuchContentException if a ddm content with the primary key could not be found
-	 */
-	public static DDMContent[] findByCompanyId_PrevAndNext(
-			long contentId, long companyId,
-			OrderByComparator<DDMContent> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchContentException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			contentId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1028,3 +827,4 @@ public class DDMContentUtil {
 	private static volatile DDMContentPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1016177093

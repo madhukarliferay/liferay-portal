@@ -131,6 +131,45 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 			"liferay-portal-ee", getUpstreamBranchName() + "-private");
 	}
 
+	@Override
+	public synchronized void setUp() {
+		if (isSetUp()) {
+			return;
+		}
+
+		System.out.println(toString());
+
+		try {
+			if (JenkinsResultsParserUtil.isBuildCachingEnabled(
+					System.getenv("JOB_NAME"),
+					System.getenv("CI_TEST_SUITE"))) {
+
+				checkAvailableGitArchive();
+			}
+
+			if (!isSnapshot()) {
+				prepareGitWorkingDirectory();
+
+				_setUpBinariesCache();
+
+				prepareGitArchive();
+
+				setSetUp(true);
+			}
+
+			if (!isSetUp() && isSnapshot()) {
+				useGitArchive();
+
+				_setUpBinariesCache();
+			}
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
+		}
+
+		setSetUp(true);
+	}
+
 	public void setUpPortalProfile() {
 		String upstreamBranchName = getUpstreamBranchName();
 
@@ -247,28 +286,36 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 				"test.company.default.locale", companyDefaultLocale);
 		}
 
-		Properties buildProperties = null;
+		String portalLatestBundleVersion = System.getenv(
+			"PORTAL_LATEST_BUNDLE_VERSION");
 
-		try {
-			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
-		}
-		catch (IOException ioException) {
-			throw new RuntimeException(ioException);
-		}
-
-		String latestBundleVersion = JenkinsResultsParserUtil.getProperty(
-			buildProperties, "portal.latest.bundle.version",
-			getUpstreamBranchName());
-
-		if (!JenkinsResultsParserUtil.isNullOrEmpty(latestBundleVersion)) {
-			testProperties.put(
-				"test.released.release.bundle.version", latestBundleVersion);
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(
+				portalLatestBundleVersion)) {
 
 			testProperties.put(
-				"test.released.test.portal.bundle.zip.url",
-				JenkinsResultsParserUtil.getProperty(
-					buildProperties, "portal.bundle.tomcat",
-					latestBundleVersion));
+				"test.released.release.bundle.version",
+				portalLatestBundleVersion);
+
+			Properties buildProperties = null;
+
+			try {
+				buildProperties = JenkinsResultsParserUtil.getBuildProperties();
+			}
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
+			}
+
+			String portalBundleTomcatURL = JenkinsResultsParserUtil.getProperty(
+				buildProperties, "portal.bundle.tomcat",
+				portalLatestBundleVersion);
+
+			if (!JenkinsResultsParserUtil.isNullOrEmpty(
+					portalBundleTomcatURL)) {
+
+				testProperties.put(
+					"test.released.test.portal.bundle.zip.url",
+					portalBundleTomcatURL);
+			}
 		}
 
 		return testProperties;
@@ -289,6 +336,64 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 			null, portalGitWorkingDirectory, upstreamBranchName, null,
 			portalGitWorkingDirectory.getGitRepositoryName(), "relevant",
 			upstreamBranchName);
+	}
+
+	private void _setUpBinariesCache() {
+		if (!JenkinsResultsParserUtil.isCloudCINode() || _setUpBinariesCache) {
+			return;
+		}
+
+		String binariesCacheS3Path;
+
+		try {
+			binariesCacheS3Path = JenkinsResultsParserUtil.getBuildProperty(
+				"binaries.cache.s3.path", getUpstreamBranchName());
+		}
+		catch (IOException ioException) {
+			System.out.println(
+				"WARNING: Unable to get \"binaries.cache.s3.path\"");
+
+			_setUpBinariesCache = true;
+
+			return;
+		}
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(binariesCacheS3Path)) {
+			return;
+		}
+
+		File binariesCacheTarGzipFile = new File(
+			getDirectory(), "binaries-cache.tar.gz");
+
+		try {
+			CloudBucketUtil.downloadS3File(
+				binariesCacheTarGzipFile, binariesCacheS3Path);
+		}
+		catch (IOException ioException) {
+			System.out.println(
+				"WARNING: Unable to download " + binariesCacheS3Path);
+
+			_setUpBinariesCache = true;
+
+			return;
+		}
+
+		try {
+			JenkinsResultsParserUtil.unTarGzip(
+				binariesCacheTarGzipFile, getDirectory());
+
+			System.out.println(
+				"Successfully untared " + binariesCacheS3Path + " to " +
+					getDirectory());
+		}
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
+		finally {
+			JenkinsResultsParserUtil.delete(binariesCacheTarGzipFile);
+
+			_setUpBinariesCache = true;
+		}
 	}
 
 	private void _writeAppServerPropertiesFile() {
@@ -341,5 +446,6 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 	private static final int _SETUP_PROFILE_DXP_RETRY_DELAY = 5;
 
 	private Properties _appServerProperties;
+	private boolean _setUpBinariesCache;
 
 }

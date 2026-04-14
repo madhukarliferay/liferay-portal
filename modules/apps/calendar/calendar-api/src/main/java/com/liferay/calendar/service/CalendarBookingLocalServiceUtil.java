@@ -335,6 +335,13 @@ public class CalendarBookingLocalServiceUtil {
 		return getService().fetchCalendarBooking(uuid, groupId);
 	}
 
+	public static CalendarBooking fetchCalendarBookingByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return getService().fetchCalendarBookingByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the calendar booking matching the UUID and group.
 	 *
@@ -373,6 +380,14 @@ public class CalendarBookingLocalServiceUtil {
 
 		return getService().getCalendarBooking(
 			calendarId, parentCalendarBookingId);
+	}
+
+	public static CalendarBooking getCalendarBookingByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getCalendarBookingByExternalReferenceCode(
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -826,3 +841,4 @@ public class CalendarBookingLocalServiceUtil {
 			CalendarBookingLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:157156017

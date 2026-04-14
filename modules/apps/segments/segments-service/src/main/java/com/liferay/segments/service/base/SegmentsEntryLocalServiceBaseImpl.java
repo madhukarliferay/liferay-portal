@@ -261,6 +261,23 @@ public abstract class SegmentsEntryLocalServiceBaseImpl
 		return segmentsEntryPersistence.fetchByUUID_G(uuid, groupId);
 	}
 
+	@Override
+	public SegmentsEntry fetchSegmentsEntryByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return segmentsEntryPersistence.fetchByERC_G(
+			externalReferenceCode, groupId);
+	}
+
+	@Override
+	public SegmentsEntry getSegmentsEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return segmentsEntryPersistence.findByERC_G(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the segments entry with the primary key.
 	 *
@@ -611,3 +628,4 @@ public abstract class SegmentsEntryLocalServiceBaseImpl
 		SegmentsEntryLocalServiceBaseImpl.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1663496574

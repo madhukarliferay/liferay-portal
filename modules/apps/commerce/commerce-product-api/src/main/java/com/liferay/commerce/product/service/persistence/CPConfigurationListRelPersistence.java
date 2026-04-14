@@ -123,47 +123,6 @@ public interface CPConfigurationListRelPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp configuration list rel in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration list rel
-	 * @throws NoSuchCPConfigurationListRelException if a matching cp configuration list rel could not be found
-	 */
-	public CPConfigurationListRel findByCPConfigurationListId_Last(
-			long CPConfigurationListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationListRel> orderByComparator)
-		throws NoSuchCPConfigurationListRelException;
-
-	/**
-	 * Returns the last cp configuration list rel in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration list rel, or <code>null</code> if a matching cp configuration list rel could not be found
-	 */
-	public CPConfigurationListRel fetchByCPConfigurationListId_Last(
-		long CPConfigurationListId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationListRel>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration list rels before and after the current cp configuration list rel in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListRelId the primary key of the current cp configuration list rel
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration list rel
-	 * @throws NoSuchCPConfigurationListRelException if a cp configuration list rel with the primary key could not be found
-	 */
-	public CPConfigurationListRel[] findByCPConfigurationListId_PrevAndNext(
-			long CPConfigurationListRelId, long CPConfigurationListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationListRel> orderByComparator)
-		throws NoSuchCPConfigurationListRelException;
-
-	/**
 	 * Removes all the cp configuration list rels where CPConfigurationListId = &#63; from the database.
 	 *
 	 * @param CPConfigurationListId the cp configuration list ID
@@ -271,51 +230,6 @@ public interface CPConfigurationListRelPersistence
 		long classNameId, long CPConfigurationListId,
 		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationListRel>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp configuration list rel in the ordered set where classNameId = &#63; and CPConfigurationListId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration list rel
-	 * @throws NoSuchCPConfigurationListRelException if a matching cp configuration list rel could not be found
-	 */
-	public CPConfigurationListRel findByC_C_Last(
-			long classNameId, long CPConfigurationListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationListRel> orderByComparator)
-		throws NoSuchCPConfigurationListRelException;
-
-	/**
-	 * Returns the last cp configuration list rel in the ordered set where classNameId = &#63; and CPConfigurationListId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration list rel, or <code>null</code> if a matching cp configuration list rel could not be found
-	 */
-	public CPConfigurationListRel fetchByC_C_Last(
-		long classNameId, long CPConfigurationListId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationListRel>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration list rels before and after the current cp configuration list rel in the ordered set where classNameId = &#63; and CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListRelId the primary key of the current cp configuration list rel
-	 * @param classNameId the class name ID
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration list rel
-	 * @throws NoSuchCPConfigurationListRelException if a cp configuration list rel with the primary key could not be found
-	 */
-	public CPConfigurationListRel[] findByC_C_PrevAndNext(
-			long CPConfigurationListRelId, long classNameId,
-			long CPConfigurationListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationListRel> orderByComparator)
-		throws NoSuchCPConfigurationListRelException;
 
 	/**
 	 * Removes all the cp configuration list rels where classNameId = &#63; and CPConfigurationListId = &#63; from the database.
@@ -519,3 +433,4 @@ public interface CPConfigurationListRelPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1567014244

@@ -84,6 +84,189 @@ public class WorkflowInstanceLinkPersistenceImpl
 	private FinderPath _finderPathWithPaginationFindAll;
 	private FinderPath _finderPathWithoutPaginationFindAll;
 	private FinderPath _finderPathCountAll;
+	private FinderPath _finderPathFetchByWorkflowInstanceId;
+
+	/**
+	 * Returns the workflow instance link where workflowInstanceId = &#63; or throws a <code>NoSuchWorkflowInstanceLinkException</code> if it could not be found.
+	 *
+	 * @param workflowInstanceId the workflow instance ID
+	 * @return the matching workflow instance link
+	 * @throws NoSuchWorkflowInstanceLinkException if a matching workflow instance link could not be found
+	 */
+	@Override
+	public WorkflowInstanceLink findByWorkflowInstanceId(
+			long workflowInstanceId)
+		throws NoSuchWorkflowInstanceLinkException {
+
+		WorkflowInstanceLink workflowInstanceLink = fetchByWorkflowInstanceId(
+			workflowInstanceId);
+
+		if (workflowInstanceLink == null) {
+			StringBundler sb = new StringBundler(4);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("workflowInstanceId=");
+			sb.append(workflowInstanceId);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchWorkflowInstanceLinkException(sb.toString());
+		}
+
+		return workflowInstanceLink;
+	}
+
+	/**
+	 * Returns the workflow instance link where workflowInstanceId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param workflowInstanceId the workflow instance ID
+	 * @return the matching workflow instance link, or <code>null</code> if a matching workflow instance link could not be found
+	 */
+	@Override
+	public WorkflowInstanceLink fetchByWorkflowInstanceId(
+		long workflowInstanceId) {
+
+		return fetchByWorkflowInstanceId(workflowInstanceId, true);
+	}
+
+	/**
+	 * Returns the workflow instance link where workflowInstanceId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param workflowInstanceId the workflow instance ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching workflow instance link, or <code>null</code> if a matching workflow instance link could not be found
+	 */
+	@Override
+	public WorkflowInstanceLink fetchByWorkflowInstanceId(
+		long workflowInstanceId, boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					WorkflowInstanceLink.class)) {
+
+			Object[] finderArgs = null;
+
+			if (useFinderCache) {
+				finderArgs = new Object[] {workflowInstanceId};
+			}
+
+			Object result = null;
+
+			if (useFinderCache) {
+				result = FinderCacheUtil.getResult(
+					_finderPathFetchByWorkflowInstanceId, finderArgs, this);
+			}
+
+			if (result instanceof WorkflowInstanceLink) {
+				WorkflowInstanceLink workflowInstanceLink =
+					(WorkflowInstanceLink)result;
+
+				if (workflowInstanceId !=
+						workflowInstanceLink.getWorkflowInstanceId()) {
+
+					result = null;
+				}
+			}
+
+			if (result == null) {
+				StringBundler sb = new StringBundler(3);
+
+				sb.append(_SQL_SELECT_WORKFLOWINSTANCELINK_WHERE);
+
+				sb.append(
+					_FINDER_COLUMN_WORKFLOWINSTANCEID_WORKFLOWINSTANCEID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(workflowInstanceId);
+
+					List<WorkflowInstanceLink> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							FinderCacheUtil.putResult(
+								_finderPathFetchByWorkflowInstanceId,
+								finderArgs, list);
+						}
+					}
+					else {
+						WorkflowInstanceLink workflowInstanceLink = list.get(0);
+
+						result = workflowInstanceLink;
+
+						cacheResult(workflowInstanceLink);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (WorkflowInstanceLink)result;
+			}
+		}
+	}
+
+	/**
+	 * Removes the workflow instance link where workflowInstanceId = &#63; from the database.
+	 *
+	 * @param workflowInstanceId the workflow instance ID
+	 * @return the workflow instance link that was removed
+	 */
+	@Override
+	public WorkflowInstanceLink removeByWorkflowInstanceId(
+			long workflowInstanceId)
+		throws NoSuchWorkflowInstanceLinkException {
+
+		WorkflowInstanceLink workflowInstanceLink = findByWorkflowInstanceId(
+			workflowInstanceId);
+
+		return remove(workflowInstanceLink);
+	}
+
+	/**
+	 * Returns the number of workflow instance links where workflowInstanceId = &#63;.
+	 *
+	 * @param workflowInstanceId the workflow instance ID
+	 * @return the number of matching workflow instance links
+	 */
+	@Override
+	public int countByWorkflowInstanceId(long workflowInstanceId) {
+		WorkflowInstanceLink workflowInstanceLink = fetchByWorkflowInstanceId(
+			workflowInstanceId);
+
+		if (workflowInstanceLink == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String
+		_FINDER_COLUMN_WORKFLOWINSTANCEID_WORKFLOWINSTANCEID_2 =
+			"workflowInstanceLink.workflowInstanceId = ?";
+
 	private FinderPath _finderPathWithPaginationFindByC_C;
 	private FinderPath _finderPathWithoutPaginationFindByC_C;
 	private FinderPath _finderPathCountByC_C;
@@ -329,233 +512,6 @@ public class WorkflowInstanceLinkPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last workflow instance link in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching workflow instance link
-	 * @throws NoSuchWorkflowInstanceLinkException if a matching workflow instance link could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink findByC_C_Last(
-			long companyId, long classNameId,
-			OrderByComparator<WorkflowInstanceLink> orderByComparator)
-		throws NoSuchWorkflowInstanceLinkException {
-
-		WorkflowInstanceLink workflowInstanceLink = fetchByC_C_Last(
-			companyId, classNameId, orderByComparator);
-
-		if (workflowInstanceLink != null) {
-			return workflowInstanceLink;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-
-		sb.append("}");
-
-		throw new NoSuchWorkflowInstanceLinkException(sb.toString());
-	}
-
-	/**
-	 * Returns the last workflow instance link in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching workflow instance link, or <code>null</code> if a matching workflow instance link could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink fetchByC_C_Last(
-		long companyId, long classNameId,
-		OrderByComparator<WorkflowInstanceLink> orderByComparator) {
-
-		int count = countByC_C(companyId, classNameId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<WorkflowInstanceLink> list = findByC_C(
-			companyId, classNameId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the workflow instance links before and after the current workflow instance link in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param workflowInstanceLinkId the primary key of the current workflow instance link
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next workflow instance link
-	 * @throws NoSuchWorkflowInstanceLinkException if a workflow instance link with the primary key could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink[] findByC_C_PrevAndNext(
-			long workflowInstanceLinkId, long companyId, long classNameId,
-			OrderByComparator<WorkflowInstanceLink> orderByComparator)
-		throws NoSuchWorkflowInstanceLinkException {
-
-		WorkflowInstanceLink workflowInstanceLink = findByPrimaryKey(
-			workflowInstanceLinkId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			WorkflowInstanceLink[] array = new WorkflowInstanceLinkImpl[3];
-
-			array[0] = getByC_C_PrevAndNext(
-				session, workflowInstanceLink, companyId, classNameId,
-				orderByComparator, true);
-
-			array[1] = workflowInstanceLink;
-
-			array[2] = getByC_C_PrevAndNext(
-				session, workflowInstanceLink, companyId, classNameId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected WorkflowInstanceLink getByC_C_PrevAndNext(
-		Session session, WorkflowInstanceLink workflowInstanceLink,
-		long companyId, long classNameId,
-		OrderByComparator<WorkflowInstanceLink> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_WORKFLOWINSTANCELINK_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_C_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(WorkflowInstanceLinkModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(classNameId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						workflowInstanceLink)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<WorkflowInstanceLink> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -903,245 +859,6 @@ public class WorkflowInstanceLinkPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last workflow instance link in the ordered set where groupId = &#63; and companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching workflow instance link
-	 * @throws NoSuchWorkflowInstanceLinkException if a matching workflow instance link could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink findByG_C_C_Last(
-			long groupId, long companyId, long classNameId,
-			OrderByComparator<WorkflowInstanceLink> orderByComparator)
-		throws NoSuchWorkflowInstanceLinkException {
-
-		WorkflowInstanceLink workflowInstanceLink = fetchByG_C_C_Last(
-			groupId, companyId, classNameId, orderByComparator);
-
-		if (workflowInstanceLink != null) {
-			return workflowInstanceLink;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-
-		sb.append("}");
-
-		throw new NoSuchWorkflowInstanceLinkException(sb.toString());
-	}
-
-	/**
-	 * Returns the last workflow instance link in the ordered set where groupId = &#63; and companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching workflow instance link, or <code>null</code> if a matching workflow instance link could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink fetchByG_C_C_Last(
-		long groupId, long companyId, long classNameId,
-		OrderByComparator<WorkflowInstanceLink> orderByComparator) {
-
-		int count = countByG_C_C(groupId, companyId, classNameId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<WorkflowInstanceLink> list = findByG_C_C(
-			groupId, companyId, classNameId, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the workflow instance links before and after the current workflow instance link in the ordered set where groupId = &#63; and companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param workflowInstanceLinkId the primary key of the current workflow instance link
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next workflow instance link
-	 * @throws NoSuchWorkflowInstanceLinkException if a workflow instance link with the primary key could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink[] findByG_C_C_PrevAndNext(
-			long workflowInstanceLinkId, long groupId, long companyId,
-			long classNameId,
-			OrderByComparator<WorkflowInstanceLink> orderByComparator)
-		throws NoSuchWorkflowInstanceLinkException {
-
-		WorkflowInstanceLink workflowInstanceLink = findByPrimaryKey(
-			workflowInstanceLinkId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			WorkflowInstanceLink[] array = new WorkflowInstanceLinkImpl[3];
-
-			array[0] = getByG_C_C_PrevAndNext(
-				session, workflowInstanceLink, groupId, companyId, classNameId,
-				orderByComparator, true);
-
-			array[1] = workflowInstanceLink;
-
-			array[2] = getByG_C_C_PrevAndNext(
-				session, workflowInstanceLink, groupId, companyId, classNameId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected WorkflowInstanceLink getByG_C_C_PrevAndNext(
-		Session session, WorkflowInstanceLink workflowInstanceLink,
-		long groupId, long companyId, long classNameId,
-		OrderByComparator<WorkflowInstanceLink> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_WORKFLOWINSTANCELINK_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_C_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_C_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_C_CLASSNAMEID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(WorkflowInstanceLinkModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(companyId);
-
-		queryPos.add(classNameId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						workflowInstanceLink)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<WorkflowInstanceLink> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -1521,255 +1238,6 @@ public class WorkflowInstanceLinkPersistenceImpl
 	}
 
 	/**
-	 * Returns the last workflow instance link in the ordered set where groupId = &#63; and companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching workflow instance link
-	 * @throws NoSuchWorkflowInstanceLinkException if a matching workflow instance link could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink findByG_C_C_C_Last(
-			long groupId, long companyId, long classNameId, long classPK,
-			OrderByComparator<WorkflowInstanceLink> orderByComparator)
-		throws NoSuchWorkflowInstanceLinkException {
-
-		WorkflowInstanceLink workflowInstanceLink = fetchByG_C_C_C_Last(
-			groupId, companyId, classNameId, classPK, orderByComparator);
-
-		if (workflowInstanceLink != null) {
-			return workflowInstanceLink;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-
-		sb.append(", classPK=");
-		sb.append(classPK);
-
-		sb.append("}");
-
-		throw new NoSuchWorkflowInstanceLinkException(sb.toString());
-	}
-
-	/**
-	 * Returns the last workflow instance link in the ordered set where groupId = &#63; and companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching workflow instance link, or <code>null</code> if a matching workflow instance link could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink fetchByG_C_C_C_Last(
-		long groupId, long companyId, long classNameId, long classPK,
-		OrderByComparator<WorkflowInstanceLink> orderByComparator) {
-
-		int count = countByG_C_C_C(groupId, companyId, classNameId, classPK);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<WorkflowInstanceLink> list = findByG_C_C_C(
-			groupId, companyId, classNameId, classPK, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the workflow instance links before and after the current workflow instance link in the ordered set where groupId = &#63; and companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param workflowInstanceLinkId the primary key of the current workflow instance link
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next workflow instance link
-	 * @throws NoSuchWorkflowInstanceLinkException if a workflow instance link with the primary key could not be found
-	 */
-	@Override
-	public WorkflowInstanceLink[] findByG_C_C_C_PrevAndNext(
-			long workflowInstanceLinkId, long groupId, long companyId,
-			long classNameId, long classPK,
-			OrderByComparator<WorkflowInstanceLink> orderByComparator)
-		throws NoSuchWorkflowInstanceLinkException {
-
-		WorkflowInstanceLink workflowInstanceLink = findByPrimaryKey(
-			workflowInstanceLinkId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			WorkflowInstanceLink[] array = new WorkflowInstanceLinkImpl[3];
-
-			array[0] = getByG_C_C_C_PrevAndNext(
-				session, workflowInstanceLink, groupId, companyId, classNameId,
-				classPK, orderByComparator, true);
-
-			array[1] = workflowInstanceLink;
-
-			array[2] = getByG_C_C_C_PrevAndNext(
-				session, workflowInstanceLink, groupId, companyId, classNameId,
-				classPK, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected WorkflowInstanceLink getByG_C_C_C_PrevAndNext(
-		Session session, WorkflowInstanceLink workflowInstanceLink,
-		long groupId, long companyId, long classNameId, long classPK,
-		OrderByComparator<WorkflowInstanceLink> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_WORKFLOWINSTANCELINK_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_C_C_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_C_C_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_C_C_CLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_C_C_CLASSPK_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(WorkflowInstanceLinkModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(companyId);
-
-		queryPos.add(classNameId);
-
-		queryPos.add(classPK);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						workflowInstanceLink)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<WorkflowInstanceLink> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the workflow instance links where groupId = &#63; and companyId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1899,6 +1367,11 @@ public class WorkflowInstanceLinkPersistenceImpl
 			EntityCacheUtil.putResult(
 				WorkflowInstanceLinkImpl.class,
 				workflowInstanceLink.getPrimaryKey(), workflowInstanceLink);
+
+			FinderCacheUtil.putResult(
+				_finderPathFetchByWorkflowInstanceId,
+				new Object[] {workflowInstanceLink.getWorkflowInstanceId()},
+				workflowInstanceLink);
 		}
 	}
 
@@ -1980,6 +1453,23 @@ public class WorkflowInstanceLinkPersistenceImpl
 		for (Serializable primaryKey : primaryKeys) {
 			EntityCacheUtil.removeResult(
 				WorkflowInstanceLinkImpl.class, primaryKey);
+		}
+	}
+
+	protected void cacheUniqueFindersCache(
+		WorkflowInstanceLinkModelImpl workflowInstanceLinkModelImpl) {
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					workflowInstanceLinkModelImpl.getCtCollectionId())) {
+
+			Object[] args = new Object[] {
+				workflowInstanceLinkModelImpl.getWorkflowInstanceId()
+			};
+
+			FinderCacheUtil.putResult(
+				_finderPathFetchByWorkflowInstanceId, args,
+				workflowInstanceLinkModelImpl);
 		}
 	}
 
@@ -2173,6 +1663,8 @@ public class WorkflowInstanceLinkPersistenceImpl
 		EntityCacheUtil.putResult(
 			WorkflowInstanceLinkImpl.class, workflowInstanceLinkModelImpl,
 			false, true);
+
+		cacheUniqueFindersCache(workflowInstanceLinkModelImpl);
 
 		if (isNew) {
 			workflowInstanceLink.setNew(false);
@@ -2686,6 +2178,8 @@ public class WorkflowInstanceLinkPersistenceImpl
 			Collections.singleton("workflowInstanceLinkId"));
 		_ctColumnNamesMap.put(
 			CTColumnResolutionType.STRICT, ctStrictColumnNames);
+
+		_uniqueIndexColumnNames.add(new String[] {"workflowInstanceId"});
 	}
 
 	/**
@@ -2706,6 +2200,11 @@ public class WorkflowInstanceLinkPersistenceImpl
 		_finderPathCountAll = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
 			new String[0], new String[0], false);
+
+		_finderPathFetchByWorkflowInstanceId = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByWorkflowInstanceId",
+			new String[] {Long.class.getName()},
+			new String[] {"workflowInstanceId"}, true);
 
 		_finderPathWithPaginationFindByC_C = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_C",
@@ -2817,3 +2316,4 @@ public class WorkflowInstanceLinkPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1720379360

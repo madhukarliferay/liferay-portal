@@ -7,6 +7,7 @@ import EventMetricQuery, {
 	EventMetricsVariables
 } from 'shared/queries/EventMetricQuery';
 import IntervalSelector from 'shared/components/IntervalSelector';
+import Loading from 'shared/components/Loading';
 import moment from 'moment';
 import NoResultsDisplay from 'shared/components/NoResultsDisplay';
 import React, {useState} from 'react';
@@ -35,8 +36,13 @@ import {Interval, RangeSelectors, SafeRangeSelectors} from 'shared/types';
 import {isHourlyRangeKey} from 'shared/util/time';
 import {isNil} from 'lodash';
 import {mapListResultsToProps} from 'shared/util/mappers';
-import {RangeKeyTimeRanges, SessionEntityTypes} from 'shared/util/constants';
+import {
+	RangeKeyTimeRanges,
+	SessionEntityTypes,
+	Sizes
+} from 'shared/util/constants';
 import {sub} from 'shared/util/lang';
+import {useLDPEnabled} from 'shared/hooks/useLDPEnabled';
 import {useQuery} from '@apollo/react-hooks';
 import {useSelectedPoint} from 'shared/hooks/useSelectedPoint';
 import {withEmpty} from 'cerebro-shared/hocs/utils';
@@ -63,6 +69,7 @@ interface IProfileCardProps extends React.HTMLAttributes<HTMLElement> {
 	delta: number;
 	entity: Individual;
 	interval: Interval;
+	groupId: string;
 	onChangeInterval: (interval: Interval) => void;
 	onDeltaChange: (delta: number) => void;
 	onPageChange: (page: number) => void;
@@ -80,6 +87,7 @@ const ProfileCard: React.FC<IProfileCardProps> = ({
 	channelId,
 	delta,
 	entity: {id: entityId},
+	groupId,
 	interval,
 	onChangeInterval,
 	onDeltaChange,
@@ -94,6 +102,8 @@ const ProfileCard: React.FC<IProfileCardProps> = ({
 }) => {
 	const {hasSelectedPoint, onPointSelect, selectedPoint} = useSelectedPoint();
 	const [searchValue, setSearchValue] = useState<string>('');
+
+	const LDPEnabled = useLDPEnabled({groupId});
 
 	const activityResponse = useQuery<EventMetricsData, EventMetricsVariables>(
 		EventMetricQuery,
@@ -214,6 +224,74 @@ const ProfileCard: React.FC<IProfileCardProps> = ({
 		? getDateRangeLabelFromDate(intervalInitDate, interval)
 		: getDateRangeLabel(activityHistory, interval, 'intervalInitDate');
 
+	const renderNoResults = () => {
+		if (sessionsMappedResults?.loading) {
+			return (
+				<NoResultsDisplay>
+					<Loading key='LOADING' />
+				</NoResultsDisplay>
+			);
+		}
+
+		if (!sessionsMappedResults?.items?.length) {
+			if (query) {
+				return (
+					<NoResultsDisplay
+						description={Liferay.Language.get(
+							'review-your-search-and-try-again'
+						)}
+						icon={{
+							border: false,
+							size: Sizes.XXXLarge,
+							symbol: 'ac_no_results_found'
+						}}
+						spacer
+						title={Liferay.Language.get(
+							'there-are-no-results-found'
+						)}
+					>
+						<ClayButton
+							className='button-root'
+							displayType='secondary'
+							onClick={() => {
+								onQueryChange('');
+								setSearchValue('');
+							}}
+						>
+							{Liferay.Language.get('clear-search')}
+						</ClayButton>
+					</NoResultsDisplay>
+				);
+			}
+
+			return (
+				<NoResultsDisplay
+					description={
+						<>
+							<span className='mr-1'>
+								{Liferay.Language.get(
+									'check-back-later-to-verify-if-data-has-been-received-from-your-data-sources'
+								)}
+							</span>
+
+							<ClayLink
+								href={URLConstants.IndividualProfilesDocument}
+								key='DOCUMENTATION'
+								target='_blank'
+							>
+								{Liferay.Language.get(
+									'learn-more-about-individuals'
+								)}
+							</ClayLink>
+						</>
+					}
+					spacer
+					title={Liferay.Language.get('there-are-no-events-found')}
+				/>
+			);
+		}
+	};
+
 	return (
 		<WrapSafeResults
 			className='flex-grow-1 loading-root'
@@ -265,6 +343,7 @@ const ProfileCard: React.FC<IProfileCardProps> = ({
 						hasSelectedPoint={hasSelectedPoint}
 						history={activityHistory}
 						interval={interval}
+						LDPEnabled={LDPEnabled}
 						onPointSelect={handleChangeSelection}
 						rangeSelectors={rangeSelectors}
 						selectedPoint={selectedPoint}
@@ -278,6 +357,7 @@ const ProfileCard: React.FC<IProfileCardProps> = ({
 											Liferay.Language.get(
 												'individuals-events-x'
 											),
+
 											[date]
 									  )
 									: Liferay.Language.get(
@@ -318,42 +398,14 @@ const ProfileCard: React.FC<IProfileCardProps> = ({
 				searchValue={searchValue}
 				showCheckbox={false}
 				showSearch={false}
-				total={sessionsMappedResults.total}
+				total={sessionsMappedResults.total as number}
 			/>
 
 			<PaginatedVerticalTimeline
 				{...sessionsMappedResults}
 				delta={delta}
 				initialExpanded={false}
-				noResultsRenderer={
-					<NoResultsDisplay
-						description={
-							<>
-								<span className='mr-1'>
-									{Liferay.Language.get(
-										'check-back-later-to-verify-if-data-has-been-received-from-your-data-sources'
-									)}
-								</span>
-
-								<ClayLink
-									href={
-										URLConstants.IndividualProfilesDocument
-									}
-									key='DOCUMENTATION'
-									target='_blank'
-								>
-									{Liferay.Language.get(
-										'learn-more-about-individuals'
-									)}
-								</ClayLink>
-							</>
-						}
-						spacer
-						title={Liferay.Language.get(
-							'there-are-no-events-found'
-						)}
-					/>
-				}
+				noResultsRenderer={renderNoResults()}
 				onDeltaChange={onDeltaChange}
 				onPageChange={onPageChange}
 				page={page}

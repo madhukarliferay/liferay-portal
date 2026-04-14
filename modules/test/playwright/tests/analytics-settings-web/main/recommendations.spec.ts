@@ -21,7 +21,7 @@ import {
 	goNextStep,
 	goToAnalyticsCloudInstanceSettings,
 	syncAllContacts,
-	syncSite,
+	toggleSiteSync,
 } from './utils/analytics-settings';
 
 export enum JobId {
@@ -63,7 +63,10 @@ test.describe('Test All Recommendation Job', () => {
 				name: getRandomString(),
 			});
 
-			apiHelpers.data.push({id: site.id, type: 'site'});
+			apiHelpers.data.push({
+				id: site.externalReferenceCode,
+				type: 'site',
+			});
 
 			const channelName = 'My Property - ' + getRandomString();
 
@@ -82,7 +85,7 @@ test.describe('Test All Recommendation Job', () => {
 
 			await connectToAnalyticsCloud(page, {token});
 
-			await syncSite({
+			await toggleSiteSync({
 				channelName,
 				page,
 				siteName: site.name,

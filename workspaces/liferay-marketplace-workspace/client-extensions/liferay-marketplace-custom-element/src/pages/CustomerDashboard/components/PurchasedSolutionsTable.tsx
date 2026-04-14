@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {ClayButtonWithIcon} from '@clayui/button';
 import ClayDropDown from '@clayui/drop-down';
 import {addDays, format} from 'date-fns';
 import {useNavigate} from 'react-router-dom';
 
+import ButtonWithIcon from '../../../components/ButtonWithIcon';
 import {DashboardEmptyTable} from '../../../components/DashboardTable/DashboardEmptyTable';
 import OrderStatus from '../../../components/OrderStatus';
 import Table from '../../../components/Table/Table';
@@ -121,15 +121,13 @@ const PurchasedSolutionsTable: React.FC<PurchasedSolutionsTableProps> = ({
 				},
 				{
 					key: 'orderStatusInfo',
-					render: (orderStatusInfo) => (
-						<OrderStatus orderStatus={orderStatusInfo?.label}>
-							{orderStatusInfo?.label}
-						</OrderStatus>
+					render: (_, placedOrder) => (
+						<OrderStatus placedOrder={placedOrder} />
 					),
 					title: 'Status',
 				},
 				{
-					align: 'center',
+					align: 'right',
 					key: 'status',
 					render: (_, {customFields, id}) => {
 						const virtualHost =
@@ -138,8 +136,9 @@ const PurchasedSolutionsTable: React.FC<PurchasedSolutionsTableProps> = ({
 						return (
 							<div onClick={(event) => event.stopPropagation()}>
 								<ClayDropDown
+									alignmentPosition={['tr', 'br']}
 									trigger={
-										<ClayButtonWithIcon
+										<ButtonWithIcon
 											aria-label="Kebab Button"
 											displayType={null}
 											symbol="ellipsis-v"

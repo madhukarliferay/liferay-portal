@@ -166,7 +166,9 @@ const AddDataSetSortModalContent = ({
 
 	return (
 		<>
-			<ClayModal.Header>
+			<ClayModal.Header
+				closeButtonAriaLabel={Liferay.Language.get('close')}
+			>
 				{Liferay.Language.get('new-sorting-option')}
 			</ClayModal.Header>
 
@@ -356,7 +358,9 @@ const EditFDSSortModalContent = ({
 
 	return (
 		<>
-			<ClayModal.Header>
+			<ClayModal.Header
+				closeButtonAriaLabel={Liferay.Language.get('close')}
+			>
 				{Liferay.Util.sub(
 					Liferay.Language.get('edit-x-sorting'),
 					fdsSort.label
@@ -515,14 +519,13 @@ const Sorting = ({
 		setFDSSorts(
 			sortItems(
 				storedFDSSorts,
-
 				storedFDSSorts?.[0]?.[OBJECT_RELATIONSHIP.DATA_SET_SORTS]
 					?.sortsOrder as string
 			) as IDataSetSort[]
 		);
 
 		setLoading(false);
-	}, [dataSet]);
+	}, [dataSet.externalReferenceCode]);
 
 	useEffect(() => {
 		fetchDataSetSorts();

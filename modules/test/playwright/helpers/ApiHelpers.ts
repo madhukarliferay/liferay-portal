@@ -13,11 +13,13 @@ import {Page} from '@playwright/test';
 
 import {liferayConfig} from '../liferay.config';
 import {ApiBuilderHelper} from './ApiBuilderHelper';
+import {CookiesApiHelper} from './CookiesApiHelper';
 import {DataEngineApiHelper} from './DataEngineApiHelper';
 import {DynamicDataMappingApiHelper} from './DynamicDataMappingApiHelper';
 import {FeatureFlagApiHelper} from './FeatureFlagApiHelper';
 import {HeadlessAdminAddressApiHelper} from './HeadlessAdminAddressApiHelper';
 import {HeadlessAdminContentApiHelper} from './HeadlessAdminContentApiHelper';
+import {HeadlessAdminSiteApiHelper} from './HeadlessAdminSiteApiHelper';
 import {HeadlessAdminTaxonomyApiHelper} from './HeadlessAdminTaxonomyApiHelper';
 import {HeadlessAdminUserApiHelper} from './HeadlessAdminUserApiHelper';
 import {HeadlessAdminWorkflowApiHelper} from './HeadlessAdminWorkflowApiHelper';
@@ -36,8 +38,10 @@ import {HeadlessCommerceDeliveryCartApiHelper} from './HeadlessCommerceDeliveryC
 import {HeadlessCommerceDeliveryCatalogApiHelper} from './HeadlessCommerceDeliveryCatalogApiHelper';
 import {HeadlessCommerceReturnApiHelper} from './HeadlessCommerceReturnApiHelper';
 import {HeadlessDeliveryApiHelper} from './HeadlessDeliveryApiHelper';
+import {HeadlessDigitalSalesRoomApiHelper} from './HeadlessDigitalSalesRoomApiHelper';
 import {HeadlessPortalInstanceApiHelper} from './HeadlessPortalInstanceApiHelper';
 import {HeadlessSiteApiHelper} from './HeadlessSiteApiHelper';
+import {LanguageApiHelper} from './LanguageApiHelper';
 import {ListTypeAdminApiHelper} from './ListTypeAdminApiHelper';
 import {NotificationApiHelper} from './NotificationApiHelper';
 import {ObjectAdminApiHelper} from './ObjectAdminApiHelper';
@@ -74,6 +78,7 @@ import {JSONWebServicesSiteNavigationMenuApiHelper} from './json-web-services/JS
 import {JSONWebServicesStagingApiHelper} from './json-web-services/JSONWebServicesStagingApiHelper';
 import {JSONWebServicesTeamApiHelper} from './json-web-services/JSONWebServicesTeamApiHelper';
 import {JSONWebServicesUserApiHelper} from './json-web-services/JSONWebServicesUserApiHelper';
+import {JSONWebServicesUserGroupApiHelper} from './json-web-services/JSONWebServicesUserGroupApiHelper';
 
 type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
 
@@ -114,11 +119,13 @@ export async function getHeader(
 export class ApiHelpers {
 	readonly apiBuilder: ApiBuilderHelper;
 	readonly baseUrl: string;
+	readonly cookies: CookiesApiHelper;
 	readonly featureFlag: FeatureFlagApiHelper;
 	readonly dataEngine: DataEngineApiHelper;
 	readonly dynamicDataMapping: DynamicDataMappingApiHelper;
 	readonly headlessAdminAddress: HeadlessAdminAddressApiHelper;
 	readonly headlessAdminContent: HeadlessAdminContentApiHelper;
+	readonly headlessAdminSite: HeadlessAdminSiteApiHelper;
 	readonly headlessAdminTaxonomy: HeadlessAdminTaxonomyApiHelper;
 	readonly headlessAdminUser: HeadlessAdminUserApiHelper;
 	readonly headlessAdminWorkflow: HeadlessAdminWorkflowApiHelper;
@@ -137,6 +144,7 @@ export class ApiHelpers {
 	readonly headlessCommerceDeliveryCart: HeadlessCommerceDeliveryCartApiHelper;
 	readonly headlessCommerceReturn: HeadlessCommerceReturnApiHelper;
 	readonly headlessDelivery: HeadlessDeliveryApiHelper;
+	readonly headlessDigitalSalesRoom: HeadlessDigitalSalesRoomApiHelper;
 	readonly headlessSite: HeadlessSiteApiHelper;
 	readonly headlessPortalInstance: HeadlessPortalInstanceApiHelper;
 	readonly jsonWebServicesAnnouncementsEntryApiHelper: JSONWebServicesAnnouncementsEntryApiHelper;
@@ -168,6 +176,8 @@ export class ApiHelpers {
 	readonly jsonWebServicesStaging: JSONWebServicesStagingApiHelper;
 	readonly jsonWebServicesTeam: JSONWebServicesTeamApiHelper;
 	readonly jsonWebServicesUser: JSONWebServicesUserApiHelper;
+	readonly jsonWebServicesUserGroup: JSONWebServicesUserGroupApiHelper;
+	readonly language: LanguageApiHelper;
 	readonly listTypeAdmin: ListTypeAdminApiHelper;
 	readonly notification: NotificationApiHelper;
 	readonly objectAdmin: ObjectAdminApiHelper;
@@ -186,11 +196,13 @@ export class ApiHelpers {
 		this.baseUrl = baseUrl
 			? baseUrl + '/o/'
 			: liferayConfig.environment.baseUrl + '/o/';
+		this.cookies = new CookiesApiHelper(this);
 		this.featureFlag = new FeatureFlagApiHelper(page);
 		this.dataEngine = new DataEngineApiHelper(this);
 		this.dynamicDataMapping = new DynamicDataMappingApiHelper(this);
 		this.headlessAdminAddress = new HeadlessAdminAddressApiHelper(this);
 		this.headlessAdminContent = new HeadlessAdminContentApiHelper(this);
+		this.headlessAdminSite = new HeadlessAdminSiteApiHelper(this);
 		this.headlessAdminTaxonomy = new HeadlessAdminTaxonomyApiHelper(this);
 		this.headlessAdminUser = new HeadlessAdminUserApiHelper(this);
 		this.headlessAdminWorkflow = new HeadlessAdminWorkflowApiHelper(this);
@@ -219,6 +231,9 @@ export class ApiHelpers {
 			new HeadlessCommerceDeliveryCartApiHelper(this);
 		this.headlessCommerceReturn = new HeadlessCommerceReturnApiHelper(this);
 		this.headlessDelivery = new HeadlessDeliveryApiHelper(this);
+		this.headlessDigitalSalesRoom = new HeadlessDigitalSalesRoomApiHelper(
+			this
+		);
 		this.headlessSite = new HeadlessSiteApiHelper(this);
 		this.headlessPortalInstance = new HeadlessPortalInstanceApiHelper(this);
 		this.jsonWebServicesAnnouncementsEntryApiHelper =
@@ -269,6 +284,10 @@ export class ApiHelpers {
 		this.jsonWebServicesStaging = new JSONWebServicesStagingApiHelper(this);
 		this.jsonWebServicesTeam = new JSONWebServicesTeamApiHelper(this);
 		this.jsonWebServicesUser = new JSONWebServicesUserApiHelper(this);
+		this.jsonWebServicesUserGroup = new JSONWebServicesUserGroupApiHelper(
+			this
+		);
+		this.language = new LanguageApiHelper(this);
 		this.listTypeAdmin = new ListTypeAdminApiHelper(this);
 		this.notification = new NotificationApiHelper(this);
 		this.objectAdmin = new ObjectAdminApiHelper(this);
@@ -468,9 +487,7 @@ export class DataApiHelpers extends ApiHelpers {
 				await this.apiBuilder.deleteApiApplication(item.id);
 			}
 			else if (item.type === 'assetLibrary') {
-				await this.headlessAssetLibrary.deleteAssetLibrariesPage(
-					item.id
-				);
+				await this.headlessAssetLibrary.deleteAssetLibrary(item.id);
 			}
 			else if (item.type === 'catalog') {
 				await this.headlessCommerceAdminCatalog.deleteCatalog(item.id);
@@ -483,6 +500,9 @@ export class DataApiHelpers extends ApiHelpers {
 			}
 			else if (item.type === 'ctCollection') {
 				await this.headlessChangeTracking.deleteCTCollection(item.id);
+			}
+			else if (item.type === 'currency') {
+				await this.headlessCommerceAdminCatalog.deleteCurrency(item.id);
 			}
 			else if (item.type === 'discount') {
 				await this.headlessCommerceAdminPricing.deleteDiscount(item.id);
@@ -498,6 +518,17 @@ export class DataApiHelpers extends ApiHelpers {
 			else if (item.type === 'listTypeDefinition') {
 				await this.listTypeAdmin.deleteListTypeDefinition(item.id);
 			}
+			else if (item.type === 'navigationMenu') {
+				const [
+					siteExternalReferenceCode,
+					navigationMenuExternalReferenceCode,
+				] = item.id.split('|');
+
+				await this.headlessAdminSite.deleteSiteNavigationMenu(
+					siteExternalReferenceCode,
+					navigationMenuExternalReferenceCode
+				);
+			}
 			else if (item.type === 'notificationQueueEntry') {
 				await this.notification.deleteNotificationQueueEntry(item.id);
 			}
@@ -512,6 +543,35 @@ export class DataApiHelpers extends ApiHelpers {
 			else if (item.type === 'objectDefinition') {
 				const objectDefinitionAPIClient =
 					await this.buildRestClient(ObjectDefinitionAPI);
+
+				const {body: objectDefinition} =
+					await objectDefinitionAPIClient.getObjectDefinition(
+						item.id
+					);
+
+				const objectRelationshipRESTClient = await this.buildRestClient(
+					ObjectRelationshipAPI
+				);
+
+				// Check if there are edge relationship and update them before removing the definition
+
+				const {body: objectRelationships} =
+					await objectRelationshipRESTClient.getObjectDefinitionByExternalReferenceCodeObjectRelationshipsPage(
+						objectDefinition.externalReferenceCode
+					);
+
+				for (const objectRelationship of objectRelationships.items) {
+					if (objectRelationship.edge) {
+						await objectRelationshipRESTClient.putObjectRelationship(
+							objectRelationship.id,
+							{
+								...objectRelationship,
+								edge: false,
+							}
+						);
+					}
+				}
+
 				await objectDefinitionAPIClient.deleteObjectDefinition(item.id);
 			}
 			else if (item.type === 'objectFolder') {
@@ -606,7 +666,7 @@ export class DataApiHelpers extends ApiHelpers {
 				);
 			}
 			else if (item.type === 'site') {
-				await this.headlessSite.deleteSite(item.id);
+				await this.headlessAdminSite.deleteSite(item.id);
 			}
 			else if (item.type === 'skuUnitOfMeasure') {
 				await this.headlessCommerceAdminCatalog.deleteSkuUnitOfMeasure(

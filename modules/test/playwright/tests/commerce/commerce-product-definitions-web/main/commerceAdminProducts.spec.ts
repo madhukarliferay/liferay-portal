@@ -8,8 +8,10 @@ import {expect, mergeTests} from '@playwright/test';
 import {apiHelpersTest} from '../../../../fixtures/apiHelpersTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
+import {userPersonalBarPagesTest} from '../../../../fixtures/userPersonalBarPagesTest';
 import getRandomString from '../../../../utils/getRandomString';
 import {userData} from '../../../../utils/performLogin';
 
@@ -17,8 +19,49 @@ export const test = mergeTests(
 	apiHelpersTest,
 	commercePagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	isolatedSiteTest,
-	loginTest()
+	loginTest(),
+	userPersonalBarPagesTest
+);
+
+test(
+	'Add a SKU',
+	{tag: '@COMMERCE-6021'},
+	async ({
+		apiHelpers,
+		commerceAdminProductDetailsPage,
+		commerceAdminProductDetailsSkusPage,
+		commerceAdminProductPage,
+	}) => {
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+			});
+
+		await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+		await commerceAdminProductDetailsPage.goToProductSkus();
+
+		await commerceAdminProductDetailsSkusPage.skuAddButton.click();
+
+		await commerceAdminProductDetailsSkusPage.skuAddModalSkuInput.fill(
+			'BLACKSKU'
+		);
+
+		await commerceAdminProductDetailsSkusPage.skuAddModalSkuPurchasableToggle.check();
+
+		await commerceAdminProductDetailsSkusPage.skuAddModalSkuPublishButton.click();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.skuAddModalSuccessMessage
+		).toBeVisible();
+	}
 );
 
 test(
@@ -58,6 +101,100 @@ test(
 		await expect(
 			commerceAdminProductPage.productsTableRowLink(product.name['en_US'])
 		).toHaveCount(0);
+	}
+);
+
+test(
+	'Add a SKU with subscriptions',
+	{tag: '@COMMERCE-6024'},
+	async ({
+		apiHelpers,
+		commerceAdminProductDetailsPage,
+		commerceAdminProductDetailsSkusPage,
+		commerceAdminProductPage,
+	}) => {
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
+				name: 'Master',
+			});
+
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+				name: {en_US: 'Simple T-Shirt'},
+				productType: 'simple',
+			});
+
+		await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+		await commerceAdminProductDetailsPage.goToProductSkus();
+
+		await commerceAdminProductDetailsSkusPage.skuAddButton.click();
+
+		await commerceAdminProductDetailsSkusPage.skuAddModalSkuInput.fill(
+			'BLACKSKU'
+		);
+
+		await commerceAdminProductDetailsSkusPage.skuAddModalSkuPublishButton.click();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.skuAddModalSuccessMessage
+		).toBeVisible();
+
+		await commerceAdminProductDetailsSkusPage
+			.skusTableRowLink('BLACKSKU')
+			.click();
+
+		await commerceAdminProductDetailsSkusPage.goToSkuTab('Subscriptions');
+
+		const overrideToggle =
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByLabel(
+				'Override Subscription Settings'
+			);
+
+		await overrideToggle.check();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByText(
+				'Payment Subscription'
+			)
+		).toBeVisible();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByText(
+				'Delivery Subscription'
+			)
+		).toBeVisible();
+
+		await commerceAdminProductDetailsSkusPage.sidePanelSaveButton.click();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByText(
+				'Success:Your request completed successfully.'
+			)
+		).toBeVisible();
+
+		await overrideToggle.uncheck();
+
+		await commerceAdminProductDetailsSkusPage.sidePanelSaveButton.click();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByText(
+				'Success:Your request completed successfully.'
+			)
+		).toBeVisible();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByText(
+				'Payment Subscription'
+			)
+		).not.toBeVisible();
+
+		await expect(
+			commerceAdminProductDetailsSkusPage.sidePanelFrame.getByText(
+				'Delivery Subscription'
+			)
+		).not.toBeVisible();
 	}
 );
 
@@ -230,5 +367,38 @@ test(
 		await apiHelpers.headlessAdminUser.patchUserAccount(user, {
 			languageId: 'en_US',
 		});
+	}
+);
+
+test(
+	'Creating product with pending status in headless triggers workflow notification',
+	{tag: ['@LPD-73496']},
+	async ({
+		apiHelpers,
+		commerceAdminProductPage,
+		page,
+		userPersonalBarPage,
+	}) => {
+		await userPersonalBarPage.goToProcessBuilderConfigurationTab();
+		await userPersonalBarPage.enableSingleApproverWorkflowProduct();
+
+		try {
+			const catalog =
+				await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+			const product =
+				await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+					catalogId: catalog.id,
+					productStatus: 1,
+				});
+
+			await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+			await expect(page.getByText('Assigned to:')).toBeVisible();
+			await expect(userPersonalBarPage.notificationBadge).toBeVisible();
+		}
+		finally {
+			await userPersonalBarPage.disableSingleApproverWorkflowProduct();
+		}
 	}
 );

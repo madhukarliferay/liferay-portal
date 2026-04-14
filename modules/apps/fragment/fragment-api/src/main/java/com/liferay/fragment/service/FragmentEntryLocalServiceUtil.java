@@ -290,6 +290,13 @@ public class FragmentEntryLocalServiceUtil {
 			externalReferenceCode, groupId);
 	}
 
+	public static FragmentEntry fetchFragmentEntryByExternalReferenceCode(
+		String externalReferenceCode, long groupId, boolean head) {
+
+		return getService().fetchFragmentEntryByExternalReferenceCode(
+			externalReferenceCode, groupId, head);
+	}
+
 	public static FragmentEntry fetchFragmentEntryByUuidAndGroupId(
 		String uuid, long groupId) {
 
@@ -451,6 +458,22 @@ public class FragmentEntryLocalServiceUtil {
 		return getService().getFragmentEntry(fragmentEntryId);
 	}
 
+	public static FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getFragmentEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
+	public static FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId, boolean head)
+		throws PortalException {
+
+		return getService().getFragmentEntryByExternalReferenceCode(
+			externalReferenceCode, groupId, head);
+	}
+
 	public static FragmentEntry getFragmentEntryByUuidAndGroupId(
 			String uuid, long groupId)
 		throws PortalException {
@@ -508,6 +531,12 @@ public class FragmentEntryLocalServiceUtil {
 		getVersions(FragmentEntry fragmentEntry) {
 
 		return getService().getVersions(fragmentEntry);
+	}
+
+	public static boolean hasExportableFragmentEntries(
+		long fragmentCollectionId) {
+
+		return getService().hasExportableFragmentEntries(fragmentCollectionId);
 	}
 
 	public static FragmentEntry moveFragmentEntry(
@@ -609,3 +638,4 @@ public class FragmentEntryLocalServiceUtil {
 			FragmentEntryLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1144222

@@ -52,13 +52,29 @@ import java.util.function.Supplier;
 			value = ContentPageSpecification.class
 		),
 		@JsonSubTypes.Type(
+			name = "EmbeddedPageSpecification",
+			value = EmbeddedPageSpecification.class
+		),
+		@JsonSubTypes.Type(
+			name = "LinkToPagePageSpecification",
+			value = LinkToPagePageSpecification.class
+		),
+		@JsonSubTypes.Type(
+			name = "LinkToURLPageSpecification",
+			value = LinkToURLPageSpecification.class
+		),
+		@JsonSubTypes.Type(
+			name = "PageSetPageSpecification",
+			value = PageSetPageSpecification.class
+		),
+		@JsonSubTypes.Type(
 			name = "WidgetPageSpecification",
 			value = WidgetPageSpecification.class
 		)
 	}
 )
 @JsonTypeInfo(
-	include = JsonTypeInfo.As.PROPERTY, property = "type",
+	include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type",
 	use = JsonTypeInfo.Id.NAME, visible = true
 )
 @XmlRootElement(name = "PageSpecification")
@@ -169,48 +185,6 @@ public abstract class PageSpecification implements Serializable {
 
 	@JsonIgnore
 	private Supplier<String> _externalReferenceCodeSupplier;
-
-	@io.swagger.v3.oas.annotations.media.Schema
-	@Valid
-	public Settings getSettings() {
-		if (_settingsSupplier != null) {
-			settings = _settingsSupplier.get();
-
-			_settingsSupplier = null;
-		}
-
-		return settings;
-	}
-
-	public void setSettings(Settings settings) {
-		this.settings = settings;
-
-		_settingsSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setSettings(
-		UnsafeSupplier<Settings, Exception> settingsUnsafeSupplier) {
-
-		_settingsSupplier = () -> {
-			try {
-				return settingsUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Settings settings;
-
-	@JsonIgnore
-	private Supplier<Settings> _settingsSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The site template page specification's external reference code."
@@ -443,18 +417,6 @@ public abstract class PageSpecification implements Serializable {
 			sb.append("\"");
 		}
 
-		Settings settings = getSettings();
-
-		if (settings != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"settings\": ");
-
-			sb.append(String.valueOf(settings));
-		}
-
 		String siteTemplatePageSpecificationExternalReferenceCode =
 			getSiteTemplatePageSpecificationExternalReferenceCode();
 
@@ -484,9 +446,7 @@ public abstract class PageSpecification implements Serializable {
 			sb.append("\"status\": ");
 
 			sb.append("\"");
-
 			sb.append(status);
-
 			sb.append("\"");
 		}
 
@@ -500,9 +460,7 @@ public abstract class PageSpecification implements Serializable {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -560,6 +518,10 @@ public abstract class PageSpecification implements Serializable {
 	public static enum Type {
 
 		CONTENT_PAGE_SPECIFICATION("ContentPageSpecification"),
+		EMBEDDED_PAGE_SPECIFICATION("EmbeddedPageSpecification"),
+		LINK_TO_PAGE_PAGE_SPECIFICATION("LinkToPagePageSpecification"),
+		LINK_TO_URL_PAGE_SPECIFICATION("LinkToURLPageSpecification"),
+		PAGE_SET_PAGE_SPECIFICATION("PageSetPageSpecification"),
 		WIDGET_PAGE_SPECIFICATION("WidgetPageSpecification");
 
 		@JsonCreator
@@ -684,3 +646,4 @@ public abstract class PageSpecification implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-632025331

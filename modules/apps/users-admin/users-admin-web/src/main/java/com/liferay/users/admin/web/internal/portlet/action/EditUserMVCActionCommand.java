@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.exception.NoSuchListTypeException;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.RequiredUserException;
+import com.liferay.portal.kernel.exception.UserCommentsException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserFieldException;
 import com.liferay.portal.kernel.exception.UserIdException;
@@ -47,6 +48,7 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.membershippolicy.MembershipPolicyException;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.service.ListTypeLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -287,6 +289,7 @@ public class EditUserMVCActionCommand
 					 exception instanceof MembershipPolicyException ||
 					 exception instanceof NoSuchListTypeException ||
 					 exception instanceof RequiredUserException ||
+					 exception instanceof UserCommentsException ||
 					 exception instanceof UserEmailAddressException ||
 					 exception instanceof UserFieldException ||
 					 exception instanceof UserIdException ||
@@ -415,16 +418,16 @@ public class EditUserMVCActionCommand
 		boolean male = BeanParamUtil.getBoolean(
 			user, actionRequest, "male", true);
 
-		Calendar birthdayCal = CalendarFactoryUtil.getCalendar();
+		Calendar calendar = CalendarFactoryUtil.getCalendar();
 
-		birthdayCal.setTime(contact.getBirthday());
+		calendar.setTime(contact.getBirthday());
 
 		int birthdayMonth = ParamUtil.getInteger(
-			actionRequest, "birthdayMonth", birthdayCal.get(Calendar.MONTH));
+			actionRequest, "birthdayMonth", calendar.get(Calendar.MONTH));
 		int birthdayDay = ParamUtil.getInteger(
-			actionRequest, "birthdayDay", birthdayCal.get(Calendar.DATE));
+			actionRequest, "birthdayDay", calendar.get(Calendar.DATE));
 		int birthdayYear = ParamUtil.getInteger(
-			actionRequest, "birthdayYear", birthdayCal.get(Calendar.YEAR));
+			actionRequest, "birthdayYear", calendar.get(Calendar.YEAR));
 
 		String comments = BeanParamUtil.getString(
 			user, actionRequest, "comments");
@@ -608,14 +611,43 @@ public class EditUserMVCActionCommand
 		String parameterValue = ParamUtil.getString(
 			portletRequest, parameterName);
 
-		if (Validator.isNull(parameterValue)) {
+		if (Validator.isNotNull(parameterValue)) {
+			ListType listType = _listTypeLocalService.addListType(
+				companyId, StringUtil.toLowerCase(parameterValue), type);
+
+			return listType.getListTypeId();
+		}
+
+		User currentUser = _portal.getUser(portletRequest);
+
+		if (currentUser == null) {
 			return 0;
 		}
 
-		ListType listType = _listTypeLocalService.addListType(
-			companyId, parameterValue, type);
+		User selectedUser = _portal.getSelectedUser(portletRequest);
 
-		return listType.getListTypeId();
+		if (type.equals(ListTypeConstants.CONTACT_PREFIX)) {
+			if (!UsersAdminUtil.hasUpdateFieldPermission(
+					_permissionCheckerFactory.create(currentUser), currentUser,
+					selectedUser, "prefix")) {
+
+				Contact contact = selectedUser.getContact();
+
+				return contact.getPrefixListTypeId();
+			}
+		}
+		else {
+			if (!UsersAdminUtil.hasUpdateFieldPermission(
+					_permissionCheckerFactory.create(currentUser), currentUser,
+					selectedUser, "suffix")) {
+
+				Contact contact = selectedUser.getContact();
+
+				return contact.getSuffixListTypeId();
+			}
+		}
+
+		return 0;
 	}
 
 	private WorkflowTask _getWorkflowTask(
@@ -692,6 +724,9 @@ public class EditUserMVCActionCommand
 
 	@Reference
 	private ListTypeLocalService _listTypeLocalService;
+
+	@Reference
+	private PermissionCheckerFactory _permissionCheckerFactory;
 
 	@Reference
 	private Portal _portal;

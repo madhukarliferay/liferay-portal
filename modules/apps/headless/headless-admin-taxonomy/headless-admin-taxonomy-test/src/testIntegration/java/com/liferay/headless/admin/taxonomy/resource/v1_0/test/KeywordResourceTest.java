@@ -24,26 +24,30 @@ import com.liferay.headless.admin.taxonomy.client.resource.v1_0.KeywordResource;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
-import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
-import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.DataGuard;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.site.cms.site.initializer.test.util.CMSTestUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -279,104 +283,6 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 		keywordResource.deleteKeyword(keyword.getId());
 	}
 
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPage() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPage();
-
-		AssetLibrary assetLibrary1 = _randomAssetLibrary();
-		AssetLibrary assetLibrary2 = _randomAssetLibrary();
-
-		Keyword keyword1 = _addKeywordWithAssetLibraries(assetLibrary1);
-		Keyword keyword2 = _addKeywordWithAssetLibraries(assetLibrary2);
-		Keyword keyword3 = _addKeywordWithAssetLibraries(_randomAssetLibrary());
-
-		Page<Keyword> page = keywordResource.getKeywordsPage(
-			null, null, null, Pagination.of(1, 5), null);
-
-		assertEquals(
-			Arrays.asList(keyword1, keyword2, keyword3),
-			(List<Keyword>)page.getItems());
-
-		page = keywordResource.getKeywordsPage(
-			null, null,
-			StringBundler.concat(
-				"(groupIds in ('", assetLibrary1.getId(), "', '",
-				assetLibrary2.getId(), "'))"),
-			Pagination.of(1, 5), null);
-
-		assertEquals(
-			Arrays.asList(keyword1, keyword2), (List<Keyword>)page.getItems());
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithFilterDateTimeEquals() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithFilterDateTimeEquals();
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithFilterStringContains() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithFilterStringContains();
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithFilterStringEquals() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithFilterStringEquals();
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithFilterStringStartsWith()
-		throws Exception {
-
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithFilterStringStartsWith();
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithPagination() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithPagination();
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithSortDateTime() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithSortDateTime();
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Override
-	@Test
-	public void testGetKeywordsPageWithSortString() throws Exception {
-		_addCMSGroup();
-
-		super.testGetKeywordsPageWithSortString();
-	}
-
 	@Override
 	@Test
 	public void testGetKeywordsRankedPage() throws Exception {
@@ -463,32 +369,111 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 	@FeatureFlag("LPD-17564")
 	@Override
 	@Test
-	public void testGraphQLGetKeywordsPage() throws Exception {
-		_addCMSGroup();
+	public void testGetSiteKeywordsPage() throws Exception {
+		super.testGetSiteKeywordsPage();
 
-		super.testGraphQLGetKeywordsPage();
+		Group originalIrrelevantGroup = irrelevantGroup;
+		Group originalTestGroup = testGroup;
+
+		testGroup = CMSTestUtil.getOrAddGroup(KeywordResourceTest.class);
+
+		irrelevantGroup = GroupTestUtil.addGroup(
+			testDepotEntryGroup.getCompanyId(), TestPropsValues.getUserId(),
+			GroupConstants.DEFAULT_PARENT_GROUP_ID, GroupConstants.CMS);
+
+		super.testGetSiteKeywordsPage();
+
+		irrelevantGroup = originalIrrelevantGroup;
+		testGroup = originalTestGroup;
+
+		_cmsAdministratorUser = UserTestUtil.addUser(
+			testCompany, RoleConstants.CMS_ADMINISTRATOR);
+
+		_userLocalService.updatePassword(
+			_cmsAdministratorUser.getUserId(), "test", "test", false, true);
+
+		_regularUser = UserTestUtil.addUser();
+
+		_userLocalService.updatePassword(
+			_regularUser.getUserId(), "test", "test", false, true);
+
+		_testGetSiteKeywordsPageWithUser(_cmsAdministratorUser);
+		_testGetSiteKeywordsPageWithUser(_regularUser);
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetKeywordsRankedPage() throws Exception {
+		super.testGraphQLGetKeywordsRankedPage();
 	}
 
 	@FeatureFlag("LPD-17564")
 	@Override
 	@Test
-	public void testPostKeyword() throws Exception {
-		_addCMSGroup();
+	public void testPatchSiteKeyword() throws Exception {
+		Group originalTestGroup = testGroup;
 
-		AssetLibrary assetLibrary = _randomAssetLibrary();
+		testGroup = CMSTestUtil.getOrAddGroup(KeywordResourceTest.class);
 
-		Keyword keyword = _addKeywordWithAssetLibraries(assetLibrary);
+		Keyword keyword = _postKeywordWithAssetLibraries(_randomAssetLibrary());
 
 		List<AssetTagGroupRel> assetTagGroupRels =
 			_assetTagGroupRelLocalService.getAssetTagGroupRelsByTagId(
 				keyword.getId());
 
-		Assert.assertFalse(assetTagGroupRels.isEmpty());
+		Assert.assertEquals(
+			assetTagGroupRels.toString(), 1, assetTagGroupRels.size());
 
-		AssetTagGroupRel assetTagGroupRel = assetTagGroupRels.get(0);
+		Keyword patchKeyword = _patchKeywordWithAssetLibraries(
+			keyword, _randomAssetLibrary(), _randomAssetLibrary());
+
+		assertEquals(keyword, patchKeyword);
+
+		assetTagGroupRels =
+			_assetTagGroupRelLocalService.getAssetTagGroupRelsByTagId(
+				keyword.getId());
 
 		Assert.assertEquals(
-			(long)assetLibrary.getId(), assetTagGroupRel.getGroupId());
+			assetTagGroupRels.toString(), 3, assetTagGroupRels.size());
+
+		testGroup = originalTestGroup;
+	}
+
+	@FeatureFlag("LPD-17564")
+	@Override
+	@Test
+	public void testPostSiteKeyword() throws Exception {
+		super.testPostSiteKeyword();
+
+		Group originalTestGroup = testGroup;
+
+		testGroup = CMSTestUtil.getOrAddGroup(KeywordResourceTest.class);
+
+		_cmsAdministratorUser = UserTestUtil.addUser(
+			testCompany, RoleConstants.CMS_ADMINISTRATOR);
+
+		_userLocalService.updatePassword(
+			_cmsAdministratorUser.getUserId(), "test", "test", false, true);
+
+		Keyword randomKeyword = randomKeyword();
+
+		KeywordResource cmsAdminKeywordResource = KeywordResource.builder(
+		).authentication(
+			_cmsAdministratorUser.getEmailAddress(), "test"
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+
+		Keyword postKeyword = cmsAdminKeywordResource.postSiteKeyword(
+			testGroup.getGroupId(), randomKeyword);
+
+		assertEquals(randomKeyword, postKeyword);
+		assertValid(postKeyword);
+
+		testGroup = originalTestGroup;
 	}
 
 	@Override
@@ -518,11 +503,13 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 	@Override
 	@Test
 	public void testPutKeyword() throws Exception {
-		_addCMSGroup();
+		Group originalTestGroup = testGroup;
+
+		testGroup = CMSTestUtil.getOrAddGroup(KeywordResourceTest.class);
 
 		super.testPutKeyword();
 
-		Keyword keyword = _addKeywordWithAssetLibraries(_randomAssetLibrary());
+		Keyword keyword = _postKeywordWithAssetLibraries(_randomAssetLibrary());
 
 		Keyword randomKeyword = randomKeyword();
 
@@ -533,23 +520,32 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 			keyword.getId(), randomKeyword);
 
 		assertEquals(randomKeyword, putKeyword);
+
+		testGroup = originalTestGroup;
 	}
 
 	@FeatureFlag("LPD-17564")
 	@Override
 	@Test
 	public void testPutKeywordMerge() throws Exception {
-		_addCMSGroup();
+		Group originalTestGroup = testGroup;
 
-		Keyword keyword1 = _addKeywordWithAssetLibraries(_randomAssetLibrary());
-		Keyword keyword2 = _addKeywordWithAssetLibraries(_randomAssetLibrary());
-		Keyword keyword3 = _addKeywordWithAssetLibraries(_randomAssetLibrary());
+		testGroup = CMSTestUtil.getOrAddGroup(KeywordResourceTest.class);
+
+		Keyword keyword1 = _postKeywordWithAssetLibraries(
+			_randomAssetLibrary());
+		Keyword keyword2 = _postKeywordWithAssetLibraries(
+			_randomAssetLibrary());
+		Keyword keyword3 = _postKeywordWithAssetLibraries(
+			_randomAssetLibrary());
 
 		keywordResource.putKeywordMerge(
 			keyword1.getId(), new Long[] {keyword2.getId(), keyword3.getId()});
 
-		Keyword keyword4 = _addKeywordWithAssetLibraries(_randomAssetLibrary());
-		Keyword keyword5 = _addKeywordWithAssetLibraries(_randomAssetLibrary());
+		Keyword keyword4 = _postKeywordWithAssetLibraries(
+			_randomAssetLibrary());
+		Keyword keyword5 = _postKeywordWithAssetLibraries(
+			_randomAssetLibrary());
 
 		HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
 
@@ -577,6 +573,8 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 
 		Assert.assertEquals(
 			assetTagGroupRels.toString(), -1, assetTagGroupRel.getGroupId());
+
+		testGroup = originalTestGroup;
 	}
 
 	@Override
@@ -630,13 +628,6 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 	}
 
 	@Override
-	protected Keyword testGetKeywordsPage_addKeyword(Keyword keyword)
-		throws Exception {
-
-		return _addKeywordWithAssetLibraries(_randomAssetLibrary());
-	}
-
-	@Override
 	protected Keyword testGetKeywordsRankedPage_addKeyword(Keyword keyword)
 		throws Exception {
 
@@ -649,6 +640,15 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 			assetEntry.getEntryId(), keyword.getId());
 
 		return keyword;
+	}
+
+	@Override
+	protected Long testGetSiteKeywordsPage_getIrrelevantSiteId() {
+		if (irrelevantGroup.isCMS()) {
+			return null;
+		}
+
+		return irrelevantGroup.getGroupId();
 	}
 
 	@Override
@@ -668,11 +668,6 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 	}
 
 	@Override
-	protected Keyword testGraphQLGetKeywordsPage_addKeyword() throws Exception {
-		return _addKeywordWithAssetLibraries(_randomAssetLibrary());
-	}
-
-	@Override
 	protected Long
 			testPutAssetLibraryKeywordByExternalReferenceCode_getAssetLibraryId()
 		throws Exception {
@@ -680,30 +675,17 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 		return testDepotEntry.getDepotEntryId();
 	}
 
-	private void _addCMSGroup() throws Exception {
+	private Keyword _patchKeywordWithAssetLibraries(
+			Keyword keyword, AssetLibrary... assetLibraries)
+		throws Exception {
 
-		// These tests require the instance to be created with the feature
-		// flag LPD-17564 enabled. On CI, feature flags are enabled on
-		// demand for each test, but not during instance initialization.
-		// Until the feature flag LPD-17564 is removed, we need an explicit CMS
-		// group creation.
+		keyword.setAssetLibraries(assetLibraries);
 
-		Role role = _roleLocalService.fetchRole(
-			testDepotEntryGroup.getCompanyId(), RoleConstants.SITE_MEMBER);
-
-		if (role == null) {
-			_roleLocalService.addRole(
-				null, TestPropsValues.getUserId(), null, 0,
-				RoleConstants.SITE_MEMBER, null, null,
-				RoleConstants.TYPE_REGULAR, null, null);
-		}
-
-		GroupTestUtil.addGroup(
-			testDepotEntryGroup.getCompanyId(), TestPropsValues.getUserId(),
-			GroupConstants.DEFAULT_PARENT_GROUP_ID, GroupConstants.CMS);
+		return keywordResource.patchSiteKeyword(
+			testGroup.getGroupId(), keyword);
 	}
 
-	private Keyword _addKeywordWithAssetLibraries(
+	private Keyword _postKeywordWithAssetLibraries(
 			AssetLibrary... assetLibraries)
 		throws Exception {
 
@@ -711,7 +693,7 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 
 		keyword.setAssetLibraries(assetLibraries);
 
-		return keywordResource.postKeyword(keyword);
+		return keywordResource.postSiteKeyword(testGroup.getGroupId(), keyword);
 	}
 
 	private AssetLibrary _randomAssetLibrary() throws Exception {
@@ -725,17 +707,50 @@ public class KeywordResourceTest extends BaseKeywordResourceTestCase {
 		return new AssetLibrary() {
 			{
 				id = depotEntryGroup.getGroupId();
+				scopeKey = depotEntryGroup.getGroupKey();
 			}
 		};
+	}
+
+	private void _testGetSiteKeywordsPageWithUser(User user) throws Exception {
+		KeywordResource userKeywordResource = KeywordResource.builder(
+		).authentication(
+			user.getEmailAddress(), "test"
+		).endpoint(
+			testCompany.getVirtualHostname(), 8080, "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+
+		Page<Keyword> page = userKeywordResource.getSiteKeywordsPage(
+			testGroup.getGroupId(), null, null, null, Pagination.of(1, 10),
+			null);
+
+		long originalTotalCount = page.getTotalCount();
+
+		keywordResource.postSiteKeyword(
+			testGroup.getGroupId(), randomKeyword());
+
+		page = userKeywordResource.getSiteKeywordsPage(
+			testGroup.getGroupId(), null, null, null, Pagination.of(1, 10),
+			null);
+
+		Assert.assertEquals(originalTotalCount + 1, page.getTotalCount());
 	}
 
 	@Inject
 	private AssetTagGroupRelLocalService _assetTagGroupRelLocalService;
 
+	@DeleteAfterTestRun
+	private User _cmsAdministratorUser;
+
 	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;
 
+	@DeleteAfterTestRun
+	private User _regularUser;
+
 	@Inject
-	private RoleLocalService _roleLocalService;
+	private UserLocalService _userLocalService;
 
 }

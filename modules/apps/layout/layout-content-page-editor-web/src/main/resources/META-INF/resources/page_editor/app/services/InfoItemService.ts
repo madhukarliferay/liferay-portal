@@ -5,6 +5,7 @@
 
 import {EditableValue} from '../../types/editables/EditableValue';
 import {config} from '../config/index';
+import {ObjectFields} from '../contexts/ObjectDataContext';
 import {State} from '../reducers';
 import {PageContent} from '../utils/usePageContents';
 import serviceFetch from './serviceFetch';
@@ -27,10 +28,17 @@ function getAvailableListItemRenderers({
 	});
 }
 
-function getAvailableListRenderers({className}: {className: string}) {
+function getAvailableListRenderers({
+	className,
+	key,
+}: {
+	className: string;
+	key: string;
+}) {
 	return serviceFetch(config.getAvailableListRenderersURL, {
 		body: {
 			className,
+			key,
 		},
 	});
 }
@@ -42,7 +50,7 @@ function getAvailableStructureMappingFields({
 	classNameId: string;
 	classTypeId: string;
 }) {
-	return serviceFetch(config.mappingFieldsURL, {
+	return serviceFetch<ObjectFields>(config.mappingFieldsURL, {
 		body: {
 			classNameId,
 			classTypeId,

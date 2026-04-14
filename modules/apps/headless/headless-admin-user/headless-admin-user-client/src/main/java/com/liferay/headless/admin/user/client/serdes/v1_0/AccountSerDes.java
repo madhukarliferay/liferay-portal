@@ -567,9 +567,7 @@ public class AccountSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(account.getType());
-
 			sb.append("\"");
 		}
 
@@ -1418,3 +1416,4 @@ public class AccountSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1952093783

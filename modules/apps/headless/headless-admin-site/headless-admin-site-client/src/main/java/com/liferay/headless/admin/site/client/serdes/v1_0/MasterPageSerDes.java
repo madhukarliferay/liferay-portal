@@ -5,9 +5,9 @@
 
 package com.liferay.headless.admin.site.client.serdes.v1_0;
 
-import com.liferay.headless.admin.site.client.dto.v1_0.ItemExternalReference;
 import com.liferay.headless.admin.site.client.dto.v1_0.MasterPage;
 import com.liferay.headless.admin.site.client.dto.v1_0.PageSpecification;
+import com.liferay.headless.admin.site.client.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.headless.admin.site.client.json.BaseJSONParser;
 
 import jakarta.annotation.Generated;
@@ -60,20 +60,6 @@ public class MasterPageSerDes {
 			sb.append("\"creator\": ");
 
 			sb.append(masterPage.getCreator());
-		}
-
-		if (masterPage.getCreatorExternalReferenceCode() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"creatorExternalReferenceCode\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(masterPage.getCreatorExternalReferenceCode()));
-
-			sb.append("\"");
 		}
 
 		if (masterPage.getDateCreated() != null) {
@@ -216,29 +202,19 @@ public class MasterPageSerDes {
 			sb.append("]");
 		}
 
-		if (masterPage.getTaxonomyCategoryItemExternalReferences() != null) {
+		if (masterPage.getPermissions() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"taxonomyCategoryItemExternalReferences\": ");
+			sb.append("\"permissions\": ");
 
 			sb.append("[");
 
-			for (int i = 0;
-				 i <
-					 masterPage.
-						 getTaxonomyCategoryItemExternalReferences().length;
-				 i++) {
+			for (int i = 0; i < masterPage.getPermissions().length; i++) {
+				sb.append(masterPage.getPermissions()[i]);
 
-				sb.append(
-					String.valueOf(
-						masterPage.getTaxonomyCategoryItemExternalReferences()
-							[i]));
-
-				if ((i + 1) < masterPage.
-						getTaxonomyCategoryItemExternalReferences().length) {
-
+				if ((i + 1) < masterPage.getPermissions().length) {
 					sb.append(", ");
 				}
 			}
@@ -246,14 +222,37 @@ public class MasterPageSerDes {
 			sb.append("]");
 		}
 
-		if (masterPage.getThumbnail() != null) {
+		if (masterPage.getTaxonomyCategoryBriefs() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"thumbnail\": ");
+			sb.append("\"taxonomyCategoryBriefs\": ");
 
-			sb.append(String.valueOf(masterPage.getThumbnail()));
+			sb.append("[");
+
+			for (int i = 0; i < masterPage.getTaxonomyCategoryBriefs().length;
+				 i++) {
+
+				sb.append(
+					String.valueOf(masterPage.getTaxonomyCategoryBriefs()[i]));
+
+				if ((i + 1) < masterPage.getTaxonomyCategoryBriefs().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		if (masterPage.getThumbnailURLReference() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"thumbnailURLReference\": ");
+
+			sb.append(String.valueOf(masterPage.getThumbnailURLReference()));
 		}
 
 		if (masterPage.getUuid() != null) {
@@ -296,15 +295,6 @@ public class MasterPageSerDes {
 		}
 		else {
 			map.put("creator", String.valueOf(masterPage.getCreator()));
-		}
-
-		if (masterPage.getCreatorExternalReferenceCode() == null) {
-			map.put("creatorExternalReferenceCode", null);
-		}
-		else {
-			map.put(
-				"creatorExternalReferenceCode",
-				String.valueOf(masterPage.getCreatorExternalReferenceCode()));
 		}
 
 		if (masterPage.getDateCreated() == null) {
@@ -382,21 +372,29 @@ public class MasterPageSerDes {
 				String.valueOf(masterPage.getPageSpecifications()));
 		}
 
-		if (masterPage.getTaxonomyCategoryItemExternalReferences() == null) {
-			map.put("taxonomyCategoryItemExternalReferences", null);
+		if (masterPage.getPermissions() == null) {
+			map.put("permissions", null);
+		}
+		else {
+			map.put("permissions", String.valueOf(masterPage.getPermissions()));
+		}
+
+		if (masterPage.getTaxonomyCategoryBriefs() == null) {
+			map.put("taxonomyCategoryBriefs", null);
 		}
 		else {
 			map.put(
-				"taxonomyCategoryItemExternalReferences",
-				String.valueOf(
-					masterPage.getTaxonomyCategoryItemExternalReferences()));
+				"taxonomyCategoryBriefs",
+				String.valueOf(masterPage.getTaxonomyCategoryBriefs()));
 		}
 
-		if (masterPage.getThumbnail() == null) {
-			map.put("thumbnail", null);
+		if (masterPage.getThumbnailURLReference() == null) {
+			map.put("thumbnailURLReference", null);
 		}
 		else {
-			map.put("thumbnail", String.valueOf(masterPage.getThumbnail()));
+			map.put(
+				"thumbnailURLReference",
+				String.valueOf(masterPage.getThumbnailURLReference()));
 		}
 
 		if (masterPage.getUuid() == null) {
@@ -425,11 +423,6 @@ public class MasterPageSerDes {
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
 			if (Objects.equals(jsonParserFieldName, "creator")) {
-				return false;
-			}
-			else if (Objects.equals(
-						jsonParserFieldName, "creatorExternalReferenceCode")) {
-
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
@@ -463,13 +456,17 @@ public class MasterPageSerDes {
 
 				return false;
 			}
+			else if (Objects.equals(jsonParserFieldName, "permissions")) {
+				return false;
+			}
 			else if (Objects.equals(
-						jsonParserFieldName,
-						"taxonomyCategoryItemExternalReferences")) {
+						jsonParserFieldName, "taxonomyCategoryBriefs")) {
 
 				return false;
 			}
-			else if (Objects.equals(jsonParserFieldName, "thumbnail")) {
+			else if (Objects.equals(
+						jsonParserFieldName, "thumbnailURLReference")) {
+
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "uuid")) {
@@ -488,14 +485,6 @@ public class MasterPageSerDes {
 				if (jsonParserFieldValue != null) {
 					masterPage.setCreator(
 						CreatorSerDes.toDTO((String)jsonParserFieldValue));
-				}
-			}
-			else if (Objects.equals(
-						jsonParserFieldName, "creatorExternalReferenceCode")) {
-
-				if (jsonParserFieldValue != null) {
-					masterPage.setCreatorExternalReferenceCode(
-						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
@@ -565,36 +554,54 @@ public class MasterPageSerDes {
 					masterPage.setPageSpecifications(pageSpecificationsArray);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "permissions")) {
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					com.liferay.headless.admin.site.client.permission.
+						Permission[] permissionsArray = new
+						com.liferay.headless.admin.site.client.permission.
+							Permission[jsonParserFieldValues.length];
+
+					for (int i = 0; i < permissionsArray.length; i++) {
+						permissionsArray[i] =
+							com.liferay.headless.admin.site.client.permission.
+								Permission.toDTO(
+									(String)jsonParserFieldValues[i]);
+					}
+
+					masterPage.setPermissions(permissionsArray);
+				}
+			}
 			else if (Objects.equals(
-						jsonParserFieldName,
-						"taxonomyCategoryItemExternalReferences")) {
+						jsonParserFieldName, "taxonomyCategoryBriefs")) {
 
 				if (jsonParserFieldValue != null) {
 					Object[] jsonParserFieldValues =
 						(Object[])jsonParserFieldValue;
 
-					ItemExternalReference[]
-						taxonomyCategoryItemExternalReferencesArray =
-							new ItemExternalReference
-								[jsonParserFieldValues.length];
+					TaxonomyCategoryBrief[] taxonomyCategoryBriefsArray =
+						new TaxonomyCategoryBrief[jsonParserFieldValues.length];
 
-					for (int i = 0;
-						 i < taxonomyCategoryItemExternalReferencesArray.length;
+					for (int i = 0; i < taxonomyCategoryBriefsArray.length;
 						 i++) {
 
-						taxonomyCategoryItemExternalReferencesArray[i] =
-							ItemExternalReferenceSerDes.toDTO(
+						taxonomyCategoryBriefsArray[i] =
+							TaxonomyCategoryBriefSerDes.toDTO(
 								(String)jsonParserFieldValues[i]);
 					}
 
-					masterPage.setTaxonomyCategoryItemExternalReferences(
-						taxonomyCategoryItemExternalReferencesArray);
+					masterPage.setTaxonomyCategoryBriefs(
+						taxonomyCategoryBriefsArray);
 				}
 			}
-			else if (Objects.equals(jsonParserFieldName, "thumbnail")) {
+			else if (Objects.equals(
+						jsonParserFieldName, "thumbnailURLReference")) {
+
 				if (jsonParserFieldValue != null) {
-					masterPage.setThumbnail(
-						ItemExternalReferenceSerDes.toDTO(
+					masterPage.setThumbnailURLReference(
+						ThumbnailURLReferenceSerDes.toDTO(
 							(String)jsonParserFieldValue));
 				}
 			}
@@ -684,3 +691,4 @@ public class MasterPageSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-386054042

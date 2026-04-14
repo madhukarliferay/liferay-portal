@@ -296,6 +296,10 @@ public interface KBArticleLocalService
 		long resourcePrimKey, long groupId, int version);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KBArticle fetchKBArticleByExternalReferenceCode(
+		long groupId, String externalReferenceCode, int version);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public KBArticle fetchKBArticleByUrlTitle(
 		long groupId, long kbFolderId, String urlTitle);
 
@@ -322,6 +326,10 @@ public interface KBArticleLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public KBArticle fetchLatestKBArticleByExternalReferenceCode(
 		long groupId, String externalReferenceCode);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public KBArticle fetchLatestKBArticleByExternalReferenceCode(
+		long groupId, String externalReferenceCode, int status);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public KBArticle fetchLatestKBArticleByUrlTitle(
@@ -675,3 +683,4 @@ public interface KBArticleLocalService
 		throws E;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1527610797

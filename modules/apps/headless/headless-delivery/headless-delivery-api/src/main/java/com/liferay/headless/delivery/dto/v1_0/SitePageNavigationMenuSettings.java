@@ -273,9 +273,7 @@ public class SitePageNavigationMenuSettings implements Serializable {
 			sb.append("\"targetType\": ");
 
 			sb.append("\"");
-
 			sb.append(targetType);
-
 			sb.append("\"");
 		}
 
@@ -418,3 +416,4 @@ public class SitePageNavigationMenuSettings implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1494250309

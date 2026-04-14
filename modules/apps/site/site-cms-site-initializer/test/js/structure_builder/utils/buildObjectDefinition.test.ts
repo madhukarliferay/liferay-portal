@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {
+	RelatedContent,
+	StructureChild,
+} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/types/Structure';
+import {Uuid} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/types/Uuid';
 import buildObjectDefinition from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/buildObjectDefinition';
 import {Field} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/field';
 import getUuid from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/getUuid';
@@ -22,6 +27,7 @@ const DATE_TIME_FIELD: Field = {
 	indexableConfig: {indexed: false},
 	label: {en_US: 'Date and Time Field'},
 	localized: true,
+	locked: false,
 	name: 'datetimeField',
 	parent: getUuid(),
 	required: false,
@@ -37,11 +43,48 @@ const TEXT_FIELD: Field = {
 	indexableConfig: {indexed: true, indexedAsKeyword: true},
 	label: {en_US: 'Text Field'},
 	localized: false,
+	locked: false,
 	name: 'textField',
 	parent: getUuid(),
 	required: true,
 	settings: {},
 	type: 'text',
+	uuid: getUuid(),
+};
+
+const TITLE_FIELD: Field = {
+	erc: 'title-field',
+	indexableConfig: {indexed: true, indexedAsKeyword: true},
+	label: {en_US: 'Title Field'},
+	localized: false,
+	locked: true,
+	name: 'titleField',
+	parent: getUuid(),
+	required: true,
+	settings: {},
+	type: 'text',
+	uuid: getUuid(),
+};
+
+const RELATED_CONTENT: RelatedContent = {
+	erc: 'related-content-erc',
+	label: {en_US: 'Related Content'},
+	multiselection: true,
+	name: 'relatedContent',
+	parent: getUuid(),
+	relatedStructureERC: 'related-structure-erc',
+	type: 'related-content',
+	uuid: getUuid(),
+};
+
+const RELATED_CONTENT_SINGLE: RelatedContent = {
+	erc: 'related-content-single-erc',
+	label: {en_US: 'Related Content Single'},
+	multiselection: false,
+	name: 'relatedContentSingle',
+	parent: getUuid(),
+	relatedStructureERC: 'related-structure-single-erc',
+	type: 'related-content',
 	uuid: getUuid(),
 };
 
@@ -56,9 +99,9 @@ function getChildren(fields: Field[]) {
 }
 
 describe('buildObjectDefinition', () => {
-	it('Builds objectDefinition with a field without settings', () => {
+	it('builds objectDefinition with a field without settings and a locked field', () => {
 		const result = buildObjectDefinition({
-			children: getChildren([TEXT_FIELD]),
+			children: getChildren([TEXT_FIELD, TITLE_FIELD]),
 			erc: 'structureERC',
 			label: {en_US: 'Structure'},
 			name: 'myStructure',
@@ -67,10 +110,12 @@ describe('buildObjectDefinition', () => {
 		});
 
 		expect(result).toEqual({
+			enableComments: true,
 			enableFriendlyURLCustomization: true,
 			enableIndexSearch: true,
 			enableLocalization: true,
 			enableObjectEntryDraft: true,
+			enableObjectEntryHistory: true,
 			enableObjectEntrySchedule: true,
 			enableObjectEntryVersioning: true,
 			externalReferenceCode: 'structureERC',
@@ -89,6 +134,21 @@ describe('buildObjectDefinition', () => {
 					name: 'textField',
 					objectFieldSettings: [],
 					required: true,
+					system: false,
+				},
+				{
+					DBType: 'String',
+					businessType: 'Text',
+					externalReferenceCode: 'title-field',
+					indexed: true,
+					indexedAsKeyword: true,
+					indexedLanguageId: '',
+					label: {en_US: 'Title Field'},
+					localized: false,
+					name: 'titleField',
+					objectFieldSettings: [],
+					required: true,
+					system: true,
 				},
 			],
 			objectRelationships: [],
@@ -101,7 +161,7 @@ describe('buildObjectDefinition', () => {
 		});
 	});
 
-	it('Builds objectDefinition with a field with settings', () => {
+	it('builds objectDefinition with a field with settings', () => {
 		const result = buildObjectDefinition({
 			children: getChildren([DATE_TIME_FIELD]),
 			erc: 'structureERC',
@@ -112,10 +172,12 @@ describe('buildObjectDefinition', () => {
 		});
 
 		expect(result).toEqual({
+			enableComments: true,
 			enableFriendlyURLCustomization: true,
 			enableIndexSearch: true,
 			enableLocalization: true,
 			enableObjectEntryDraft: true,
+			enableObjectEntryHistory: true,
 			enableObjectEntrySchedule: true,
 			enableObjectEntryVersioning: true,
 			externalReferenceCode: 'structureERC',
@@ -134,6 +196,7 @@ describe('buildObjectDefinition', () => {
 						{name: 'timeStorage', value: 'convertToUTC'},
 					],
 					required: false,
+					system: false,
 				},
 			],
 			objectRelationships: [],
@@ -146,7 +209,7 @@ describe('buildObjectDefinition', () => {
 		});
 	});
 
-	it('Builds objectDefinition with spaces selected', () => {
+	it('builds objectDefinition with spaces and workflows selected', () => {
 		const result = buildObjectDefinition({
 			children: getChildren([TEXT_FIELD]),
 			erc: 'structureERC',
@@ -154,13 +217,16 @@ describe('buildObjectDefinition', () => {
 			name: 'myStructure',
 			spaces: ['space-1-erc', 'space-2-erc'],
 			status: 'published',
+			workflows: {'': 'Workflow 2', 'space-1-erc': 'Workflow 1'},
 		});
 
 		expect(result).toEqual({
+			enableComments: true,
 			enableFriendlyURLCustomization: true,
 			enableIndexSearch: true,
 			enableLocalization: true,
 			enableObjectEntryDraft: true,
+			enableObjectEntryHistory: true,
 			enableObjectEntrySchedule: true,
 			enableObjectEntryVersioning: true,
 			externalReferenceCode: 'structureERC',
@@ -185,6 +251,7 @@ describe('buildObjectDefinition', () => {
 					name: 'textField',
 					objectFieldSettings: [],
 					required: true,
+					system: false,
 				},
 			],
 			objectRelationships: [],
@@ -194,6 +261,48 @@ describe('buildObjectDefinition', () => {
 				code: 0,
 			},
 			titleObjectFieldName: 'title',
+			workflowDefinitionLinks: [
+				{
+					groupExternalReferenceCode: '',
+					workflowDefinitionName: 'Workflow 2',
+				},
+				{
+					groupExternalReferenceCode: 'space-1-erc',
+					workflowDefinitionName: 'Workflow 1',
+				},
+			],
 		});
+	});
+
+	it('builds objectDefinition with related content relationships', () => {
+		const children: Map<Uuid, StructureChild> = new Map<
+			Uuid,
+			StructureChild
+		>([
+			[RELATED_CONTENT.uuid, RELATED_CONTENT],
+			[RELATED_CONTENT_SINGLE.uuid, RELATED_CONTENT_SINGLE],
+			[TEXT_FIELD.uuid, TEXT_FIELD],
+		]);
+
+		const result = buildObjectDefinition({
+			children,
+			erc: 'structureERC',
+			label: {en_US: 'Structure'},
+			name: 'myStructure',
+			spaces: [],
+			status: 'draft',
+		});
+
+		expect(result.objectRelationships).toEqual([
+			{
+				deletionType: 'disassociate',
+				externalReferenceCode: 'related-content-erc',
+				label: {en_US: 'Related Content'},
+				name: 'relatedContent',
+				objectDefinitionExternalReferenceCode1: 'structureERC',
+				objectDefinitionExternalReferenceCode2: 'related-structure-erc',
+				type: 'manyToMany',
+			},
+		]);
 	});
 });

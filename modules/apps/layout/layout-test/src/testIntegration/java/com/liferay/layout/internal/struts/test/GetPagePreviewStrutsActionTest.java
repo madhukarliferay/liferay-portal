@@ -6,15 +6,24 @@
 package com.liferay.layout.internal.struts.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.client.extension.constants.ClientExtensionEntryConstants;
+import com.liferay.client.extension.model.ClientExtensionEntry;
+import com.liferay.client.extension.service.ClientExtensionEntryLocalService;
+import com.liferay.client.extension.service.ClientExtensionEntryRelLocalService;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.events.LifecycleAction;
+import com.liferay.portal.kernel.events.LifecycleEvent;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
+import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -22,7 +31,9 @@ import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.ThemeLocalService;
 import com.liferay.portal.kernel.servlet.HttpMethods;
+import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -34,14 +45,19 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.Collections;
+import java.util.Objects;
 
 import org.hamcrest.CoreMatchers;
 
@@ -51,6 +67,9 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -177,6 +196,88 @@ public class GetPagePreviewStrutsActionTest {
 			mockHttpServletResponse.getStatus());
 	}
 
+	@Test
+	@TestInfo("LPD-80135")
+	public void testGetPagePreviewWithThemeCSSClientExtension()
+		throws Exception {
+
+		_addLayout(_group, false, LayoutConstants.TYPE_CONTENT);
+
+		long draftPlid = _fragmentEntryLink.getPlid();
+
+		String mainCSSUrl =
+			"http://" + RandomTestUtil.randomString() + ".com/main.css";
+
+		ClientExtensionEntry clientExtensionEntry =
+			_clientExtensionEntryLocalService.addClientExtensionEntry(
+				RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+				StringPool.BLANK,
+				Collections.singletonMap(
+					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+				StringPool.BLANK, StringPool.BLANK,
+				ClientExtensionEntryConstants.TYPE_THEME_CSS,
+				UnicodePropertiesBuilder.create(
+					true
+				).put(
+					"mainURL", mainCSSUrl
+				).buildString());
+
+		_clientExtensionEntryRelLocalService.addClientExtensionEntryRel(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			_portal.getClassNameId(Layout.class), draftPlid,
+			clientExtensionEntry.getExternalReferenceCode(),
+			ClientExtensionEntryConstants.TYPE_THEME_CSS, StringPool.BLANK,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		try {
+			MockHttpServletRequest mockHttpServletRequest =
+				new MockHttpServletRequest(
+					ServletContextPool.get(StringPool.BLANK));
+
+			mockHttpServletRequest.addParameter(
+				"segmentsExperienceId",
+				String.valueOf(
+					_segmentsExperienceLocalService.
+						fetchDefaultSegmentsExperienceId(draftPlid)));
+			mockHttpServletRequest.addParameter(
+				"selPlid", String.valueOf(draftPlid));
+			mockHttpServletRequest.addParameter(
+				"p_l_id", String.valueOf(draftPlid));
+			mockHttpServletRequest.setAttribute(
+				WebKeys.CURRENT_URL, RandomTestUtil.randomString());
+
+			Layout draftLayout = _layoutLocalService.getLayout(draftPlid);
+
+			_themeDisplay.setLayout(draftLayout);
+
+			_themeDisplay.setPlid(draftPlid);
+
+			mockHttpServletRequest.setAttribute(
+				WebKeys.THEME_DISPLAY, _themeDisplay);
+			mockHttpServletRequest.setMethod(HttpMethods.GET);
+			mockHttpServletRequest.setServerName("www.liferay.com");
+
+			_serviceContext.setRequest(mockHttpServletRequest);
+			_themeDisplay.setRequest(mockHttpServletRequest);
+
+			_processClientExtensionServicePreAction(mockHttpServletRequest);
+
+			MockHttpServletResponse mockHttpServletResponse =
+				new MockHttpServletResponse();
+
+			_getPagePreviewStrutsAction.execute(
+				mockHttpServletRequest, mockHttpServletResponse);
+
+			String content = mockHttpServletResponse.getContentAsString();
+
+			Assert.assertThat(content, CoreMatchers.containsString(mainCSSUrl));
+		}
+		finally {
+			_clientExtensionEntryLocalService.deleteClientExtensionEntry(
+				clientExtensionEntry.getClientExtensionEntryId());
+		}
+	}
+
 	private Layout _addLayout(Group group, boolean privateLayout, String type)
 		throws Exception {
 
@@ -210,7 +311,8 @@ public class GetPagePreviewStrutsActionTest {
 		throws Exception {
 
 		MockHttpServletRequest mockHttpServletRequest =
-			new MockHttpServletRequest();
+			new MockHttpServletRequest(
+				ServletContextPool.get(StringPool.BLANK));
 
 		mockHttpServletRequest.addParameter(
 			"segmentsExperienceId",
@@ -221,8 +323,11 @@ public class GetPagePreviewStrutsActionTest {
 		mockHttpServletRequest.addParameter(
 			"selPlid", String.valueOf(_fragmentEntryLink.getPlid()));
 		mockHttpServletRequest.setAttribute(
+			WebKeys.CURRENT_URL, RandomTestUtil.randomString());
+		mockHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, _themeDisplay);
 		mockHttpServletRequest.setMethod(HttpMethods.GET);
+		mockHttpServletRequest.setServerName("www.liferay.com");
 
 		_serviceContext.setRequest(mockHttpServletRequest);
 
@@ -242,8 +347,46 @@ public class GetPagePreviewStrutsActionTest {
 			content, CoreMatchers.containsString(_fragmentEntryLink.getHtml()));
 		Assert.assertThat(
 			content, CoreMatchers.containsString(_fragmentEntryLink.getJs()));
+
+		Theme theme = _themeLocalService.fetchTheme(
+			TestPropsValues.getCompanyId(), expectedThemeId);
+
 		Assert.assertThat(
-			content, CoreMatchers.containsString("themeId=" + expectedThemeId));
+			content,
+			CoreMatchers.containsString(
+				"/o/" + theme.getServletContextName() + "/css/main."));
+	}
+
+	private void _processClientExtensionServicePreAction(
+			MockHttpServletRequest mockHttpServletRequest)
+		throws Exception {
+
+		Bundle bundle = FrameworkUtil.getBundle(
+			GetPagePreviewStrutsActionTest.class);
+
+		ServiceTrackerList<LifecycleAction> lifecycleActions =
+			ServiceTrackerListFactory.open(
+				bundle.getBundleContext(), LifecycleAction.class,
+				"(key=servlet.service.events.pre)");
+
+		for (LifecycleAction lifecycleAction : lifecycleActions) {
+			Class<?> clazz = lifecycleAction.getClass();
+
+			if (Objects.equals(
+					clazz.getName(),
+					"com.liferay.client.extension.internal.events." +
+						"ClientExtensionsServicePreAction")) {
+
+				lifecycleAction.processLifecycleEvent(
+					new LifecycleEvent(
+						mockHttpServletRequest, new MockHttpServletResponse()));
+
+				return;
+			}
+		}
+
+		throw new AssertionError(
+			"ClientExtensionsServicePreAction is not registered");
 	}
 
 	private void _setUpThemeDisplay() throws Exception {
@@ -266,9 +409,17 @@ public class GetPagePreviewStrutsActionTest {
 		_themeDisplay.setPlid(layout.getPlid());
 		_themeDisplay.setRealUser(TestPropsValues.getUser());
 		_themeDisplay.setScopeGroupId(_group.getGroupId());
+		_themeDisplay.setServerName("localhost");
 		_themeDisplay.setSiteGroupId(_group.getGroupId());
 		_themeDisplay.setUser(TestPropsValues.getUser());
 	}
+
+	@Inject
+	private ClientExtensionEntryLocalService _clientExtensionEntryLocalService;
+
+	@Inject
+	private ClientExtensionEntryRelLocalService
+		_clientExtensionEntryRelLocalService;
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
@@ -293,9 +444,15 @@ public class GetPagePreviewStrutsActionTest {
 	private LayoutSetLocalService _layoutSetLocalService;
 
 	@Inject
+	private Portal _portal;
+
+	@Inject
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 	private ServiceContext _serviceContext;
 	private ThemeDisplay _themeDisplay;
+
+	@Inject
+	private ThemeLocalService _themeLocalService;
 
 }

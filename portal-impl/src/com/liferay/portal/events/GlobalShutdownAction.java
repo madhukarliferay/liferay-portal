@@ -7,7 +7,6 @@ package com.liferay.portal.events;
 
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.portal.kernel.deploy.auto.AutoDeployDir;
-import com.liferay.portal.kernel.deploy.auto.AutoDeployUtil;
 import com.liferay.portal.kernel.deploy.hot.HotDeployUtil;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.log.Log;
@@ -15,8 +14,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.struts.AuthPublicPathRegistry;
-import com.liferay.portal.util.PropsValues;
 
 /**
  * @author Brian Wing Shun Chan
@@ -74,7 +73,7 @@ public class GlobalShutdownAction extends SimpleAction {
 
 		// Auto deploy
 
-		AutoDeployUtil.unregisterDir(AutoDeployDir.DEFAULT_NAME);
+		AutoDeployDir.stop();
 
 		// Hot deploy
 

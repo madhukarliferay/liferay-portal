@@ -122,47 +122,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 			<CPInstanceUnitOfMeasure> orderByComparator);
 
 	/**
-	 * Returns the last cp instance unit of measure in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByUuid_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
 	 * Removes all the cp instance unit of measures where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -272,50 +231,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 			<CPInstanceUnitOfMeasure> orderByComparator);
 
 	/**
-	 * Returns the last cp instance unit of measure in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByUuid_C_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
 	 * Removes all the cp instance unit of measures where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -419,47 +334,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 		long CPInstanceId,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByCPInstanceId_Last(
-			long CPInstanceId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByCPInstanceId_Last(
-		long CPInstanceId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByCPInstanceId_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, long CPInstanceId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
 
 	/**
 	 * Removes all the cp instance unit of measures where CPInstanceId = &#63; from the database.
@@ -571,50 +445,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 			<CPInstanceUnitOfMeasure> orderByComparator);
 
 	/**
-	 * Returns the last cp instance unit of measure in the ordered set where companyId = &#63; and sku = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByC_S_Last(
-			long companyId, String sku,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where companyId = &#63; and sku = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByC_S_Last(
-		long companyId, String sku,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where companyId = &#63; and sku = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByC_S_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, long companyId, String sku,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
 	 * Removes all the cp instance unit of measures where companyId = &#63; and sku = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -724,50 +554,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 		long CPInstanceId, boolean active,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where CPInstanceId = &#63; and active = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByC_A_Last(
-			long CPInstanceId, boolean active,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where CPInstanceId = &#63; and active = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByC_A_Last(
-		long CPInstanceId, boolean active,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where CPInstanceId = &#63; and active = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param CPInstanceId the cp instance ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByC_A_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, long CPInstanceId, boolean active,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
 
 	/**
 	 * Removes all the cp instance unit of measures where CPInstanceId = &#63; and active = &#63; from the database.
@@ -931,50 +717,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 			<CPInstanceUnitOfMeasure> orderByComparator);
 
 	/**
-	 * Returns the last cp instance unit of measure in the ordered set where CPInstanceId = &#63; and primary = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByC_P_Last(
-			long CPInstanceId, boolean primary,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where CPInstanceId = &#63; and primary = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByC_P_Last(
-		long CPInstanceId, boolean primary,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where CPInstanceId = &#63; and primary = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param CPInstanceId the cp instance ID
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByC_P_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, long CPInstanceId, boolean primary,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
 	 * Removes all the cp instance unit of measures where CPInstanceId = &#63; and primary = &#63; from the database.
 	 *
 	 * @param CPInstanceId the cp instance ID
@@ -1090,54 +832,6 @@ public interface CPInstanceUnitOfMeasurePersistence
 		long companyId, String key, String sku,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where companyId = &#63; and key = &#63; and sku = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param key the key
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure findByC_K_S_Last(
-			long companyId, String key, String sku,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
-
-	/**
-	 * Returns the last cp instance unit of measure in the ordered set where companyId = &#63; and key = &#63; and sku = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param key the key
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance unit of measure, or <code>null</code> if a matching cp instance unit of measure could not be found
-	 */
-	public CPInstanceUnitOfMeasure fetchByC_K_S_Last(
-		long companyId, String key, String sku,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CPInstanceUnitOfMeasure> orderByComparator);
-
-	/**
-	 * Returns the cp instance unit of measures before and after the current cp instance unit of measure in the ordered set where companyId = &#63; and key = &#63; and sku = &#63;.
-	 *
-	 * @param CPInstanceUnitOfMeasureId the primary key of the current cp instance unit of measure
-	 * @param companyId the company ID
-	 * @param key the key
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance unit of measure
-	 * @throws NoSuchCPInstanceUnitOfMeasureException if a cp instance unit of measure with the primary key could not be found
-	 */
-	public CPInstanceUnitOfMeasure[] findByC_K_S_PrevAndNext(
-			long CPInstanceUnitOfMeasureId, long companyId, String key,
-			String sku,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPInstanceUnitOfMeasure> orderByComparator)
-		throws NoSuchCPInstanceUnitOfMeasureException;
 
 	/**
 	 * Removes all the cp instance unit of measures where companyId = &#63; and key = &#63; and sku = &#63; from the database.
@@ -1283,3 +977,4 @@ public interface CPInstanceUnitOfMeasurePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:674721944

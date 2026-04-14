@@ -216,56 +216,6 @@ public class CommercePricingClassUtil {
 	}
 
 	/**
-	 * Returns the last commerce pricing class in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce pricing class
-	 * @throws NoSuchPricingClassException if a matching commerce pricing class could not be found
-	 */
-	public static CommercePricingClass findByUuid_Last(
-			String uuid,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce pricing class in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce pricing class, or <code>null</code> if a matching commerce pricing class could not be found
-	 */
-	public static CommercePricingClass fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<CommercePricingClass> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce pricing classes before and after the current commerce pricing class in the ordered set where uuid = &#63;.
-	 *
-	 * @param commercePricingClassId the primary key of the current commerce pricing class
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce pricing class
-	 * @throws NoSuchPricingClassException if a commerce pricing class with the primary key could not be found
-	 */
-	public static CommercePricingClass[] findByUuid_PrevAndNext(
-			long commercePricingClassId, String uuid,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			commercePricingClassId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce pricing classes that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -312,25 +262,6 @@ public class CommercePricingClassUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce pricing classes before and after the current commerce pricing class in the ordered set of commerce pricing classes that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param commercePricingClassId the primary key of the current commerce pricing class
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce pricing class
-	 * @throws NoSuchPricingClassException if a commerce pricing class with the primary key could not be found
-	 */
-	public static CommercePricingClass[] filterFindByUuid_PrevAndNext(
-			long commercePricingClassId, String uuid,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			commercePricingClassId, uuid, orderByComparator);
 	}
 
 	/**
@@ -476,61 +407,6 @@ public class CommercePricingClassUtil {
 	}
 
 	/**
-	 * Returns the last commerce pricing class in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce pricing class
-	 * @throws NoSuchPricingClassException if a matching commerce pricing class could not be found
-	 */
-	public static CommercePricingClass findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce pricing class in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce pricing class, or <code>null</code> if a matching commerce pricing class could not be found
-	 */
-	public static CommercePricingClass fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CommercePricingClass> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce pricing classes before and after the current commerce pricing class in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commercePricingClassId the primary key of the current commerce pricing class
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce pricing class
-	 * @throws NoSuchPricingClassException if a commerce pricing class with the primary key could not be found
-	 */
-	public static CommercePricingClass[] findByUuid_C_PrevAndNext(
-			long commercePricingClassId, String uuid, long companyId,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			commercePricingClassId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce pricing classes that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -582,26 +458,6 @@ public class CommercePricingClassUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce pricing classes before and after the current commerce pricing class in the ordered set of commerce pricing classes that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commercePricingClassId the primary key of the current commerce pricing class
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce pricing class
-	 * @throws NoSuchPricingClassException if a commerce pricing class with the primary key could not be found
-	 */
-	public static CommercePricingClass[] filterFindByUuid_C_PrevAndNext(
-			long commercePricingClassId, String uuid, long companyId,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			commercePricingClassId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -742,58 +598,6 @@ public class CommercePricingClassUtil {
 	}
 
 	/**
-	 * Returns the last commerce pricing class in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce pricing class
-	 * @throws NoSuchPricingClassException if a matching commerce pricing class could not be found
-	 */
-	public static CommercePricingClass findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce pricing class in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce pricing class, or <code>null</code> if a matching commerce pricing class could not be found
-	 */
-	public static CommercePricingClass fetchByCompanyId_Last(
-		long companyId,
-		OrderByComparator<CommercePricingClass> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce pricing classes before and after the current commerce pricing class in the ordered set where companyId = &#63;.
-	 *
-	 * @param commercePricingClassId the primary key of the current commerce pricing class
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce pricing class
-	 * @throws NoSuchPricingClassException if a commerce pricing class with the primary key could not be found
-	 */
-	public static CommercePricingClass[] findByCompanyId_PrevAndNext(
-			long commercePricingClassId, long companyId,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			commercePricingClassId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce pricing classes that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -842,25 +646,6 @@ public class CommercePricingClassUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce pricing classes before and after the current commerce pricing class in the ordered set of commerce pricing classes that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param commercePricingClassId the primary key of the current commerce pricing class
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce pricing class
-	 * @throws NoSuchPricingClassException if a commerce pricing class with the primary key could not be found
-	 */
-	public static CommercePricingClass[] filterFindByCompanyId_PrevAndNext(
-			long commercePricingClassId, long companyId,
-			OrderByComparator<CommercePricingClass> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPricingClassException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			commercePricingClassId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1135,3 +920,4 @@ public class CommercePricingClassUtil {
 	private static volatile CommercePricingClassPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-587028841

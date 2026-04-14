@@ -5,6 +5,7 @@
 
 package com.liferay.calendar.service.persistence.impl;
 
+import com.liferay.calendar.exception.DuplicateCalendarBookingExternalReferenceCodeException;
 import com.liferay.calendar.exception.NoSuchBookingException;
 import com.liferay.calendar.model.CalendarBooking;
 import com.liferay.calendar.model.CalendarBookingTable;
@@ -26,14 +27,20 @@ import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.sanitizer.Sanitizer;
+import com.liferay.portal.kernel.sanitizer.SanitizerException;
+import com.liferay.portal.kernel.sanitizer.SanitizerUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -329,230 +336,6 @@ public class CalendarBookingPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByUuid_Last(
-			String uuid, OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByUuid_Last(
-			uuid, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByUuid_Last(
-		String uuid, OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where uuid = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByUuid_PrevAndNext(
-			long calendarBookingId, String uuid,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		uuid = Objects.toString(uuid, "");
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, calendarBooking, uuid, orderByComparator, true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, calendarBooking, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByUuid_PrevAndNext(
-		Session session, CalendarBooking calendarBooking, String uuid,
-		OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -1103,244 +886,6 @@ public class CalendarBookingPersistenceImpl
 	}
 
 	/**
-	 * Returns the last calendar booking in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByUuid_C_PrevAndNext(
-			long calendarBookingId, String uuid, long companyId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		uuid = Objects.toString(uuid, "");
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, calendarBooking, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, calendarBooking, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByUuid_C_PrevAndNext(
-		Session session, CalendarBooking calendarBooking, String uuid,
-		long companyId, OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the calendar bookings where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1667,218 +1212,6 @@ public class CalendarBookingPersistenceImpl
 	}
 
 	/**
-	 * Returns the last calendar booking in the ordered set where calendarId = &#63;.
-	 *
-	 * @param calendarId the calendar ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByCalendarId_Last(
-			long calendarId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByCalendarId_Last(
-			calendarId, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("calendarId=");
-		sb.append(calendarId);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where calendarId = &#63;.
-	 *
-	 * @param calendarId the calendar ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByCalendarId_Last(
-		long calendarId, OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByCalendarId(calendarId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByCalendarId(
-			calendarId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where calendarId = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param calendarId the calendar ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByCalendarId_PrevAndNext(
-			long calendarBookingId, long calendarId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByCalendarId_PrevAndNext(
-				session, calendarBooking, calendarId, orderByComparator, true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByCalendarId_PrevAndNext(
-				session, calendarBooking, calendarId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByCalendarId_PrevAndNext(
-		Session session, CalendarBooking calendarBooking, long calendarId,
-		OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		sb.append(_FINDER_COLUMN_CALENDARID_CALENDARID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(calendarId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the calendar bookings where calendarId = &#63; from the database.
 	 *
 	 * @param calendarId the calendar ID
@@ -2183,222 +1516,6 @@ public class CalendarBookingPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where calendarResourceId = &#63;.
-	 *
-	 * @param calendarResourceId the calendar resource ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByCalendarResourceId_Last(
-			long calendarResourceId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByCalendarResourceId_Last(
-			calendarResourceId, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("calendarResourceId=");
-		sb.append(calendarResourceId);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where calendarResourceId = &#63;.
-	 *
-	 * @param calendarResourceId the calendar resource ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByCalendarResourceId_Last(
-		long calendarResourceId,
-		OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByCalendarResourceId(calendarResourceId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByCalendarResourceId(
-			calendarResourceId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where calendarResourceId = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param calendarResourceId the calendar resource ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByCalendarResourceId_PrevAndNext(
-			long calendarBookingId, long calendarResourceId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByCalendarResourceId_PrevAndNext(
-				session, calendarBooking, calendarResourceId, orderByComparator,
-				true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByCalendarResourceId_PrevAndNext(
-				session, calendarBooking, calendarResourceId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByCalendarResourceId_PrevAndNext(
-		Session session, CalendarBooking calendarBooking,
-		long calendarResourceId,
-		OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		sb.append(_FINDER_COLUMN_CALENDARRESOURCEID_CALENDARRESOURCEID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(calendarResourceId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -2716,223 +1833,6 @@ public class CalendarBookingPersistenceImpl
 	}
 
 	/**
-	 * Returns the last calendar booking in the ordered set where parentCalendarBookingId = &#63;.
-	 *
-	 * @param parentCalendarBookingId the parent calendar booking ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByParentCalendarBookingId_Last(
-			long parentCalendarBookingId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByParentCalendarBookingId_Last(
-			parentCalendarBookingId, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentCalendarBookingId=");
-		sb.append(parentCalendarBookingId);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where parentCalendarBookingId = &#63;.
-	 *
-	 * @param parentCalendarBookingId the parent calendar booking ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByParentCalendarBookingId_Last(
-		long parentCalendarBookingId,
-		OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByParentCalendarBookingId(parentCalendarBookingId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByParentCalendarBookingId(
-			parentCalendarBookingId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where parentCalendarBookingId = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param parentCalendarBookingId the parent calendar booking ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByParentCalendarBookingId_PrevAndNext(
-			long calendarBookingId, long parentCalendarBookingId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByParentCalendarBookingId_PrevAndNext(
-				session, calendarBooking, parentCalendarBookingId,
-				orderByComparator, true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByParentCalendarBookingId_PrevAndNext(
-				session, calendarBooking, parentCalendarBookingId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByParentCalendarBookingId_PrevAndNext(
-		Session session, CalendarBooking calendarBooking,
-		long parentCalendarBookingId,
-		OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		sb.append(
-			_FINDER_COLUMN_PARENTCALENDARBOOKINGID_PARENTCALENDARBOOKINGID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentCalendarBookingId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the calendar bookings where parentCalendarBookingId = &#63; from the database.
 	 *
 	 * @param parentCalendarBookingId the parent calendar booking ID
@@ -3247,225 +2147,6 @@ public class CalendarBookingPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where recurringCalendarBookingId = &#63;.
-	 *
-	 * @param recurringCalendarBookingId the recurring calendar booking ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByRecurringCalendarBookingId_Last(
-			long recurringCalendarBookingId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking =
-			fetchByRecurringCalendarBookingId_Last(
-				recurringCalendarBookingId, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("recurringCalendarBookingId=");
-		sb.append(recurringCalendarBookingId);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where recurringCalendarBookingId = &#63;.
-	 *
-	 * @param recurringCalendarBookingId the recurring calendar booking ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByRecurringCalendarBookingId_Last(
-		long recurringCalendarBookingId,
-		OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByRecurringCalendarBookingId(
-			recurringCalendarBookingId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByRecurringCalendarBookingId(
-			recurringCalendarBookingId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where recurringCalendarBookingId = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param recurringCalendarBookingId the recurring calendar booking ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByRecurringCalendarBookingId_PrevAndNext(
-			long calendarBookingId, long recurringCalendarBookingId,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByRecurringCalendarBookingId_PrevAndNext(
-				session, calendarBooking, recurringCalendarBookingId,
-				orderByComparator, true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByRecurringCalendarBookingId_PrevAndNext(
-				session, calendarBooking, recurringCalendarBookingId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByRecurringCalendarBookingId_PrevAndNext(
-		Session session, CalendarBooking calendarBooking,
-		long recurringCalendarBookingId,
-		OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		sb.append(
-			_FINDER_COLUMN_RECURRINGCALENDARBOOKINGID_RECURRINGCALENDARBOOKINGID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(recurringCalendarBookingId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -4193,231 +2874,6 @@ public class CalendarBookingPersistenceImpl
 	}
 
 	/**
-	 * Returns the last calendar booking in the ordered set where calendarId = &#63; and status = &#63;.
-	 *
-	 * @param calendarId the calendar ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByC_S_Last(
-			long calendarId, int status,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByC_S_Last(
-			calendarId, status, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("calendarId=");
-		sb.append(calendarId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where calendarId = &#63; and status = &#63;.
-	 *
-	 * @param calendarId the calendar ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByC_S_Last(
-		long calendarId, int status,
-		OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByC_S(calendarId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByC_S(
-			calendarId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where calendarId = &#63; and status = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param calendarId the calendar ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByC_S_PrevAndNext(
-			long calendarBookingId, long calendarId, int status,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByC_S_PrevAndNext(
-				session, calendarBooking, calendarId, status, orderByComparator,
-				true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByC_S_PrevAndNext(
-				session, calendarBooking, calendarId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByC_S_PrevAndNext(
-		Session session, CalendarBooking calendarBooking, long calendarId,
-		int status, OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_S_CALENDARID_2);
-
-		sb.append(_FINDER_COLUMN_C_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(calendarId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the calendar bookings where calendarId = &#63; and status = any &#63;.
 	 *
 	 * <p>
@@ -5035,233 +3491,6 @@ public class CalendarBookingPersistenceImpl
 	}
 
 	/**
-	 * Returns the last calendar booking in the ordered set where parentCalendarBookingId = &#63; and status = &#63;.
-	 *
-	 * @param parentCalendarBookingId the parent calendar booking ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking
-	 * @throws NoSuchBookingException if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking findByP_S_Last(
-			long parentCalendarBookingId, int status,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = fetchByP_S_Last(
-			parentCalendarBookingId, status, orderByComparator);
-
-		if (calendarBooking != null) {
-			return calendarBooking;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentCalendarBookingId=");
-		sb.append(parentCalendarBookingId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchBookingException(sb.toString());
-	}
-
-	/**
-	 * Returns the last calendar booking in the ordered set where parentCalendarBookingId = &#63; and status = &#63;.
-	 *
-	 * @param parentCalendarBookingId the parent calendar booking ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
-	 */
-	@Override
-	public CalendarBooking fetchByP_S_Last(
-		long parentCalendarBookingId, int status,
-		OrderByComparator<CalendarBooking> orderByComparator) {
-
-		int count = countByP_S(parentCalendarBookingId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CalendarBooking> list = findByP_S(
-			parentCalendarBookingId, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the calendar bookings before and after the current calendar booking in the ordered set where parentCalendarBookingId = &#63; and status = &#63;.
-	 *
-	 * @param calendarBookingId the primary key of the current calendar booking
-	 * @param parentCalendarBookingId the parent calendar booking ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar booking
-	 * @throws NoSuchBookingException if a calendar booking with the primary key could not be found
-	 */
-	@Override
-	public CalendarBooking[] findByP_S_PrevAndNext(
-			long calendarBookingId, long parentCalendarBookingId, int status,
-			OrderByComparator<CalendarBooking> orderByComparator)
-		throws NoSuchBookingException {
-
-		CalendarBooking calendarBooking = findByPrimaryKey(calendarBookingId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CalendarBooking[] array = new CalendarBookingImpl[3];
-
-			array[0] = getByP_S_PrevAndNext(
-				session, calendarBooking, parentCalendarBookingId, status,
-				orderByComparator, true);
-
-			array[1] = calendarBooking;
-
-			array[2] = getByP_S_PrevAndNext(
-				session, calendarBooking, parentCalendarBookingId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CalendarBooking getByP_S_PrevAndNext(
-		Session session, CalendarBooking calendarBooking,
-		long parentCalendarBookingId, int status,
-		OrderByComparator<CalendarBooking> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_S_PARENTCALENDARBOOKINGID_2);
-
-		sb.append(_FINDER_COLUMN_P_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CalendarBookingModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentCalendarBookingId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						calendarBooking)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CalendarBooking> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the calendar bookings where parentCalendarBookingId = &#63; and status = &#63; from the database.
 	 *
 	 * @param parentCalendarBookingId the parent calendar booking ID
@@ -5346,6 +3575,218 @@ public class CalendarBookingPersistenceImpl
 	private static final String _FINDER_COLUMN_P_S_STATUS_2 =
 		"calendarBooking.status = ?";
 
+	private FinderPath _finderPathFetchByERC_G;
+
+	/**
+	 * Returns the calendar booking where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchBookingException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching calendar booking
+	 * @throws NoSuchBookingException if a matching calendar booking could not be found
+	 */
+	@Override
+	public CalendarBooking findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws NoSuchBookingException {
+
+		CalendarBooking calendarBooking = fetchByERC_G(
+			externalReferenceCode, groupId);
+
+		if (calendarBooking == null) {
+			StringBundler sb = new StringBundler(6);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("externalReferenceCode=");
+			sb.append(externalReferenceCode);
+
+			sb.append(", groupId=");
+			sb.append(groupId);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchBookingException(sb.toString());
+		}
+
+		return calendarBooking;
+	}
+
+	/**
+	 * Returns the calendar booking where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
+	 */
+	@Override
+	public CalendarBooking fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return fetchByERC_G(externalReferenceCode, groupId, true);
+	}
+
+	/**
+	 * Returns the calendar booking where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching calendar booking, or <code>null</code> if a matching calendar booking could not be found
+	 */
+	@Override
+	public CalendarBooking fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					CalendarBooking.class)) {
+
+			externalReferenceCode = Objects.toString(externalReferenceCode, "");
+
+			Object[] finderArgs = null;
+
+			if (useFinderCache) {
+				finderArgs = new Object[] {externalReferenceCode, groupId};
+			}
+
+			Object result = null;
+
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByERC_G, finderArgs, this);
+			}
+
+			if (result instanceof CalendarBooking) {
+				CalendarBooking calendarBooking = (CalendarBooking)result;
+
+				if (!Objects.equals(
+						externalReferenceCode,
+						calendarBooking.getExternalReferenceCode()) ||
+					(groupId != calendarBooking.getGroupId())) {
+
+					result = null;
+				}
+			}
+
+			if (result == null) {
+				StringBundler sb = new StringBundler(4);
+
+				sb.append(_SQL_SELECT_CALENDARBOOKING_WHERE);
+
+				boolean bindExternalReferenceCode = false;
+
+				if (externalReferenceCode.isEmpty()) {
+					sb.append(_FINDER_COLUMN_ERC_G_EXTERNALREFERENCECODE_3);
+				}
+				else {
+					bindExternalReferenceCode = true;
+
+					sb.append(_FINDER_COLUMN_ERC_G_EXTERNALREFERENCECODE_2);
+				}
+
+				sb.append(_FINDER_COLUMN_ERC_G_GROUPID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindExternalReferenceCode) {
+						queryPos.add(externalReferenceCode);
+					}
+
+					queryPos.add(groupId);
+
+					List<CalendarBooking> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByERC_G, finderArgs, list);
+						}
+					}
+					else {
+						CalendarBooking calendarBooking = list.get(0);
+
+						result = calendarBooking;
+
+						cacheResult(calendarBooking);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (CalendarBooking)result;
+			}
+		}
+	}
+
+	/**
+	 * Removes the calendar booking where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the calendar booking that was removed
+	 */
+	@Override
+	public CalendarBooking removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws NoSuchBookingException {
+
+		CalendarBooking calendarBooking = findByERC_G(
+			externalReferenceCode, groupId);
+
+		return remove(calendarBooking);
+	}
+
+	/**
+	 * Returns the number of calendar bookings where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching calendar bookings
+	 */
+	@Override
+	public int countByERC_G(String externalReferenceCode, long groupId) {
+		CalendarBooking calendarBooking = fetchByERC_G(
+			externalReferenceCode, groupId);
+
+		if (calendarBooking == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_ERC_G_EXTERNALREFERENCECODE_2 =
+		"calendarBooking.externalReferenceCode = ? AND ";
+
+	private static final String _FINDER_COLUMN_ERC_G_EXTERNALREFERENCECODE_3 =
+		"(calendarBooking.externalReferenceCode IS NULL OR calendarBooking.externalReferenceCode = '') AND ";
+
+	private static final String _FINDER_COLUMN_ERC_G_GROUPID_2 =
+		"calendarBooking.groupId = ?";
+
 	public CalendarBookingPersistenceImpl() {
 		Map<String, String> dbColumnNames = new HashMap<String, String>();
 
@@ -5396,6 +3837,14 @@ public class CalendarBookingPersistenceImpl
 				new Object[] {
 					calendarBooking.getCalendarId(),
 					calendarBooking.getVEventUid()
+				},
+				calendarBooking);
+
+			finderCache.putResult(
+				_finderPathFetchByERC_G,
+				new Object[] {
+					calendarBooking.getExternalReferenceCode(),
+					calendarBooking.getGroupId()
 				},
 				calendarBooking);
 		}
@@ -5506,6 +3955,14 @@ public class CalendarBookingPersistenceImpl
 
 			finderCache.putResult(
 				_finderPathFetchByC_V, args, calendarBookingModelImpl);
+
+			args = new Object[] {
+				calendarBookingModelImpl.getExternalReferenceCode(),
+				calendarBookingModelImpl.getGroupId()
+			};
+
+			finderCache.putResult(
+				_finderPathFetchByERC_G, args, calendarBookingModelImpl);
 		}
 	}
 
@@ -5647,6 +4104,69 @@ public class CalendarBookingPersistenceImpl
 			String uuid = PortalUUIDUtil.generate();
 
 			calendarBooking.setUuid(uuid);
+		}
+
+		if (Validator.isNull(calendarBooking.getExternalReferenceCode())) {
+			calendarBooking.setExternalReferenceCode(calendarBooking.getUuid());
+		}
+		else {
+			if (!Objects.equals(
+					calendarBookingModelImpl.getColumnOriginalValue(
+						"externalReferenceCode"),
+					calendarBooking.getExternalReferenceCode())) {
+
+				long userId = GetterUtil.getLong(
+					PrincipalThreadLocal.getName());
+
+				if (userId > 0) {
+					long companyId = calendarBooking.getCompanyId();
+
+					long groupId = calendarBooking.getGroupId();
+
+					long classPK = 0;
+
+					if (!isNew) {
+						classPK = calendarBooking.getPrimaryKey();
+					}
+
+					try {
+						calendarBooking.setExternalReferenceCode(
+							SanitizerUtil.sanitize(
+								companyId, groupId, userId,
+								CalendarBooking.class.getName(), classPK,
+								ContentTypes.TEXT_HTML, Sanitizer.MODE_ALL,
+								calendarBooking.getExternalReferenceCode(),
+								null));
+					}
+					catch (SanitizerException sanitizerException) {
+						throw new SystemException(sanitizerException);
+					}
+				}
+			}
+
+			CalendarBooking ercCalendarBooking = fetchByERC_G(
+				calendarBooking.getExternalReferenceCode(),
+				calendarBooking.getGroupId());
+
+			if (isNew) {
+				if (ercCalendarBooking != null) {
+					throw new DuplicateCalendarBookingExternalReferenceCodeException(
+						"Duplicate calendar booking with external reference code " +
+							calendarBooking.getExternalReferenceCode() +
+								" and group " + calendarBooking.getGroupId());
+				}
+			}
+			else {
+				if ((ercCalendarBooking != null) &&
+					(calendarBooking.getCalendarBookingId() !=
+						ercCalendarBooking.getCalendarBookingId())) {
+
+					throw new DuplicateCalendarBookingExternalReferenceCodeException(
+						"Duplicate calendar booking with external reference code " +
+							calendarBooking.getExternalReferenceCode() +
+								" and group " + calendarBooking.getGroupId());
+				}
+			}
 		}
 
 		ServiceContext serviceContext =
@@ -6196,6 +4716,7 @@ public class CalendarBookingPersistenceImpl
 		ctControlColumnNames.add("mvccVersion");
 		ctControlColumnNames.add("ctCollectionId");
 		ctStrictColumnNames.add("uuid_");
+		ctStrictColumnNames.add("externalReferenceCode");
 		ctStrictColumnNames.add("groupId");
 		ctStrictColumnNames.add("companyId");
 		ctStrictColumnNames.add("userId");
@@ -6241,6 +4762,9 @@ public class CalendarBookingPersistenceImpl
 			new String[] {"calendarId", "parentCalendarBookingId"});
 
 		_uniqueIndexColumnNames.add(new String[] {"calendarId", "vEventUid"});
+
+		_uniqueIndexColumnNames.add(
+			new String[] {"externalReferenceCode", "groupId"});
 	}
 
 	/**
@@ -6439,6 +4963,11 @@ public class CalendarBookingPersistenceImpl
 			new String[] {Long.class.getName(), Integer.class.getName()},
 			new String[] {"parentCalendarBookingId", "status"}, false);
 
+		_finderPathFetchByERC_G = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByERC_G",
+			new String[] {String.class.getName(), Long.class.getName()},
+			new String[] {"externalReferenceCode", "groupId"}, true);
+
 		CalendarBookingUtil.setPersistence(this);
 	}
 
@@ -6516,3 +5045,4 @@ public class CalendarBookingPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1469984450

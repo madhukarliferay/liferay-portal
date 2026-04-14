@@ -14,8 +14,8 @@ ViewSharedWithMeSectionDisplayContext viewSharedWithMeSectionDisplayContext = (V
 <div>
 	<div>
 		<react:component
-			module="{Toolbar} from site-cms-site-initializer"
-			props="<%= viewSharedWithMeSectionDisplayContext.getToolbarProps() %>"
+			module="{Breadcrumb} from site-cms-site-initializer"
+			props="<%= viewSharedWithMeSectionDisplayContext.getBreadcrumbProps() %>"
 		/>
 	</div>
 
@@ -31,7 +31,6 @@ ViewSharedWithMeSectionDisplayContext viewSharedWithMeSectionDisplayContext = (V
 			propsTransformer="{SharedWithMeFDSPropsTransformer} from site-cms-site-initializer"
 			selectedItemsKey="id"
 			selectionType="multiple"
-			style="fluid"
 		/>
 	</div>
 </div>

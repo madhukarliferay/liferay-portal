@@ -16,6 +16,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,7 +41,8 @@ import org.json.JSONObject;
  */
 public class CISystemStatusReportUtil {
 
-	public static void appendNodeHistoryDataToJavaScriptFile(String filePath)
+	public static void appendNodeHistoryDataToJavaScriptFile(
+			String filePath, JenkinsCohort jenkinsCohort)
 		throws IOException {
 
 		StringBuilder sb = new StringBuilder();
@@ -53,6 +55,16 @@ public class CISystemStatusReportUtil {
 		long durationDays = _getReportDurationDays();
 
 		localDate = localDate.minusDays(durationDays - 1);
+
+		Set<String> keys = new HashSet<>(Arrays.asList(_NODE_METRIC_NAMES));
+
+		Set<String> asgPrimaryLabels = jenkinsCohort.getASGPrimaryLabels();
+
+		for (String asgPrimaryLabel : asgPrimaryLabels) {
+			for (String asgNodeMetricName : _ASG_NODE_METRIC_NAMES) {
+				keys.add(asgNodeMetricName + "__" + asgPrimaryLabel);
+			}
+		}
 
 		for (String dateString :
 				JenkinsResultsParserUtil.getDateStrings(
@@ -79,7 +91,85 @@ public class CISystemStatusReportUtil {
 				jsonObject,
 				JenkinsResultsParserUtil.toJSONObject(
 					"file://" + nodeDataFile.getPath()),
-				_NODE_METRIC_NAMES);
+				keys);
+		}
+
+		if (jsonObject == null) {
+			jsonObject = new JSONObject();
+		}
+
+		if (!asgPrimaryLabels.isEmpty()) {
+			jsonObject.put("asg_primary_labels", asgPrimaryLabels);
+		}
+
+		sb.append("\nvar nodeHistoryData = ");
+
+		sb.append(jsonObject);
+
+		sb.append(";");
+
+		JenkinsResultsParserUtil.append(new File(filePath), sb.toString());
+	}
+
+	public static void appendPullRequestHistoryDataToJavaScriptFile(
+			String filePath, JenkinsCohort jenkinsCohort)
+		throws IOException {
+
+		StringBuilder sb = new StringBuilder();
+
+		JSONObject jsonObject = null;
+
+		LocalDate localDate = JenkinsResultsParserUtil.getLocalDate(
+			System.currentTimeMillis());
+
+		long durationDays = _getReportDurationDays();
+
+		localDate = localDate.minusDays(durationDays - 1);
+
+		Set<String> keys = new HashSet<>(Arrays.asList(_NODE_METRIC_NAMES));
+
+		Set<String> asgPrimaryLabels = jenkinsCohort.getASGPrimaryLabels();
+
+		for (String asgPrimaryLabel : asgPrimaryLabels) {
+			for (String asgNodeMetricName : _ASG_NODE_METRIC_NAMES) {
+				keys.add(asgNodeMetricName + "__" + asgPrimaryLabel);
+			}
+		}
+
+		for (String dateString :
+				JenkinsResultsParserUtil.getDateStrings(
+					durationDays, localDate)) {
+
+			File nodeDataFile = new File(
+				_TMP_BASE_DIR, dateString + "/node.json");
+
+			if (!nodeDataFile.exists()) {
+				System.out.println(
+					"Node data not available in: " + nodeDataFile);
+
+				continue;
+			}
+
+			if (jsonObject == null) {
+				jsonObject = JenkinsResultsParserUtil.toJSONObject(
+					"file://" + nodeDataFile.getPath());
+
+				continue;
+			}
+
+			_mergeJSONArraysInJSONObjects(
+				jsonObject,
+				JenkinsResultsParserUtil.toJSONObject(
+					"file://" + nodeDataFile.getPath()),
+				keys);
+		}
+
+		if (jsonObject == null) {
+			jsonObject = new JSONObject();
+		}
+
+		if (!asgPrimaryLabels.isEmpty()) {
+			jsonObject.put("asg_primary_labels", asgPrimaryLabels);
 		}
 
 		sb.append("\nvar nodeHistoryData = ");
@@ -96,6 +186,19 @@ public class CISystemStatusReportUtil {
 			_CI_SYSTEM_STATUS_REPORT_DIR, new File(filePath));
 	}
 
+	public static void writeConfigJSFile(String filePath) throws IOException {
+		int maxNodeCount = Integer.parseInt(
+			JenkinsResultsParserUtil.getBuildProperty(
+				"report.ci.max.node.count"));
+
+		String content = String.format(
+			"window.MAX_Y_AXES = %d;%n", maxNodeCount);
+
+		File configFile = new File(filePath, "/js/config.js");
+
+		JenkinsResultsParserUtil.write(configFile, content);
+	}
+
 	public static void writeJenkinsDataJavaScriptFile(String filePath)
 		throws IOException {
 
@@ -105,7 +208,9 @@ public class CISystemStatusReportUtil {
 
 		jenkinsCohort.writeDataJavaScriptFile(filePath);
 
-		appendNodeHistoryDataToJavaScriptFile(filePath);
+		appendNodeHistoryDataToJavaScriptFile(filePath, jenkinsCohort);
+
+		appendPullRequestHistoryDataToJavaScriptFile(filePath, jenkinsCohort);
 	}
 
 	public static void writeTestrayDataJavaScriptFile(
@@ -621,22 +726,51 @@ public class CISystemStatusReportUtil {
 	}
 
 	private static void _mergeJSONArraysInJSONObjects(
-		JSONObject jsonObject1, JSONObject jsonObject2, String[] keys) {
+		JSONObject jsonObject1, JSONObject jsonObject2, Set<String> keys) {
+
+		JSONArray timestampsJSONArray1 = jsonObject1.optJSONArray(
+			"timestamps", new JSONArray());
+
+		int count1 = timestampsJSONArray1.length();
+
+		JSONArray timestampsJSONArray2 = jsonObject2.optJSONArray(
+			"timestamps", new JSONArray());
+
+		int count2 = timestampsJSONArray2.length();
 
 		for (String key : keys) {
-			JSONArray jsonArray = jsonObject1.getJSONArray(key);
+			JSONArray jsonArray1 = jsonObject1.optJSONArray(
+				key, new JSONArray());
 
-			jsonArray.putAll(jsonObject2.getJSONArray(key));
+			while (jsonArray1.length() < count1) {
+				jsonArray1.put(0);
+			}
+
+			JSONArray jsonArray2 = jsonObject2.optJSONArray(
+				key, new JSONArray());
+
+			while (jsonArray2.length() < count2) {
+				jsonArray2.put(0);
+			}
+
+			jsonArray1.putAll(jsonArray2);
+
+			jsonObject1.put(key, jsonArray1);
 		}
 	}
+
+	private static final String[] _ASG_NODE_METRIC_NAMES = {
+		"idle_nodes", "occupied_nodes", "offline_nodes", "queued_builds"
+	};
 
 	private static final File _CI_SYSTEM_STATUS_REPORT_DIR;
 
 	private static final int _DAYS_PER_WEEK = 7;
 
 	private static final String[] _NODE_METRIC_NAMES = {
-		"idle_nodes", "occupied_nodes", "offline_nodes", "online_nodes",
-		"queued_builds", "timestamps"
+		"downstream_started_builds", "idle_nodes", "occupied_nodes",
+		"offline_nodes", "online_nodes", "queued_builds", "timestamps",
+		"top_level_started_builds"
 	};
 
 	private static final File _TESTRAY_LOGS_DIR;

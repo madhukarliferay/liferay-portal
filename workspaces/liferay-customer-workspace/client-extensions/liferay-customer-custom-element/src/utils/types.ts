@@ -23,6 +23,7 @@ export interface IAccountSubscription {
 
 export interface IAccountSubscriptionGroup {
 	accountSubscriptionGroupId?: number;
+	activationProductName?: string;
 	activationStatus: string;
 	name?: string;
 }
@@ -135,7 +136,20 @@ export interface ITicket {
 	selected?: boolean;
 	status: string;
 	subject: string;
-	ticketId: number;
+	ticketId: string | number;
+}
+
+export interface ITicketAttachment {
+	accountKey: string;
+	creator: {
+		id: string;
+		name: string;
+	};
+	dateCreated: string;
+	fileName: string;
+	fileSize: string;
+	id: number;
+	jiraIssueKey: string;
 }
 
 export interface ITimeInput {

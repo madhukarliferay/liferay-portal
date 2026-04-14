@@ -15,11 +15,11 @@ import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnectionUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
-import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.Company;
@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.impl.CompanyImpl;
 import com.liferay.portal.model.impl.VirtualHostImpl;
@@ -65,7 +66,7 @@ public abstract class BaseDBPartitionTestCase {
 			PermissionCheckerMethodTestRule.INSTANCE);
 
 	public static void assume() {
-		Assume.assumeTrue(DBPartition.isPartitionEnabled());
+		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
 
 		if (db == null) {
 			db = DBManagerUtil.getDB();
@@ -230,12 +231,7 @@ public abstract class BaseDBPartitionTestCase {
 			return defaultPartitionName;
 		}
 
-		String databasePartitionSchemaNamePrefix =
-			ReflectionTestUtil.getFieldValue(
-				DBPartitionUtil.class,
-				"_DATABASE_PARTITION_SCHEMA_NAME_PREFIX");
-
-		return databasePartitionSchemaNamePrefix + companyId;
+		return PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX + companyId;
 	}
 
 	protected static void importDBPartitions() throws Exception {
@@ -267,15 +263,16 @@ public abstract class BaseDBPartitionTestCase {
 				PreparedStatement preparedStatement1 =
 					connection.prepareStatement(
 						"insert into Group_ (mvccVersion, ctCollectionId, " +
-							"companyId, groupId, classNameId, classPK) " +
-								"values (?, ?, ?, ?, ?, ?)");
+							"companyId, groupId, classNameId, classPK, " +
+								"groupKey) values (?, ?, ?, ?, ?, ?, ?)");
 				PreparedStatement preparedStatement2 =
 					connection.prepareStatement(
 						"insert into PasswordPolicy (mvccVersion, " +
 							"passwordPolicyId, companyId, defaultPolicy) " +
 								"values (?, ?, ?, ?)");
 				PreparedStatement preparedStatement3 =
-					connection.prepareStatement(
+					AutoBatchPreparedStatementUtil.autoBatch(
+						connection,
 						"insert into Role_ (mvccVersion, ctCollectionId, " +
 							"roleId, companyId, name, type_) values (?, ?, " +
 								"?, ?, ?, ?)");
@@ -292,6 +289,7 @@ public abstract class BaseDBPartitionTestCase {
 				preparedStatement1.setLong(
 					5, ClassNameLocalServiceUtil.getClassNameId(Company.class));
 				preparedStatement1.setLong(6, companyId);
+				preparedStatement1.setString(7, RandomTestUtil.randomString());
 
 				preparedStatement1.executeUpdate();
 
@@ -310,8 +308,10 @@ public abstract class BaseDBPartitionTestCase {
 					preparedStatement3.setString(5, ROLE_NAMES[i]);
 					preparedStatement3.setLong(6, 1);
 
-					preparedStatement3.executeUpdate();
+					preparedStatement3.addBatch();
 				}
+
+				preparedStatement3.executeBatch();
 
 				preparedStatement4.setLong(1, 1);
 				preparedStatement4.setLong(2, companyId);
@@ -431,6 +431,7 @@ public abstract class BaseDBPartitionTestCase {
 		DataSource dataSource = InfrastructureUtil.getDataSource();
 
 		try (Connection connection = dataSource.getConnection();
+
 			Statement statement = connection.createStatement()) {
 
 			statement.execute(getCreateTableSQL(tableName));

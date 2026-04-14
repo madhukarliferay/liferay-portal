@@ -8,22 +8,29 @@ package com.liferay.object.web.internal.info.item.provider;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
+import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldValue;
+import com.liferay.info.field.type.RelationshipInfoFieldType;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
 import com.liferay.info.item.ERCInfoItemIdentifier;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.item.field.reader.InfoItemFieldReaderFieldSetProvider;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
+import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.info.type.WebImage;
 import com.liferay.layout.page.template.info.item.provider.DisplayPageInfoItemFieldSetProvider;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
+import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.info.field.converter.ObjectFieldInfoFieldConverter;
 import com.liferay.object.info.item.ObjectEntryInfoItemFields;
 import com.liferay.object.info.item.provider.util.ObjectEntryInfoItemValuesProviderUtil;
 import com.liferay.object.info.item.util.ObjectEntryInfoItemUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
+import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectRelationship;
+import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectActionLocalService;
@@ -38,21 +45,27 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCache;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.TimeZoneUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.template.info.item.provider.TemplateInfoItemFieldSetProvider;
 
+import java.time.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * @author Guilherme Camacho
@@ -73,6 +86,7 @@ public class ObjectEntryInfoItemFieldValuesProvider
 		ObjectEntryLocalService objectEntryLocalService,
 		ObjectEntryManagerRegistry objectEntryManagerRegistry,
 		ObjectFieldLocalService objectFieldLocalService,
+		ObjectRelatedModelsProviderRegistry objectRelatedModelsProviderRegistry,
 		ObjectRelationshipLocalService objectRelationshipLocalService,
 		ObjectScopeProviderRegistry objectScopeProviderRegistry, Portal portal,
 		TemplateInfoItemFieldSetProvider templateInfoItemFieldSetProvider,
@@ -93,6 +107,8 @@ public class ObjectEntryInfoItemFieldValuesProvider
 		_objectEntryLocalService = objectEntryLocalService;
 		_objectEntryManagerRegistry = objectEntryManagerRegistry;
 		_objectFieldLocalService = objectFieldLocalService;
+		_objectRelatedModelsProviderRegistry =
+			objectRelatedModelsProviderRegistry;
 		_objectRelationshipLocalService = objectRelationshipLocalService;
 		_objectScopeProviderRegistry = objectScopeProviderRegistry;
 		_portal = portal;
@@ -116,7 +132,12 @@ public class ObjectEntryInfoItemFieldValuesProvider
 
 		InfoItemFieldValues infoItemFieldValues = threadLocalCache.get(key);
 
-		if (infoItemFieldValues != null) {
+		ThemeDisplay themeDisplay = _getThemeDisplay();
+
+		if ((infoItemFieldValues != null) &&
+			((themeDisplay == null) ||
+			 Validator.isNull(themeDisplay.getDoAsUserId()))) {
+
 			return infoItemFieldValues;
 		}
 
@@ -128,7 +149,7 @@ public class ObjectEntryInfoItemFieldValuesProvider
 				_displayPageInfoItemFieldSetProvider.getInfoFieldValues(
 					_getInfoItemReference(objectEntry), StringPool.BLANK,
 					ObjectEntry.class.getSimpleName(), objectEntry,
-					_getThemeDisplay())
+					themeDisplay)
 			).infoFieldValues(
 				_infoItemFieldReaderFieldSetProvider.getInfoFieldValues(
 					objectEntry.getModelClassName(), objectEntry)
@@ -143,7 +164,11 @@ public class ObjectEntryInfoItemFieldValuesProvider
 			throw new RuntimeException(exception);
 		}
 
-		threadLocalCache.put(key, infoItemFieldValues);
+		if ((themeDisplay != null) &&
+			Validator.isNull(themeDisplay.getDoAsUserId())) {
+
+			threadLocalCache.put(key, infoItemFieldValues);
+		}
 
 		return infoItemFieldValues;
 	}
@@ -179,8 +204,14 @@ public class ObjectEntryInfoItemFieldValuesProvider
 				objectEntry.getCreateDate()));
 		objectEntryFieldValues.add(
 			new InfoFieldValue<>(
-				ObjectEntryInfoItemFields.expirationDateInfoField,
-				objectEntry.getExpirationDate()));
+				ObjectEntryInfoItemFields.getDisplayDateInfoField(
+					_objectDefinition),
+				_getLocalDateTime(objectEntry.getDisplayDate())));
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.getExpirationDateInfoField(
+					_objectDefinition),
+				_getLocalDateTime(objectEntry.getExpirationDate())));
 		objectEntryFieldValues.add(
 			new InfoFieldValue<>(
 				ObjectEntryInfoItemFields.externalReferenceCodeInfoField,
@@ -199,8 +230,9 @@ public class ObjectEntryInfoItemFieldValuesProvider
 				objectEntry.getLastPublishDate()));
 		objectEntryFieldValues.add(
 			new InfoFieldValue<>(
-				ObjectEntryInfoItemFields.reviewDateInfoField,
-				objectEntry.getReviewDate()));
+				ObjectEntryInfoItemFields.getReviewDateInfoField(
+					_objectDefinition),
+				_getLocalDateTime(objectEntry.getReviewDate())));
 		objectEntryFieldValues.add(
 			new InfoFieldValue<>(
 				ObjectEntryInfoItemFields.statusInfoField,
@@ -233,20 +265,64 @@ public class ObjectEntryInfoItemFieldValuesProvider
 				_objectRelationshipLocalService, _objectScopeProviderRegistry,
 				_portal, themeDisplay, properties));
 
-		if (FeatureFlagManagerUtil.isEnabled(
-				_objectDefinition.getCompanyId(), "LPD-21926")) {
+		objectEntryFieldValues.add(
+			new InfoFieldValue<>(
+				ObjectEntryInfoItemFields.getFriendlyURLInfoField(
+					_objectDefinition),
+				() ->
+					ObjectEntryInfoItemValuesProviderUtil.
+						getFriendlyURLInfoFieldValue(
+							_portal.getClassNameId(
+								_objectDefinition.getClassName()),
+							_friendlyURLEntryLocalService,
+							objectEntry.getObjectEntryId())));
+
+		for (ObjectRelationship objectRelationship :
+				_objectRelationshipLocalService.getObjectRelationships(
+					_objectDefinition.getObjectDefinitionId(),
+					ObjectRelationshipConstants.DELETION_TYPE_DISASSOCIATE,
+					false)) {
+
+			if (!objectRelationship.compareType(
+					ObjectRelationshipConstants.TYPE_MANY_TO_MANY)) {
+
+				continue;
+			}
 
 			objectEntryFieldValues.add(
 				new InfoFieldValue<>(
-					ObjectEntryInfoItemFields.getFriendlyURLInfoField(
-						_objectDefinition),
+					_objectFieldInfoFieldConverter.
+						addRelationshipInfoFieldAttributes(
+							InfoField.builder(
+								ObjectField.class.getSimpleName()
+							).infoFieldType(
+								RelationshipInfoFieldType.INSTANCE
+							).name(
+								ObjectRelationshipConstants.
+									OBJECT_RELATIONSHIP_FIELD_NAME_PREFIX +
+										objectRelationship.getName()
+							).labelInfoLocalizedValue(
+								InfoLocalizedValue.<String>builder(
+								).values(
+									objectRelationship.getLabelMap()
+								).defaultLocale(
+									LocaleUtil.fromLanguageId(
+										objectRelationship.
+											getDefaultLanguageId())
+								).build()
+							).editable(
+								true
+							).localizable(
+								false
+							),
+							objectRelationship),
 					() ->
 						ObjectEntryInfoItemValuesProviderUtil.
-							getFriendlyURLInfoFieldValue(
-								_portal.getClassNameId(
-									_objectDefinition.getClassName()),
-								_friendlyURLEntryLocalService,
-								objectEntry.getObjectEntryId())));
+							getMultipleRelationshipInfoFieldValue(
+								objectRelationship,
+								_objectDefinitionLocalService,
+								objectEntry.getObjectEntryId(),
+								_objectRelatedModelsProviderRegistry)));
 		}
 
 		return objectEntryFieldValues;
@@ -316,6 +392,16 @@ public class ObjectEntryInfoItemFieldValuesProvider
 			new ERCInfoItemIdentifier(objectEntry.getExternalReferenceCode()));
 	}
 
+	private LocalDateTime _getLocalDateTime(Date date) {
+		if (date == null) {
+			return null;
+		}
+
+		TimeZone timeZone = TimeZoneUtil.getDefault();
+
+		return LocalDateTime.ofInstant(date.toInstant(), timeZone.toZoneId());
+	}
+
 	private com.liferay.object.rest.dto.v1_0.ObjectEntry _getObjectEntry(
 		ObjectDefinition objectDefinition, ObjectEntry objectEntry,
 		ThemeDisplay themeDisplay) {
@@ -382,6 +468,8 @@ public class ObjectEntryInfoItemFieldValuesProvider
 	private final ObjectEntryManagerRegistry _objectEntryManagerRegistry;
 	private final ObjectFieldInfoFieldConverter _objectFieldInfoFieldConverter;
 	private final ObjectFieldLocalService _objectFieldLocalService;
+	private final ObjectRelatedModelsProviderRegistry
+		_objectRelatedModelsProviderRegistry;
 	private final ObjectRelationshipLocalService
 		_objectRelationshipLocalService;
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;

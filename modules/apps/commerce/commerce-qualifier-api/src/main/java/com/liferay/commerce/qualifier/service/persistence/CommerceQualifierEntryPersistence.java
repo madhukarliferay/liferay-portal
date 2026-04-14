@@ -127,51 +127,6 @@ public interface CommerceQualifierEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and sourceClassPK = &#63;.
-	 *
-	 * @param sourceClassNameId the source class name ID
-	 * @param sourceClassPK the source class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry findByS_S_Last(
-			long sourceClassNameId, long sourceClassPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and sourceClassPK = &#63;.
-	 *
-	 * @param sourceClassNameId the source class name ID
-	 * @param sourceClassPK the source class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry, or <code>null</code> if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry fetchByS_S_Last(
-		long sourceClassNameId, long sourceClassPK,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce qualifier entries before and after the current commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and sourceClassPK = &#63;.
-	 *
-	 * @param commerceQualifierEntryId the primary key of the current commerce qualifier entry
-	 * @param sourceClassNameId the source class name ID
-	 * @param sourceClassPK the source class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a commerce qualifier entry with the primary key could not be found
-	 */
-	public CommerceQualifierEntry[] findByS_S_PrevAndNext(
-			long commerceQualifierEntryId, long sourceClassNameId,
-			long sourceClassPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
-
-	/**
 	 * Removes all the commerce qualifier entries where sourceClassNameId = &#63; and sourceClassPK = &#63; from the database.
 	 *
 	 * @param sourceClassNameId the source class name ID
@@ -281,51 +236,6 @@ public interface CommerceQualifierEntryPersistence
 		long targetClassNameId, long targetClassPK,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where targetClassNameId = &#63; and targetClassPK = &#63;.
-	 *
-	 * @param targetClassNameId the target class name ID
-	 * @param targetClassPK the target class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry findByT_T_Last(
-			long targetClassNameId, long targetClassPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where targetClassNameId = &#63; and targetClassPK = &#63;.
-	 *
-	 * @param targetClassNameId the target class name ID
-	 * @param targetClassPK the target class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry, or <code>null</code> if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry fetchByT_T_Last(
-		long targetClassNameId, long targetClassPK,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce qualifier entries before and after the current commerce qualifier entry in the ordered set where targetClassNameId = &#63; and targetClassPK = &#63;.
-	 *
-	 * @param commerceQualifierEntryId the primary key of the current commerce qualifier entry
-	 * @param targetClassNameId the target class name ID
-	 * @param targetClassPK the target class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a commerce qualifier entry with the primary key could not be found
-	 */
-	public CommerceQualifierEntry[] findByT_T_PrevAndNext(
-			long commerceQualifierEntryId, long targetClassNameId,
-			long targetClassPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
 
 	/**
 	 * Removes all the commerce qualifier entries where targetClassNameId = &#63; and targetClassPK = &#63; from the database.
@@ -446,54 +356,6 @@ public interface CommerceQualifierEntryPersistence
 		long sourceClassNameId, long sourceClassPK, long targetClassNameId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and sourceClassPK = &#63; and targetClassNameId = &#63;.
-	 *
-	 * @param sourceClassNameId the source class name ID
-	 * @param sourceClassPK the source class pk
-	 * @param targetClassNameId the target class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry findByS_S_T_Last(
-			long sourceClassNameId, long sourceClassPK, long targetClassNameId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and sourceClassPK = &#63; and targetClassNameId = &#63;.
-	 *
-	 * @param sourceClassNameId the source class name ID
-	 * @param sourceClassPK the source class pk
-	 * @param targetClassNameId the target class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry, or <code>null</code> if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry fetchByS_S_T_Last(
-		long sourceClassNameId, long sourceClassPK, long targetClassNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce qualifier entries before and after the current commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and sourceClassPK = &#63; and targetClassNameId = &#63;.
-	 *
-	 * @param commerceQualifierEntryId the primary key of the current commerce qualifier entry
-	 * @param sourceClassNameId the source class name ID
-	 * @param sourceClassPK the source class pk
-	 * @param targetClassNameId the target class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a commerce qualifier entry with the primary key could not be found
-	 */
-	public CommerceQualifierEntry[] findByS_S_T_PrevAndNext(
-			long commerceQualifierEntryId, long sourceClassNameId,
-			long sourceClassPK, long targetClassNameId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
 
 	/**
 	 * Removes all the commerce qualifier entries where sourceClassNameId = &#63; and sourceClassPK = &#63; and targetClassNameId = &#63; from the database.
@@ -618,54 +480,6 @@ public interface CommerceQualifierEntryPersistence
 		long sourceClassNameId, long targetClassNameId, long targetClassPK,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and targetClassNameId = &#63; and targetClassPK = &#63;.
-	 *
-	 * @param sourceClassNameId the source class name ID
-	 * @param targetClassNameId the target class name ID
-	 * @param targetClassPK the target class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry findByS_T_T_Last(
-			long sourceClassNameId, long targetClassNameId, long targetClassPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
-
-	/**
-	 * Returns the last commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and targetClassNameId = &#63; and targetClassPK = &#63;.
-	 *
-	 * @param sourceClassNameId the source class name ID
-	 * @param targetClassNameId the target class name ID
-	 * @param targetClassPK the target class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce qualifier entry, or <code>null</code> if a matching commerce qualifier entry could not be found
-	 */
-	public CommerceQualifierEntry fetchByS_T_T_Last(
-		long sourceClassNameId, long targetClassNameId, long targetClassPK,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceQualifierEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce qualifier entries before and after the current commerce qualifier entry in the ordered set where sourceClassNameId = &#63; and targetClassNameId = &#63; and targetClassPK = &#63;.
-	 *
-	 * @param commerceQualifierEntryId the primary key of the current commerce qualifier entry
-	 * @param sourceClassNameId the source class name ID
-	 * @param targetClassNameId the target class name ID
-	 * @param targetClassPK the target class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce qualifier entry
-	 * @throws NoSuchCommerceQualifierEntryException if a commerce qualifier entry with the primary key could not be found
-	 */
-	public CommerceQualifierEntry[] findByS_T_T_PrevAndNext(
-			long commerceQualifierEntryId, long sourceClassNameId,
-			long targetClassNameId, long targetClassPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceQualifierEntry> orderByComparator)
-		throws NoSuchCommerceQualifierEntryException;
 
 	/**
 	 * Removes all the commerce qualifier entries where sourceClassNameId = &#63; and targetClassNameId = &#63; and targetClassPK = &#63; from the database.
@@ -882,3 +696,4 @@ public interface CommerceQualifierEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1853197660

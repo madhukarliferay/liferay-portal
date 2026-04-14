@@ -86,9 +86,7 @@ public class ContentPageTemplateSettings
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -193,3 +191,4 @@ public class ContentPageTemplateSettings
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1273988615

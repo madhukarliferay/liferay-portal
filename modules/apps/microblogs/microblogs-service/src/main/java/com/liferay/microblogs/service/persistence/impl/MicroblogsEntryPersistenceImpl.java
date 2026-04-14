@@ -314,218 +314,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByCompanyId_Last(
-		long companyId, OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByCompanyId_PrevAndNext(
-			long microblogsEntryId, long companyId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, microblogsEntry, companyId, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, microblogsEntry, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByCompanyId_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -576,6 +364,15 @@ public class MicroblogsEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -659,207 +456,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByCompanyId_PrevAndNext(
-			long microblogsEntryId, long companyId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				microblogsEntryId, companyId, orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, microblogsEntry, companyId, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, microblogsEntry, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByCompanyId_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the microblogs entries where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -933,6 +529,15 @@ public class MicroblogsEntryPersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByCompanyId(
+				companyId);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -1190,217 +795,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByUserId_Last(
-			long userId, OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByUserId_Last(
-			userId, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("userId=");
-		sb.append(userId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByUserId_Last(
-		long userId, OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByUserId(userId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByUserId(
-			userId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where userId = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByUserId_PrevAndNext(
-			long microblogsEntryId, long userId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByUserId_PrevAndNext(
-				session, microblogsEntry, userId, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByUserId_PrevAndNext(
-				session, microblogsEntry, userId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByUserId_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long userId,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_USERID_USERID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where userId = &#63;.
 	 *
 	 * @param userId the user ID
@@ -1451,6 +845,15 @@ public class MicroblogsEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByUserId(userId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUserId(
+					userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -1534,207 +937,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where userId = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByUserId_PrevAndNext(
-			long microblogsEntryId, long userId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByUserId_PrevAndNext(
-				microblogsEntryId, userId, orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByUserId_PrevAndNext(
-				session, microblogsEntry, userId, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByUserId_PrevAndNext(
-				session, microblogsEntry, userId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByUserId_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long userId,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_USERID_USERID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the microblogs entries where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -1808,6 +1010,14 @@ public class MicroblogsEntryPersistenceImpl
 	public int filterCountByUserId(long userId) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByUserId(userId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByUserId(userId);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -2087,231 +1297,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where userId = &#63; and type = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByU_T_Last(
-			long userId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByU_T_Last(
-			userId, type, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("userId=");
-		sb.append(userId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where userId = &#63; and type = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByU_T_Last(
-		long userId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByU_T(userId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByU_T(
-			userId, type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where userId = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param userId the user ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByU_T_PrevAndNext(
-			long microblogsEntryId, long userId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByU_T_PrevAndNext(
-				session, microblogsEntry, userId, type, orderByComparator,
-				true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByU_T_PrevAndNext(
-				session, microblogsEntry, userId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByU_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long userId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_U_T_USERID_2);
-
-		sb.append(_FINDER_COLUMN_U_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(userId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where userId = &#63; and type = &#63;.
 	 *
 	 * @param userId the user ID
@@ -2365,6 +1350,15 @@ public class MicroblogsEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByU_T(userId, type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByU_T(
+					userId, type, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2452,214 +1446,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where userId = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param userId the user ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByU_T_PrevAndNext(
-			long microblogsEntryId, long userId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByU_T_PrevAndNext(
-				microblogsEntryId, userId, type, orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByU_T_PrevAndNext(
-				session, microblogsEntry, userId, type, orderByComparator,
-				true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByU_T_PrevAndNext(
-				session, microblogsEntry, userId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByU_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long userId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_U_T_USERID_2);
-
-		sb.append(_FINDER_COLUMN_U_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(userId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the microblogs entries where userId = &#63; and type = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -2740,6 +1526,14 @@ public class MicroblogsEntryPersistenceImpl
 	public int filterCountByU_T(long userId, int type) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByU_T(userId, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByU_T(userId, type);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -3039,234 +1833,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByCCNI_CCPK_Last(
-			long creatorClassNameId, long creatorClassPK,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByCCNI_CCPK_Last(
-			creatorClassNameId, creatorClassPK, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("creatorClassNameId=");
-		sb.append(creatorClassNameId);
-
-		sb.append(", creatorClassPK=");
-		sb.append(creatorClassPK);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByCCNI_CCPK_Last(
-		long creatorClassNameId, long creatorClassPK,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByCCNI_CCPK(creatorClassNameId, creatorClassPK);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByCCNI_CCPK(
-			creatorClassNameId, creatorClassPK, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByCCNI_CCPK_PrevAndNext(
-			long microblogsEntryId, long creatorClassNameId,
-			long creatorClassPK,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByCCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByCCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByCCNI_CCPK_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry,
-		long creatorClassNameId, long creatorClassPK,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_CREATORCLASSPK_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where creatorClassNameId = &#63; and creatorClassPK = &#63;.
 	 *
 	 * @param creatorClassNameId the creator class name ID
@@ -3326,6 +1892,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByCCNI_CCPK(
 				creatorClassNameId, creatorClassPK, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCCNI_CCPK(
+					creatorClassNameId, creatorClassPK, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -3413,217 +1988,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByCCNI_CCPK_PrevAndNext(
-			long microblogsEntryId, long creatorClassNameId,
-			long creatorClassPK,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByCCNI_CCPK_PrevAndNext(
-				microblogsEntryId, creatorClassNameId, creatorClassPK,
-				orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByCCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByCCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByCCNI_CCPK_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry,
-		long creatorClassNameId, long creatorClassPK,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_CREATORCLASSPK_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where creatorClassNameId = &#63; and creatorClassPK = any &#63;.
 	 *
 	 * @param creatorClassNameId the creator class name ID
@@ -3683,6 +2047,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByCCNI_CCPK(
 				creatorClassNameId, creatorClassPKs, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCCNI_CCPK(
+					creatorClassNameId, creatorClassPKs, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		if (creatorClassPKs == null) {
@@ -4148,6 +2521,15 @@ public class MicroblogsEntryPersistenceImpl
 			return countByCCNI_CCPK(creatorClassNameId, creatorClassPK);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByCCNI_CCPK(
+				creatorClassNameId, creatorClassPK);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_MICROBLOGSENTRY_WHERE);
@@ -4201,6 +2583,14 @@ public class MicroblogsEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByCCNI_CCPK(creatorClassNameId, creatorClassPKs);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries =
+				InlineSQLHelperUtil.filter(
+					findByCCNI_CCPK(creatorClassNameId, creatorClassPKs));
+
+			return microblogsEntries.size();
 		}
 
 		if (creatorClassPKs == null) {
@@ -4513,232 +2903,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByCCNI_T_Last(
-			long creatorClassNameId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByCCNI_T_Last(
-			creatorClassNameId, type, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("creatorClassNameId=");
-		sb.append(creatorClassNameId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByCCNI_T_Last(
-		long creatorClassNameId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByCCNI_T(creatorClassNameId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByCCNI_T(
-			creatorClassNameId, type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByCCNI_T_PrevAndNext(
-			long microblogsEntryId, long creatorClassNameId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByCCNI_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, type,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByCCNI_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, type,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByCCNI_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry,
-		long creatorClassNameId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CCNI_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where creatorClassNameId = &#63; and type = &#63;.
 	 *
 	 * @param creatorClassNameId the creator class name ID
@@ -4796,6 +2960,15 @@ public class MicroblogsEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByCCNI_T(
 				creatorClassNameId, type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCCNI_T(
+					creatorClassNameId, type, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -4883,215 +3056,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByCCNI_T_PrevAndNext(
-			long microblogsEntryId, long creatorClassNameId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByCCNI_T_PrevAndNext(
-				microblogsEntryId, creatorClassNameId, type, orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByCCNI_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, type,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByCCNI_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, type,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByCCNI_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry,
-		long creatorClassNameId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_CCNI_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the microblogs entries where creatorClassNameId = &#63; and type = &#63; from the database.
 	 *
 	 * @param creatorClassNameId the creator class name ID
@@ -5173,6 +3137,15 @@ public class MicroblogsEntryPersistenceImpl
 	public int filterCountByCCNI_T(long creatorClassNameId, int type) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByCCNI_T(creatorClassNameId, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByCCNI_T(
+				creatorClassNameId, type);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5467,232 +3440,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where type = &#63; and parentMicroblogsEntryId = &#63;.
-	 *
-	 * @param type the type
-	 * @param parentMicroblogsEntryId the parent microblogs entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByT_P_Last(
-			int type, long parentMicroblogsEntryId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByT_P_Last(
-			type, parentMicroblogsEntryId, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("type=");
-		sb.append(type);
-
-		sb.append(", parentMicroblogsEntryId=");
-		sb.append(parentMicroblogsEntryId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where type = &#63; and parentMicroblogsEntryId = &#63;.
-	 *
-	 * @param type the type
-	 * @param parentMicroblogsEntryId the parent microblogs entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByT_P_Last(
-		int type, long parentMicroblogsEntryId,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByT_P(type, parentMicroblogsEntryId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByT_P(
-			type, parentMicroblogsEntryId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where type = &#63; and parentMicroblogsEntryId = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param type the type
-	 * @param parentMicroblogsEntryId the parent microblogs entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByT_P_PrevAndNext(
-			long microblogsEntryId, int type, long parentMicroblogsEntryId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByT_P_PrevAndNext(
-				session, microblogsEntry, type, parentMicroblogsEntryId,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByT_P_PrevAndNext(
-				session, microblogsEntry, type, parentMicroblogsEntryId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByT_P_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, int type,
-		long parentMicroblogsEntryId,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_T_P_TYPE_2);
-
-		sb.append(_FINDER_COLUMN_T_P_PARENTMICROBLOGSENTRYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(type);
-
-		queryPos.add(parentMicroblogsEntryId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where type = &#63; and parentMicroblogsEntryId = &#63;.
 	 *
 	 * @param type the type
@@ -5750,6 +3497,15 @@ public class MicroblogsEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByT_P(
 				type, parentMicroblogsEntryId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByT_P(
+					type, parentMicroblogsEntryId, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -5837,216 +3593,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where type = &#63; and parentMicroblogsEntryId = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param type the type
-	 * @param parentMicroblogsEntryId the parent microblogs entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByT_P_PrevAndNext(
-			long microblogsEntryId, int type, long parentMicroblogsEntryId,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByT_P_PrevAndNext(
-				microblogsEntryId, type, parentMicroblogsEntryId,
-				orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByT_P_PrevAndNext(
-				session, microblogsEntry, type, parentMicroblogsEntryId,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByT_P_PrevAndNext(
-				session, microblogsEntry, type, parentMicroblogsEntryId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByT_P_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, int type,
-		long parentMicroblogsEntryId,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_T_P_TYPE_2_SQL);
-
-		sb.append(_FINDER_COLUMN_T_P_PARENTMICROBLOGSENTRYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(type);
-
-		queryPos.add(parentMicroblogsEntryId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the microblogs entries where type = &#63; and parentMicroblogsEntryId = &#63; from the database.
 	 *
 	 * @param type the type
@@ -6128,6 +3674,15 @@ public class MicroblogsEntryPersistenceImpl
 	public int filterCountByT_P(int type, long parentMicroblogsEntryId) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByT_P(type, parentMicroblogsEntryId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByT_P(
+				type, parentMicroblogsEntryId);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -6445,245 +4000,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByC_CCNI_CCPK_Last(
-			long companyId, long creatorClassNameId, long creatorClassPK,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByC_CCNI_CCPK_Last(
-			companyId, creatorClassNameId, creatorClassPK, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", creatorClassNameId=");
-		sb.append(creatorClassNameId);
-
-		sb.append(", creatorClassPK=");
-		sb.append(creatorClassPK);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByC_CCNI_CCPK_Last(
-		long companyId, long creatorClassNameId, long creatorClassPK,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByC_CCNI_CCPK(
-			companyId, creatorClassNameId, creatorClassPK);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByC_CCNI_CCPK(
-			companyId, creatorClassNameId, creatorClassPK, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByC_CCNI_CCPK_PrevAndNext(
-			long microblogsEntryId, long companyId, long creatorClassNameId,
-			long creatorClassPK,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByC_CCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByC_CCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByC_CCNI_CCPK_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		long creatorClassNameId, long creatorClassPK,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_CREATORCLASSPK_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -6747,6 +4063,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByC_CCNI_CCPK(
 				companyId, creatorClassNameId, creatorClassPK, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_CCNI_CCPK(
+					companyId, creatorClassNameId, creatorClassPK,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -6838,222 +4163,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByC_CCNI_CCPK_PrevAndNext(
-			long microblogsEntryId, long companyId, long creatorClassNameId,
-			long creatorClassPK,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_CCNI_CCPK_PrevAndNext(
-				microblogsEntryId, companyId, creatorClassNameId,
-				creatorClassPK, orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByC_CCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByC_CCNI_CCPK_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByC_CCNI_CCPK_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		long creatorClassNameId, long creatorClassPK,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_CREATORCLASSPK_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = any &#63;.
 	 *
 	 * @param companyId the company ID
@@ -7118,6 +4227,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByC_CCNI_CCPK(
 				companyId, creatorClassNameId, creatorClassPKs, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_CCNI_CCPK(
+					companyId, creatorClassNameId, creatorClassPKs,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		if (creatorClassPKs == null) {
@@ -7617,6 +4735,15 @@ public class MicroblogsEntryPersistenceImpl
 				companyId, creatorClassNameId, creatorClassPK);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByC_CCNI_CCPK(
+				companyId, creatorClassNameId, creatorClassPK);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_MICROBLOGSENTRY_WHERE);
@@ -7676,6 +4803,15 @@ public class MicroblogsEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_CCNI_CCPK(
 				companyId, creatorClassNameId, creatorClassPKs);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries =
+				InlineSQLHelperUtil.filter(
+					findByC_CCNI_CCPK(
+						companyId, creatorClassNameId, creatorClassPKs));
+
+			return microblogsEntries.size();
 		}
 
 		if (creatorClassPKs == null) {
@@ -8013,243 +5149,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByC_CCNI_T_Last(
-			long companyId, long creatorClassNameId, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByC_CCNI_T_Last(
-			companyId, creatorClassNameId, type, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", creatorClassNameId=");
-		sb.append(creatorClassNameId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByC_CCNI_T_Last(
-		long companyId, long creatorClassNameId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByC_CCNI_T(companyId, creatorClassNameId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByC_CCNI_T(
-			companyId, creatorClassNameId, type, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByC_CCNI_T_PrevAndNext(
-			long microblogsEntryId, long companyId, long creatorClassNameId,
-			int type, OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByC_CCNI_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId, type,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByC_CCNI_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId, type,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByC_CCNI_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		long creatorClassNameId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_T_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and type = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -8312,6 +5211,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByC_CCNI_T(
 				companyId, creatorClassNameId, type, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_CCNI_T(
+					companyId, creatorClassNameId, type, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -8399,221 +5307,6 @@ public class MicroblogsEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByC_CCNI_T_PrevAndNext(
-			long microblogsEntryId, long companyId, long creatorClassNameId,
-			int type, OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_CCNI_T_PrevAndNext(
-				microblogsEntryId, companyId, creatorClassNameId, type,
-				orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByC_CCNI_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId, type,
-				orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByC_CCNI_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId, type,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByC_CCNI_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		long creatorClassNameId, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_CCNI_T_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -8714,6 +5407,15 @@ public class MicroblogsEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_CCNI_T(companyId, creatorClassNameId, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByC_CCNI_T(
+				companyId, creatorClassNameId, type);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -9037,245 +5739,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByCCNI_CCPK_T_Last(
-			long creatorClassNameId, long creatorClassPK, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByCCNI_CCPK_T_Last(
-			creatorClassNameId, creatorClassPK, type, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("creatorClassNameId=");
-		sb.append(creatorClassNameId);
-
-		sb.append(", creatorClassPK=");
-		sb.append(creatorClassPK);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByCCNI_CCPK_T_Last(
-		long creatorClassNameId, long creatorClassPK, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByCCNI_CCPK_T(
-			creatorClassNameId, creatorClassPK, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByCCNI_CCPK_T(
-			creatorClassNameId, creatorClassPK, type, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByCCNI_CCPK_T_PrevAndNext(
-			long microblogsEntryId, long creatorClassNameId,
-			long creatorClassPK, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByCCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				type, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByCCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByCCNI_CCPK_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry,
-		long creatorClassNameId, long creatorClassPK, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_T_CREATORCLASSPK_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
 	 *
 	 * @param creatorClassNameId the creator class name ID
@@ -9339,6 +5802,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByCCNI_CCPK_T(
 				creatorClassNameId, creatorClassPK, type, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCCNI_CCPK_T(
+					creatorClassNameId, creatorClassPK, type, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -9430,222 +5902,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByCCNI_CCPK_T_PrevAndNext(
-			long microblogsEntryId, long creatorClassNameId,
-			long creatorClassPK, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByCCNI_CCPK_T_PrevAndNext(
-				microblogsEntryId, creatorClassNameId, creatorClassPK, type,
-				orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByCCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				type, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByCCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, creatorClassNameId, creatorClassPK,
-				type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByCCNI_CCPK_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry,
-		long creatorClassNameId, long creatorClassPK, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_T_CREATORCLASSPK_2);
-
-		sb.append(_FINDER_COLUMN_CCNI_CCPK_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where creatorClassNameId = &#63; and creatorClassPK = any &#63; and type = &#63;.
 	 *
 	 * @param creatorClassNameId the creator class name ID
@@ -9709,6 +5965,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByCCNI_CCPK_T(
 				creatorClassNameId, creatorClassPKs, type, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCCNI_CCPK_T(
+					creatorClassNameId, creatorClassPKs, type,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		if (creatorClassPKs == null) {
@@ -10210,6 +6475,15 @@ public class MicroblogsEntryPersistenceImpl
 			return countByCCNI_CCPK_T(creatorClassNameId, creatorClassPK, type);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByCCNI_CCPK_T(
+				creatorClassNameId, creatorClassPK, type);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_MICROBLOGSENTRY_WHERE);
@@ -10269,6 +6543,15 @@ public class MicroblogsEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByCCNI_CCPK_T(
 				creatorClassNameId, creatorClassPKs, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries =
+				InlineSQLHelperUtil.filter(
+					findByCCNI_CCPK_T(
+						creatorClassNameId, creatorClassPKs, type));
+
+			return microblogsEntries.size();
 		}
 
 		if (creatorClassPKs == null) {
@@ -10636,256 +6919,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByC_CCNI_CCPK_T_Last(
-			long companyId, long creatorClassNameId, long creatorClassPK,
-			int type, OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByC_CCNI_CCPK_T_Last(
-			companyId, creatorClassNameId, creatorClassPK, type,
-			orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", creatorClassNameId=");
-		sb.append(creatorClassNameId);
-
-		sb.append(", creatorClassPK=");
-		sb.append(creatorClassPK);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByC_CCNI_CCPK_T_Last(
-		long companyId, long creatorClassNameId, long creatorClassPK, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByC_CCNI_CCPK_T(
-			companyId, creatorClassNameId, creatorClassPK, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByC_CCNI_CCPK_T(
-			companyId, creatorClassNameId, creatorClassPK, type, count - 1,
-			count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByC_CCNI_CCPK_T_PrevAndNext(
-			long microblogsEntryId, long companyId, long creatorClassNameId,
-			long creatorClassPK, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByC_CCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, type, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByC_CCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByC_CCNI_CCPK_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		long creatorClassNameId, long creatorClassPK, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_CREATORCLASSPK_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -10955,6 +6988,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByC_CCNI_CCPK_T(
 				companyId, creatorClassNameId, creatorClassPK, type, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_CCNI_CCPK_T(
+					companyId, creatorClassNameId, creatorClassPK, type,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -11050,227 +7092,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = &#63; and type = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param companyId the company ID
-	 * @param creatorClassNameId the creator class name ID
-	 * @param creatorClassPK the creator class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByC_CCNI_CCPK_T_PrevAndNext(
-			long microblogsEntryId, long companyId, long creatorClassNameId,
-			long creatorClassPK, int type,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_CCNI_CCPK_T_PrevAndNext(
-				microblogsEntryId, companyId, creatorClassNameId,
-				creatorClassPK, type, orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByC_CCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, type, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByC_CCNI_CCPK_T_PrevAndNext(
-				session, microblogsEntry, companyId, creatorClassNameId,
-				creatorClassPK, type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByC_CCNI_CCPK_T_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long companyId,
-		long creatorClassNameId, long creatorClassPK, int type,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_CREATORCLASSNAMEID_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_CREATORCLASSPK_2);
-
-		sb.append(_FINDER_COLUMN_C_CCNI_CCPK_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(creatorClassNameId);
-
-		queryPos.add(creatorClassPK);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where companyId = &#63; and creatorClassNameId = &#63; and creatorClassPK = any &#63; and type = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -11340,6 +7161,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByC_CCNI_CCPK_T(
 				companyId, creatorClassNameId, creatorClassPKs, type, start,
 				end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_CCNI_CCPK_T(
+					companyId, creatorClassNameId, creatorClassPKs, type,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		if (creatorClassPKs == null) {
@@ -11878,6 +7708,15 @@ public class MicroblogsEntryPersistenceImpl
 				companyId, creatorClassNameId, creatorClassPK, type);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByC_CCNI_CCPK_T(
+				companyId, creatorClassNameId, creatorClassPK, type);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_MICROBLOGSENTRY_WHERE);
@@ -11943,6 +7782,15 @@ public class MicroblogsEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_CCNI_CCPK_T(
 				companyId, creatorClassNameId, creatorClassPKs, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries =
+				InlineSQLHelperUtil.filter(
+					findByC_CCNI_CCPK_T(
+						companyId, creatorClassNameId, creatorClassPKs, type));
+
+			return microblogsEntries.size();
 		}
 
 		if (creatorClassPKs == null) {
@@ -12324,266 +8172,6 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last microblogs entry in the ordered set where userId = &#63; and createDate = &#63; and type = &#63; and socialRelationType = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param type the type
-	 * @param socialRelationType the social relation type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry
-	 * @throws NoSuchEntryException if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry findByU_C_T_S_Last(
-			long userId, Date createDate, int type, int socialRelationType,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = fetchByU_C_T_S_Last(
-			userId, createDate, type, socialRelationType, orderByComparator);
-
-		if (microblogsEntry != null) {
-			return microblogsEntry;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("userId=");
-		sb.append(userId);
-
-		sb.append(", createDate=");
-		sb.append(createDate);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append(", socialRelationType=");
-		sb.append(socialRelationType);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last microblogs entry in the ordered set where userId = &#63; and createDate = &#63; and type = &#63; and socialRelationType = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param type the type
-	 * @param socialRelationType the social relation type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching microblogs entry, or <code>null</code> if a matching microblogs entry could not be found
-	 */
-	@Override
-	public MicroblogsEntry fetchByU_C_T_S_Last(
-		long userId, Date createDate, int type, int socialRelationType,
-		OrderByComparator<MicroblogsEntry> orderByComparator) {
-
-		int count = countByU_C_T_S(
-			userId, createDate, type, socialRelationType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MicroblogsEntry> list = findByU_C_T_S(
-			userId, createDate, type, socialRelationType, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set where userId = &#63; and createDate = &#63; and type = &#63; and socialRelationType = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param type the type
-	 * @param socialRelationType the social relation type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] findByU_C_T_S_PrevAndNext(
-			long microblogsEntryId, long userId, Date createDate, int type,
-			int socialRelationType,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = getByU_C_T_S_PrevAndNext(
-				session, microblogsEntry, userId, createDate, type,
-				socialRelationType, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = getByU_C_T_S_PrevAndNext(
-				session, microblogsEntry, userId, createDate, type,
-				socialRelationType, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry getByU_C_T_S_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long userId,
-		Date createDate, int type, int socialRelationType,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_U_C_T_S_USERID_2);
-
-		boolean bindCreateDate = false;
-
-		if (createDate == null) {
-			sb.append(_FINDER_COLUMN_U_C_T_S_CREATEDATE_1);
-		}
-		else {
-			bindCreateDate = true;
-
-			sb.append(_FINDER_COLUMN_U_C_T_S_CREATEDATE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_U_C_T_S_TYPE_2);
-
-		sb.append(_FINDER_COLUMN_U_C_T_S_SOCIALRELATIONTYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MicroblogsEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(userId);
-
-		if (bindCreateDate) {
-			queryPos.add(new Timestamp(createDate.getTime()));
-		}
-
-		queryPos.add(type);
-
-		queryPos.add(socialRelationType);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the microblogs entries that the user has permission to view where userId = &#63; and createDate = &#63; and type = &#63; and socialRelationType = &#63;.
 	 *
 	 * @param userId the user ID
@@ -12651,6 +8239,15 @@ public class MicroblogsEntryPersistenceImpl
 			return findByU_C_T_S(
 				userId, createDate, type, socialRelationType, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByU_C_T_S(
+					userId, createDate, type, socialRelationType,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -12753,238 +8350,6 @@ public class MicroblogsEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the microblogs entries before and after the current microblogs entry in the ordered set of microblogs entries that the user has permission to view where userId = &#63; and createDate = &#63; and type = &#63; and socialRelationType = &#63;.
-	 *
-	 * @param microblogsEntryId the primary key of the current microblogs entry
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param type the type
-	 * @param socialRelationType the social relation type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next microblogs entry
-	 * @throws NoSuchEntryException if a microblogs entry with the primary key could not be found
-	 */
-	@Override
-	public MicroblogsEntry[] filterFindByU_C_T_S_PrevAndNext(
-			long microblogsEntryId, long userId, Date createDate, int type,
-			int socialRelationType,
-			OrderByComparator<MicroblogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByU_C_T_S_PrevAndNext(
-				microblogsEntryId, userId, createDate, type, socialRelationType,
-				orderByComparator);
-		}
-
-		MicroblogsEntry microblogsEntry = findByPrimaryKey(microblogsEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MicroblogsEntry[] array = new MicroblogsEntryImpl[3];
-
-			array[0] = filterGetByU_C_T_S_PrevAndNext(
-				session, microblogsEntry, userId, createDate, type,
-				socialRelationType, orderByComparator, true);
-
-			array[1] = microblogsEntry;
-
-			array[2] = filterGetByU_C_T_S_PrevAndNext(
-				session, microblogsEntry, userId, createDate, type,
-				socialRelationType, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MicroblogsEntry filterGetByU_C_T_S_PrevAndNext(
-		Session session, MicroblogsEntry microblogsEntry, long userId,
-		Date createDate, int type, int socialRelationType,
-		OrderByComparator<MicroblogsEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MICROBLOGSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_U_C_T_S_USERID_2);
-
-		boolean bindCreateDate = false;
-
-		if (createDate == null) {
-			sb.append(_FINDER_COLUMN_U_C_T_S_CREATEDATE_1);
-		}
-		else {
-			bindCreateDate = true;
-
-			sb.append(_FINDER_COLUMN_U_C_T_S_CREATEDATE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_U_C_T_S_TYPE_2_SQL);
-
-		sb.append(_FINDER_COLUMN_U_C_T_S_SOCIALRELATIONTYPE_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_MICROBLOGSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					MicroblogsEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MicroblogsEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MicroblogsEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MicroblogsEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MicroblogsEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(userId);
-
-		if (bindCreateDate) {
-			queryPos.add(new Timestamp(createDate.getTime()));
-		}
-
-		queryPos.add(type);
-
-		queryPos.add(socialRelationType);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						microblogsEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MicroblogsEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -13103,6 +8468,15 @@ public class MicroblogsEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByU_C_T_S(userId, createDate, type, socialRelationType);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MicroblogsEntry> microblogsEntries = findByU_C_T_S(
+				userId, createDate, type, socialRelationType);
+
+			microblogsEntries = InlineSQLHelperUtil.filter(microblogsEntries);
+
+			return microblogsEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(5);
@@ -14138,3 +9512,4 @@ public class MicroblogsEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1812069314

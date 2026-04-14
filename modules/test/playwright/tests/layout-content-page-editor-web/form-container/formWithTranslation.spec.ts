@@ -28,6 +28,7 @@ import getRandomString from '../../../utils/getRandomString';
 import {goToObjectEntity} from '../../setup/page-management-site/main/utils/goToObjectEntity';
 import {cmsPagesTest} from '../../site-cms-site-initializer/main/fixtures/cmsPagesTest';
 import {structureBuilderPagesTest} from '../../site-cms-site-initializer/structure-builder/fixtures/structureBuilderPagesTest';
+import chooseFileFromCMSLibrary from '../main/utils/chooseFileFromCMSLibrary';
 import chooseFileFromDocumentLibrary from '../main/utils/chooseFileFromDocumentLibrary';
 import getFormContainerDefinition from '../main/utils/getFormContainerDefinition';
 import getFragmentDefinition from '../main/utils/getFragmentDefinition';
@@ -42,11 +43,8 @@ const test = mergeTests(
 	featureFlagsTest({
 		'LPD-11235': {enabled: true},
 		'LPD-17564': {enabled: true},
-		'LPD-21926': {enabled: true},
-		'LPD-32050': {enabled: true},
 		'LPD-60546': {enabled: true},
 		'LPS-178052': {enabled: true},
-		'LPS-179669': {enabled: true},
 	}),
 	fragmentsPagesTest,
 	isolatedSiteTest,
@@ -57,18 +55,6 @@ const test = mergeTests(
 	pageManagementSiteTest,
 	structureBuilderPagesTest
 );
-
-let structureIds = [];
-
-test.beforeEach(() => {
-	structureIds = [];
-});
-
-test.afterEach(async ({structureBuilderPage}) => {
-	for (const id of structureIds) {
-		await structureBuilderPage.deleteStructure(Number(id));
-	}
-});
 
 test(
 	'Can translate text form fields',
@@ -527,7 +513,13 @@ test(
 test(
 	'Can translate select form field',
 	{tag: '@LPD-46485'},
-	async ({apiHelpers, page, pageEditorPage, site}) => {
+	async ({
+		apiHelpers,
+		localizationSelectPage,
+		page,
+		pageEditorPage,
+		site,
+	}) => {
 
 		// Create object definition with a localized select
 
@@ -536,6 +528,11 @@ test(
 
 		const listTypeDefinition =
 			await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+		apiHelpers.data.push({
+			id: listTypeDefinition.id,
+			type: 'listTypeDefinition',
+		});
 
 		const options = ['Spain', 'Italy', 'Germany', 'Brasil'];
 
@@ -617,19 +614,31 @@ test(
 
 		// Go to view mode
 
-		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`);
+		await expect(async () => {
+			await page.goto('/');
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await localizationSelectPage.trigger.waitFor({timeout: 8000});
+		}).toPass();
 
 		const input = page.getByPlaceholder('Choose an Option');
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option', {
+		await expect(async () => {
+			const option = page.getByRole('option', {
 				name: 'Italy',
-			}),
-			trigger: input,
-		});
+			});
 
-		const valueInput = page.locator('[name="selectCountry"]');
+			await input.click({timeout: 2000});
+
+			await expect(option).toBeVisible({timeout: 2000});
+
+			await option.click({timeout: 2000});
+		}).toPass();
+
+		const valueInput = page.locator('[name="ObjectField_selectCountry"]');
 
 		await expect(valueInput).toHaveValue('italy');
 
@@ -663,13 +672,23 @@ test(
 			trigger: page.getByLabel('Select a language, current language:'),
 		});
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option', {
-				name: 'Germany',
-			}),
-			trigger: page.getByPlaceholder('Choose an Option'),
-		});
+		await expect(async () => {
+			await page
+				.getByPlaceholder('Choose an Option')
+				.click({timeout: 1000});
+
+			await expect(
+				page.getByRole('option', {
+					name: 'Germany',
+				})
+			).toBeVisible({timeout: 1000});
+
+			await page
+				.getByRole('option', {
+					name: 'Germany',
+				})
+				.click({timeout: 1000});
+		}).toPass();
 
 		// Check the translation in the localization select
 
@@ -706,7 +725,7 @@ test(
 );
 
 test(
-	'Can translate multiselect form field',
+	'Can translate multiselect form field with Multiselector Checkbox fragment',
 	{tag: '@LPD-48344'},
 	async ({apiHelpers, page, pageEditorPage, site}) => {
 
@@ -714,6 +733,11 @@ test(
 
 		const listTypeDefinition =
 			await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+		apiHelpers.data.push({
+			id: listTypeDefinition.id,
+			type: 'listTypeDefinition',
+		});
 
 		for (const option of ['Spain', 'Italy', 'Germany']) {
 			await apiHelpers.listTypeAdmin.postListTypeEntry({
@@ -790,6 +814,18 @@ test(
 			addLocalizationSelect: true,
 		});
 
+		// Swap to Multiselector Checkbox fragment
+
+		const fragmentId = await pageEditorPage.getFragmentId(
+			'Multiselector Dropdown'
+		);
+
+		await pageEditorPage.swapFragment({
+			folder: 'Form Components',
+			fragmentId,
+			fragmentName: 'Multiselector Checkbox',
+		});
+
 		await pageEditorPage.publishPage();
 
 		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`);
@@ -834,6 +870,182 @@ test(
 		).toBeVisible();
 
 		// Check the object entry
+
+		const {items} =
+			await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+				'c/plants'
+			);
+
+		expect(items[0].growthAreas_i18n).toStrictEqual({
+			en_US: [
+				{key: 'spain', name: 'Spain'},
+				{key: 'italy', name: 'Italy'},
+			],
+			es_ES: [
+				{key: 'spain', name: 'Spain'},
+				{key: 'italy', name: 'Italy'},
+				{key: 'germany', name: 'Germany'},
+			],
+		});
+	}
+);
+
+test(
+	'Can translate multiselect form field with Multiselector Dropdown fragment',
+	{tag: '@LPD-73126'},
+	async ({
+		apiHelpers,
+		localizationSelectPage,
+		page,
+		pageEditorPage,
+		site,
+	}) => {
+
+		// Create object definition
+
+		const listTypeDefinition =
+			await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+		apiHelpers.data.push({
+			id: listTypeDefinition.id,
+			type: 'listTypeDefinition',
+		});
+
+		for (const option of ['Spain', 'Italy', 'Germany']) {
+			await apiHelpers.listTypeAdmin.postListTypeEntry({
+				key: option,
+				listTypeDefinitionExternalReferenceCode:
+					listTypeDefinition.externalReferenceCode,
+				name_i18n: {en_US: option},
+			});
+		}
+
+		const objectDefinitionAPIClient =
+			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+
+		const {body: objectDefinition} =
+			await objectDefinitionAPIClient.postObjectDefinition({
+				active: true,
+				enableLocalization: true,
+				externalReferenceCode: 'plantERC',
+				label: {
+					en_US: 'Plant',
+				},
+				name: 'Plant',
+				objectFields: [
+					{
+						DBType: 'String',
+						businessType: 'MultiselectPicklist',
+						indexed: true,
+						indexedAsKeyword: false,
+						label: {
+							en_US: 'Growth Areas',
+						},
+						listTypeDefinitionExternalReferenceCode:
+							listTypeDefinition.externalReferenceCode,
+						listTypeDefinitionId: listTypeDefinition.id,
+						localized: true,
+						name: 'growthAreas',
+						required: false,
+					},
+				],
+				pluralLabel: {
+					en_US: 'Plants',
+				},
+				portlet: true,
+				scope: 'company',
+				status: {
+					code: 0,
+				},
+			});
+
+		apiHelpers.data.push({
+			id: objectDefinition.id,
+			type: 'objectDefinition',
+		});
+
+		// Create a page with a Form fragment
+
+		const formId = getRandomString();
+
+		const formDefinition = getFormContainerDefinition({
+			id: formId,
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([formDefinition]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+		// Map the form to the Plant object
+
+		await pageEditorPage.mapFormFragment(formId, 'Plant', 'all', {
+			addLocalizationSelect: true,
+		});
+
+		// Publish and go to edit mode
+
+		await pageEditorPage.publishPage();
+
+		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`);
+
+		// Select some options in default language
+
+		const input = page
+			.locator('.multiselector-dropdown')
+			.getByRole('combobox');
+
+		await clickAndExpectToBeVisible({
+			target: page.getByRole('option', {name: 'Spain'}),
+			trigger: input,
+		});
+
+		await clickAndExpectToBeVisible({
+			target: page.locator('.label').getByText('Spain'),
+			trigger: page.getByRole('option', {name: 'Spain'}),
+		});
+
+		await clickAndExpectToBeVisible({
+			target: page.getByRole('option', {name: 'Italy'}),
+			trigger: input,
+		});
+
+		await clickAndExpectToBeVisible({
+			target: page.locator('.label').getByText('Italy'),
+			trigger: page.getByRole('option', {name: 'Italy'}),
+		});
+
+		// Switch to spanish and select also another option
+
+		await localizationSelectPage.switchLanguage('es-ES');
+
+		await clickAndExpectToBeVisible({
+			target: page.getByRole('option', {name: 'Germany'}),
+			trigger: input,
+		});
+
+		await clickAndExpectToBeVisible({
+			target: page.locator('.label').getByText('Germany'),
+			trigger: page.getByRole('option', {name: 'Germany'}),
+		});
+
+		// Check translation status
+
+		expect(await localizationSelectPage.getLanguageStatus('es-ES')).toBe(
+			'translated'
+		);
+
+		// Save the form and check the object entry
+
+		await clickAndExpectToBeVisible({
+			target: page.getByText(
+				'Thank you. Your information was successfully received.'
+			),
+			trigger: page.getByRole('button', {name: 'Submit'}),
+		});
 
 		const {items} =
 			await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
@@ -1010,6 +1222,7 @@ test(
 	'Can translate attachment form fields',
 	{tag: '@LPD-46482'},
 	async ({
+		apiHelpers,
 		contentsPage,
 		localizationSelectPage,
 		page,
@@ -1040,7 +1253,6 @@ test(
 			name: 'Bananza',
 			page: structureBuilderPage,
 			publish: false,
-			structureIds,
 		});
 
 		// Add two fields of type select and configure one of them to select files from document library
@@ -1067,7 +1279,7 @@ test(
 
 		// Customize experience and delete Friendly URL fragment
 
-		await structureBuilderPage.customizeExperience();
+		await structureBuilderPage.customizeEditor();
 
 		await pageEditorPage.deleteFragment(
 			await pageEditorPage.getFragmentId('Friendly URL')
@@ -1083,7 +1295,49 @@ test(
 
 		await contentsPage.createContent(structureLabel);
 
+		await contentsPage.publishButton.waitFor();
+
 		await contentsPage.fillData([{label: 'Title', value: contentTitle}]);
+
+		// Create documents in Document Library via API
+
+		const fileBase64 = 'R0lGODlhAQABAAAAACw=';
+
+		const document3 = await apiHelpers.objectEntry.postObjectEntry(
+			{
+				file: {
+					fileBase64,
+					name: 'file_upload_image_3.jpg',
+				},
+				objectEntryFolderExternalReferenceCode: 'L_FILES',
+				title: 'file_upload_image_3.jpg',
+			},
+			'cms/basic-documents',
+			'Default'
+		);
+
+		apiHelpers.data.push({
+			id: document3.file.id,
+			type: 'document',
+		});
+
+		const document4 = await apiHelpers.objectEntry.postObjectEntry(
+			{
+				file: {
+					fileBase64,
+					name: 'file_upload_image_4.jpg',
+				},
+				objectEntryFolderExternalReferenceCode: 'L_FILES',
+				title: 'file_upload_image_4.jpg',
+			},
+			'cms/basic-documents',
+			'Default'
+		);
+
+		apiHelpers.data.push({
+			id: document4.file.id,
+			type: 'document',
+		});
 
 		// Select files for default language
 
@@ -1094,14 +1348,6 @@ test(
 		const filePath2 = path.join(
 			__dirname,
 			'../main/dependencies/file_upload_image_2.jpg'
-		);
-		const filePath3 = path.join(
-			__dirname,
-			'../main/dependencies/file_upload_image_3.jpg'
-		);
-		const filePath4 = path.join(
-			__dirname,
-			'../main/dependencies/file_upload_image_4.jpg'
 		);
 
 		// Select file from computer in the default language
@@ -1118,8 +1364,8 @@ test(
 
 		const dmFileFragment = page.locator('.file-upload').nth(1);
 
-		await chooseFileFromDocumentLibrary({
-			filePath: filePath3,
+		await chooseFileFromCMSLibrary({
+			fileName: document3.title,
 			page,
 			trigger: dmFileFragment.getByText('Select File', {
 				exact: true,
@@ -1140,8 +1386,8 @@ test(
 			await localizationSelectPage.switchLanguage('es-ES');
 
 			await expect(async () => {
-				await chooseFileFromDocumentLibrary({
-					filePath: filePath4,
+				await chooseFileFromCMSLibrary({
+					fileName: document4.title,
 					page,
 					trigger: dmFileFragment.getByText('Select File', {
 						exact: true,
@@ -1175,7 +1421,13 @@ test(
 test(
 	'Can remove a translation and keep its value in the attachment form field',
 	{tag: '@LPD-46482'},
-	async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+	async ({
+		apiHelpers,
+		localizationSelectPage,
+		page,
+		pageEditorPage,
+		pageManagementSite,
+	}) => {
 
 		// Create object definition
 
@@ -1213,10 +1465,10 @@ test(
 							} as any,
 							{
 								name: 'fileSource',
-								value: 'userComputer',
+								value: 'userComputerToDocumentsAndMedia',
 							} as any,
 							{
-								name: 'showFilesInDocumentsAndMedia',
+								name: 'showFilesInLibrary',
 								value: false,
 							} as any,
 						],
@@ -1326,15 +1578,7 @@ test(
 
 		// Change the translation to spanish and remove the files
 
-		const trigger = page.getByLabel('Select a language, current language:');
-
-		await trigger.waitFor();
-
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option').filter({hasText: 'es-ES'}),
-			trigger,
-		});
+		await localizationSelectPage.switchLanguage('es-ES');
 
 		await firstFileUploadFragment.getByTitle('Remove Item').click();
 
@@ -1350,13 +1594,7 @@ test(
 
 		// Check that the translations are kept properly
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option', {
-				name: 'English (United States) Language',
-			}),
-			trigger,
-		});
+		await localizationSelectPage.switchLanguage('en-US');
 
 		await expect(
 			firstFileUploadFragment.getByText('file_upload_image_1.jpg')
@@ -1366,11 +1604,7 @@ test(
 			secondFileUploadFragment.getByText('balinese.jpg')
 		).toBeVisible();
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option').filter({hasText: 'es-ES'}),
-			trigger,
-		});
+		await localizationSelectPage.switchLanguage('es-ES');
 
 		await expect(
 			firstFileUploadFragment.getByText('file_upload_image_1.jpg')
@@ -1380,11 +1614,7 @@ test(
 			secondFileUploadFragment.getByText('balinese.jpg')
 		).not.toBeVisible();
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option').filter({hasText: 'ca-ES'}),
-			trigger,
-		});
+		await localizationSelectPage.switchLanguage('ca-ES');
 
 		await expect(
 			firstFileUploadFragment.getByText('file_upload_image_1.jpg')
@@ -1399,7 +1629,13 @@ test(
 test(
 	'Translate an upload field to a language and check that the default language is empty',
 	{tag: '@LPD-46482'},
-	async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+	async ({
+		apiHelpers,
+		localizationSelectPage,
+		page,
+		pageEditorPage,
+		pageManagementSite,
+	}) => {
 
 		// Create object definition
 
@@ -1437,10 +1673,10 @@ test(
 							} as any,
 							{
 								name: 'fileSource',
-								value: 'userComputer',
+								value: 'userComputerToDocumentsAndMedia',
 							} as any,
 							{
-								name: 'showFilesInDocumentsAndMedia',
+								name: 'showFilesInLibrary',
 								value: false,
 							} as any,
 						],
@@ -1518,15 +1754,7 @@ test(
 
 		// Change the translation to spanish
 
-		const trigger = page.getByLabel('Select a language, current language:');
-
-		await trigger.waitFor();
-
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option').filter({hasText: 'es-ES'}),
-			trigger,
-		});
+		await localizationSelectPage.switchLanguage('es-ES');
 
 		// Select file from computer in spanish
 
@@ -1570,13 +1798,7 @@ test(
 
 		// Check that the translations in the default language are empty
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option', {
-				name: 'English (United States) Language',
-			}),
-			trigger,
-		});
+		await localizationSelectPage.switchLanguage('en-US');
 
 		await expect(
 			firstFileUploadFragment.getByText('file_upload_image_1.jpg')
@@ -1640,6 +1862,11 @@ test(
 
 		const listTypeDefinition =
 			await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+		apiHelpers.data.push({
+			id: listTypeDefinition.id,
+			type: 'listTypeDefinition',
+		});
 
 		for (const option of ['Spain', 'Italy']) {
 			await apiHelpers.listTypeAdmin.postListTypeEntry({
@@ -1863,6 +2090,18 @@ test(
 
 		await pageEditorPage.mapFormFragment(formId, 'Plant', 'all', {
 			addLocalizationSelect: true,
+		});
+
+		// Swap to Multiselector Checkbox fragment
+
+		const fragmentId = await pageEditorPage.getFragmentId(
+			'Multiselector Dropdown'
+		);
+
+		await pageEditorPage.swapFragment({
+			folder: 'Form Components',
+			fragmentId,
+			fragmentName: 'Multiselector Checkbox',
 		});
 
 		await pageEditorPage.publishPage();
@@ -2118,6 +2357,7 @@ test(
 	async ({
 		apiHelpers,
 		displayPageTemplatesPage,
+		localizationSelectPage,
 		page,
 		pageEditorPage,
 		site,
@@ -2138,19 +2378,6 @@ test(
 				},
 				name: 'TranslationFieldsGroup',
 				objectFields: [
-					{
-						DBType: 'Clob',
-						businessType: 'RichText',
-						externalReferenceCode: 'richTextERC',
-						indexed: true,
-						indexedAsKeyword: false,
-						label: {
-							en_US: 'Rich Text',
-						},
-						localized: true,
-						name: 'richText',
-						required: false,
-					},
 					{
 						DBType: 'Clob',
 						businessType: 'LongText',
@@ -2217,10 +2444,6 @@ test(
 					en_US: 'long text english',
 					es_ES: 'long text spanish',
 				},
-				richText_i18n: {
-					en_US: 'rich text english',
-					es_ES: 'rich text spanish',
-				},
 				text_i18n: {
 					en_US: 'text english',
 					es_ES: 'text spanish',
@@ -2241,7 +2464,6 @@ test(
 		await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
 			{
 				classNameId: className.classNameId,
-				classTypeId: '0',
 				groupId: site.id,
 				name: displayPageTemplateName,
 			}
@@ -2268,9 +2490,15 @@ test(
 
 		// Go to the object display page
 
-		await page.goto(
-			`/web${site.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
-		);
+		await expect(async () => {
+			await page.goto('/');
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
+			);
+
+			await localizationSelectPage.trigger.waitFor({timeout: 8000});
+		}).toPass();
 
 		// Assert that translation is displayed correctly
 
@@ -2281,8 +2509,6 @@ test(
 			name: 'Long Text',
 		});
 
-		const richTextField = page.locator('.ck-editor__editable');
-
 		const textField = page.getByRole('textbox', {
 			exact: true,
 			name: 'Text',
@@ -2291,10 +2517,6 @@ test(
 		await expect(checkboxField).toBeChecked();
 
 		await expect(longTextField).toHaveValue('long text english');
-
-		await expect(
-			richTextField.getByText('rich text english')
-		).toBeVisible();
 
 		await expect(textField).toHaveValue('text english');
 
@@ -2306,23 +2528,13 @@ test(
 
 		await textField.fill('text english 1');
 
-		await richTextField.fill('rich text english 1');
-
 		// Assert spanish translation is correct
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option').filter({hasText: 'es-ES'}),
-			trigger: page.getByLabel('Select a language, current language:'),
-		});
+		await localizationSelectPage.switchLanguage('es-ES');
 
 		await expect(checkboxField).not.toBeChecked();
 
 		await expect(longTextField).toHaveValue('long text spanish');
-
-		await expect(
-			richTextField.getByText('rich text spanish')
-		).toBeVisible();
 
 		await expect(textField).toHaveValue('text spanish');
 
@@ -2333,8 +2545,6 @@ test(
 		await longTextField.fill('long text spanish 1');
 
 		await textField.fill('text spanish 1');
-
-		await richTextField.fill('rich text spanish 1');
 
 		// Edit the object
 
@@ -2372,10 +2582,6 @@ test(
 
 		await expect(page.getByText('long text english 1')).toBeVisible();
 
-		await expect(
-			richTextField.getByText('rich text english 1')
-		).toBeVisible();
-
 		await expect(page.locator('input.ddm-field-text')).toHaveValue(
 			'text english 1'
 		);
@@ -2392,10 +2598,6 @@ test(
 
 		await expect(page.getByText('long text spanish 1')).toBeVisible();
 
-		await expect(
-			richTextField.getByText('rich text spanish 1')
-		).toBeVisible();
-
 		await expect(page.locator('input.ddm-field-text')).toHaveValue(
 			'text spanish 1'
 		);
@@ -2411,6 +2613,11 @@ test(
 
 		const listTypeDefinition =
 			await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+		apiHelpers.data.push({
+			id: listTypeDefinition.id,
+			type: 'listTypeDefinition',
+		});
 
 		for (const option of ['Spain', 'Italy']) {
 			await apiHelpers.listTypeAdmin.postListTypeEntry({

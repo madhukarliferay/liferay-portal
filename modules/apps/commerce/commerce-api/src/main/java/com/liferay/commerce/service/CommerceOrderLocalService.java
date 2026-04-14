@@ -533,6 +533,7 @@ public interface CommerceOrderLocalService
 	public long searchCommerceOrdersCount(SearchContext searchContext)
 		throws PortalException;
 
+	@Indexable(type = IndexableType.REINDEX)
 	public CommerceOrder updateAccount(
 			long commerceOrderId, long userId, long commerceAccountId)
 		throws PortalException;
@@ -783,3 +784,4 @@ public interface CommerceOrderLocalService
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-368619044

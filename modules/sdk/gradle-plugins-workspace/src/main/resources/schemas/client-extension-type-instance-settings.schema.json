@@ -139,6 +139,33 @@
 		},
 		{
 			"properties": {
+				"clientId": {
+					"title": "Client ID",
+					"type": "string"
+				},
+				"clientSecret": {
+					"title": "Client Secret",
+					"type": "string"
+				},
+				"pid": {
+					"const": "com.liferay.ai.hub.cell.configuration.AIHubCellConfiguration",
+					"title": "AI Hub Configuration"
+				},
+				"serviceURL": {
+					"title": "Service URL",
+					"type": "string"
+				}
+			},
+			"required": [
+				"pid",
+				"clientId",
+				"clientSecret",
+				"serviceURL"
+			],
+			"title": "AI Hub Configuration"
+		},
+		{
+			"properties": {
 				"commerceSyncEnabledAnalyticsChannelIds": {
 					"items": {
 						"type": "string"
@@ -159,6 +186,9 @@
 					"type": "string"
 				},
 				"liferayAnalyticsConnectionType": {
+					"type": "string"
+				},
+				"liferayAnalyticsCredentialType": {
 					"type": "string"
 				},
 				"liferayAnalyticsDataSourceId": {
@@ -774,7 +804,7 @@
 				},
 				"unapprovedChangesAllowed": {
 					"default": false,
-					"title": "Allow Unapproved Changes",
+					"title": "Allow Publishing Unapproved Changes",
 					"type": "boolean"
 				}
 			},
@@ -1638,13 +1668,13 @@
 		{
 			"properties": {
 				"cacheControl": {
-					"default": "private, no-cache, no-store, must-revalidate",
+					"default": "must-revalidate",
 					"description": "Set the cache control policy for documents with view permissions for guests.",
 					"title": "Cache Control",
 					"type": "string"
 				},
 				"maxAge": {
-					"default": 0,
+					"default": 600,
 					"description": "Set the number of seconds after a response is generated in which a response will be considered fresh.",
 					"title": "Max Age",
 					"type": "number"
@@ -1996,16 +2026,28 @@
 		},
 		{
 			"properties": {
+				"cachingStrategy": {
+					"default": "do-not-use-hashes",
+					"description": "Set the balance between caching span and size of the import maps (which affect the size of the page's HTML). If you decide not to use hashes, the import maps will be smaller but the caching span will be limited. On the other hand, if you use one hash per file, the import maps will be bigger but files will be infinitely cacheable.",
+					"title": "Caching Strategy",
+					"type": "string"
+				},
 				"cssStyleSheetsMaxAge": {
 					"default": 86400,
-					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for CSS style sheets.",
+					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for mutable CSS style sheets.",
 					"title": "CSS Style Sheets Max Age Directive Value",
 					"type": "number"
 				},
-				"esModulesMaxAge": {
+				"jsFilesMaxAge": {
 					"default": 86400,
-					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for ES modules.",
-					"title": "ES Modules Max Age Directive Value",
+					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for mutable JavaScript files.",
+					"title": "JavaScript Files Max Age Directive Value",
+					"type": "number"
+				},
+				"labelsModulesMaxAge": {
+					"default": 3600,
+					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for labels modules.",
+					"title": "Labels Modules Max Age Directive Value",
 					"type": "number"
 				},
 				"pid": {
@@ -2015,20 +2057,68 @@
 				"sendNoCacheForCSSStyleSheets": {
 					"default": false,
 					"description": "If checked, a \"no-cache\" directive (instead of \"must-revalidate\") will be sent in the \"Cache-Control\" header for CSS style sheets.",
-					"title": "Send No Cache Directive For CSS Style Sheets",
+					"title": "Send No Cache Directive for CSS Style Sheets",
 					"type": "boolean"
 				},
-				"sendNoCacheForESModules": {
+				"sendNoCacheForJSFiles": {
 					"default": false,
-					"description": "If checked, a \"no-cache\" directive (instead of \"must-revalidate\") will be sent in the \"Cache-Control\" header for ES modules.",
-					"title": "Send No Cache Directive For ES Modules",
+					"description": "If checked, a \"no-cache\" directive (instead of \"must-revalidate\") will be sent in the \"Cache-Control\" header for JavaScript files.",
+					"title": "Send No Cache Directive for JavaScript Files",
 					"type": "boolean"
+				},
+				"sendNoCacheForLabelsModules": {
+					"default": false,
+					"description": "If checked, a \"no-cache\" directive (instead of \"must-revalidate\") will be sent in the \"Cache-Control\" header for labels modules.",
+					"title": "Send No Cache Directive for Labels Modules",
+					"type": "boolean"
+				},
+				"sendNoCacheForTokenizedCSSStyleSheets": {
+					"default": false,
+					"description": "If checked, a \"no-cache\" directive (instead of \"must-revalidate\") will be sent in the \"Cache-Control\" header for CSS style sheets that contain tokens (e.g. \"@theme_image_path@\").",
+					"title": "Send No Cache Directive for Tokenized CSS Style Sheets",
+					"type": "boolean"
+				},
+				"sendNoCacheForTranslatedJSFiles": {
+					"default": false,
+					"description": "If checked, a \"no-cache\" directive (instead of \"must-revalidate\") will be sent in the \"Cache-Control\" header for translated JavaScript files (those that contain invocations to \"Liferay.Language.get()\" and do not have an associated language.json file).",
+					"title": "Send No Cache Directive for Translated JavaScript Files",
+					"type": "boolean"
+				},
+				"tokenizedCSSStyleSheetsMaxAge": {
+					"default": 86400,
+					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for CSS style sheets that contain tokens (e.g. \"@theme_image_path@\").",
+					"title": "Tokenized CSS Style Sheets Max Age Directive Value",
+					"type": "number"
+				},
+				"translatedJSFilesMaxAge": {
+					"default": 3600,
+					"description": "Set the value of the \"max-age\" directive in the \"Cache-Control\" header for translated JavaScript files for translated JavaScript files (those that contain invocations to \"Liferay.Language.get()\" and do not have an associated language.json file).",
+					"title": "Translated JavaScript Files Max Age Directive Value",
+					"type": "number"
 				}
 			},
 			"required": [
 				"pid"
 			],
 			"title": "Frontend Caching"
+		},
+		{
+			"properties": {
+				"disableGetRemoteMethods": {
+					"default": false,
+					"description": "If checked, the methods getRemoteAddr() and getRemoteHost() will be undefined within the Liferay.ThemeDisplay global object. This configuration is primarily implemented to mitigate privacy risks by avoiding the exposure of client IP/host information and to optimize performance by allowing public caching of pages for unauthenticated users. Note that checking this option will make custom code that relies on these methods fail.",
+					"title": "Disable getRemoteAddr() and getRemoteHost() Methods",
+					"type": "boolean"
+				},
+				"pid": {
+					"const": "com.liferay.frontend.js.web.internal.configuration.LiferayGlobalObjectConfiguration",
+					"title": "Liferay Global Object"
+				}
+			},
+			"required": [
+				"pid"
+			],
+			"title": "Liferay Global Object"
 		},
 		{
 			"properties": {
@@ -2274,7 +2364,7 @@
 			"title": "SEO"
 		},
 		{
-			"description": "Configure when automatic propagation is triggered for site templates.",
+			"description": "Site Templates Configuration",
 			"properties": {
 				"cancelPropagationImportTask": {
 					"default": true,
@@ -2284,14 +2374,8 @@
 				},
 				"pid": {
 					"const": "com.liferay.layout.set.prototype.configuration.LayoutSetPrototypeConfiguration",
-					"description": "Configure when automatic propagation is triggered for site templates.",
+					"description": "Site Templates Configuration",
 					"title": "Site Templates"
-				},
-				"triggerPropagation": {
-					"default": false,
-					"description": "If unchecked, changes are propagated to sites individually when they are first visited by a user. If checked, enabling propagation in a template also triggers propagation for all connected sites simultaneously.",
-					"title": "Trigger Propagation",
-					"type": "boolean"
 				}
 			},
 			"required": [
@@ -2342,6 +2426,84 @@
 				"tenantId"
 			],
 			"title": "Outlook Auth Connector"
+		},
+		{
+			"properties": {
+				"additionalJavaMailProperties": {
+					"default": "",
+					"description": "Manually specify additional JavaMail properties to override the existing configuration.",
+					"title": "Additional Java Mail Properties",
+					"type": "string"
+				},
+				"enablePOPServerNotifications": {
+					"default": false,
+					"title": "Enable POP Server Notifications",
+					"type": "boolean"
+				},
+				"enableStartTLS": {
+					"default": true,
+					"title": "Enable StartTLS",
+					"type": "boolean"
+				},
+				"incomingPOPPort": {
+					"default": "110",
+					"title": "Incoming Port",
+					"type": "string"
+				},
+				"incomingPOPServer": {
+					"default": "localhost",
+					"title": "Incoming POP Server",
+					"type": "string"
+				},
+				"outgoingSMTPPort": {
+					"default": "25",
+					"title": "Outgoing Port",
+					"type": "string"
+				},
+				"outgoingSMTPServer": {
+					"default": "localhost",
+					"title": "Outgoing SMTP Server",
+					"type": "string"
+				},
+				"pid": {
+					"const": "com.liferay.mail.settings.configuration.MailSettingCompanyConfiguration",
+					"title": "Mail Settings"
+				},
+				"popPassword": {
+					"default": "",
+					"title": "POP Password",
+					"type": "string"
+				},
+				"popUserName": {
+					"default": "",
+					"title": "POP User Name",
+					"type": "string"
+				},
+				"smtpPassword": {
+					"default": "",
+					"title": "SMTP Password",
+					"type": "string"
+				},
+				"smtpUserName": {
+					"default": "",
+					"title": "SMTP User Name",
+					"type": "string"
+				},
+				"storeProtocol": {
+					"default": "pop3",
+					"title": "Store Protocol",
+					"type": "string"
+				},
+				"transportProtocol": {
+					"default": "smtp",
+					"title": "Transport Protocol",
+					"type": "string"
+				}
+			},
+			"required": [
+				"pid"
+			],
+			"title": "Mail Settings"
 		},
 		{
 			"properties": {
@@ -2731,35 +2893,7 @@
 					"default": "",
 					"type": "string"
 				},
-				"helpCenterApiPassword": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterApiUserName": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterFileRepoId": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterFileRepoURL": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterGetAccountApiEndpoint": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterJsonwsURL": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterTicketAttachmentApiEndpoint": {
-					"default": "",
-					"type": "string"
-				},
-				"helpCenterTokenTicketDir": {
+				"googleCloudHotfixBucket": {
 					"default": "",
 					"type": "string"
 				},
@@ -2842,10 +2976,6 @@
 					"default": "",
 					"type": "string"
 				},
-				"patcherPubsubCredentialFilePath": {
-					"default": "",
-					"type": "string"
-				},
 				"patcherPubsubProjectId": {
 					"default": "",
 					"type": "string"
@@ -2892,6 +3022,30 @@
 				},
 				"pid": {
 					"const": "com.liferay.osb.patcher.configuration.PatcherConfiguration"
+				},
+				"supportLiferayAPIClientId": {
+					"default": "",
+					"type": "string"
+				},
+				"supportLiferayAPIClientSecret": {
+					"default": "",
+					"type": "string"
+				},
+				"supportLiferayAccountSearchAPIEndpoint": {
+					"default": "",
+					"type": "string"
+				},
+				"supportLiferayLFUURL": {
+					"default": "",
+					"type": "string"
+				},
+				"supportLiferayTicketAttachmentAPIEndpoint": {
+					"default": "",
+					"type": "string"
+				},
+				"supportLiferayURL": {
+					"default": "",
+					"type": "string"
 				},
 				"troubleshootingURL": {
 					"default": "",
@@ -3175,12 +3329,12 @@
 			"title": "Portal Cross-Origin Resource Sharing (CORS)"
 		},
 		{
-			"description": "Configure third party providers and other settings to index and search text embeddings. Semantic Search is a beta feature: enable it in Instance Settings > Feature Flags.",
+			"description": "Configure third party providers and other settings to index and search text embeddings. You can enable additional providers for Semantic Search in Instance Settings > Feature Flags > Beta.",
 			"properties": {
 				"pid": {
 					"const": "com.liferay.portal.search.configuration.SemanticSearchConfiguration",
-					"description": "Configure third party providers and other settings to index and search text embeddings. Semantic Search is a beta feature: enable it in Instance Settings > Feature Flags.",
-					"title": "Semantic Search (Beta)"
+					"description": "Configure third party providers and other settings to index and search text embeddings. You can enable additional providers for Semantic Search in Instance Settings > Feature Flags > Beta.",
+					"title": "Semantic Search"
 				},
 				"textEmbeddingCacheTimeout": {
 					"default": 604800,
@@ -3204,7 +3358,7 @@
 			"required": [
 				"pid"
 			],
-			"title": "Semantic Search (Beta)"
+			"title": "Semantic Search"
 		},
 		{
 			"properties": {
@@ -3215,7 +3369,7 @@
 					"type": "boolean"
 				},
 				"pid": {
-					"const": "com.liferay.portal.search.elasticsearch7.configuration.DeepPaginationConfiguration",
+					"const": "com.liferay.portal.search.elasticsearch8.configuration.DeepPaginationConfiguration",
 					"title": "Deep Pagination Configuration"
 				},
 				"pointInTimeKeepAliveSeconds": {
@@ -3798,7 +3952,7 @@
 		},
 		{
 			"properties": {
-				"authorizationEndPoint": {
+				"authorizationEndpoint": {
 					"default": "",
 					"description": "Set the authorization endpoint for the OpenID Connect provider.",
 					"title": "Authorization Endpoint",
@@ -3813,6 +3967,15 @@
 					"title": "Custom Authorization Request Parameters",
 					"type": "array"
 				},
+				"customClaims": {
+					"default": "",
+					"description": "Map the custom claims from the OpenId Connect provider to custom fields.",
+					"items": {
+						"type": "string"
+					},
+					"title": "Custom Claims",
+					"type": "array"
+				},
 				"customTokenRequestParameters": {
 					"default": "",
 					"description": "Add custom token request parameters, e.g.: resource=https://contacts.google.com https://maps.google.com",
@@ -3822,13 +3985,13 @@
 					"title": "Custom Token Request Parameters",
 					"type": "array"
 				},
-				"discoveryEndPoint": {
+				"discoveryEndpoint": {
 					"default": "",
 					"description": "Set the discovery endpoint for the OpenID Connect provider. If this is set, manually set endpoints will be ignored.",
 					"title": "Discovery Endpoint",
 					"type": "string"
 				},
-				"discoveryEndPointCacheInMillis": {
+				"discoveryEndpointCacheInMillis": {
 					"default": 360000,
 					"description": "Discovery endpoint metadata will be cached on this interval in milliseconds. If set to 0, Ehcache's default time to live value of 600 seconds will be used.",
 					"title": "Discovery Endpoint Cache in Milliseconds",
@@ -3853,6 +4016,12 @@
 					"default": "",
 					"description": "Set the JWKS URI for the OpenID Connect provider.",
 					"title": "JWKS URI",
+					"type": "string"
+				},
+				"matcherField": {
+					"default": "email",
+					"description": "The \"sub\" claim is the primary user matcher. If matching fails, the configured matcher field is used as a fallback.",
+					"title": "Matcher Field",
 					"type": "string"
 				},
 				"openIdConnectClientId": {
@@ -3904,13 +4073,13 @@
 					"title": "Token Connection Timeout in Milliseconds",
 					"type": "number"
 				},
-				"tokenEndPoint": {
+				"tokenEndpoint": {
 					"default": "",
 					"description": "Set the token endpoint for the OpenID Connect provider.",
 					"title": "Token Endpoint",
 					"type": "string"
 				},
-				"userInfoEndPoint": {
+				"userInfoEndpoint": {
 					"default": "",
 					"description": "Set the user information endpoint for the OpenID Connect provider.",
 					"title": "User Information Endpoint",
@@ -3919,6 +4088,7 @@
 			},
 			"required": [
 				"pid",
+				"matcherField",
 				"openIdConnectClientId",
 				"openIdConnectClientSecret",
 				"providerName",
@@ -3981,24 +4151,6 @@
 				"path"
 			],
 			"title": "Headless API Endpoint"
-		},
-		{
-			"properties": {
-				"enableApplicationsMenu": {
-					"default": true,
-					"description": "When enabled, the control panel applications and cross-site applications will be accessible through the new applications menu which can be accessed by clicking the grid menu icon in the upper-right corner.",
-					"title": "Enable Applications Menu",
-					"type": "boolean"
-				},
-				"pid": {
-					"const": "com.liferay.product.navigation.applications.menu.configuration.ApplicationsMenuInstanceConfiguration",
-					"title": "Applications Menu"
-				}
-			},
-			"required": [
-				"pid"
-			],
-			"title": "Applications Menu"
 		},
 		{
 			"properties": {
@@ -4342,14 +4494,6 @@
 		},
 		{
 			"properties": {
-				"authorizationGrantEndpoint": {
-					"title": "Authorization Grant Endpoint",
-					"type": "string"
-				},
-				"authorizationTokenEndpoint": {
-					"title": "Authorization Token Endpoint",
-					"type": "string"
-				},
 				"clientId": {
 					"title": "Client ID",
 					"type": "string"
@@ -4366,16 +4510,8 @@
 					"const": "com.liferay.sharepoint.rest.repository.internal.configuration.SharepointRepositoryConfiguration",
 					"title": "Sharepoint OAuth2"
 				},
-				"resource": {
-					"title": "Resource",
-					"type": "string"
-				},
 				"scope": {
 					"title": "Scope",
-					"type": "string"
-				},
-				"siteDomain": {
-					"title": "Site Domain",
 					"type": "string"
 				},
 				"tenantId": {
@@ -4404,6 +4540,25 @@
 				"pid"
 			],
 			"title": "Sharing"
+		},
+		{
+			"properties": {
+				"checkInterval": {
+					"default": 15,
+					"description": "Set the check interval in minutes.",
+					"min": 1,
+					"title": "Check Interval",
+					"type": "number"
+				},
+				"pid": {
+					"const": "com.liferay.site.cms.site.initializer.configuration.BulkActionTaskConfiguration",
+					"title": "Bulk Action Task Configuration"
+				}
+			},
+			"required": [
+				"pid"
+			],
+			"title": "Bulk Action Task Configuration"
 		},
 		{
 			"properties": {
@@ -4477,18 +4632,6 @@
 					"const": "com.liferay.staging.configuration.StagingConfiguration",
 					"description": "The settings in this configuration let you control the staging process.",
 					"title": "Staging"
-				},
-				"publishDisplayedContent": {
-					"default": false,
-					"description": "If checked, the displayed content will be published to Live for Dynamic Data Lists Display, Form, Web Content Display and Wiki Display. These widgets will publish the displayed content to Live independently of the Publish Process settings. For example, a Web Content Display will publish the Web Content even if Web Contents were not selected on the Publish Process screen. This can be useful to make sure that Staging and Live display the same content. However, in most cases the content is already available in Live and publishing it again can slow down the process unnecessarily. Uncheck to not publish the displayed content.",
-					"title": "Publish Displayed Content by Default",
-					"type": "boolean"
-				},
-				"publishParentLayoutsByDefault": {
-					"default": true,
-					"description": "If checked, parent pages are always published to live.",
-					"title": "Publish Parent Pages by Default",
-					"type": "boolean"
 				},
 				"stagingDeleteTempLAROnFailure": {
 					"default": true,
@@ -4660,7 +4803,7 @@
 				"imageDefaultUseInitials": {
 					"default": true,
 					"description": "Enable to set the user's initials as the default user portrait. Otherwise, the default portrait image files will be used. The default portrait image path is set by the \"image.default.user.portrait\" property in portal.properties.",
-					"title": "Use Initials For Default User Portrait",
+					"title": "Use Initials for Default User Portrait",
 					"type": "boolean"
 				},
 				"imageMaxHeight": {
@@ -4700,6 +4843,7 @@
 				"com.liferay.adaptive.media.image.content.transformer.backwards.compatibility.internal.configuration.AMBackwardsCompatibilityHtmlContentTransformerConfiguration",
 				"com.liferay.adaptive.media.image.internal.configuration.AMImageCompanyConfiguration",
 				"com.liferay.ai.creator.openai.configuration.AICreatorOpenAICompanyConfiguration",
+				"com.liferay.ai.hub.cell.configuration.AIHubCellConfiguration",
 				"com.liferay.analytics.settings.configuration.AnalyticsConfiguration",
 				"com.liferay.asset.auto.tagger.google.cloud.natural.language.internal.configuration.GCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration",
 				"com.liferay.asset.auto.tagger.internal.configuration.AssetAutoTaggerCompanyConfiguration",
@@ -4753,6 +4897,7 @@
 				"com.liferay.frontend.js.spa.web.internal.configuration.SPAConfiguration",
 				"com.liferay.frontend.js.web.internal.configuration.CustomDialogsSettingsConfiguration",
 				"com.liferay.frontend.js.web.internal.configuration.FrontendCachingConfiguration",
+				"com.liferay.frontend.js.web.internal.configuration.LiferayGlobalObjectConfiguration",
 				"com.liferay.journal.configuration.JournalServiceConfiguration",
 				"com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration",
 				"com.liferay.layout.locked.layouts.web.internal.configuration.LockedLayoutsCompanyConfiguration",
@@ -4760,6 +4905,7 @@
 				"com.liferay.layout.seo.internal.configuration.LayoutSEOCompanyConfiguration",
 				"com.liferay.layout.set.prototype.configuration.LayoutSetPrototypeConfiguration",
 				"com.liferay.mail.outlook.auth.connector.provider.internal.configuration.MailOutlookAuthConnectorCompanyConfiguration",
+				"com.liferay.mail.settings.configuration.MailSettingCompanyConfiguration",
 				"com.liferay.multi.factor.authentication.email.otp.configuration.MFAEmailOTPConfiguration",
 				"com.liferay.multi.factor.authentication.fido2.web.internal.configuration.MFAFIDO2Configuration",
 				"com.liferay.multi.factor.authentication.ip.address.internal.configuration.MFAIPAddressConfiguration",
@@ -4777,7 +4923,7 @@
 				"com.liferay.portal.defaultpermissions.configuration.PortalDefaultPermissionsCompanyConfiguration",
 				"com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration",
 				"com.liferay.portal.search.configuration.SemanticSearchConfiguration",
-				"com.liferay.portal.search.elasticsearch7.configuration.DeepPaginationConfiguration",
+				"com.liferay.portal.search.elasticsearch8.configuration.DeepPaginationConfiguration",
 				"com.liferay.portal.search.internal.configuration.SiteActivityAsahConfiguration",
 				"com.liferay.portal.search.internal.configuration.UserActivityAsahConfiguration",
 				"com.liferay.portal.search.opensearch2.configuration.DeepPaginationConfiguration",
@@ -4793,7 +4939,6 @@
 				"com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration",
 				"com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration",
 				"com.liferay.portal.vulcan.internal.configuration.VulcanCompanyConfiguration",
-				"com.liferay.product.navigation.applications.menu.configuration.ApplicationsMenuInstanceConfiguration",
 				"com.liferay.product.navigation.personal.menu.configuration.PersonalMenuConfiguration",
 				"com.liferay.redirect.internal.configuration.RedirectURLConfiguration",
 				"com.liferay.saml.runtime.configuration.SamlProviderConfiguration",
@@ -4804,6 +4949,7 @@
 				"com.liferay.segments.context.vocabulary.internal.configuration.SegmentsContextVocabularyCompanyConfiguration",
 				"com.liferay.sharepoint.rest.repository.internal.configuration.SharepointRepositoryConfiguration",
 				"com.liferay.sharing.internal.configuration.SharingCompanyConfiguration",
+				"com.liferay.site.cms.site.initializer.configuration.BulkActionTaskConfiguration",
 				"com.liferay.site.internal.configuration.SitemapCompanyConfiguration",
 				"com.liferay.social.activity.internal.configuration.SocialActivityCompanyConfiguration",
 				"com.liferay.staging.configuration.StagingConfiguration",

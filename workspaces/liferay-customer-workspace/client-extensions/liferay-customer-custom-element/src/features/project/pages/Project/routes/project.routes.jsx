@@ -8,10 +8,10 @@ import {useEffect, useMemo, useState} from 'react';
 import {HashRouter, Route, Routes} from 'react-router-dom';
 import {useAppPropertiesContext} from '~/contexts/AppPropertiesContext';
 import getKebabCase from '~/utils/getKebabCase';
+import {useAppContext} from '~/features/project/context';
 import BusinessEventAdd from '~/features/project/pages/Project/BusinessEvents/pages/BusinessEventsAdd';
 import DeactivateKeysTable from '~/features/project/containers/DeactivateKeysTable';
 import GenerateNewKey from '~/features/project/containers/GenerateNewKey';
-import {useAppContext} from '~/features/project/context';
 import {actionTypes} from '~/features/project/context/reducer';
 import Layout from '~/features/project/layouts/BaseLayout';
 import {PRODUCT_TYPES} from '~/features/project/utils/constants';
@@ -20,6 +20,7 @@ import Commerce from '../ActivationKeys/Commerce';
 import EnterpriseSearch from '../ActivationKeys/EnterpriseSearch';
 import AnalyticsCloud from '../AnalyticsCloud';
 import Attachments from '../Attachments';
+import CloudNative from '../CloudNative';
 import DXP from '../DXP';
 import DXPCloud from '../DXPCloud';
 import LiferayExperienceCloud from '../LiferayExperienceCloud';
@@ -41,7 +42,10 @@ import BusinessEventsItemEdit from '../BusinessEvents/pages/BusinessEventsItem/B
 const ProjectRoutes = () => {
 	const [hasComplimentaryKey, setHasComplimentaryKey] = useState(false);
 
-	const [{project, subscriptionGroups}, dispatch] = useAppContext();
+	const [
+		{hasExperienceSubscription, hasLegacySubscription, hasPlanSubscription, project, subscriptionGroups, subscriptions},
+		dispatch,
+	] = useAppContext();
 	const {featureFlags} = useAppPropertiesContext();
 
 	const {data: koroneikiData, loading: koroneikiAccountLoading} =
@@ -51,7 +55,7 @@ const ProjectRoutes = () => {
 
 	if (koroneikiAccount) {
 		const userId = Liferay.ThemeDisplay.getUserId();
-		
+
 		const cookieKey = `CP_LAST_VIEWED_PROJECT_${userId}`;
 		const cookieValue = encodeURIComponent(koroneikiAccount.accountKey);
 		const expires = new Date();
@@ -71,21 +75,33 @@ const ProjectRoutes = () => {
 		}
 	}
 
-	const {data: myUserAccountData} =
+	const {data: myUserAccountData, loading: loggedUserAccountLoading} =
 		useMyUserAccountByAccountExternalReferenceCode(
 			koroneikiAccount?.accountKey,
 			koroneikiAccountLoading
 		);
 	const loggedUserAccount = myUserAccountData?.myUserAccount;
 
-	const hasSaasSubscription = useMemo(
+	const isLoading =
+		koroneikiAccountLoading ||
+		loggedUserAccountLoading ||
+		subscriptions === undefined;
+
+	const isProjectUsageEnabled =
+		(hasPlanSubscription || hasLegacySubscription) &&
+		  (featureFlags.includes('LRSD-6322') ||
+		  	loggedUserAccount?.isLiferayStaff ||
+		  	loggedUserAccount?.isPartner) ||
+		hasExperienceSubscription &&
+		  (featureFlags.includes('LRSD-12003') ||
+			  loggedUserAccount?.isLiferayStaff);
+
+	const hasSLASubscription = useMemo(
 		() =>
-			subscriptionGroups?.some(
-				(subscription) =>
-					subscription.externalReferenceCode ===
-					`${project?.externalReferenceCode}_liferay-saas`
-			),
-		[subscriptionGroups]
+			koroneikiAccount?.slaCurrent ||
+			koroneikiAccount?.slaExpired ||
+			koroneikiAccount?.slaFuture,
+		[koroneikiAccount]
 	);
 
 	useEffect(() => {
@@ -142,17 +158,15 @@ const ProjectRoutes = () => {
 								path="new"
 							/>
 
-							{featureFlags.includes('LPS-186175') && (
-								<Route
-									element={
-										<DeactivateKeysTable
-											initialFilter="startswith(productName,'Portal')"
-											productName={PRODUCT_TYPES.portal}
-										/>
-									}
-									path="deactivate"
-								/>
-							)}
+							<Route
+								element={
+									<DeactivateKeysTable
+										initialFilter="startswith(productName,'Portal')"
+										productName={PRODUCT_TYPES.portal}
+									/>
+								}
+								path="deactivate"
+							/>
 
 							<Route
 								element={
@@ -265,6 +279,23 @@ const ProjectRoutes = () => {
 						<Route
 							element={
 								<ProductOutlet
+									product={
+										PRODUCT_TYPES.cloudNative
+									}
+								/>
+							}
+						>
+							<Route
+								element={<CloudNative />}
+								path={getKebabCase(
+									PRODUCT_TYPES.cloudNative
+								)}
+							/>
+						</Route>
+
+						<Route
+							element={
+								<ProductOutlet
 									product={PRODUCT_TYPES.commerce}
 								/>
 							}
@@ -285,13 +316,11 @@ const ProjectRoutes = () => {
 						</Route>
 					</Route>
 
-					{featureFlags.includes('ISSD-119') && (
-						<Route element={<Attachments />} path="attachments" />
-					)}
+					<Route element={<Attachments />} path="attachments" />
 
 					<Route element={<TeamMembers />} path="team-members" />
-					
-					{featureFlags.includes('LRSD-5119') && (
+
+					{hasSLASubscription && (
 						<Route path="business-events">
 							<Route element={<BusinessEvents />} index />
 							<Route element={<BusinessEventAdd />} path="new"/>
@@ -303,16 +332,20 @@ const ProjectRoutes = () => {
 						</Route>
 					)}
 
-					{((featureFlags.includes('LRSD-6322') && loggedUserAccount?.isLiferayStaff) ||
-						(featureFlags.includes('LRSD-7805') && loggedUserAccount?.isPartner)) &&
-							hasSaasSubscription && (
-								<Route
-									element={<ProjectUsage />}
-									path="project-usage"
-								/>
+					{isProjectUsageEnabled && (
+						<Route element={<ProjectUsage />} path="project-usage" />
 					)}
 
-					<Route element={<h3>Page not found</h3>} path="*" />
+					<Route
+						element={
+							isLoading ? (
+								<ClayLoadingIndicator />
+							) : (
+								<h3>Page not found</h3>
+							)
+						}
+						path="*"
+					/>
 				</Route>
 			</Routes>
 		</HashRouter>

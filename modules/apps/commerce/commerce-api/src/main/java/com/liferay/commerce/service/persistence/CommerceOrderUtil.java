@@ -211,52 +211,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByUuid_Last(
-			String uuid, OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByUuid_Last(
-		String uuid, OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByUuid_PrevAndNext(
-			long commerceOrderId, String uuid,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			commerceOrderId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce orders where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -451,59 +405,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByUuid_C_PrevAndNext(
-			long commerceOrderId, String uuid, long companyId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			commerceOrderId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce orders where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -626,52 +527,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByGroupId_Last(
-			long groupId, OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByGroupId_Last(
-		long groupId, OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where groupId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByGroupId_PrevAndNext(
-			long commerceOrderId, long groupId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			commerceOrderId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce orders that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -718,24 +573,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set of commerce orders that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] filterFindByGroupId_PrevAndNext(
-			long commerceOrderId, long groupId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			commerceOrderId, groupId, orderByComparator);
 	}
 
 	/**
@@ -868,52 +705,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByUserId_Last(
-			long userId, OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByUserId_Last(
-		long userId, OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where userId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByUserId_PrevAndNext(
-			long commerceOrderId, long userId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			commerceOrderId, userId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce orders where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -1037,56 +828,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().fetchByBillingAddressId_First(
 			billingAddressId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where billingAddressId = &#63;.
-	 *
-	 * @param billingAddressId the billing address ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByBillingAddressId_Last(
-			long billingAddressId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByBillingAddressId_Last(
-			billingAddressId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where billingAddressId = &#63;.
-	 *
-	 * @param billingAddressId the billing address ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByBillingAddressId_Last(
-		long billingAddressId,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByBillingAddressId_Last(
-			billingAddressId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where billingAddressId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param billingAddressId the billing address ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByBillingAddressId_PrevAndNext(
-			long commerceOrderId, long billingAddressId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByBillingAddressId_PrevAndNext(
-			commerceOrderId, billingAddressId, orderByComparator);
 	}
 
 	/**
@@ -1216,56 +957,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where commerceAccountId = &#63;.
-	 *
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByCommerceAccountId_Last(
-			long commerceAccountId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByCommerceAccountId_Last(
-			commerceAccountId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where commerceAccountId = &#63;.
-	 *
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByCommerceAccountId_Last(
-		long commerceAccountId,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByCommerceAccountId_Last(
-			commerceAccountId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where commerceAccountId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByCommerceAccountId_PrevAndNext(
-			long commerceOrderId, long commerceAccountId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByCommerceAccountId_PrevAndNext(
-			commerceOrderId, commerceAccountId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce orders where commerceAccountId = &#63; from the database.
 	 *
 	 * @param commerceAccountId the commerce account ID
@@ -1389,56 +1080,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().fetchByShippingAddressId_First(
 			shippingAddressId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where shippingAddressId = &#63;.
-	 *
-	 * @param shippingAddressId the shipping address ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByShippingAddressId_Last(
-			long shippingAddressId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByShippingAddressId_Last(
-			shippingAddressId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where shippingAddressId = &#63;.
-	 *
-	 * @param shippingAddressId the shipping address ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByShippingAddressId_Last(
-		long shippingAddressId,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByShippingAddressId_Last(
-			shippingAddressId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where shippingAddressId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param shippingAddressId the shipping address ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByShippingAddressId_PrevAndNext(
-			long commerceOrderId, long shippingAddressId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByShippingAddressId_PrevAndNext(
-			commerceOrderId, shippingAddressId, orderByComparator);
 	}
 
 	/**
@@ -1575,59 +1216,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and commerceAccountId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByG_C_Last(
-			long groupId, long commerceAccountId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_C_Last(
-			groupId, commerceAccountId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and commerceAccountId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByG_C_Last(
-		long groupId, long commerceAccountId,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByG_C_Last(
-			groupId, commerceAccountId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where groupId = &#63; and commerceAccountId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByG_C_PrevAndNext(
-			long commerceOrderId, long groupId, long commerceAccountId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_C_PrevAndNext(
-			commerceOrderId, groupId, commerceAccountId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce orders that the user has permission to view where groupId = &#63; and commerceAccountId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1680,25 +1268,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().filterFindByG_C(
 			groupId, commerceAccountId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set of commerce orders that the user has permission to view where groupId = &#63; and commerceAccountId = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] filterFindByG_C_PrevAndNext(
-			long commerceOrderId, long groupId, long commerceAccountId,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().filterFindByG_C_PrevAndNext(
-			commerceOrderId, groupId, commerceAccountId, orderByComparator);
 	}
 
 	/**
@@ -1848,60 +1417,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and commercePaymentMethodKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param commercePaymentMethodKey the commerce payment method key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByG_CP_Last(
-			long groupId, String commercePaymentMethodKey,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_CP_Last(
-			groupId, commercePaymentMethodKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and commercePaymentMethodKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param commercePaymentMethodKey the commerce payment method key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByG_CP_Last(
-		long groupId, String commercePaymentMethodKey,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByG_CP_Last(
-			groupId, commercePaymentMethodKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where groupId = &#63; and commercePaymentMethodKey = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param commercePaymentMethodKey the commerce payment method key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByG_CP_PrevAndNext(
-			long commerceOrderId, long groupId, String commercePaymentMethodKey,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_CP_PrevAndNext(
-			commerceOrderId, groupId, commercePaymentMethodKey,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce orders that the user has permission to view where groupId = &#63; and commercePaymentMethodKey = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1955,26 +1470,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().filterFindByG_CP(
 			groupId, commercePaymentMethodKey, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set of commerce orders that the user has permission to view where groupId = &#63; and commercePaymentMethodKey = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param commercePaymentMethodKey the commerce payment method key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] filterFindByG_CP_PrevAndNext(
-			long commerceOrderId, long groupId, String commercePaymentMethodKey,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().filterFindByG_CP_PrevAndNext(
-			commerceOrderId, groupId, commercePaymentMethodKey,
-			orderByComparator);
 	}
 
 	/**
@@ -2137,62 +1632,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and userId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByG_U_O_Last(
-			long groupId, long userId, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_U_O_Last(
-			groupId, userId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and userId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByG_U_O_Last(
-		long groupId, long userId, int orderStatus,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByG_U_O_Last(
-			groupId, userId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where groupId = &#63; and userId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByG_U_O_PrevAndNext(
-			long commerceOrderId, long groupId, long userId, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_U_O_PrevAndNext(
-			commerceOrderId, groupId, userId, orderStatus, orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce orders that the user has permission to view where groupId = &#63; and userId = &#63; and orderStatus = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2248,26 +1687,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().filterFindByG_U_O(
 			groupId, userId, orderStatus, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set of commerce orders that the user has permission to view where groupId = &#63; and userId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] filterFindByG_U_O_PrevAndNext(
-			long commerceOrderId, long groupId, long userId, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().filterFindByG_U_O_PrevAndNext(
-			commerceOrderId, groupId, userId, orderStatus, orderByComparator);
 	}
 
 	/**
@@ -2434,63 +1853,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByG_C_O_Last(
-			long groupId, long commerceAccountId, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_C_O_Last(
-			groupId, commerceAccountId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where groupId = &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByG_C_O_Last(
-		long groupId, long commerceAccountId, int orderStatus,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByG_C_O_Last(
-			groupId, commerceAccountId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where groupId = &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByG_C_O_PrevAndNext(
-			long commerceOrderId, long groupId, long commerceAccountId,
-			int orderStatus, OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByG_C_O_PrevAndNext(
-			commerceOrderId, groupId, commerceAccountId, orderStatus,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce orders that the user has permission to view where groupId = &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2548,27 +1910,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().filterFindByG_C_O(
 			groupId, commerceAccountId, orderStatus, start, end,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set of commerce orders that the user has permission to view where groupId = &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param groupId the group ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] filterFindByG_C_O_PrevAndNext(
-			long commerceOrderId, long groupId, long commerceAccountId,
-			int orderStatus, OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().filterFindByG_C_O_PrevAndNext(
-			commerceOrderId, groupId, commerceAccountId, orderStatus,
 			orderByComparator);
 	}
 
@@ -2736,63 +2077,6 @@ public class CommerceOrderUtil {
 	}
 
 	/**
-	 * Returns the last commerce order in the ordered set where userId = &#63; and createDate &lt; &#63; and orderStatus = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByU_LtC_O_Last(
-			long userId, Date createDate, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByU_LtC_O_Last(
-			userId, createDate, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where userId = &#63; and createDate &lt; &#63; and orderStatus = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByU_LtC_O_Last(
-		long userId, Date createDate, int orderStatus,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByU_LtC_O_Last(
-			userId, createDate, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where userId = &#63; and createDate &lt; &#63; and orderStatus = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByU_LtC_O_PrevAndNext(
-			long commerceOrderId, long userId, Date createDate, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByU_LtC_O_PrevAndNext(
-			commerceOrderId, userId, createDate, orderStatus,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce orders where userId = &#63; and createDate &lt; &#63; and orderStatus = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -2940,63 +2224,6 @@ public class CommerceOrderUtil {
 
 		return getPersistence().fetchByC_LtC_O_First(
 			createDate, commerceAccountId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where createDate &lt; &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order
-	 * @throws NoSuchOrderException if a matching commerce order could not be found
-	 */
-	public static CommerceOrder findByC_LtC_O_Last(
-			Date createDate, long commerceAccountId, int orderStatus,
-			OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByC_LtC_O_Last(
-			createDate, commerceAccountId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order in the ordered set where createDate &lt; &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order, or <code>null</code> if a matching commerce order could not be found
-	 */
-	public static CommerceOrder fetchByC_LtC_O_Last(
-		Date createDate, long commerceAccountId, int orderStatus,
-		OrderByComparator<CommerceOrder> orderByComparator) {
-
-		return getPersistence().fetchByC_LtC_O_Last(
-			createDate, commerceAccountId, orderStatus, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce orders before and after the current commerce order in the ordered set where createDate &lt; &#63; and commerceAccountId = &#63; and orderStatus = &#63;.
-	 *
-	 * @param commerceOrderId the primary key of the current commerce order
-	 * @param createDate the create date
-	 * @param commerceAccountId the commerce account ID
-	 * @param orderStatus the order status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order
-	 * @throws NoSuchOrderException if a commerce order with the primary key could not be found
-	 */
-	public static CommerceOrder[] findByC_LtC_O_PrevAndNext(
-			long commerceOrderId, Date createDate, long commerceAccountId,
-			int orderStatus, OrderByComparator<CommerceOrder> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderException {
-
-		return getPersistence().findByC_LtC_O_PrevAndNext(
-			commerceOrderId, createDate, commerceAccountId, orderStatus,
-			orderByComparator);
 	}
 
 	/**
@@ -3257,3 +2484,4 @@ public class CommerceOrderUtil {
 	private static volatile CommerceOrderPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2094306153

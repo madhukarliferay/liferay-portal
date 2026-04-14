@@ -5,7 +5,7 @@
 
 import {fireEvent, render, screen} from '@testing-library/react';
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import React from 'react';
 
 import {LocalizationSelect} from '../src/main/resources/META-INF/resources/js/api/LocalizationSelect';
@@ -37,6 +37,56 @@ describe('LocalizationSelect', () => {
 		);
 
 		expect(screen.getByText('en-US')).toBeInTheDocument();
+	});
+
+	it('renders with current language', () => {
+		const themeDisplay = window.Liferay.ThemeDisplay;
+
+		try {
+			window.Liferay.ThemeDisplay = {
+				...window.Liferay.ThemeDisplay,
+				getLanguageId: jest.fn(() => 'es_ES'),
+			};
+
+			render(
+				<LocalizationSelect
+					defaultLanguageId="en_US"
+					editMode={false}
+					hideLanguageLabel={false}
+					locales={locales}
+				/>
+			);
+
+			expect(screen.getByText('es-ES')).toBeInTheDocument();
+		}
+		finally {
+			window.Liferay.ThemeDisplay = themeDisplay;
+		}
+	});
+
+	it('falls back to default language when current language is not in locales', () => {
+		const themeDisplay = window.Liferay.ThemeDisplay;
+
+		try {
+			window.Liferay.ThemeDisplay = {
+				...window.Liferay.ThemeDisplay,
+				getLanguageId: jest.fn(() => 'fr_FR'),
+			};
+
+			render(
+				<LocalizationSelect
+					defaultLanguageId="en_US"
+					editMode={false}
+					hideLanguageLabel={false}
+					locales={locales}
+				/>
+			);
+
+			expect(screen.getByText('en-US')).toBeInTheDocument();
+		}
+		finally {
+			window.Liferay.ThemeDisplay = themeDisplay;
+		}
 	});
 
 	it('changes selected locale when clicking an option', () => {

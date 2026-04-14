@@ -5,6 +5,7 @@
 		<field name="mvccVersion" type="long" />
 		<field name="ctCollectionId" type="long" />
 		<field name="uuid" type="String" />
+		<field name="externalReferenceCode" type="String" />
 		<field name="segmentsEntryId" type="long" />
 		<field name="groupId" type="long" />
 		<field name="companyId" type="long" />
@@ -62,7 +63,8 @@
 		<field name="userName" type="String" />
 		<field name="createDate" type="Date" />
 		<field name="modifiedDate" type="Date" />
-		<field name="segmentsEntryId" type="long" />
+		<field name="segmentsEntryERC" type="String" />
+		<field name="segmentsEntryScopeERC" type="String" />
 		<field name="segmentsExperienceKey" type="String" />
 		<field name="plid" type="long" />
 		<field localized="true" name="name" type="String" />

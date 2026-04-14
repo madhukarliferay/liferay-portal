@@ -207,52 +207,6 @@ public class KBFolderUtil {
 	}
 
 	/**
-	 * Returns the last kb folder in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder
-	 * @throws NoSuchFolderException if a matching kb folder could not be found
-	 */
-	public static KBFolder findByUuid_Last(
-			String uuid, OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb folder in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder, or <code>null</code> if a matching kb folder could not be found
-	 */
-	public static KBFolder fetchByUuid_Last(
-		String uuid, OrderByComparator<KBFolder> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set where uuid = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] findByUuid_PrevAndNext(
-			long kbFolderId, String uuid,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			kbFolderId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb folders where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -444,59 +398,6 @@ public class KBFolderUtil {
 	}
 
 	/**
-	 * Returns the last kb folder in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder
-	 * @throws NoSuchFolderException if a matching kb folder could not be found
-	 */
-	public static KBFolder findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb folder in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder, or <code>null</code> if a matching kb folder could not be found
-	 */
-	public static KBFolder fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<KBFolder> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] findByUuid_C_PrevAndNext(
-			long kbFolderId, String uuid, long companyId,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			kbFolderId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb folders where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -616,54 +517,6 @@ public class KBFolderUtil {
 
 		return getPersistence().fetchByCompanyId_First(
 			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder
-	 * @throws NoSuchFolderException if a matching kb folder could not be found
-	 */
-	public static KBFolder findByCompanyId_Last(
-			long companyId, OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder, or <code>null</code> if a matching kb folder could not be found
-	 */
-	public static KBFolder fetchByCompanyId_Last(
-		long companyId, OrderByComparator<KBFolder> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] findByCompanyId_PrevAndNext(
-			long kbFolderId, long companyId,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			kbFolderId, companyId, orderByComparator);
 	}
 
 	/**
@@ -799,59 +652,6 @@ public class KBFolderUtil {
 	}
 
 	/**
-	 * Returns the last kb folder in the ordered set where groupId = &#63; and parentKBFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder
-	 * @throws NoSuchFolderException if a matching kb folder could not be found
-	 */
-	public static KBFolder findByG_P_Last(
-			long groupId, long parentKBFolderId,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByG_P_Last(
-			groupId, parentKBFolderId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb folder in the ordered set where groupId = &#63; and parentKBFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder, or <code>null</code> if a matching kb folder could not be found
-	 */
-	public static KBFolder fetchByG_P_Last(
-		long groupId, long parentKBFolderId,
-		OrderByComparator<KBFolder> orderByComparator) {
-
-		return getPersistence().fetchByG_P_Last(
-			groupId, parentKBFolderId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set where groupId = &#63; and parentKBFolderId = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] findByG_P_PrevAndNext(
-			long kbFolderId, long groupId, long parentKBFolderId,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByG_P_PrevAndNext(
-			kbFolderId, groupId, parentKBFolderId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the kb folders that the user has permission to view where groupId = &#63; and parentKBFolderId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -904,25 +704,6 @@ public class KBFolderUtil {
 
 		return getPersistence().filterFindByG_P(
 			groupId, parentKBFolderId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set of kb folders that the user has permission to view where groupId = &#63; and parentKBFolderId = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] filterFindByG_P_PrevAndNext(
-			long kbFolderId, long groupId, long parentKBFolderId,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().filterFindByG_P_PrevAndNext(
-			kbFolderId, groupId, parentKBFolderId, orderByComparator);
 	}
 
 	/**
@@ -1233,62 +1014,6 @@ public class KBFolderUtil {
 	}
 
 	/**
-	 * Returns the last kb folder in the ordered set where groupId = &#63; and parentKBFolderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder
-	 * @throws NoSuchFolderException if a matching kb folder could not be found
-	 */
-	public static KBFolder findByG_P_S_Last(
-			long groupId, long parentKBFolderId, int status,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByG_P_S_Last(
-			groupId, parentKBFolderId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb folder in the ordered set where groupId = &#63; and parentKBFolderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb folder, or <code>null</code> if a matching kb folder could not be found
-	 */
-	public static KBFolder fetchByG_P_S_Last(
-		long groupId, long parentKBFolderId, int status,
-		OrderByComparator<KBFolder> orderByComparator) {
-
-		return getPersistence().fetchByG_P_S_Last(
-			groupId, parentKBFolderId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set where groupId = &#63; and parentKBFolderId = &#63; and status = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] findByG_P_S_PrevAndNext(
-			long kbFolderId, long groupId, long parentKBFolderId, int status,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().findByG_P_S_PrevAndNext(
-			kbFolderId, groupId, parentKBFolderId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the kb folders that the user has permission to view where groupId = &#63; and parentKBFolderId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1345,26 +1070,6 @@ public class KBFolderUtil {
 
 		return getPersistence().filterFindByG_P_S(
 			groupId, parentKBFolderId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb folders before and after the current kb folder in the ordered set of kb folders that the user has permission to view where groupId = &#63; and parentKBFolderId = &#63; and status = &#63;.
-	 *
-	 * @param kbFolderId the primary key of the current kb folder
-	 * @param groupId the group ID
-	 * @param parentKBFolderId the parent kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb folder
-	 * @throws NoSuchFolderException if a kb folder with the primary key could not be found
-	 */
-	public static KBFolder[] filterFindByG_P_S_PrevAndNext(
-			long kbFolderId, long groupId, long parentKBFolderId, int status,
-			OrderByComparator<KBFolder> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchFolderException {
-
-		return getPersistence().filterFindByG_P_S_PrevAndNext(
-			kbFolderId, groupId, parentKBFolderId, status, orderByComparator);
 	}
 
 	/**
@@ -1635,3 +1340,4 @@ public class KBFolderUtil {
 	private static volatile KBFolderPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1542457920

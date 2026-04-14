@@ -1,10 +1,18 @@
 {
 	"friendlyURL": "/add-space-members",
 	"hidden": true,
+	"name": "Add Space Members",
 	"name_i18n": {
 		"en_US": "Add Space Members"
 	},
 	"permissions": [
+		{
+			"actionIds": [
+				"VIEW"
+			],
+			"roleName": "CMS Administrator",
+			"scope": 4
+		},
 		{
 			"actionIds": [
 			],

@@ -22,15 +22,28 @@ export function fetchDetails({accountId, groupId}) {
 	});
 }
 
-export function fetchFieldValues({fieldMappingFieldName, groupId, query}) {
+export function fetchFieldValues({
+	channelId,
+	fieldMappingFieldName,
+	groupId,
+	query
+}) {
 	return sendRequest({
 		data: {
+			channelId,
 			delta: DEFAULT_DELTA,
 			fieldMappingFieldName,
 			query: escapeSingleQuotes(query)
 		},
 		method: 'GET',
 		path: `contacts/${groupId}/account/field_values`
+	});
+}
+
+export function fetchMetrics({groupId}) {
+	return sendRequest({
+		method: 'GET',
+		path: `contacts/${groupId}/account/metrics`
 	});
 }
 

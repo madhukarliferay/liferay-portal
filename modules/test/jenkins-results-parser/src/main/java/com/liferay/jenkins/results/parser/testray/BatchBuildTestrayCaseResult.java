@@ -16,6 +16,8 @@ import com.liferay.jenkins.results.parser.TestReport;
 import com.liferay.jenkins.results.parser.TopLevelBuildReport;
 import com.liferay.jenkins.results.parser.job.property.JobProperty;
 import com.liferay.jenkins.results.parser.job.property.JobPropertyFactory;
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
+import com.liferay.jenkins.results.parser.test.clazz.TestClassMethod;
 import com.liferay.jenkins.results.parser.test.clazz.group.AxisTestClassGroup;
 
 import java.io.File;
@@ -39,30 +41,53 @@ import org.dom4j.Element;
 /**
  * @author Michael Hashimoto
  */
-public class BatchBuildTestrayCaseResult extends BuildTestrayCaseResult {
+public class BatchBuildTestrayCaseResult
+	<A extends TestClass, B extends TestClassMethod>
+		extends BuildTestrayCaseResult {
 
 	public BatchBuildTestrayCaseResult(
-		TestrayBuild testrayBuild, TopLevelBuildReport topLevelBuildReport,
-		AxisTestClassGroup axisTestClassGroup) {
+		AxisTestClassGroup axisTestClassGroup, TestClass testClass,
+		TestClassMethod testClassMethod, TestrayBuild testrayBuild,
+		TopLevelBuildReport topLevelBuildReport) {
 
 		super(testrayBuild, topLevelBuildReport);
 
 		_axisTestClassGroup = axisTestClassGroup;
+		_testClass = (A)testClass;
+		_testClassMethod = (B)testClassMethod;
+
+		initBuildReport();
+	}
+
+	public BatchBuildTestrayCaseResult(
+		AxisTestClassGroup axisTestClassGroup, TestClass testClass,
+		TestrayBuild testrayBuild, TopLevelBuildReport topLevelBuildReport) {
+
+		this(
+			axisTestClassGroup, testClass, null, testrayBuild,
+			topLevelBuildReport);
+	}
+
+	public BatchBuildTestrayCaseResult(
+		AxisTestClassGroup axisTestClassGroup, TestrayBuild testrayBuild,
+		TopLevelBuildReport topLevelBuildReport) {
+
+		this(axisTestClassGroup, null, null, testrayBuild, topLevelBuildReport);
 	}
 
 	public String getAxisName() {
+		DownstreamBuildReport downstreamBuildReport =
+			getDownstreamBuildReport();
+
+		if (downstreamBuildReport != null) {
+			return downstreamBuildReport.getAxisName();
+		}
+
 		return _axisTestClassGroup.getAxisName();
 	}
 
 	public String getBatchName() {
 		return _axisTestClassGroup.getBatchName();
-	}
-
-	@Override
-	public BuildReport getBuildReport() {
-		TopLevelBuildReport topLevelBuildReport = getTopLevelBuildReport();
-
-		return topLevelBuildReport.getDownstreamBuildReport(getAxisName());
 	}
 
 	@Override
@@ -358,6 +383,14 @@ public class BatchBuildTestrayCaseResult extends BuildTestrayCaseResult {
 		return testrayAttachments;
 	}
 
+	protected A getTestClass() {
+		return _testClass;
+	}
+
+	protected B getTestClassMethod() {
+		return _testClassMethod;
+	}
+
 	protected TestReport getTestReport() {
 		return null;
 	}
@@ -475,68 +508,80 @@ public class BatchBuildTestrayCaseResult extends BuildTestrayCaseResult {
 
 	@Override
 	protected TestrayAttachment getTopLevelBuildReportTestrayAttachment() {
-		TopLevelBuildTestrayCaseResult topLevelBuildTestrayCaseResult =
-			getTopLevelBuildTestrayCaseResult();
+		TopLevelStandaloneBuildTestrayCaseResult
+			topLevelStandaloneBuildTestrayCaseResult =
+				getTopLevelStandaloneBuildTestrayCaseResult();
 
-		if (topLevelBuildTestrayCaseResult == null) {
+		if (topLevelStandaloneBuildTestrayCaseResult == null) {
 			return null;
 		}
 
-		return topLevelBuildTestrayCaseResult.
+		return topLevelStandaloneBuildTestrayCaseResult.
 			getTopLevelBuildReportTestrayAttachment();
-	}
-
-	protected TopLevelBuildTestrayCaseResult
-		getTopLevelBuildTestrayCaseResult() {
-
-		if (_topLevelBuildTestrayCaseResult != null) {
-			return _topLevelBuildTestrayCaseResult;
-		}
-
-		_topLevelBuildTestrayCaseResult =
-			TestrayFactory.newTopLevelBuildTestrayCaseResult(
-				getTestrayBuild(), getTopLevelBuildReport());
-
-		return _topLevelBuildTestrayCaseResult;
 	}
 
 	@Override
 	protected TestrayAttachment getTopLevelJenkinsConsoleTestrayAttachment() {
-		TopLevelBuildTestrayCaseResult topLevelBuildTestrayCaseResult =
-			getTopLevelBuildTestrayCaseResult();
+		TopLevelStandaloneBuildTestrayCaseResult
+			topLevelStandaloneBuildTestrayCaseResult =
+				getTopLevelStandaloneBuildTestrayCaseResult();
 
-		if (topLevelBuildTestrayCaseResult == null) {
+		if (topLevelStandaloneBuildTestrayCaseResult == null) {
 			return null;
 		}
 
-		return topLevelBuildTestrayCaseResult.
+		return topLevelStandaloneBuildTestrayCaseResult.
 			getTopLevelJenkinsConsoleTestrayAttachment();
 	}
 
 	@Override
 	protected TestrayAttachment getTopLevelJenkinsReportTestrayAttachment() {
-		TopLevelBuildTestrayCaseResult topLevelBuildTestrayCaseResult =
-			getTopLevelBuildTestrayCaseResult();
+		TopLevelStandaloneBuildTestrayCaseResult
+			topLevelStandaloneBuildTestrayCaseResult =
+				getTopLevelStandaloneBuildTestrayCaseResult();
 
-		if (topLevelBuildTestrayCaseResult == null) {
+		if (topLevelStandaloneBuildTestrayCaseResult == null) {
 			return null;
 		}
 
-		return topLevelBuildTestrayCaseResult.
+		return topLevelStandaloneBuildTestrayCaseResult.
 			getTopLevelJenkinsReportTestrayAttachment();
 	}
 
 	@Override
 	protected TestrayAttachment getTopLevelJobSummaryTestrayAttachment() {
-		TopLevelBuildTestrayCaseResult topLevelBuildTestrayCaseResult =
-			getTopLevelBuildTestrayCaseResult();
+		TopLevelStandaloneBuildTestrayCaseResult
+			topLevelStandaloneBuildTestrayCaseResult =
+				getTopLevelStandaloneBuildTestrayCaseResult();
 
-		if (topLevelBuildTestrayCaseResult == null) {
+		if (topLevelStandaloneBuildTestrayCaseResult == null) {
 			return null;
 		}
 
-		return topLevelBuildTestrayCaseResult.
+		return topLevelStandaloneBuildTestrayCaseResult.
 			getTopLevelJobSummaryTestrayAttachment();
+	}
+
+	protected TopLevelStandaloneBuildTestrayCaseResult
+		getTopLevelStandaloneBuildTestrayCaseResult() {
+
+		if (_topLevelStandaloneBuildTestrayCaseResult != null) {
+			return _topLevelStandaloneBuildTestrayCaseResult;
+		}
+
+		_topLevelStandaloneBuildTestrayCaseResult =
+			TestrayFactory.newTopLevelStandaloneBuildTestrayCaseResult(
+				getTestrayBuild(), getTopLevelBuildReport());
+
+		return _topLevelStandaloneBuildTestrayCaseResult;
+	}
+
+	@Override
+	protected void initBuildReport() {
+		TopLevelBuildReport topLevelBuildReport = getTopLevelBuildReport();
+
+		setBuildReport(
+			topLevelBuildReport.getDownstreamBuildReport(getAxisName()));
 	}
 
 	private List<TestrayAttachment> _getDockerLogsTestrayAttachments() {
@@ -733,6 +778,9 @@ public class BatchBuildTestrayCaseResult extends BuildTestrayCaseResult {
 		"https?://.+/(?<key>jstacks/(?<fileName>[^/]+.log).txt.gz)");
 
 	private final AxisTestClassGroup _axisTestClassGroup;
-	private TopLevelBuildTestrayCaseResult _topLevelBuildTestrayCaseResult;
+	private A _testClass;
+	private B _testClassMethod;
+	private TopLevelStandaloneBuildTestrayCaseResult
+		_topLevelStandaloneBuildTestrayCaseResult;
 
 }

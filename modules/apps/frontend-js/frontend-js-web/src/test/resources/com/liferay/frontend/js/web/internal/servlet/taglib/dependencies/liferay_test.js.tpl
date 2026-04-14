@@ -4,6 +4,7 @@
 		return (
 			(...args) => {
 				import(
+					Liferay.ThemeDisplay.getCDNHost() +
 					Liferay.ThemeDisplay.getPathContext() +
 						'/o/' +
 						contextPath +
@@ -101,7 +102,6 @@ type: 'warning'
 ],
 },
 FeatureFlags: {
-'LPD-00042': true,
 },
 Language: {
 	_cache:
@@ -155,6 +155,7 @@ getDefaultLanguageId: () => 'en',
 getDoAsUserIdEncoded: () => '',
 getLanguageId: () => 'en_US',
 getParentGroupId: () => '0',
+getParentSiteGroupId: () => '0',
 getPathContext: () => '',
 getPathImage: () => '/image',
 getPathJavaScript: () => '/o/frontend-js-web',

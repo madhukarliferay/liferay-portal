@@ -824,9 +824,7 @@ public class DataDefinitionField implements Serializable {
 			sb.append("\"indexType\": ");
 
 			sb.append("\"");
-
 			sb.append(indexType);
-
 			sb.append("\"");
 		}
 
@@ -1116,3 +1114,4 @@ public class DataDefinitionField implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:650525102

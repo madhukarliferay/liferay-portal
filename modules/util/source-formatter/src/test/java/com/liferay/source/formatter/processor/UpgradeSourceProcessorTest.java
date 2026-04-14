@@ -85,23 +85,6 @@ public class UpgradeSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
-	public void testUpgradeJavaBaseModelListenerCheck() throws Exception {
-		test("upgrade/UpgradeJavaBaseModelListenerCheck.testjava");
-	}
-
-	@Test
-	public void testUpgradeJavaBasePanelAppExtendedClassesCheck()
-		throws Exception {
-
-		test("upgrade/UpgradeJavaBasePanelAppExtendedClassesCheck.testjava");
-	}
-
-	@Test
-	public void testUpgradeJavaCommerceOrderValidatorCheck() throws Exception {
-		test("upgrade/UpgradeJavaCommerceOrderValidatorCheck.testjava");
-	}
-
-	@Test
 	public void testUpgradeJavaDDMFormValuesSerializerTrackerCheck()
 		throws Exception {
 
@@ -118,11 +101,6 @@ public class UpgradeSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testUpgradeJavaFacetedSearcherCheck() throws Exception {
 		test("upgrade/UpgradeJavaFacetedSearcherCheck.testjava");
-	}
-
-	@Test
-	public void testUpgradeJavaFDSActionProviderCheck() throws Exception {
-		test("upgrade/UpgradeJavaFDSActionProviderCheck.testjava");
 	}
 
 	@Test
@@ -183,14 +161,6 @@ public class UpgradeSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
-	public void testUpgradeJavaMultiVMPoolUtilCheck() throws Exception {
-		test(
-			"upgrade/UpgradeJavaMultiVMPoolUtilCheck.testjava",
-			"Unable to resolve types for MultiVMPool.getPortalCache(). " +
-				"Replace \"TO_BE_REPLACED\" with the correct type");
-	}
-
-	@Test
 	public void testUpgradeJavaPortletIdMethodCheck() throws Exception {
 		test("upgrade/UpgradeJavaPortletIdMethodCheck.testjava");
 	}
@@ -236,11 +206,6 @@ public class UpgradeSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testUpgradeJavaSortFieldNameTranslatorCheck() throws Exception {
 		test("upgrade/UpgradeJavaSortFieldNameTranslatorCheck.testjava");
-	}
-
-	@Test
-	public void testUpgradeJavaStorageTypeAwareCheck() throws Exception {
-		test("upgrade/UpgradeJavaStorageTypeAwareCheck.testjava");
 	}
 
 	@Test

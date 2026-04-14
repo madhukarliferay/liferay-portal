@@ -119,47 +119,6 @@ public interface CTRemotePersistence extends BasePersistence<CTRemote> {
 			orderByComparator);
 
 	/**
-	 * Returns the last ct remote in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct remote
-	 * @throws NoSuchRemoteException if a matching ct remote could not be found
-	 */
-	public CTRemote findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTRemote>
-				orderByComparator)
-		throws NoSuchRemoteException;
-
-	/**
-	 * Returns the last ct remote in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct remote, or <code>null</code> if a matching ct remote could not be found
-	 */
-	public CTRemote fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CTRemote>
-			orderByComparator);
-
-	/**
-	 * Returns the ct remotes before and after the current ct remote in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctRemoteId the primary key of the current ct remote
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct remote
-	 * @throws NoSuchRemoteException if a ct remote with the primary key could not be found
-	 */
-	public CTRemote[] findByCompanyId_PrevAndNext(
-			long ctRemoteId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTRemote>
-				orderByComparator)
-		throws NoSuchRemoteException;
-
-	/**
 	 * Returns all the ct remotes that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -199,21 +158,6 @@ public interface CTRemotePersistence extends BasePersistence<CTRemote> {
 		long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CTRemote>
 			orderByComparator);
-
-	/**
-	 * Returns the ct remotes before and after the current ct remote in the ordered set of ct remotes that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param ctRemoteId the primary key of the current ct remote
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct remote
-	 * @throws NoSuchRemoteException if a ct remote with the primary key could not be found
-	 */
-	public CTRemote[] filterFindByCompanyId_PrevAndNext(
-			long ctRemoteId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTRemote>
-				orderByComparator)
-		throws NoSuchRemoteException;
 
 	/**
 	 * Removes all the ct remotes where companyId = &#63; from the database.
@@ -358,3 +302,4 @@ public interface CTRemotePersistence extends BasePersistence<CTRemote> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-138678341

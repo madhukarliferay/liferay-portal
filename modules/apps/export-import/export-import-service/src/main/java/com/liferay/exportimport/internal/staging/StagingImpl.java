@@ -54,6 +54,7 @@ import com.liferay.exportimport.kernel.staging.constants.StagingConstants;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepositoryHelper;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepositoryRegistryUtil;
+import com.liferay.journal.model.JournalArticle;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.string.StringBundler;
@@ -80,9 +81,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutBranch;
+import com.liferay.portal.kernel.model.LayoutFriendlyURL;
 import com.liferay.portal.kernel.model.LayoutRevision;
 import com.liferay.portal.kernel.model.LayoutSetBranch;
 import com.liferay.portal.kernel.model.Portlet;
@@ -136,6 +139,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Tuple;
@@ -148,7 +152,6 @@ import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.service.http.GroupServiceHttp;
 import com.liferay.portal.service.http.LayoutServiceHttp;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.exportimport.service.http.StagingServiceHttp;
 import com.liferay.portlet.exportimport.staging.ProxiedLayoutsThreadLocal;
 import com.liferay.staging.StagingGroupHelper;
@@ -196,7 +199,8 @@ public class StagingImpl implements Staging {
 		throws PortalException {
 
 		if (!(model instanceof StagedGroupedModel) ||
-			ExportImportThreadLocal.isInitialLayoutStagingInProcess()) {
+			ExportImportThreadLocal.isInitialLayoutStagingInProcess() ||
+			_isIgnoredModel(model)) {
 
 			return;
 		}
@@ -262,11 +266,24 @@ public class StagingImpl implements Staging {
 
 		long classPK = (long)stagedGroupedModel.getPrimaryKeyObj();
 
-		_changesetEntryLocalService.fetchOrAddChangesetEntry(
-			changesetCollection.getChangesetCollectionId(),
-			_classNameLocalService.getClassNameId(
-				stagedGroupedModel.getModelClassName()),
-			classPK);
+		if ((model instanceof
+				ExternalReferenceCodeModel externalReferenceCodeModel) &&
+			!(model instanceof JournalArticle)) {
+
+			_changesetEntryLocalService.fetchOrAddChangesetEntry(
+				changesetCollection.getChangesetCollectionId(),
+				externalReferenceCodeModel.getExternalReferenceCode(),
+				_classNameLocalService.getClassNameId(
+					stagedGroupedModel.getModelClassName()),
+				classPK);
+		}
+		else {
+			_changesetEntryLocalService.fetchOrAddChangesetEntry(
+				changesetCollection.getChangesetCollectionId(),
+				_classNameLocalService.getClassNameId(
+					stagedGroupedModel.getModelClassName()),
+				classPK);
+		}
 	}
 
 	@Override
@@ -471,9 +488,8 @@ public class StagingImpl implements Staging {
 				typeSettingsUnicodeProperties.remove(key);
 			}
 
-			_layoutLocalService.updateLayout(
-				layout.getGroupId(), layout.isPrivateLayout(),
-				layout.getLayoutId(), typeSettingsUnicodeProperties.toString());
+			_layoutLocalService.updateTypeSettings(
+				layout, typeSettingsUnicodeProperties.toString());
 		}
 	}
 
@@ -590,6 +606,10 @@ public class StagingImpl implements Staging {
 		Locale locale, Exception exception,
 		ExportImportConfiguration exportImportConfiguration) {
 
+		if (_log.isDebugEnabled()) {
+			_log.debug(exception);
+		}
+
 		String errorMessage = StringPool.BLANK;
 		JSONArray errorMessagesJSONArray = null;
 		int errorType = 0;
@@ -600,7 +620,9 @@ public class StagingImpl implements Staging {
 
 		Throwable throwable = exception.getCause();
 
-		if (exception.getCause() instanceof ConnectException) {
+		if ((exportImportConfiguration != null) &&
+			(throwable instanceof ConnectException)) {
+
 			Map<String, Serializable> settingsMap =
 				exportImportConfiguration.getSettingsMap();
 
@@ -1128,8 +1150,13 @@ public class StagingImpl implements Staging {
 							"live-environment-and-the-staging-environment");
 			}
 			else {
-				long maxSize = _dlValidator.getMaxAllowableSize(
-					exportImportConfiguration.getGroupId(), null);
+				long groupId = 0L;
+
+				if (exportImportConfiguration != null) {
+					groupId = exportImportConfiguration.getGroupId();
+				}
+
+				long maxSize = _dlValidator.getMaxAllowableSize(groupId, null);
 
 				if (exception instanceof FileSizeException) {
 					FileSizeException fileSizeException =
@@ -1703,6 +1730,8 @@ public class StagingImpl implements Staging {
 			errorType = ServletResponseConstants.SC_FILE_SIZE_EXCEPTION;
 		}
 		else {
+			_log.error("Unexpected error: " + exception.getMessage());
+
 			errorMessage = exception.getLocalizedMessage();
 			errorType = ServletResponseConstants.SC_FILE_CUSTOM_EXCEPTION;
 		}
@@ -3960,6 +3989,17 @@ public class StagingImpl implements Staging {
 		scheduleInformation.setStartCalendar(startCalendar);
 
 		return scheduleInformation;
+	}
+
+	private <T extends BaseModel> boolean _isIgnoredModel(T model) {
+		if ((model instanceof LayoutFriendlyURL) ||
+			((model instanceof Layout layout) && layout.isHidden() &&
+			 layout.isSystem())) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean _isLayoutRevisionIncomplete(

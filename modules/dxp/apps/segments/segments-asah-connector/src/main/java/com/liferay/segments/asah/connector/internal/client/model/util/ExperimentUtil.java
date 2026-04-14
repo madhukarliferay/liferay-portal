@@ -17,10 +17,11 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.segments.asah.connector.internal.client.model.Experiment;
 import com.liferay.segments.asah.connector.internal.client.model.ExperimentStatus;
 import com.liferay.segments.asah.connector.internal.client.model.ExperimentType;
@@ -142,9 +143,19 @@ public class ExperimentUtil {
 			_getSegmentsExperienceKey(segmentsExperience));
 		experiment.setDXPExperienceName(segmentsExperience.getName(locale));
 
-		SegmentsEntry segmentsEntry =
-			segmentsEntryLocalService.fetchSegmentsEntry(
-				segmentsExperience.getSegmentsEntryId());
+		SegmentsEntry segmentsEntry = null;
+
+		Long groupId = ScopeUtil.getItemGroupId(
+			segmentsExperience.getCompanyId(),
+			segmentsExperience.getSegmentsEntryScopeERC(),
+			segmentsExperience.getGroupId());
+
+		if (groupId != null) {
+			segmentsEntry =
+				segmentsEntryLocalService.
+					fetchSegmentsEntryByExternalReferenceCode(
+						segmentsExperience.getSegmentsEntryERC(), groupId);
+		}
 
 		if (segmentsEntry == null) {
 			experiment.setDXPSegmentId(SegmentsEntryConstants.KEY_DEFAULT);

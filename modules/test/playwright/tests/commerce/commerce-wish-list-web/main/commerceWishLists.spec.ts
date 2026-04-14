@@ -5,7 +5,6 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
@@ -17,10 +16,10 @@ import getPageDefinition from '../../../layout-content-page-editor-web/main/util
 import getWidgetDefinition from '../../../layout-content-page-editor-web/main/utils/getWidgetDefinition';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	loginTest()
@@ -67,7 +66,7 @@ test('LPD-34906 Verify wishlist visibility rules', async ({
 		name: 'WishListsSite',
 	});
 
-	apiHelpers.data.push({id: site.id, type: 'site'});
+	apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 	const layout = await apiHelpers.headlessDelivery.createSitePage({
 		pageDefinition: getPageDefinition([

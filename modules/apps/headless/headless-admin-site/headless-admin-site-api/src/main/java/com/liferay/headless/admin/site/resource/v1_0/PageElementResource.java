@@ -5,7 +5,6 @@
 
 package com.liferay.headless.admin.site.resource.v1_0;
 
-import com.liferay.headless.admin.site.dto.v1_0.FragmentComposition;
 import com.liferay.headless.admin.site.dto.v1_0.PageElement;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -45,14 +44,14 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface PageElementResource {
 
-	public void deleteSiteSiteByExternalReferenceCodePageElement(
+	public void deleteSitePageSpecificationPageExperiencePageElement(
 			String siteExternalReferenceCode,
 			String pageSpecificationExternalReferenceCode,
 			String pageExperienceExternalReferenceCode,
 			String pageElementExternalReferenceCode)
 		throws Exception;
 
-	public PageElement getSiteSiteByExternalReferenceCodePageElement(
+	public PageElement getSitePageSpecificationPageExperiencePageElement(
 			String siteExternalReferenceCode,
 			String pageSpecificationExternalReferenceCode,
 			String pageExperienceExternalReferenceCode,
@@ -60,7 +59,7 @@ public interface PageElementResource {
 		throws Exception;
 
 	public Page<PageElement>
-			getSiteSiteByExternalReferenceCodePageElementPageElementsPage(
+			getSitePageSpecificationPageExperiencePageElementPageElementsPage(
 				String siteExternalReferenceCode,
 				String pageSpecificationExternalReferenceCode,
 				String pageExperienceExternalReferenceCode,
@@ -68,37 +67,26 @@ public interface PageElementResource {
 		throws Exception;
 
 	public Page<PageElement>
-			getSiteSiteByExternalReferenceCodePageExperiencePageElementsPage(
+			getSitePageSpecificationPageExperiencePageElementsPage(
 				String siteExternalReferenceCode,
 				String pageSpecificationExternalReferenceCode,
 				String pageExperienceExternalReferenceCode, Boolean flatten)
 		throws Exception;
 
-	public PageElement patchSiteSiteByExternalReferenceCodePageElement(
+	public PageElement patchSitePageSpecificationPageExperiencePageElement(
 			String siteExternalReferenceCode,
 			String pageSpecificationExternalReferenceCode,
 			String pageExperienceExternalReferenceCode,
 			String pageElementExternalReferenceCode, PageElement pageElement)
 		throws Exception;
 
-	public PageElement
-			postSiteSiteByExternalReferenceCodePageElementFragmentComposition(
-				String siteExternalReferenceCode,
-				String pageSpecificationExternalReferenceCode,
-				String pageExperienceExternalReferenceCode,
-				String pageElementExternalReferenceCode, Integer position,
-				FragmentComposition fragmentComposition)
+	public PageElement postSitePageSpecificationPageExperiencePageElement(
+			String siteExternalReferenceCode,
+			String pageSpecificationExternalReferenceCode,
+			String pageExperienceExternalReferenceCode, PageElement pageElement)
 		throws Exception;
 
-	public PageElement
-			postSiteSiteByExternalReferenceCodePageExperiencePageElement(
-				String siteExternalReferenceCode,
-				String pageSpecificationExternalReferenceCode,
-				String pageExperienceExternalReferenceCode,
-				PageElement pageElement)
-		throws Exception;
-
-	public PageElement putSiteSiteByExternalReferenceCodePageElement(
+	public PageElement putSitePageSpecificationPageExperiencePageElement(
 			String siteExternalReferenceCode,
 			String pageSpecificationExternalReferenceCode,
 			String pageExperienceExternalReferenceCode,
@@ -201,3 +189,4 @@ public interface PageElementResource {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:2129843669

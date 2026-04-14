@@ -306,221 +306,6 @@ public class OpenIdConnectSessionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last open ID connect session in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session
-	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
-	 */
-	@Override
-	public OpenIdConnectSession findByUserId_Last(
-			long userId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws NoSuchSessionException {
-
-		OpenIdConnectSession openIdConnectSession = fetchByUserId_Last(
-			userId, orderByComparator);
-
-		if (openIdConnectSession != null) {
-			return openIdConnectSession;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("userId=");
-		sb.append(userId);
-
-		sb.append("}");
-
-		throw new NoSuchSessionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
-	 */
-	@Override
-	public OpenIdConnectSession fetchByUserId_Last(
-		long userId,
-		OrderByComparator<OpenIdConnectSession> orderByComparator) {
-
-		int count = countByUserId(userId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<OpenIdConnectSession> list = findByUserId(
-			userId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the open ID connect sessions before and after the current open ID connect session in the ordered set where userId = &#63;.
-	 *
-	 * @param openIdConnectSessionId the primary key of the current open ID connect session
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next open ID connect session
-	 * @throws NoSuchSessionException if a open ID connect session with the primary key could not be found
-	 */
-	@Override
-	public OpenIdConnectSession[] findByUserId_PrevAndNext(
-			long openIdConnectSessionId, long userId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws NoSuchSessionException {
-
-		OpenIdConnectSession openIdConnectSession = findByPrimaryKey(
-			openIdConnectSessionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			OpenIdConnectSession[] array = new OpenIdConnectSessionImpl[3];
-
-			array[0] = getByUserId_PrevAndNext(
-				session, openIdConnectSession, userId, orderByComparator, true);
-
-			array[1] = openIdConnectSession;
-
-			array[2] = getByUserId_PrevAndNext(
-				session, openIdConnectSession, userId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected OpenIdConnectSession getByUserId_PrevAndNext(
-		Session session, OpenIdConnectSession openIdConnectSession, long userId,
-		OrderByComparator<OpenIdConnectSession> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_OPENIDCONNECTSESSION_WHERE);
-
-		sb.append(_FINDER_COLUMN_USERID_USERID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OpenIdConnectSessionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						openIdConnectSession)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<OpenIdConnectSession> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the open ID connect sessions where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -824,238 +609,6 @@ public class OpenIdConnectSessionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last open ID connect session in the ordered set where accessTokenExpirationDate &lt; &#63;.
-	 *
-	 * @param accessTokenExpirationDate the access token expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session
-	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
-	 */
-	@Override
-	public OpenIdConnectSession findByLtAccessTokenExpirationDate_Last(
-			Date accessTokenExpirationDate,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws NoSuchSessionException {
-
-		OpenIdConnectSession openIdConnectSession =
-			fetchByLtAccessTokenExpirationDate_Last(
-				accessTokenExpirationDate, orderByComparator);
-
-		if (openIdConnectSession != null) {
-			return openIdConnectSession;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("accessTokenExpirationDate<");
-		sb.append(accessTokenExpirationDate);
-
-		sb.append("}");
-
-		throw new NoSuchSessionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where accessTokenExpirationDate &lt; &#63;.
-	 *
-	 * @param accessTokenExpirationDate the access token expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
-	 */
-	@Override
-	public OpenIdConnectSession fetchByLtAccessTokenExpirationDate_Last(
-		Date accessTokenExpirationDate,
-		OrderByComparator<OpenIdConnectSession> orderByComparator) {
-
-		int count = countByLtAccessTokenExpirationDate(
-			accessTokenExpirationDate);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<OpenIdConnectSession> list = findByLtAccessTokenExpirationDate(
-			accessTokenExpirationDate, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the open ID connect sessions before and after the current open ID connect session in the ordered set where accessTokenExpirationDate &lt; &#63;.
-	 *
-	 * @param openIdConnectSessionId the primary key of the current open ID connect session
-	 * @param accessTokenExpirationDate the access token expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next open ID connect session
-	 * @throws NoSuchSessionException if a open ID connect session with the primary key could not be found
-	 */
-	@Override
-	public OpenIdConnectSession[] findByLtAccessTokenExpirationDate_PrevAndNext(
-			long openIdConnectSessionId, Date accessTokenExpirationDate,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws NoSuchSessionException {
-
-		OpenIdConnectSession openIdConnectSession = findByPrimaryKey(
-			openIdConnectSessionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			OpenIdConnectSession[] array = new OpenIdConnectSessionImpl[3];
-
-			array[0] = getByLtAccessTokenExpirationDate_PrevAndNext(
-				session, openIdConnectSession, accessTokenExpirationDate,
-				orderByComparator, true);
-
-			array[1] = openIdConnectSession;
-
-			array[2] = getByLtAccessTokenExpirationDate_PrevAndNext(
-				session, openIdConnectSession, accessTokenExpirationDate,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected OpenIdConnectSession getByLtAccessTokenExpirationDate_PrevAndNext(
-		Session session, OpenIdConnectSession openIdConnectSession,
-		Date accessTokenExpirationDate,
-		OrderByComparator<OpenIdConnectSession> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_OPENIDCONNECTSESSION_WHERE);
-
-		boolean bindAccessTokenExpirationDate = false;
-
-		if (accessTokenExpirationDate == null) {
-			sb.append(
-				_FINDER_COLUMN_LTACCESSTOKENEXPIRATIONDATE_ACCESSTOKENEXPIRATIONDATE_1);
-		}
-		else {
-			bindAccessTokenExpirationDate = true;
-
-			sb.append(
-				_FINDER_COLUMN_LTACCESSTOKENEXPIRATIONDATE_ACCESSTOKENEXPIRATIONDATE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OpenIdConnectSessionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindAccessTokenExpirationDate) {
-			queryPos.add(new Timestamp(accessTokenExpirationDate.getTime()));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						openIdConnectSession)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<OpenIdConnectSession> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the open ID connect sessions where accessTokenExpirationDate &lt; &#63; from the database.
 	 *
 	 * @param accessTokenExpirationDate the access token expiration date
@@ -1148,6 +701,423 @@ public class OpenIdConnectSessionPersistenceImpl
 	private static final String
 		_FINDER_COLUMN_LTACCESSTOKENEXPIRATIONDATE_ACCESSTOKENEXPIRATIONDATE_2 =
 			"openIdConnectSession.accessTokenExpirationDate < ?";
+
+	private FinderPath _finderPathFetchByU_I;
+
+	/**
+	 * Returns the open ID connect session where userId = &#63; and issuer = &#63; or throws a <code>NoSuchSessionException</code> if it could not be found.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the matching open ID connect session
+	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession findByU_I(long userId, String issuer)
+		throws NoSuchSessionException {
+
+		OpenIdConnectSession openIdConnectSession = fetchByU_I(userId, issuer);
+
+		if (openIdConnectSession == null) {
+			StringBundler sb = new StringBundler(6);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("userId=");
+			sb.append(userId);
+
+			sb.append(", issuer=");
+			sb.append(issuer);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchSessionException(sb.toString());
+		}
+
+		return openIdConnectSession;
+	}
+
+	/**
+	 * Returns the open ID connect session where userId = &#63; and issuer = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession fetchByU_I(long userId, String issuer) {
+		return fetchByU_I(userId, issuer, true);
+	}
+
+	/**
+	 * Returns the open ID connect session where userId = &#63; and issuer = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession fetchByU_I(
+		long userId, String issuer, boolean useFinderCache) {
+
+		issuer = Objects.toString(issuer, "");
+
+		Object[] finderArgs = null;
+
+		if (useFinderCache) {
+			finderArgs = new Object[] {userId, issuer};
+		}
+
+		Object result = null;
+
+		if (useFinderCache) {
+			result = finderCache.getResult(
+				_finderPathFetchByU_I, finderArgs, this);
+		}
+
+		if (result instanceof OpenIdConnectSession) {
+			OpenIdConnectSession openIdConnectSession =
+				(OpenIdConnectSession)result;
+
+			if ((userId != openIdConnectSession.getUserId()) ||
+				!Objects.equals(issuer, openIdConnectSession.getIssuer())) {
+
+				result = null;
+			}
+		}
+
+		if (result == null) {
+			StringBundler sb = new StringBundler(4);
+
+			sb.append(_SQL_SELECT_OPENIDCONNECTSESSION_WHERE);
+
+			sb.append(_FINDER_COLUMN_U_I_USERID_2);
+
+			boolean bindIssuer = false;
+
+			if (issuer.isEmpty()) {
+				sb.append(_FINDER_COLUMN_U_I_ISSUER_3);
+			}
+			else {
+				bindIssuer = true;
+
+				sb.append(_FINDER_COLUMN_U_I_ISSUER_2);
+			}
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				queryPos.add(userId);
+
+				if (bindIssuer) {
+					queryPos.add(issuer);
+				}
+
+				List<OpenIdConnectSession> list = query.list();
+
+				if (list.isEmpty()) {
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathFetchByU_I, finderArgs, list);
+					}
+				}
+				else {
+					OpenIdConnectSession openIdConnectSession = list.get(0);
+
+					result = openIdConnectSession;
+
+					cacheResult(openIdConnectSession);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
+		else {
+			return (OpenIdConnectSession)result;
+		}
+	}
+
+	/**
+	 * Removes the open ID connect session where userId = &#63; and issuer = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the open ID connect session that was removed
+	 */
+	@Override
+	public OpenIdConnectSession removeByU_I(long userId, String issuer)
+		throws NoSuchSessionException {
+
+		OpenIdConnectSession openIdConnectSession = findByU_I(userId, issuer);
+
+		return remove(openIdConnectSession);
+	}
+
+	/**
+	 * Returns the number of open ID connect sessions where userId = &#63; and issuer = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the number of matching open ID connect sessions
+	 */
+	@Override
+	public int countByU_I(long userId, String issuer) {
+		OpenIdConnectSession openIdConnectSession = fetchByU_I(userId, issuer);
+
+		if (openIdConnectSession == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_U_I_USERID_2 =
+		"openIdConnectSession.userId = ? AND ";
+
+	private static final String _FINDER_COLUMN_U_I_ISSUER_2 =
+		"openIdConnectSession.issuer = ?";
+
+	private static final String _FINDER_COLUMN_U_I_ISSUER_3 =
+		"(openIdConnectSession.issuer IS NULL OR openIdConnectSession.issuer = '')";
+
+	private FinderPath _finderPathFetchByI_S;
+
+	/**
+	 * Returns the open ID connect session where issuer = &#63; and sessionId = &#63; or throws a <code>NoSuchSessionException</code> if it could not be found.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the matching open ID connect session
+	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession findByI_S(String issuer, String sessionId)
+		throws NoSuchSessionException {
+
+		OpenIdConnectSession openIdConnectSession = fetchByI_S(
+			issuer, sessionId);
+
+		if (openIdConnectSession == null) {
+			StringBundler sb = new StringBundler(6);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("issuer=");
+			sb.append(issuer);
+
+			sb.append(", sessionId=");
+			sb.append(sessionId);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchSessionException(sb.toString());
+		}
+
+		return openIdConnectSession;
+	}
+
+	/**
+	 * Returns the open ID connect session where issuer = &#63; and sessionId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession fetchByI_S(String issuer, String sessionId) {
+		return fetchByI_S(issuer, sessionId, true);
+	}
+
+	/**
+	 * Returns the open ID connect session where issuer = &#63; and sessionId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession fetchByI_S(
+		String issuer, String sessionId, boolean useFinderCache) {
+
+		issuer = Objects.toString(issuer, "");
+		sessionId = Objects.toString(sessionId, "");
+
+		Object[] finderArgs = null;
+
+		if (useFinderCache) {
+			finderArgs = new Object[] {issuer, sessionId};
+		}
+
+		Object result = null;
+
+		if (useFinderCache) {
+			result = finderCache.getResult(
+				_finderPathFetchByI_S, finderArgs, this);
+		}
+
+		if (result instanceof OpenIdConnectSession) {
+			OpenIdConnectSession openIdConnectSession =
+				(OpenIdConnectSession)result;
+
+			if (!Objects.equals(issuer, openIdConnectSession.getIssuer()) ||
+				!Objects.equals(
+					sessionId, openIdConnectSession.getSessionId())) {
+
+				result = null;
+			}
+		}
+
+		if (result == null) {
+			StringBundler sb = new StringBundler(4);
+
+			sb.append(_SQL_SELECT_OPENIDCONNECTSESSION_WHERE);
+
+			boolean bindIssuer = false;
+
+			if (issuer.isEmpty()) {
+				sb.append(_FINDER_COLUMN_I_S_ISSUER_3);
+			}
+			else {
+				bindIssuer = true;
+
+				sb.append(_FINDER_COLUMN_I_S_ISSUER_2);
+			}
+
+			boolean bindSessionId = false;
+
+			if (sessionId.isEmpty()) {
+				sb.append(_FINDER_COLUMN_I_S_SESSIONID_3);
+			}
+			else {
+				bindSessionId = true;
+
+				sb.append(_FINDER_COLUMN_I_S_SESSIONID_2);
+			}
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				if (bindIssuer) {
+					queryPos.add(issuer);
+				}
+
+				if (bindSessionId) {
+					queryPos.add(sessionId);
+				}
+
+				List<OpenIdConnectSession> list = query.list();
+
+				if (list.isEmpty()) {
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathFetchByI_S, finderArgs, list);
+					}
+				}
+				else {
+					OpenIdConnectSession openIdConnectSession = list.get(0);
+
+					result = openIdConnectSession;
+
+					cacheResult(openIdConnectSession);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
+		else {
+			return (OpenIdConnectSession)result;
+		}
+	}
+
+	/**
+	 * Removes the open ID connect session where issuer = &#63; and sessionId = &#63; from the database.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the open ID connect session that was removed
+	 */
+	@Override
+	public OpenIdConnectSession removeByI_S(String issuer, String sessionId)
+		throws NoSuchSessionException {
+
+		OpenIdConnectSession openIdConnectSession = findByI_S(
+			issuer, sessionId);
+
+		return remove(openIdConnectSession);
+	}
+
+	/**
+	 * Returns the number of open ID connect sessions where issuer = &#63; and sessionId = &#63;.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the number of matching open ID connect sessions
+	 */
+	@Override
+	public int countByI_S(String issuer, String sessionId) {
+		OpenIdConnectSession openIdConnectSession = fetchByI_S(
+			issuer, sessionId);
+
+		if (openIdConnectSession == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_I_S_ISSUER_2 =
+		"openIdConnectSession.issuer = ? AND ";
+
+	private static final String _FINDER_COLUMN_I_S_ISSUER_3 =
+		"(openIdConnectSession.issuer IS NULL OR openIdConnectSession.issuer = '') AND ";
+
+	private static final String _FINDER_COLUMN_I_S_SESSIONID_2 =
+		"openIdConnectSession.sessionId = ?";
+
+	private static final String _FINDER_COLUMN_I_S_SESSIONID_3 =
+		"(openIdConnectSession.sessionId IS NULL OR openIdConnectSession.sessionId = '')";
 
 	private FinderPath _finderPathWithPaginationFindByC_A_C;
 	private FinderPath _finderPathWithoutPaginationFindByC_A_C;
@@ -1437,270 +1407,6 @@ public class OpenIdConnectSessionPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param clientId the client ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session
-	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
-	 */
-	@Override
-	public OpenIdConnectSession findByC_A_C_Last(
-			long companyId, String authServerWellKnownURI, String clientId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws NoSuchSessionException {
-
-		OpenIdConnectSession openIdConnectSession = fetchByC_A_C_Last(
-			companyId, authServerWellKnownURI, clientId, orderByComparator);
-
-		if (openIdConnectSession != null) {
-			return openIdConnectSession;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", authServerWellKnownURI=");
-		sb.append(authServerWellKnownURI);
-
-		sb.append(", clientId=");
-		sb.append(clientId);
-
-		sb.append("}");
-
-		throw new NoSuchSessionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param clientId the client ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
-	 */
-	@Override
-	public OpenIdConnectSession fetchByC_A_C_Last(
-		long companyId, String authServerWellKnownURI, String clientId,
-		OrderByComparator<OpenIdConnectSession> orderByComparator) {
-
-		int count = countByC_A_C(companyId, authServerWellKnownURI, clientId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<OpenIdConnectSession> list = findByC_A_C(
-			companyId, authServerWellKnownURI, clientId, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the open ID connect sessions before and after the current open ID connect session in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
-	 *
-	 * @param openIdConnectSessionId the primary key of the current open ID connect session
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param clientId the client ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next open ID connect session
-	 * @throws NoSuchSessionException if a open ID connect session with the primary key could not be found
-	 */
-	@Override
-	public OpenIdConnectSession[] findByC_A_C_PrevAndNext(
-			long openIdConnectSessionId, long companyId,
-			String authServerWellKnownURI, String clientId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws NoSuchSessionException {
-
-		authServerWellKnownURI = Objects.toString(authServerWellKnownURI, "");
-		clientId = Objects.toString(clientId, "");
-
-		OpenIdConnectSession openIdConnectSession = findByPrimaryKey(
-			openIdConnectSessionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			OpenIdConnectSession[] array = new OpenIdConnectSessionImpl[3];
-
-			array[0] = getByC_A_C_PrevAndNext(
-				session, openIdConnectSession, companyId,
-				authServerWellKnownURI, clientId, orderByComparator, true);
-
-			array[1] = openIdConnectSession;
-
-			array[2] = getByC_A_C_PrevAndNext(
-				session, openIdConnectSession, companyId,
-				authServerWellKnownURI, clientId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected OpenIdConnectSession getByC_A_C_PrevAndNext(
-		Session session, OpenIdConnectSession openIdConnectSession,
-		long companyId, String authServerWellKnownURI, String clientId,
-		OrderByComparator<OpenIdConnectSession> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_OPENIDCONNECTSESSION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_A_C_COMPANYID_2);
-
-		boolean bindAuthServerWellKnownURI = false;
-
-		if (authServerWellKnownURI.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_A_C_AUTHSERVERWELLKNOWNURI_3);
-		}
-		else {
-			bindAuthServerWellKnownURI = true;
-
-			sb.append(_FINDER_COLUMN_C_A_C_AUTHSERVERWELLKNOWNURI_2);
-		}
-
-		boolean bindClientId = false;
-
-		if (clientId.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_A_C_CLIENTID_3);
-		}
-		else {
-			bindClientId = true;
-
-			sb.append(_FINDER_COLUMN_C_A_C_CLIENTID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OpenIdConnectSessionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (bindAuthServerWellKnownURI) {
-			queryPos.add(authServerWellKnownURI);
-		}
-
-		if (bindClientId) {
-			queryPos.add(clientId);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						openIdConnectSession)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<OpenIdConnectSession> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -2091,6 +1797,22 @@ public class OpenIdConnectSessionPersistenceImpl
 			openIdConnectSession.getPrimaryKey(), openIdConnectSession);
 
 		finderCache.putResult(
+			_finderPathFetchByU_I,
+			new Object[] {
+				openIdConnectSession.getUserId(),
+				openIdConnectSession.getIssuer()
+			},
+			openIdConnectSession);
+
+		finderCache.putResult(
+			_finderPathFetchByI_S,
+			new Object[] {
+				openIdConnectSession.getIssuer(),
+				openIdConnectSession.getSessionId()
+			},
+			openIdConnectSession);
+
+		finderCache.putResult(
 			_finderPathFetchByU_A_C,
 			new Object[] {
 				openIdConnectSession.getUserId(),
@@ -2180,6 +1902,22 @@ public class OpenIdConnectSessionPersistenceImpl
 		OpenIdConnectSessionModelImpl openIdConnectSessionModelImpl) {
 
 		Object[] args = new Object[] {
+			openIdConnectSessionModelImpl.getUserId(),
+			openIdConnectSessionModelImpl.getIssuer()
+		};
+
+		finderCache.putResult(
+			_finderPathFetchByU_I, args, openIdConnectSessionModelImpl);
+
+		args = new Object[] {
+			openIdConnectSessionModelImpl.getIssuer(),
+			openIdConnectSessionModelImpl.getSessionId()
+		};
+
+		finderCache.putResult(
+			_finderPathFetchByI_S, args, openIdConnectSessionModelImpl);
+
+		args = new Object[] {
 			openIdConnectSessionModelImpl.getUserId(),
 			openIdConnectSessionModelImpl.getAuthServerWellKnownURI(),
 			openIdConnectSessionModelImpl.getClientId()
@@ -2680,6 +2418,16 @@ public class OpenIdConnectSessionPersistenceImpl
 				new String[] {Date.class.getName()},
 				new String[] {"accessTokenExpirationDate"}, false);
 
+		_finderPathFetchByU_I = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByU_I",
+			new String[] {Long.class.getName(), String.class.getName()},
+			new String[] {"userId", "issuer"}, true);
+
+		_finderPathFetchByI_S = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByI_S",
+			new String[] {String.class.getName(), String.class.getName()},
+			new String[] {"issuer", "sessionId"}, true);
+
 		_finderPathWithPaginationFindByC_A_C = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_C",
 			new String[] {
@@ -2797,3 +2545,4 @@ public class OpenIdConnectSessionPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1894233691

@@ -673,7 +673,7 @@ public class CommerceOrderItemLocalServiceUtil {
 
 	public static CommerceOrderItem updateCommerceOrderItem(
 			long commerceOrderItemId, long commerceInventoryBookedQuantityId)
-		throws com.liferay.commerce.exception.NoSuchOrderItemException {
+		throws PortalException {
 
 		return getService().updateCommerceOrderItem(
 			commerceOrderItemId, commerceInventoryBookedQuantityId);
@@ -889,3 +889,4 @@ public class CommerceOrderItemLocalServiceUtil {
 			CommerceOrderItemLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1990702472

@@ -10,7 +10,6 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -19,6 +18,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.spring.orm.LastSessionRecorderHelperUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -57,6 +57,7 @@ public class CompanyThreadLocal {
 		}
 
 		try (Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select userId, languageId, timeZoneId from User_ where " +
 					"companyId = ? and type_ = ?")) {
@@ -161,7 +162,7 @@ public class CompanyThreadLocal {
 
 		if (isLocked()) {
 			throw new UnsupportedOperationException(
-				"CompanyThreadLocal modification is not allowed");
+				"Unable to set company ID on locked company thread local");
 		}
 
 		_syncLastDBPartitionSessionState();
@@ -200,7 +201,7 @@ public class CompanyThreadLocal {
 		if (!companyId.equals(_companyId.get())) {
 			if (isLocked()) {
 				throw new UnsupportedOperationException(
-					"CompanyThreadLocal modification is not allowed");
+					"Unable to set company ID on locked company thread local");
 			}
 
 			_syncLastDBPartitionSessionState();
@@ -269,7 +270,7 @@ public class CompanyThreadLocal {
 	}
 
 	private static void _syncLastDBPartitionSessionState() {
-		if (DBPartition.isPartitionEnabled()) {
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
 			LastSessionRecorderHelperUtil.syncLastSessionState(false);
 		}
 	}

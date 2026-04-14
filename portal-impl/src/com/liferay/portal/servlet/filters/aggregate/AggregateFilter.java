@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -43,7 +44,6 @@ import com.liferay.portal.servlet.filters.dynamiccss.DynamicCSSUtil;
 import com.liferay.portal.servlet.filters.util.CacheFileNameGenerator;
 import com.liferay.portal.util.AggregateUtil;
 import com.liferay.portal.util.JavaScriptBundleUtil;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -308,6 +308,7 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 			long fileLastModifiedTime = -1;
 
 			try (Reader reader = new FileReader(cacheFile);
+
 				UnsyncBufferedReader unsyncBufferedReader =
 					new UnsyncBufferedReader(reader)) {
 
@@ -408,6 +409,7 @@ public class AggregateFilter extends IgnoreModuleRequestFilter {
 			long fileLastModifiedTime = -1;
 
 			try (Reader reader = new FileReader(cacheDataFile);
+
 				UnsyncBufferedReader unsyncBufferedReader =
 					new UnsyncBufferedReader(reader)) {
 

@@ -30,8 +30,10 @@ public class DLWebUpgradeStepRegistrator implements UpgradeStepRegistrator {
 	public void register(Registry registry) {
 		registry.registerInitialization();
 
+		registry.register("0.0.1", "0.0.2", new UpgradeAdminPortlets());
+
 		registry.register(
-			"0.0.1", "1.0.0", new UpgradeAdminPortlets(),
+			"0.0.2", "1.0.0",
 			new UpgradePortletSettings(_settingsLocatorHelper));
 
 		registry.register(
@@ -56,6 +58,11 @@ public class DLWebUpgradeStepRegistrator implements UpgradeStepRegistrator {
 				UpgradePortletPreferences(
 					_dlAppLocalService, _groupLocalService,
 					_repositoryLocalService));
+
+		registry.register(
+			"1.2.0", "1.3.0",
+			new com.liferay.document.library.web.internal.upgrade.v1_3_0.
+				UpgradePortletPreferences(_groupLocalService));
 	}
 
 	@Reference

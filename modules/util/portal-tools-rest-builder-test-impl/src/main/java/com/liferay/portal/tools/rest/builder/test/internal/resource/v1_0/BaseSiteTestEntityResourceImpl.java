@@ -5,6 +5,7 @@
 
 package com.liferay.portal.tools.rest.builder.test.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
@@ -340,25 +341,27 @@ public abstract class BaseSiteTestEntityResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(siteTestEntityId);
+		Long resourceId = getPermissionCheckerResourceId(siteTestEntityId);
 		String resourceName = getPermissionCheckerResourceName(
 			siteTestEntityId);
-		Long resourceId = getPermissionCheckerResourceId(siteTestEntityId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteTestEntityPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getSiteTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteTestEntityPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putSiteTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -822,13 +825,13 @@ public abstract class BaseSiteTestEntityResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(siteTestEntityId);
+		Long resourceId = getPermissionCheckerResourceId(siteTestEntityId);
 		String resourceName = getPermissionCheckerResourceName(
 			siteTestEntityId);
-		Long resourceId = getPermissionCheckerResourceId(siteTestEntityId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -864,21 +867,22 @@ public abstract class BaseSiteTestEntityResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteTestEntityPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getSiteTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteTestEntityPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putSiteTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -995,8 +999,33 @@ public abstract class BaseSiteTestEntityResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		UnsafeFunction<SiteTestEntity, SiteTestEntity, Exception>
+			siteTestEntityUnsafeFunction = siteTestEntity -> {
+				if (parameters.containsKey("siteId")) {
+					deleteSiteSiteTestEntityByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						siteTestEntity.getExternalReferenceCode());
+
+					return siteTestEntity;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
+			};
+
+		if (contextBatchUnsafeBiConsumer != null) {
+			contextBatchUnsafeBiConsumer.accept(
+				siteTestEntities, siteTestEntityUnsafeFunction);
+		}
+		else if (contextBatchUnsafeConsumer != null) {
+			contextBatchUnsafeConsumer.accept(
+				siteTestEntities, siteTestEntityUnsafeFunction::apply);
+		}
+		else {
+			for (SiteTestEntity siteTestEntity : siteTestEntities) {
+				siteTestEntityUnsafeFunction.apply(siteTestEntity);
+			}
+		}
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
@@ -1057,6 +1086,15 @@ public abstract class BaseSiteTestEntityResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1274,6 +1312,9 @@ public abstract class BaseSiteTestEntityResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1843,3 +1884,4 @@ public abstract class BaseSiteTestEntityResourceImpl
 		LogFactoryUtil.getLog(BaseSiteTestEntityResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1654074745

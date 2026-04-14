@@ -139,8 +139,8 @@ public class PortletFragmentEntryProcessorTest {
 
 		FragmentEntryLink fragmentEntryLink =
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
-				null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-				fragmentEntry.getFragmentEntryId(),
+				null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+				fragmentEntry.getExternalReferenceCode(), null,
 				_segmentsExperienceLocalService.
 					fetchDefaultSegmentsExperienceId(_layout.getPlid()),
 				_layout.getPlid(), fragmentEntry.getCss(),

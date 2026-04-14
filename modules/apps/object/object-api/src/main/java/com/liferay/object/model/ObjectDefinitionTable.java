@@ -81,6 +81,10 @@ public class ObjectDefinitionTable extends BaseTable<ObjectDefinitionTable> {
 		createColumn(
 			"enableComments", Boolean.class, Types.BOOLEAN,
 			Column.FLAG_DEFAULT);
+	public final Column<ObjectDefinitionTable, Boolean> enableFormContainer =
+		createColumn(
+			"enableFormContainer", Boolean.class, Types.BOOLEAN,
+			Column.FLAG_DEFAULT);
 	public final Column<ObjectDefinitionTable, Boolean>
 		enableFriendlyURLCustomization = createColumn(
 			"enableFriendlyURLCustomization", Boolean.class, Types.BOOLEAN,
@@ -88,10 +92,6 @@ public class ObjectDefinitionTable extends BaseTable<ObjectDefinitionTable> {
 	public final Column<ObjectDefinitionTable, Boolean> enableIndexSearch =
 		createColumn(
 			"enableIndexSearch", Boolean.class, Types.BOOLEAN,
-			Column.FLAG_DEFAULT);
-	public final Column<ObjectDefinitionTable, Boolean> enableLocalization =
-		createColumn(
-			"enableLocalization", Boolean.class, Types.BOOLEAN,
 			Column.FLAG_DEFAULT);
 	public final Column<ObjectDefinitionTable, Boolean> enableObjectEntryDraft =
 		createColumn(
@@ -161,3 +161,4 @@ public class ObjectDefinitionTable extends BaseTable<ObjectDefinitionTable> {
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:368111822

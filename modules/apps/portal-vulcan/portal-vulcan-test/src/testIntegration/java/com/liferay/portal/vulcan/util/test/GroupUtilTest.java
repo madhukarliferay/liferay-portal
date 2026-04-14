@@ -12,9 +12,12 @@ import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
@@ -73,30 +76,25 @@ public class GroupUtilTest {
 
 	@Test
 	public void testGetDepotGroupId() throws Exception {
-		_testGetDepotGroupId();
-
 		Group depotEntryGroup = _depotEntry.getGroup();
 
-		Assert.assertNull(
+		Assert.assertEquals(
+			Long.valueOf(depotEntryGroup.getGroupId()),
 			GroupUtil.getDepotGroupId(
-				String.valueOf(depotEntryGroup.getGroupId()),
+				String.valueOf(_depotEntry.getDepotEntryId()),
 				depotEntryGroup.getCompanyId(), _depotEntryLocalService,
 				_groupLocalService));
-	}
-
-	@FeatureFlag("LPD-17564")
-	@Test
-	public void testGetDepotGroupIdWithFF() throws Exception {
-		_testGetDepotGroupId();
-
-		Group depotEntryGroup = _depotEntry.getGroup();
-
 		Assert.assertEquals(
 			Long.valueOf(depotEntryGroup.getGroupId()),
 			GroupUtil.getDepotGroupId(
 				String.valueOf(depotEntryGroup.getGroupId()),
 				depotEntryGroup.getCompanyId(), _depotEntryLocalService,
 				_groupLocalService));
+		Assert.assertEquals(
+			Long.valueOf(depotEntryGroup.getGroupId()),
+			GroupUtil.getDepotGroupId(
+				depotEntryGroup.getGroupKey(), depotEntryGroup.getCompanyId(),
+				_depotEntryLocalService, _groupLocalService));
 	}
 
 	@Test
@@ -116,6 +114,15 @@ public class GroupUtilTest {
 		}
 	}
 
+	@Test
+	public void testGetGroupIdWithDifferentCompanyId() throws Exception {
+		Assert.assertNull(
+			GroupUtil.getGroupId(
+				RandomTestUtil.randomLong(),
+				String.valueOf(TestPropsValues.getGroupId()),
+				_groupLocalService));
+	}
+
 	@FeatureFlag("LPD-17564")
 	@Test
 	public void testGetGroupIdWithFF() throws Exception {
@@ -125,6 +132,25 @@ public class GroupUtilTest {
 		Assume.assumeNotNull(group);
 
 		_testGetGroupId(group);
+	}
+
+	@Test
+	public void testGetGroupIdWithLayoutSetPrototypeGroup() throws Exception {
+		LayoutSetPrototype layoutSetPrototype =
+			_layoutSetPrototypeLocalService.addLayoutSetPrototype(
+				TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
+				HashMapBuilder.put(
+					LocaleUtil.getDefault(), RandomTestUtil.randomString()
+				).build(),
+				null, true, true, ServiceContextTestUtil.getServiceContext());
+
+		Group group = layoutSetPrototype.getGroup();
+
+		Assert.assertEquals(
+			Long.valueOf(group.getGroupId()),
+			GroupUtil.getGroupId(
+				TestPropsValues.getCompanyId(),
+				String.valueOf(group.getGroupId()), _groupLocalService));
 	}
 
 	@Test
@@ -147,22 +173,6 @@ public class GroupUtilTest {
 
 		Assert.assertEquals(
 			Long.valueOf(group.getGroupId()), GroupUtil.getSiteId(group));
-	}
-
-	private void _testGetDepotGroupId() throws Exception {
-		Group depotEntryGroup = _depotEntry.getGroup();
-
-		Assert.assertEquals(
-			Long.valueOf(depotEntryGroup.getGroupId()),
-			GroupUtil.getDepotGroupId(
-				String.valueOf(_depotEntry.getDepotEntryId()),
-				depotEntryGroup.getCompanyId(), _depotEntryLocalService,
-				_groupLocalService));
-		Assert.assertEquals(
-			Long.valueOf(depotEntryGroup.getGroupId()),
-			GroupUtil.getDepotGroupId(
-				depotEntryGroup.getGroupKey(), depotEntryGroup.getCompanyId(),
-				_depotEntryLocalService, _groupLocalService));
 	}
 
 	private void _testGetGroupId(Group group) {
@@ -189,6 +199,9 @@ public class GroupUtilTest {
 
 	@Inject
 	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private LayoutSetPrototypeLocalService _layoutSetPrototypeLocalService;
 
 	@Inject
 	private UserGroupLocalService _userGroupLocalService;

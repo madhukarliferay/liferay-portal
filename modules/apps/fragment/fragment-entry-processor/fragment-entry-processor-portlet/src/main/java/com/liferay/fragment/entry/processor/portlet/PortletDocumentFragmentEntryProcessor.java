@@ -13,6 +13,7 @@ import com.liferay.fragment.renderer.FragmentPortletRenderer;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
@@ -49,14 +50,27 @@ public class PortletDocumentFragmentEntryProcessor
 
 	@Override
 	public void processFragmentEntryLinkHTML(
-			FragmentEntryLink fragmentEntryLink, Document document,
+			Document document, FragmentEntryLink fragmentEntryLink,
+			FragmentEntryProcessorContext fragmentEntryProcessorContext)
+		throws PortalException {
+
+		processFragmentEntryLinkHTML(
+			document, fragmentEntryLink.getEditableValuesJSONObject(),
+			fragmentEntryLink, fragmentEntryProcessorContext);
+	}
+
+	@Override
+	public void processFragmentEntryLinkHTML(
+			Document document, JSONObject editableValuesJSONObject,
+			FragmentEntryLink fragmentEntryLink,
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
 		throws PortalException {
 
 		String html = fragmentEntryLink.getHtml();
 
-		if (!html.contains("lfr-widget-") &&
-			!html.contains("@liferay_portlet")) {
+		if (fragmentEntryProcessorContext.isDisablePortletRender() ||
+			(!html.contains("lfr-widget-") &&
+			 !html.contains("@liferay_portlet"))) {
 
 			return;
 		}

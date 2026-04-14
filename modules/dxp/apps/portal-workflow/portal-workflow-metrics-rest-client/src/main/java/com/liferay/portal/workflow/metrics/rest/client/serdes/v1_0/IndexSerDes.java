@@ -52,9 +52,7 @@ public class IndexSerDes {
 			sb.append("\"group\": ");
 
 			sb.append("\"");
-
 			sb.append(index.getGroup());
-
 			sb.append("\"");
 		}
 
@@ -257,3 +255,4 @@ public class IndexSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-797829703

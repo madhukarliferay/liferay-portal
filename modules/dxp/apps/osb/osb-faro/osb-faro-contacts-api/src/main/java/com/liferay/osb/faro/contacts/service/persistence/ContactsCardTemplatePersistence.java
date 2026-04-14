@@ -120,47 +120,6 @@ public interface ContactsCardTemplatePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last contacts card template in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching contacts card template
-	 * @throws NoSuchContactsCardTemplateException if a matching contacts card template could not be found
-	 */
-	public ContactsCardTemplate findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ContactsCardTemplate> orderByComparator)
-		throws NoSuchContactsCardTemplateException;
-
-	/**
-	 * Returns the last contacts card template in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching contacts card template, or <code>null</code> if a matching contacts card template could not be found
-	 */
-	public ContactsCardTemplate fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<ContactsCardTemplate>
-			orderByComparator);
-
-	/**
-	 * Returns the contacts card templates before and after the current contacts card template in the ordered set where groupId = &#63;.
-	 *
-	 * @param contactsCardTemplateId the primary key of the current contacts card template
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next contacts card template
-	 * @throws NoSuchContactsCardTemplateException if a contacts card template with the primary key could not be found
-	 */
-	public ContactsCardTemplate[] findByGroupId_PrevAndNext(
-			long contactsCardTemplateId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ContactsCardTemplate> orderByComparator)
-		throws NoSuchContactsCardTemplateException;
-
-	/**
 	 * Removes all the contacts card templates where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -298,3 +257,4 @@ public interface ContactsCardTemplatePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:202711165

@@ -121,47 +121,6 @@ public interface RegionLocalizationPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last region localization in the ordered set where regionId = &#63;.
-	 *
-	 * @param regionId the region ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching region localization
-	 * @throws NoSuchRegionLocalizationException if a matching region localization could not be found
-	 */
-	public RegionLocalization findByRegionId_Last(
-			long regionId,
-			com.liferay.portal.kernel.util.OrderByComparator<RegionLocalization>
-				orderByComparator)
-		throws NoSuchRegionLocalizationException;
-
-	/**
-	 * Returns the last region localization in the ordered set where regionId = &#63;.
-	 *
-	 * @param regionId the region ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching region localization, or <code>null</code> if a matching region localization could not be found
-	 */
-	public RegionLocalization fetchByRegionId_Last(
-		long regionId,
-		com.liferay.portal.kernel.util.OrderByComparator<RegionLocalization>
-			orderByComparator);
-
-	/**
-	 * Returns the region localizations before and after the current region localization in the ordered set where regionId = &#63;.
-	 *
-	 * @param regionLocalizationId the primary key of the current region localization
-	 * @param regionId the region ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next region localization
-	 * @throws NoSuchRegionLocalizationException if a region localization with the primary key could not be found
-	 */
-	public RegionLocalization[] findByRegionId_PrevAndNext(
-			long regionLocalizationId, long regionId,
-			com.liferay.portal.kernel.util.OrderByComparator<RegionLocalization>
-				orderByComparator)
-		throws NoSuchRegionLocalizationException;
-
-	/**
 	 * Removes all the region localizations where regionId = &#63; from the database.
 	 *
 	 * @param regionId the region ID
@@ -351,3 +310,4 @@ public interface RegionLocalizationPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-280984497

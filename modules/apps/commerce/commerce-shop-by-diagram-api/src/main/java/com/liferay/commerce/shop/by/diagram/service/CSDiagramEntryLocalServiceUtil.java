@@ -231,6 +231,13 @@ public class CSDiagramEntryLocalServiceUtil {
 		return getService().fetchCSDiagramEntry(cpDefinitionId, sequence);
 	}
 
+	public static CSDiagramEntry fetchCSDiagramEntryByExternalReferenceCode(
+		String externalReferenceCode, long companyId) {
+
+		return getService().fetchCSDiagramEntryByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
@@ -307,6 +314,14 @@ public class CSDiagramEntryLocalServiceUtil {
 		return getService().getCSDiagramEntry(cpDefinitionId, sequence);
 	}
 
+	public static CSDiagramEntry getCSDiagramEntryByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().getCSDiagramEntryByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
 	public static
 		com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery
 			getIndexableActionableDynamicQuery() {
@@ -369,3 +384,4 @@ public class CSDiagramEntryLocalServiceUtil {
 			CSDiagramEntryLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1896285441

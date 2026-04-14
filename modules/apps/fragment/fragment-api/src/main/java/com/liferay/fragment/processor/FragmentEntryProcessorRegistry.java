@@ -26,6 +26,10 @@ public interface FragmentEntryProcessorRegistry {
 	public JSONObject getDefaultEditableValuesJSONObject(
 		String html, JSONObject configurationJSONObject);
 
+	public String mergeDefaultEditableValues(
+		JSONObject configurationJSONObject, JSONObject editableValuesJSONObject,
+		String html);
+
 	public default String processFragmentEntryLinkCSS(
 			FragmentEntryLink fragmentEntryLink,
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
@@ -40,6 +44,16 @@ public interface FragmentEntryProcessorRegistry {
 		throws PortalException {
 
 		return fragmentEntryLink.getHtml();
+	}
+
+	public default String processFragmentEntryLinkHTML(
+			JSONObject editableValuesJSONObject,
+			FragmentEntryLink fragmentEntryLink,
+			FragmentEntryProcessorContext fragmentEntryProcessorContext)
+		throws PortalException {
+
+		return processFragmentEntryLinkHTML(
+			fragmentEntryLink, fragmentEntryProcessorContext);
 	}
 
 	public void validateFragmentEntryHTML(

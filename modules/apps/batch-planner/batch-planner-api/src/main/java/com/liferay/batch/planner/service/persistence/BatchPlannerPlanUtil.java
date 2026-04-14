@@ -214,55 +214,6 @@ public class BatchPlannerPlanUtil {
 	}
 
 	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan
-	 * @throws NoSuchPlanException if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan, or <code>null</code> if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan fetchByCompanyId_Last(
-		long companyId, OrderByComparator<BatchPlannerPlan> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set where companyId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] findByCompanyId_PrevAndNext(
-			long batchPlannerPlanId, long companyId,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			batchPlannerPlanId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the batch planner plans that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -309,24 +260,6 @@ public class BatchPlannerPlanUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set of batch planner plans that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] filterFindByCompanyId_PrevAndNext(
-			long batchPlannerPlanId, long companyId,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			batchPlannerPlanId, companyId, orderByComparator);
 	}
 
 	/**
@@ -471,59 +404,6 @@ public class BatchPlannerPlanUtil {
 	}
 
 	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan
-	 * @throws NoSuchPlanException if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan, or <code>null</code> if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<BatchPlannerPlan> orderByComparator) {
-
-		return getPersistence().fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] findByC_U_PrevAndNext(
-			long batchPlannerPlanId, long companyId, long userId,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_U_PrevAndNext(
-			batchPlannerPlanId, companyId, userId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the batch planner plans that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -575,25 +455,6 @@ public class BatchPlannerPlanUtil {
 
 		return getPersistence().filterFindByC_U(
 			companyId, userId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set of batch planner plans that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] filterFindByC_U_PrevAndNext(
-			long batchPlannerPlanId, long companyId, long userId,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().filterFindByC_U_PrevAndNext(
-			batchPlannerPlanId, companyId, userId, orderByComparator);
 	}
 
 	/**
@@ -741,59 +602,6 @@ public class BatchPlannerPlanUtil {
 	}
 
 	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and export = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan
-	 * @throws NoSuchPlanException if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan findByC_E_Last(
-			long companyId, boolean export,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_E_Last(
-			companyId, export, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and export = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan, or <code>null</code> if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan fetchByC_E_Last(
-		long companyId, boolean export,
-		OrderByComparator<BatchPlannerPlan> orderByComparator) {
-
-		return getPersistence().fetchByC_E_Last(
-			companyId, export, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set where companyId = &#63; and export = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] findByC_E_PrevAndNext(
-			long batchPlannerPlanId, long companyId, boolean export,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_E_PrevAndNext(
-			batchPlannerPlanId, companyId, export, orderByComparator);
-	}
-
-	/**
 	 * Returns all the batch planner plans that the user has permission to view where companyId = &#63; and export = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -845,25 +653,6 @@ public class BatchPlannerPlanUtil {
 
 		return getPersistence().filterFindByC_E(
 			companyId, export, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set of batch planner plans that the user has permission to view where companyId = &#63; and export = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] filterFindByC_E_PrevAndNext(
-			long batchPlannerPlanId, long companyId, boolean export,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().filterFindByC_E_PrevAndNext(
-			batchPlannerPlanId, companyId, export, orderByComparator);
 	}
 
 	/**
@@ -1011,59 +800,6 @@ public class BatchPlannerPlanUtil {
 	}
 
 	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and name = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan
-	 * @throws NoSuchPlanException if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan findByC_N_Last(
-			long companyId, String name,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_N_Last(
-			companyId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and name = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan, or <code>null</code> if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan fetchByC_N_Last(
-		long companyId, String name,
-		OrderByComparator<BatchPlannerPlan> orderByComparator) {
-
-		return getPersistence().fetchByC_N_Last(
-			companyId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set where companyId = &#63; and name = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] findByC_N_PrevAndNext(
-			long batchPlannerPlanId, long companyId, String name,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_N_PrevAndNext(
-			batchPlannerPlanId, companyId, name, orderByComparator);
-	}
-
-	/**
 	 * Returns all the batch planner plans that the user has permission to view where companyId = &#63; and name = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1115,25 +851,6 @@ public class BatchPlannerPlanUtil {
 
 		return getPersistence().filterFindByC_N(
 			companyId, name, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set of batch planner plans that the user has permission to view where companyId = &#63; and name = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] filterFindByC_N_PrevAndNext(
-			long batchPlannerPlanId, long companyId, String name,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().filterFindByC_N_PrevAndNext(
-			batchPlannerPlanId, companyId, name, orderByComparator);
 	}
 
 	/**
@@ -1281,59 +998,6 @@ public class BatchPlannerPlanUtil {
 	}
 
 	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and template = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan
-	 * @throws NoSuchPlanException if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan findByC_T_Last(
-			long companyId, boolean template,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_T_Last(
-			companyId, template, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and template = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan, or <code>null</code> if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan fetchByC_T_Last(
-		long companyId, boolean template,
-		OrderByComparator<BatchPlannerPlan> orderByComparator) {
-
-		return getPersistence().fetchByC_T_Last(
-			companyId, template, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set where companyId = &#63; and template = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] findByC_T_PrevAndNext(
-			long batchPlannerPlanId, long companyId, boolean template,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_T_PrevAndNext(
-			batchPlannerPlanId, companyId, template, orderByComparator);
-	}
-
-	/**
 	 * Returns all the batch planner plans that the user has permission to view where companyId = &#63; and template = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1386,25 +1050,6 @@ public class BatchPlannerPlanUtil {
 
 		return getPersistence().filterFindByC_T(
 			companyId, template, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set of batch planner plans that the user has permission to view where companyId = &#63; and template = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] filterFindByC_T_PrevAndNext(
-			long batchPlannerPlanId, long companyId, boolean template,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().filterFindByC_T_PrevAndNext(
-			batchPlannerPlanId, companyId, template, orderByComparator);
 	}
 
 	/**
@@ -1560,63 +1205,6 @@ public class BatchPlannerPlanUtil {
 	}
 
 	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and export = &#63; and template = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan
-	 * @throws NoSuchPlanException if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan findByC_E_T_Last(
-			long companyId, boolean export, boolean template,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_E_T_Last(
-			companyId, export, template, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner plan in the ordered set where companyId = &#63; and export = &#63; and template = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner plan, or <code>null</code> if a matching batch planner plan could not be found
-	 */
-	public static BatchPlannerPlan fetchByC_E_T_Last(
-		long companyId, boolean export, boolean template,
-		OrderByComparator<BatchPlannerPlan> orderByComparator) {
-
-		return getPersistence().fetchByC_E_T_Last(
-			companyId, export, template, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set where companyId = &#63; and export = &#63; and template = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] findByC_E_T_PrevAndNext(
-			long batchPlannerPlanId, long companyId, boolean export,
-			boolean template,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().findByC_E_T_PrevAndNext(
-			batchPlannerPlanId, companyId, export, template, orderByComparator);
-	}
-
-	/**
 	 * Returns all the batch planner plans that the user has permission to view where companyId = &#63; and export = &#63; and template = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1672,27 +1260,6 @@ public class BatchPlannerPlanUtil {
 
 		return getPersistence().filterFindByC_E_T(
 			companyId, export, template, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner plans before and after the current batch planner plan in the ordered set of batch planner plans that the user has permission to view where companyId = &#63; and export = &#63; and template = &#63;.
-	 *
-	 * @param batchPlannerPlanId the primary key of the current batch planner plan
-	 * @param companyId the company ID
-	 * @param export the export
-	 * @param template the template
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner plan
-	 * @throws NoSuchPlanException if a batch planner plan with the primary key could not be found
-	 */
-	public static BatchPlannerPlan[] filterFindByC_E_T_PrevAndNext(
-			long batchPlannerPlanId, long companyId, boolean export,
-			boolean template,
-			OrderByComparator<BatchPlannerPlan> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchPlanException {
-
-		return getPersistence().filterFindByC_E_T_PrevAndNext(
-			batchPlannerPlanId, companyId, export, template, orderByComparator);
 	}
 
 	/**
@@ -1898,3 +1465,4 @@ public class BatchPlannerPlanUtil {
 	private static volatile BatchPlannerPlanPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-897836627

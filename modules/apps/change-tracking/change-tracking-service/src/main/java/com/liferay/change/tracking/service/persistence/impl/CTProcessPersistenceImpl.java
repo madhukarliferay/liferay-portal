@@ -305,215 +305,6 @@ public class CTProcessPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct process in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process
-	 * @throws NoSuchProcessException if a matching ct process could not be found
-	 */
-	@Override
-	public CTProcess findByCompanyId_Last(
-			long companyId, OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		CTProcess ctProcess = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (ctProcess != null) {
-			return ctProcess;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchProcessException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct process in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process, or <code>null</code> if a matching ct process could not be found
-	 */
-	@Override
-	public CTProcess fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CTProcess> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTProcess> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	@Override
-	public CTProcess[] findByCompanyId_PrevAndNext(
-			long ctProcessId, long companyId,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		CTProcess ctProcess = findByPrimaryKey(ctProcessId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTProcess[] array = new CTProcessImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, ctProcess, companyId, orderByComparator, true);
-
-			array[1] = ctProcess;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, ctProcess, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTProcess getByCompanyId_PrevAndNext(
-		Session session, CTProcess ctProcess, long companyId,
-		OrderByComparator<CTProcess> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CTPROCESS_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTProcessModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctProcess)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTProcess> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct processes that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -564,6 +355,15 @@ public class CTProcessPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -642,202 +442,6 @@ public class CTProcessPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set of ct processes that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	@Override
-	public CTProcess[] filterFindByCompanyId_PrevAndNext(
-			long ctProcessId, long companyId,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				ctProcessId, companyId, orderByComparator);
-		}
-
-		CTProcess ctProcess = findByPrimaryKey(ctProcessId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTProcess[] array = new CTProcessImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, ctProcess, companyId, orderByComparator, true);
-
-			array[1] = ctProcess;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, ctProcess, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTProcess filterGetByCompanyId_PrevAndNext(
-		Session session, CTProcess ctProcess, long companyId,
-		OrderByComparator<CTProcess> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTProcessModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTProcessModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTProcess.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTProcessImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTProcessImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctProcess)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTProcess> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct processes where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -911,6 +515,14 @@ public class CTProcessPersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTProcess> ctProcesses = findByCompanyId(companyId);
+
+			ctProcesses = InlineSQLHelperUtil.filter(ctProcesses);
+
+			return ctProcesses.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -1174,215 +786,6 @@ public class CTProcessPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process
-	 * @throws NoSuchProcessException if a matching ct process could not be found
-	 */
-	@Override
-	public CTProcess findByCtCollectionId_Last(
-			long ctCollectionId, OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		CTProcess ctProcess = fetchByCtCollectionId_Last(
-			ctCollectionId, orderByComparator);
-
-		if (ctProcess != null) {
-			return ctProcess;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("ctCollectionId=");
-		sb.append(ctCollectionId);
-
-		sb.append("}");
-
-		throw new NoSuchProcessException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process, or <code>null</code> if a matching ct process could not be found
-	 */
-	@Override
-	public CTProcess fetchByCtCollectionId_Last(
-		long ctCollectionId, OrderByComparator<CTProcess> orderByComparator) {
-
-		int count = countByCtCollectionId(ctCollectionId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTProcess> list = findByCtCollectionId(
-			ctCollectionId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	@Override
-	public CTProcess[] findByCtCollectionId_PrevAndNext(
-			long ctProcessId, long ctCollectionId,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		CTProcess ctProcess = findByPrimaryKey(ctProcessId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTProcess[] array = new CTProcessImpl[3];
-
-			array[0] = getByCtCollectionId_PrevAndNext(
-				session, ctProcess, ctCollectionId, orderByComparator, true);
-
-			array[1] = ctProcess;
-
-			array[2] = getByCtCollectionId_PrevAndNext(
-				session, ctProcess, ctCollectionId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTProcess getByCtCollectionId_PrevAndNext(
-		Session session, CTProcess ctProcess, long ctCollectionId,
-		OrderByComparator<CTProcess> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CTPROCESS_WHERE);
-
-		sb.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTProcessModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(ctCollectionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctProcess)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTProcess> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct processes that the user has permission to view where ctCollectionId = &#63;.
 	 *
 	 * @param ctCollectionId the ct collection ID
@@ -1434,6 +837,15 @@ public class CTProcessPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByCtCollectionId(
 				ctCollectionId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCtCollectionId(
+					ctCollectionId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -1512,202 +924,6 @@ public class CTProcessPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set of ct processes that the user has permission to view where ctCollectionId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	@Override
-	public CTProcess[] filterFindByCtCollectionId_PrevAndNext(
-			long ctProcessId, long ctCollectionId,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByCtCollectionId_PrevAndNext(
-				ctProcessId, ctCollectionId, orderByComparator);
-		}
-
-		CTProcess ctProcess = findByPrimaryKey(ctProcessId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTProcess[] array = new CTProcessImpl[3];
-
-			array[0] = filterGetByCtCollectionId_PrevAndNext(
-				session, ctProcess, ctCollectionId, orderByComparator, true);
-
-			array[1] = ctProcess;
-
-			array[2] = filterGetByCtCollectionId_PrevAndNext(
-				session, ctProcess, ctCollectionId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTProcess filterGetByCtCollectionId_PrevAndNext(
-		Session session, CTProcess ctProcess, long ctCollectionId,
-		OrderByComparator<CTProcess> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_CTCOLLECTIONID_CTCOLLECTIONID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTProcessModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTProcessModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTProcess.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTProcessImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTProcessImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(ctCollectionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctProcess)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTProcess> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct processes where ctCollectionId = &#63; from the database.
 	 *
 	 * @param ctCollectionId the ct collection ID
@@ -1782,6 +998,14 @@ public class CTProcessPersistenceImpl
 	public int filterCountByCtCollectionId(long ctCollectionId) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByCtCollectionId(ctCollectionId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTProcess> ctProcesses = findByCtCollectionId(ctCollectionId);
+
+			ctProcesses = InlineSQLHelperUtil.filter(ctProcesses);
+
+			return ctProcesses.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -2062,229 +1286,6 @@ public class CTProcessPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process
-	 * @throws NoSuchProcessException if a matching ct process could not be found
-	 */
-	@Override
-	public CTProcess findByC_T_Last(
-			long ctCollectionId, int type,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		CTProcess ctProcess = fetchByC_T_Last(
-			ctCollectionId, type, orderByComparator);
-
-		if (ctProcess != null) {
-			return ctProcess;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("ctCollectionId=");
-		sb.append(ctCollectionId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchProcessException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process, or <code>null</code> if a matching ct process could not be found
-	 */
-	@Override
-	public CTProcess fetchByC_T_Last(
-		long ctCollectionId, int type,
-		OrderByComparator<CTProcess> orderByComparator) {
-
-		int count = countByC_T(ctCollectionId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTProcess> list = findByC_T(
-			ctCollectionId, type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	@Override
-	public CTProcess[] findByC_T_PrevAndNext(
-			long ctProcessId, long ctCollectionId, int type,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		CTProcess ctProcess = findByPrimaryKey(ctProcessId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTProcess[] array = new CTProcessImpl[3];
-
-			array[0] = getByC_T_PrevAndNext(
-				session, ctProcess, ctCollectionId, type, orderByComparator,
-				true);
-
-			array[1] = ctProcess;
-
-			array[2] = getByC_T_PrevAndNext(
-				session, ctProcess, ctCollectionId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTProcess getByC_T_PrevAndNext(
-		Session session, CTProcess ctProcess, long ctCollectionId, int type,
-		OrderByComparator<CTProcess> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CTPROCESS_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_T_CTCOLLECTIONID_2);
-
-		sb.append(_FINDER_COLUMN_C_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTProcessModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(ctCollectionId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctProcess)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTProcess> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct processes that the user has permission to view where ctCollectionId = &#63; and type = &#63;.
 	 *
 	 * @param ctCollectionId the ct collection ID
@@ -2339,6 +1340,15 @@ public class CTProcessPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByC_T(
 				ctCollectionId, type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_T(
+					ctCollectionId, type, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2417,209 +1427,6 @@ public class CTProcessPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set of ct processes that the user has permission to view where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	@Override
-	public CTProcess[] filterFindByC_T_PrevAndNext(
-			long ctProcessId, long ctCollectionId, int type,
-			OrderByComparator<CTProcess> orderByComparator)
-		throws NoSuchProcessException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByC_T_PrevAndNext(
-				ctProcessId, ctCollectionId, type, orderByComparator);
-		}
-
-		CTProcess ctProcess = findByPrimaryKey(ctProcessId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTProcess[] array = new CTProcessImpl[3];
-
-			array[0] = filterGetByC_T_PrevAndNext(
-				session, ctProcess, ctCollectionId, type, orderByComparator,
-				true);
-
-			array[1] = ctProcess;
-
-			array[2] = filterGetByC_T_PrevAndNext(
-				session, ctProcess, ctCollectionId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTProcess filterGetByC_T_PrevAndNext(
-		Session session, CTProcess ctProcess, long ctCollectionId, int type,
-		OrderByComparator<CTProcess> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_T_CTCOLLECTIONID_2);
-
-		sb.append(_FINDER_COLUMN_C_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTPROCESS_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTProcessModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTProcessModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTProcess.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTProcessImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTProcessImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(ctCollectionId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctProcess)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTProcess> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2705,6 +1512,14 @@ public class CTProcessPersistenceImpl
 	public int filterCountByC_T(long ctCollectionId, int type) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByC_T(ctCollectionId, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTProcess> ctProcesses = findByC_T(ctCollectionId, type);
+
+			ctProcesses = InlineSQLHelperUtil.filter(ctProcesses);
+
+			return ctProcesses.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -3443,3 +2258,4 @@ public class CTProcessPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2117818751

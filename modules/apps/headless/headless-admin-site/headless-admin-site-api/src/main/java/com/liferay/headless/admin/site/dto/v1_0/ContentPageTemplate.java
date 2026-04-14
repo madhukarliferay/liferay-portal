@@ -91,22 +91,6 @@ public class ContentPageTemplate extends PageTemplate implements Serializable {
 			sb.append(creator);
 		}
 
-		String creatorExternalReferenceCode = getCreatorExternalReferenceCode();
-
-		if (creatorExternalReferenceCode != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"creatorExternalReferenceCode\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(creatorExternalReferenceCode));
-
-			sb.append("\"");
-		}
-
 		Date dateCreated = getDateCreated();
 
 		if (dateCreated != null) {
@@ -275,30 +259,63 @@ public class ContentPageTemplate extends PageTemplate implements Serializable {
 			sb.append(String.valueOf(pageTemplateSettings));
 		}
 
-		ItemExternalReference[] taxonomyCategoryItemExternalReferences =
-			getTaxonomyCategoryItemExternalReferences();
+		com.liferay.portal.vulcan.permission.Permission[] permissions =
+			getPermissions();
 
-		if (taxonomyCategoryItemExternalReferences != null) {
+		if (permissions != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"taxonomyCategoryItemExternalReferences\": ");
+			sb.append("\"permissions\": ");
 
 			sb.append("[");
 
-			for (int i = 0; i < taxonomyCategoryItemExternalReferences.length;
-				 i++) {
+			for (int i = 0; i < permissions.length; i++) {
+				sb.append(permissions[i]);
 
-				sb.append(
-					String.valueOf(taxonomyCategoryItemExternalReferences[i]));
-
-				if ((i + 1) < taxonomyCategoryItemExternalReferences.length) {
+				if ((i + 1) < permissions.length) {
 					sb.append(", ");
 				}
 			}
 
 			sb.append("]");
+		}
+
+		TaxonomyCategoryBrief[] taxonomyCategoryBriefs =
+			getTaxonomyCategoryBriefs();
+
+		if (taxonomyCategoryBriefs != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"taxonomyCategoryBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < taxonomyCategoryBriefs.length; i++) {
+				sb.append(String.valueOf(taxonomyCategoryBriefs[i]));
+
+				if ((i + 1) < taxonomyCategoryBriefs.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		ThumbnailURLReference thumbnailURLReference =
+			getThumbnailURLReference();
+
+		if (thumbnailURLReference != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"thumbnailURLReference\": ");
+
+			sb.append(String.valueOf(thumbnailURLReference));
 		}
 
 		Type type = getType();
@@ -311,9 +328,7 @@ public class ContentPageTemplate extends PageTemplate implements Serializable {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -434,3 +449,4 @@ public class ContentPageTemplate extends PageTemplate implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:425855683

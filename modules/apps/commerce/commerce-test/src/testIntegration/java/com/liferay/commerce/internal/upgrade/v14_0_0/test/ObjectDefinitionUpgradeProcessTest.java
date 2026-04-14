@@ -215,7 +215,7 @@ public class ObjectDefinitionUpgradeProcessTest {
 		_user = UserTestUtil.getAdminUser(_company.getCompanyId());
 
 		_objectDefinition2 = ObjectDefinitionTestUtil.publishObjectDefinition(
-			true, ObjectDefinitionTestUtil.getRandomName(),
+			ObjectDefinitionTestUtil.getRandomName(),
 			Collections.singletonList(
 				new TextObjectFieldBuilder(
 				).labelMap(
@@ -253,8 +253,10 @@ public class ObjectDefinitionUpgradeProcessTest {
 		String externalReferenceCode = RandomTestUtil.randomString();
 
 		_originalSystemObjectDefinitionManager.addBaseModel(
-			_user,
+			false, _user,
 			HashMapBuilder.<String, Object>put(
+				"active", true
+			).put(
 				"catalogId",
 				() -> {
 					List<CommerceCatalog> commerceCatalogs =
@@ -353,8 +355,8 @@ public class ObjectDefinitionUpgradeProcessTest {
 
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select count(*) from ", tableName, " where ", columnName,
-					" = ?"));
+					"select count(*) as count from ", tableName, " where ",
+					columnName, " = ?"));
 
 			preparedStatement.setLong(1, primaryKey);
 
@@ -362,7 +364,7 @@ public class ObjectDefinitionUpgradeProcessTest {
 
 			Assert.assertNotNull(resultSet.next());
 
-			Assert.assertEquals(1L, resultSet.getInt(1));
+			Assert.assertEquals(1L, resultSet.getLong("count"));
 		}
 	}
 

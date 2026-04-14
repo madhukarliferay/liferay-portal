@@ -13,6 +13,7 @@ import TextTruncate from 'shared/components/TextTruncate';
 import {CSVType} from 'shared/components/download-report/utils';
 import {DropdownRangeKey} from 'shared/components/dropdown-range-key/DropdownRangeKey';
 import {getMatchedRoute, Routes} from 'shared/util/router';
+import {getSafeDecodedURIComponent} from 'shared/util/util';
 import {pickBy} from 'lodash';
 import {PropTypes} from 'prop-types';
 import {Switch} from 'react-router-dom';
@@ -61,8 +62,8 @@ function TouchpointRoutes({className, router}) {
 	);
 	const {selectedChannel} = useChannelContext();
 	const matchedRoute = getMatchedRoute(NAV_ITEMS);
-	const decodedTitle = decodeURIComponent(title);
-	const decodedTouchpoint = decodeURIComponent(touchpoint);
+	const decodedTitle = getSafeDecodedURIComponent(title);
+	const decodedTouchpoint = getSafeDecodedURIComponent(touchpoint);
 	const [selectedSegment, setSelectedSegment] = useState({});
 
 	useEffect(() => {
@@ -93,7 +94,7 @@ function TouchpointRoutes({className, router}) {
 							<ClayLink href={decodedTouchpoint} target='_blank'>
 								{/* It should have double decode for cases when there are special characters */}
 
-								{decodeURIComponent(decodedTouchpoint)}
+								{getSafeDecodedURIComponent(decodedTouchpoint)}
 							</ClayLink>
 						</TextTruncate>
 					}
@@ -115,6 +116,12 @@ function TouchpointRoutes({className, router}) {
 			{matchedRoute === Routes.SITES_TOUCHPOINTS_OVERVIEW && (
 				<BasePage.SubHeader>
 					<div className='d-flex justify-content-end w-100'>
+						<DropdownRangeKey
+							legacy={false}
+							onRangeSelectorChange={setPathRangeSelectors}
+							rangeSelectors={pathRangeSelectors}
+						/>
+
 						<DownloadPDFReport
 							disabled={dataSourceStates.empty}
 							subtitle={`${
@@ -144,6 +151,7 @@ function TouchpointRoutes({className, router}) {
 			<BasePage.Context.Provider
 				value={{
 					filters: {},
+					rangeSelectors: pathRangeSelectors,
 					router
 				}}
 			>

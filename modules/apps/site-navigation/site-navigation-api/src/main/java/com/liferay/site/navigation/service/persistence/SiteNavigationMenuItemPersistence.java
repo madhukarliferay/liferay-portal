@@ -122,47 +122,6 @@ public interface SiteNavigationMenuItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last site navigation menu item in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where uuid = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findByUuid_PrevAndNext(
-			long siteNavigationMenuItemId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
 	 * Removes all the site navigation menu items where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -322,50 +281,6 @@ public interface SiteNavigationMenuItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last site navigation menu item in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findByUuid_C_PrevAndNext(
-			long siteNavigationMenuItemId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
 	 * Removes all the site navigation menu items where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -471,47 +386,6 @@ public interface SiteNavigationMenuItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last site navigation menu item in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where companyId = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findByCompanyId_PrevAndNext(
-			long siteNavigationMenuItemId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
 	 * Removes all the site navigation menu items where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -613,47 +487,6 @@ public interface SiteNavigationMenuItemPersistence
 		long siteNavigationMenuId,
 		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where siteNavigationMenuId = &#63;.
-	 *
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findBySiteNavigationMenuId_Last(
-			long siteNavigationMenuId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where siteNavigationMenuId = &#63;.
-	 *
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchBySiteNavigationMenuId_Last(
-		long siteNavigationMenuId,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where siteNavigationMenuId = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findBySiteNavigationMenuId_PrevAndNext(
-			long siteNavigationMenuItemId, long siteNavigationMenuId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
 
 	/**
 	 * Removes all the site navigation menu items where siteNavigationMenuId = &#63; from the database.
@@ -763,49 +596,6 @@ public interface SiteNavigationMenuItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last site navigation menu item in the ordered set where parentSiteNavigationMenuItemId = &#63;.
-	 *
-	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByParentSiteNavigationMenuItemId_Last(
-			long parentSiteNavigationMenuItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where parentSiteNavigationMenuItemId = &#63;.
-	 *
-	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByParentSiteNavigationMenuItemId_Last(
-		long parentSiteNavigationMenuItemId,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where parentSiteNavigationMenuItemId = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[]
-			findByParentSiteNavigationMenuItemId_PrevAndNext(
-				long siteNavigationMenuItemId,
-				long parentSiteNavigationMenuItemId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
 	 * Removes all the site navigation menu items where parentSiteNavigationMenuItemId = &#63; from the database.
 	 *
 	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
@@ -908,47 +698,6 @@ public interface SiteNavigationMenuItemPersistence
 		String type,
 		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where type = &#63;.
-	 *
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByType_Last(
-			String type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where type = &#63;.
-	 *
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByType_Last(
-		String type,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where type = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findByType_PrevAndNext(
-			long siteNavigationMenuItemId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
 
 	/**
 	 * Removes all the site navigation menu items where type = &#63; from the database.
@@ -1063,51 +812,6 @@ public interface SiteNavigationMenuItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last site navigation menu item in the ordered set where siteNavigationMenuId = &#63; and parentSiteNavigationMenuItemId = &#63;.
-	 *
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByS_P_Last(
-			long siteNavigationMenuId, long parentSiteNavigationMenuItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where siteNavigationMenuId = &#63; and parentSiteNavigationMenuItemId = &#63;.
-	 *
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByS_P_Last(
-		long siteNavigationMenuId, long parentSiteNavigationMenuItemId,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where siteNavigationMenuId = &#63; and parentSiteNavigationMenuItemId = &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param parentSiteNavigationMenuItemId the parent site navigation menu item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findByS_P_PrevAndNext(
-			long siteNavigationMenuItemId, long siteNavigationMenuId,
-			long parentSiteNavigationMenuItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
 	 * Removes all the site navigation menu items where siteNavigationMenuId = &#63; and parentSiteNavigationMenuItemId = &#63; from the database.
 	 *
 	 * @param siteNavigationMenuId the site navigation menu ID
@@ -1219,51 +923,6 @@ public interface SiteNavigationMenuItemPersistence
 		long siteNavigationMenuId, String name,
 		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where siteNavigationMenuId = &#63; and name LIKE &#63;.
-	 *
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item
-	 * @throws NoSuchMenuItemException if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem findByS_LikeN_Last(
-			long siteNavigationMenuId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
-
-	/**
-	 * Returns the last site navigation menu item in the ordered set where siteNavigationMenuId = &#63; and name LIKE &#63;.
-	 *
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site navigation menu item, or <code>null</code> if a matching site navigation menu item could not be found
-	 */
-	public SiteNavigationMenuItem fetchByS_LikeN_Last(
-		long siteNavigationMenuId, String name,
-		com.liferay.portal.kernel.util.OrderByComparator<SiteNavigationMenuItem>
-			orderByComparator);
-
-	/**
-	 * Returns the site navigation menu items before and after the current site navigation menu item in the ordered set where siteNavigationMenuId = &#63; and name LIKE &#63;.
-	 *
-	 * @param siteNavigationMenuItemId the primary key of the current site navigation menu item
-	 * @param siteNavigationMenuId the site navigation menu ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site navigation menu item
-	 * @throws NoSuchMenuItemException if a site navigation menu item with the primary key could not be found
-	 */
-	public SiteNavigationMenuItem[] findByS_LikeN_PrevAndNext(
-			long siteNavigationMenuItemId, long siteNavigationMenuId,
-			String name,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<SiteNavigationMenuItem> orderByComparator)
-		throws NoSuchMenuItemException;
 
 	/**
 	 * Removes all the site navigation menu items where siteNavigationMenuId = &#63; and name LIKE &#63; from the database.
@@ -1460,3 +1119,4 @@ public interface SiteNavigationMenuItemPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:257961087

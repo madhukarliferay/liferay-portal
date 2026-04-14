@@ -172,9 +172,7 @@ public class CurrencySerDes {
 			sb.append("\"roundingMode\": ");
 
 			sb.append("\"");
-
 			sb.append(currency.getRoundingMode());
-
 			sb.append("\"");
 		}
 
@@ -531,3 +529,4 @@ public class CurrencySerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1685948355

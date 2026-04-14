@@ -6,9 +6,9 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../../fixtures/apiHelpersTest';
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
 import {gogoShellPageTest} from '../../../../fixtures/gogoShellPageTest';
 import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
@@ -16,9 +16,11 @@ import getRandomString from '../../../../utils/getRandomString';
 
 export const test = mergeTests(
 	apiHelpersTest,
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	gogoShellPageTest,
 	isolatedSiteTest,
 	loginTest()
@@ -38,7 +40,7 @@ test(
 			name: getRandomString(),
 		});
 
-		apiHelpers.data.push({id: site.id, type: 'site'});
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 		const channel =
 			await apiHelpers.headlessCommerceAdminChannel.postChannel({

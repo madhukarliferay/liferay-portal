@@ -218,56 +218,6 @@ public class OpenIdConnectSessionUtil {
 	}
 
 	/**
-	 * Returns the last open ID connect session in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session
-	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
-	 */
-	public static OpenIdConnectSession findByUserId_Last(
-			long userId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws com.liferay.portal.security.sso.openid.connect.persistence.
-			exception.NoSuchSessionException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
-	 */
-	public static OpenIdConnectSession fetchByUserId_Last(
-		long userId,
-		OrderByComparator<OpenIdConnectSession> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the open ID connect sessions before and after the current open ID connect session in the ordered set where userId = &#63;.
-	 *
-	 * @param openIdConnectSessionId the primary key of the current open ID connect session
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next open ID connect session
-	 * @throws NoSuchSessionException if a open ID connect session with the primary key could not be found
-	 */
-	public static OpenIdConnectSession[] findByUserId_PrevAndNext(
-			long openIdConnectSessionId, long userId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws com.liferay.portal.security.sso.openid.connect.persistence.
-			exception.NoSuchSessionException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			openIdConnectSessionId, userId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the open ID connect sessions where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -397,60 +347,6 @@ public class OpenIdConnectSessionUtil {
 	}
 
 	/**
-	 * Returns the last open ID connect session in the ordered set where accessTokenExpirationDate &lt; &#63;.
-	 *
-	 * @param accessTokenExpirationDate the access token expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session
-	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
-	 */
-	public static OpenIdConnectSession findByLtAccessTokenExpirationDate_Last(
-			Date accessTokenExpirationDate,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws com.liferay.portal.security.sso.openid.connect.persistence.
-			exception.NoSuchSessionException {
-
-		return getPersistence().findByLtAccessTokenExpirationDate_Last(
-			accessTokenExpirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where accessTokenExpirationDate &lt; &#63;.
-	 *
-	 * @param accessTokenExpirationDate the access token expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
-	 */
-	public static OpenIdConnectSession fetchByLtAccessTokenExpirationDate_Last(
-		Date accessTokenExpirationDate,
-		OrderByComparator<OpenIdConnectSession> orderByComparator) {
-
-		return getPersistence().fetchByLtAccessTokenExpirationDate_Last(
-			accessTokenExpirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the open ID connect sessions before and after the current open ID connect session in the ordered set where accessTokenExpirationDate &lt; &#63;.
-	 *
-	 * @param openIdConnectSessionId the primary key of the current open ID connect session
-	 * @param accessTokenExpirationDate the access token expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next open ID connect session
-	 * @throws NoSuchSessionException if a open ID connect session with the primary key could not be found
-	 */
-	public static OpenIdConnectSession[]
-			findByLtAccessTokenExpirationDate_PrevAndNext(
-				long openIdConnectSessionId, Date accessTokenExpirationDate,
-				OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws com.liferay.portal.security.sso.openid.connect.persistence.
-			exception.NoSuchSessionException {
-
-		return getPersistence().findByLtAccessTokenExpirationDate_PrevAndNext(
-			openIdConnectSessionId, accessTokenExpirationDate,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the open ID connect sessions where accessTokenExpirationDate &lt; &#63; from the database.
 	 *
 	 * @param accessTokenExpirationDate the access token expiration date
@@ -473,6 +369,140 @@ public class OpenIdConnectSessionUtil {
 
 		return getPersistence().countByLtAccessTokenExpirationDate(
 			accessTokenExpirationDate);
+	}
+
+	/**
+	 * Returns the open ID connect session where userId = &#63; and issuer = &#63; or throws a <code>NoSuchSessionException</code> if it could not be found.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the matching open ID connect session
+	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession findByU_I(long userId, String issuer)
+		throws com.liferay.portal.security.sso.openid.connect.persistence.
+			exception.NoSuchSessionException {
+
+		return getPersistence().findByU_I(userId, issuer);
+	}
+
+	/**
+	 * Returns the open ID connect session where userId = &#63; and issuer = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession fetchByU_I(long userId, String issuer) {
+		return getPersistence().fetchByU_I(userId, issuer);
+	}
+
+	/**
+	 * Returns the open ID connect session where userId = &#63; and issuer = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession fetchByU_I(
+		long userId, String issuer, boolean useFinderCache) {
+
+		return getPersistence().fetchByU_I(userId, issuer, useFinderCache);
+	}
+
+	/**
+	 * Removes the open ID connect session where userId = &#63; and issuer = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the open ID connect session that was removed
+	 */
+	public static OpenIdConnectSession removeByU_I(long userId, String issuer)
+		throws com.liferay.portal.security.sso.openid.connect.persistence.
+			exception.NoSuchSessionException {
+
+		return getPersistence().removeByU_I(userId, issuer);
+	}
+
+	/**
+	 * Returns the number of open ID connect sessions where userId = &#63; and issuer = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param issuer the issuer
+	 * @return the number of matching open ID connect sessions
+	 */
+	public static int countByU_I(long userId, String issuer) {
+		return getPersistence().countByU_I(userId, issuer);
+	}
+
+	/**
+	 * Returns the open ID connect session where issuer = &#63; and sessionId = &#63; or throws a <code>NoSuchSessionException</code> if it could not be found.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the matching open ID connect session
+	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession findByI_S(
+			String issuer, String sessionId)
+		throws com.liferay.portal.security.sso.openid.connect.persistence.
+			exception.NoSuchSessionException {
+
+		return getPersistence().findByI_S(issuer, sessionId);
+	}
+
+	/**
+	 * Returns the open ID connect session where issuer = &#63; and sessionId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession fetchByI_S(
+		String issuer, String sessionId) {
+
+		return getPersistence().fetchByI_S(issuer, sessionId);
+	}
+
+	/**
+	 * Returns the open ID connect session where issuer = &#63; and sessionId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession fetchByI_S(
+		String issuer, String sessionId, boolean useFinderCache) {
+
+		return getPersistence().fetchByI_S(issuer, sessionId, useFinderCache);
+	}
+
+	/**
+	 * Removes the open ID connect session where issuer = &#63; and sessionId = &#63; from the database.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the open ID connect session that was removed
+	 */
+	public static OpenIdConnectSession removeByI_S(
+			String issuer, String sessionId)
+		throws com.liferay.portal.security.sso.openid.connect.persistence.
+			exception.NoSuchSessionException {
+
+		return getPersistence().removeByI_S(issuer, sessionId);
+	}
+
+	/**
+	 * Returns the number of open ID connect sessions where issuer = &#63; and sessionId = &#63;.
+	 *
+	 * @param issuer the issuer
+	 * @param sessionId the session ID
+	 * @return the number of matching open ID connect sessions
+	 */
+	public static int countByI_S(String issuer, String sessionId) {
+		return getPersistence().countByI_S(issuer, sessionId);
 	}
 
 	/**
@@ -599,66 +629,6 @@ public class OpenIdConnectSessionUtil {
 
 		return getPersistence().fetchByC_A_C_First(
 			companyId, authServerWellKnownURI, clientId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param clientId the client ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session
-	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
-	 */
-	public static OpenIdConnectSession findByC_A_C_Last(
-			long companyId, String authServerWellKnownURI, String clientId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws com.liferay.portal.security.sso.openid.connect.persistence.
-			exception.NoSuchSessionException {
-
-		return getPersistence().findByC_A_C_Last(
-			companyId, authServerWellKnownURI, clientId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last open ID connect session in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param clientId the client ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
-	 */
-	public static OpenIdConnectSession fetchByC_A_C_Last(
-		long companyId, String authServerWellKnownURI, String clientId,
-		OrderByComparator<OpenIdConnectSession> orderByComparator) {
-
-		return getPersistence().fetchByC_A_C_Last(
-			companyId, authServerWellKnownURI, clientId, orderByComparator);
-	}
-
-	/**
-	 * Returns the open ID connect sessions before and after the current open ID connect session in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
-	 *
-	 * @param openIdConnectSessionId the primary key of the current open ID connect session
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param clientId the client ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next open ID connect session
-	 * @throws NoSuchSessionException if a open ID connect session with the primary key could not be found
-	 */
-	public static OpenIdConnectSession[] findByC_A_C_PrevAndNext(
-			long openIdConnectSessionId, long companyId,
-			String authServerWellKnownURI, String clientId,
-			OrderByComparator<OpenIdConnectSession> orderByComparator)
-		throws com.liferay.portal.security.sso.openid.connect.persistence.
-			exception.NoSuchSessionException {
-
-		return getPersistence().findByC_A_C_PrevAndNext(
-			openIdConnectSessionId, companyId, authServerWellKnownURI, clientId,
-			orderByComparator);
 	}
 
 	/**
@@ -943,3 +913,4 @@ public class OpenIdConnectSessionUtil {
 	private static volatile OpenIdConnectSessionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:214172753

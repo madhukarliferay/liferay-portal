@@ -4,11 +4,16 @@ import React, {lazy, Suspense} from 'react';
 import RouteNotFound from 'shared/components/RouteNotFound';
 import {ChannelContext} from 'shared/context/channel';
 import {connect} from 'react-redux';
-import {DEVELOPER_MODE, ENABLE_ACCOUNTS} from 'shared/util/constants';
+import {DEVELOPER_MODE} from 'shared/util/constants';
 import {DownloadReportProvider} from 'shared/components/download-report/DownloadReportContext';
+import {ENABLE_ASSET_OBJECT_ENTRY} from 'shared/util/constants';
 import {Routes} from 'shared/util/router';
 import {Switch, withRouter} from 'react-router-dom';
-import {withOnboarding, withUnassignedSegments} from 'shared/hoc';
+import {
+	withLDPEnabled,
+	withOnboarding,
+	withUnassignedSegments
+} from 'shared/hoc';
 import {withSidebar} from 'shared/hoc';
 
 const UIKit = lazy(() =>
@@ -75,9 +80,22 @@ const IndividualProfileRoutes = lazy(() =>
 		/* webpackChunkName: "IndividualProfileRoutes" */ '../../individual/profile/pages/ProfileRoutes'
 	)
 );
+
+const IndividualProfileRoutesCDP = lazy(() =>
+	import(
+		/* webpackChunkName: "IndividualProfileRoutesCDP" */ '../../individual/profile/pages/ProfileRoutesCDP'
+	)
+);
+
 const IndividualsDashboard = lazy(() =>
 	import(
 		/* webpackChunkName: "IndividualsDashboard" */ '../../individual/dashboard/pages'
+	)
+);
+
+const IndividualsDashboardCDP = lazy(() =>
+	import(
+		/* webpackChunkName: "IndividualsDashboardCDP" */ '../../individual/dashboard/pages/IndividualsDashboardCDP'
 	)
 );
 
@@ -109,12 +127,22 @@ const TouchpointRoutes = lazy(() =>
 
 /* Assets */
 
+const NewAssetsList = lazy(() =>
+	import(/* webpackChunkName: "NewAssetsList" */ 'assets/List')
+);
+
 const AssetsList = lazy(() =>
 	import(/* webpackChunkName: "AssetsList" */ 'assets/pages')
 );
 
 const Blog = lazy(() =>
 	import(/* webpackChunkName: "Blog" */ 'assets/blog/pages')
+);
+
+const CustomAssetsDashboard = lazy(() =>
+	import(
+		/* webpackChunkName: "CustomAssetsDashboard" */ 'assets/custom-asset/pages/Dashboard'
+	)
 );
 
 const DocumentAndMedia = lazy(() =>
@@ -131,6 +159,10 @@ const WebContent = lazy(() =>
 	import(/* webpackChunkName: "WebContent" */ 'assets/web-content/pages')
 );
 
+const ObjectEntry = lazy(() =>
+	import(/* webpackChunkName: "ObjectEntry" */ 'assets/object-entry/pages')
+);
+
 /* Commmerce */
 
 const CommerceDashboard = lazy(() =>
@@ -138,7 +170,7 @@ const CommerceDashboard = lazy(() =>
 );
 
 const ROUTES = [
-	ENABLE_ACCOUNTS && {
+	{
 		data: AccountsList,
 		path: Routes.CONTACTS_LIST_ACCOUNT
 	},
@@ -147,17 +179,7 @@ const ROUTES = [
 		exact: false,
 		path: Routes.CONTACTS_ACCOUNT
 	},
-	{
-		data: IndividualProfileRoutes,
-		exact: false,
-		path: Routes.CONTACTS_INDIVIDUAL
-	},
-	{
-		data: IndividualsDashboard,
-		destructured: false,
-		exact: false,
-		path: Routes.CONTACTS_INDIVIDUALS
-	},
+
 	{
 		data: SegmentsList,
 		path: Routes.CONTACTS_LIST_SEGMENT
@@ -181,6 +203,11 @@ const ROUTES = [
 		path: Routes.ASSETS_BLOGS_ROUTES
 	},
 	{
+		data: CustomAssetsDashboard,
+		destructured: false,
+		path: Routes.ASSETS_CUSTOM_DASHBOARD
+	},
+	{
 		data: DocumentAndMedia,
 		destructured: false,
 		exact: false,
@@ -197,6 +224,12 @@ const ROUTES = [
 		destructured: false,
 		exact: false,
 		path: Routes.ASSETS_WEB_CONTENT_ROUTES
+	},
+	{
+		data: ObjectEntry,
+		destructured: false,
+		exact: false,
+		path: Routes.ASSETS_OBJECT_ENTRY_ROUTES
 	},
 	{
 		data: TouchpointRoutes,
@@ -233,7 +266,7 @@ const ROUTES = [
 		path: Routes.TESTS_OVERVIEW
 	},
 	{
-		data: AssetsList,
+		data: ENABLE_ASSET_OBJECT_ENTRY ? NewAssetsList : AssetsList,
 		destructured: false,
 		exact: false,
 		path: Routes.ASSETS
@@ -260,6 +293,7 @@ const ROUTES = [
 @withSidebar
 @withOnboarding
 @withUnassignedSegments
+@withLDPEnabled
 @connect((store, {groupId}) => ({
 	project: store.getIn(['projects', groupId, 'data'])
 }))
@@ -267,7 +301,7 @@ export default class AppSidebarRoutes extends React.PureComponent {
 	static contextType = ChannelContext;
 
 	render() {
-		const {currentUser, groupId} = this.props;
+		const {currentUser, groupId, LDPEnabled} = this.props;
 		const {selectedChannel} = this.context;
 
 		return (
@@ -280,6 +314,36 @@ export default class AppSidebarRoutes extends React.PureComponent {
 								data={NoPropertiesAvailable}
 								exact={false}
 								path={Routes.WORKSPACE_WITH_ID}
+							/>
+						)}
+
+						{LDPEnabled ? (
+							<BundleRouter
+								data={IndividualProfileRoutesCDP}
+								exact={false}
+								path={Routes.CONTACTS_INDIVIDUAL}
+							/>
+						) : (
+							<BundleRouter
+								data={IndividualProfileRoutes}
+								exact={false}
+								path={Routes.CONTACTS_INDIVIDUAL}
+							/>
+						)}
+
+						{LDPEnabled ? (
+							<BundleRouter
+								data={IndividualsDashboardCDP}
+								destructured={false}
+								exact={false}
+								path={Routes.CONTACTS_INDIVIDUALS}
+							/>
+						) : (
+							<BundleRouter
+								data={IndividualsDashboard}
+								destructured={false}
+								exact={false}
+								path={Routes.CONTACTS_INDIVIDUALS}
 							/>
 						)}
 

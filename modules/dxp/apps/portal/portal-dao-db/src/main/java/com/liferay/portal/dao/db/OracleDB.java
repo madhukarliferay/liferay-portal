@@ -5,6 +5,8 @@
 
 package com.liferay.portal.dao.db;
 
+import com.liferay.petra.io.unsync.UnsyncBufferedReader;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBInspector;
@@ -12,8 +14,6 @@ import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.Index;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -82,6 +82,7 @@ public class OracleDB extends BaseDB {
 				connection, tableName, tempColumnName, newColumnType);
 
 			runSQL(
+				connection,
 				StringBundler.concat(
 					"update ", tableName, " set ", tempColumnName, " = ",
 					columnName));
@@ -142,7 +143,7 @@ public class OracleDB extends BaseDB {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				if (resultSet.next()) {
-					return resultSet.getString(1);
+					return resultSet.getString("value");
 				}
 			}
 		}
@@ -159,6 +160,7 @@ public class OracleDB extends BaseDB {
 					"select index_name, table_name, uniqueness from ",
 					"user_indexes where index_name like 'LIFERAY_%' or ",
 					"index_name like 'IX_%'"));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
@@ -195,8 +197,7 @@ public class OracleDB extends BaseDB {
 
 	@Override
 	public String getPopulateSQL(String databaseName, String sqlContent) {
-		return StringBundler.concat(
-			"connect &1/&2;\n", "set define off;\n\n", sqlContent, "quit");
+		return "connect &1/&2;\nset define off;\n\n" + sqlContent + "quit";
 	}
 
 	@Override

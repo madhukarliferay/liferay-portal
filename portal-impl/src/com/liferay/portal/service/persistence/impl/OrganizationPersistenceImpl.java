@@ -337,227 +337,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByUuid_Last(
-			String uuid, OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByUuid_Last(
-		String uuid, OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where uuid = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByUuid_PrevAndNext(
-			long organizationId, String uuid,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		uuid = Objects.toString(uuid, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, organization, uuid, orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, organization, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByUuid_PrevAndNext(
-		Session session, Organization organization, String uuid,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -608,6 +387,15 @@ public class OrganizationPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -703,217 +491,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByUuid_PrevAndNext(
-			long organizationId, String uuid,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByUuid_PrevAndNext(
-				organizationId, uuid, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByUuid_PrevAndNext(
-				session, organization, uuid, orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByUuid_PrevAndNext(
-				session, organization, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByUuid_PrevAndNext(
-		Session session, Organization organization, String uuid,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the organizations where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1005,6 +582,14 @@ public class OrganizationPersistenceImpl
 	public int filterCountByUuid(String uuid) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByUuid(uuid);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1325,242 +910,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByUuid_C_PrevAndNext(
-			long organizationId, String uuid, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		uuid = Objects.toString(uuid, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, organization, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = organization;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, organization, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByUuid_C_PrevAndNext(
-		Session session, Organization organization, String uuid, long companyId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -1614,6 +963,15 @@ public class OrganizationPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1709,224 +1067,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByUuid_C_PrevAndNext(
-			long organizationId, String uuid, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByUuid_C_PrevAndNext(
-				organizationId, uuid, companyId, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByUuid_C_PrevAndNext(
-				session, organization, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByUuid_C_PrevAndNext(
-				session, organization, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByUuid_C_PrevAndNext(
-		Session session, Organization organization, String uuid, long companyId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2031,6 +1171,14 @@ public class OrganizationPersistenceImpl
 	public int filterCountByUuid_C(String uuid, long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByUuid_C(uuid, companyId);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -2327,215 +1475,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByCompanyId_Last(
-			long companyId, OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByCompanyId_Last(
-		long companyId, OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where companyId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByCompanyId_PrevAndNext(
-			long organizationId, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, organization, companyId, orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, organization, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByCompanyId_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2586,6 +1525,15 @@ public class OrganizationPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2664,204 +1612,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByCompanyId_PrevAndNext(
-			long organizationId, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				organizationId, companyId, orderByComparator);
-		}
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, organization, companyId, orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, organization, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByCompanyId_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2945,6 +1695,14 @@ public class OrganizationPersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByCompanyId(companyId);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -3214,215 +1972,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByCompanyIdLocations_Last(
-			long companyId, OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByCompanyIdLocations_Last(
-			companyId, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByCompanyIdLocations_Last(
-		long companyId, OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByCompanyIdLocations(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByCompanyIdLocations(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where companyId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByCompanyIdLocations_PrevAndNext(
-			long organizationId, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByCompanyIdLocations_PrevAndNext(
-				session, organization, companyId, orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = getByCompanyIdLocations_PrevAndNext(
-				session, organization, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByCompanyIdLocations_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYIDLOCATIONS_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3474,6 +2023,15 @@ public class OrganizationPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyIdLocations(
 				companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyIdLocations(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -3552,204 +2110,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByCompanyIdLocations_PrevAndNext(
-			long organizationId, long companyId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyIdLocations_PrevAndNext(
-				organizationId, companyId, orderByComparator);
-		}
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByCompanyIdLocations_PrevAndNext(
-				session, organization, companyId, orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByCompanyIdLocations_PrevAndNext(
-				session, organization, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByCompanyIdLocations_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYIDLOCATIONS_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -3835,6 +2195,15 @@ public class OrganizationPersistenceImpl
 			return countByCompanyIdLocations(companyId);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByCompanyIdLocations(
+				companyId);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
+		}
+
 		StringBundler sb = new StringBundler(2);
 
 		sb.append(_FILTER_SQL_COUNT_ORGANIZATION_WHERE);
@@ -3873,6 +2242,497 @@ public class OrganizationPersistenceImpl
 
 	private static final String _FINDER_COLUMN_COMPANYIDLOCATIONS_COMPANYID_2 =
 		"organization.companyId = ? AND organization.parentOrganizationId != 0";
+
+	private FinderPath _finderPathWithPaginationFindByLogoId;
+	private FinderPath _finderPathWithoutPaginationFindByLogoId;
+	private FinderPath _finderPathCountByLogoId;
+
+	/**
+	 * Returns all the organizations where logoId = &#63;.
+	 *
+	 * @param logoId the logo ID
+	 * @return the matching organizations
+	 */
+	@Override
+	public List<Organization> findByLogoId(long logoId) {
+		return findByLogoId(logoId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the organizations where logoId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OrganizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param logoId the logo ID
+	 * @param start the lower bound of the range of organizations
+	 * @param end the upper bound of the range of organizations (not inclusive)
+	 * @return the range of matching organizations
+	 */
+	@Override
+	public List<Organization> findByLogoId(long logoId, int start, int end) {
+		return findByLogoId(logoId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the organizations where logoId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OrganizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param logoId the logo ID
+	 * @param start the lower bound of the range of organizations
+	 * @param end the upper bound of the range of organizations (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching organizations
+	 */
+	@Override
+	public List<Organization> findByLogoId(
+		long logoId, int start, int end,
+		OrderByComparator<Organization> orderByComparator) {
+
+		return findByLogoId(logoId, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the organizations where logoId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OrganizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param logoId the logo ID
+	 * @param start the lower bound of the range of organizations
+	 * @param end the upper bound of the range of organizations (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching organizations
+	 */
+	@Override
+	public List<Organization> findByLogoId(
+		long logoId, int start, int end,
+		OrderByComparator<Organization> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Organization.class)) {
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByLogoId;
+					finderArgs = new Object[] {logoId};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByLogoId;
+				finderArgs = new Object[] {
+					logoId, start, end, orderByComparator
+				};
+			}
+
+			List<Organization> list = null;
+
+			if (useFinderCache) {
+				list = (List<Organization>)FinderCacheUtil.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (Organization organization : list) {
+						if (logoId != organization.getLogoId()) {
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						3 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(3);
+				}
+
+				sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
+
+				sb.append(_FINDER_COLUMN_LOGOID_LOGOID_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(logoId);
+
+					list = (List<Organization>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						FinderCacheUtil.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first organization in the ordered set where logoId = &#63;.
+	 *
+	 * @param logoId the logo ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching organization
+	 * @throws NoSuchOrganizationException if a matching organization could not be found
+	 */
+	@Override
+	public Organization findByLogoId_First(
+			long logoId, OrderByComparator<Organization> orderByComparator)
+		throws NoSuchOrganizationException {
+
+		Organization organization = fetchByLogoId_First(
+			logoId, orderByComparator);
+
+		if (organization != null) {
+			return organization;
+		}
+
+		StringBundler sb = new StringBundler(4);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("logoId=");
+		sb.append(logoId);
+
+		sb.append("}");
+
+		throw new NoSuchOrganizationException(sb.toString());
+	}
+
+	/**
+	 * Returns the first organization in the ordered set where logoId = &#63;.
+	 *
+	 * @param logoId the logo ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching organization, or <code>null</code> if a matching organization could not be found
+	 */
+	@Override
+	public Organization fetchByLogoId_First(
+		long logoId, OrderByComparator<Organization> orderByComparator) {
+
+		List<Organization> list = findByLogoId(logoId, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns all the organizations that the user has permission to view where logoId = &#63;.
+	 *
+	 * @param logoId the logo ID
+	 * @return the matching organizations that the user has permission to view
+	 */
+	@Override
+	public List<Organization> filterFindByLogoId(long logoId) {
+		return filterFindByLogoId(
+			logoId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the organizations that the user has permission to view where logoId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OrganizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param logoId the logo ID
+	 * @param start the lower bound of the range of organizations
+	 * @param end the upper bound of the range of organizations (not inclusive)
+	 * @return the range of matching organizations that the user has permission to view
+	 */
+	@Override
+	public List<Organization> filterFindByLogoId(
+		long logoId, int start, int end) {
+
+		return filterFindByLogoId(logoId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the organizations that the user has permissions to view where logoId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OrganizationModelImpl</code>.
+	 * </p>
+	 *
+	 * @param logoId the logo ID
+	 * @param start the lower bound of the range of organizations
+	 * @param end the upper bound of the range of organizations (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching organizations that the user has permission to view
+	 */
+	@Override
+	public List<Organization> filterFindByLogoId(
+		long logoId, int start, int end,
+		OrderByComparator<Organization> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByLogoId(logoId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByLogoId(
+					logoId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_LOGOID_LOGOID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Organization.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE, OrganizationImpl.class);
+			}
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(logoId);
+
+			return (List<Organization>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Removes all the organizations where logoId = &#63; from the database.
+	 *
+	 * @param logoId the logo ID
+	 */
+	@Override
+	public void removeByLogoId(long logoId) {
+		for (Organization organization :
+				findByLogoId(
+					logoId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+
+			remove(organization);
+		}
+	}
+
+	/**
+	 * Returns the number of organizations where logoId = &#63;.
+	 *
+	 * @param logoId the logo ID
+	 * @return the number of matching organizations
+	 */
+	@Override
+	public int countByLogoId(long logoId) {
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Organization.class)) {
+
+			FinderPath finderPath = _finderPathCountByLogoId;
+
+			Object[] finderArgs = new Object[] {logoId};
+
+			Long count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(2);
+
+				sb.append(_SQL_COUNT_ORGANIZATION_WHERE);
+
+				sb.append(_FINDER_COLUMN_LOGOID_LOGOID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(logoId);
+
+					count = (Long)query.uniqueResult();
+
+					FinderCacheUtil.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of organizations that the user has permission to view where logoId = &#63;.
+	 *
+	 * @param logoId the logo ID
+	 * @return the number of matching organizations that the user has permission to view
+	 */
+	@Override
+	public int filterCountByLogoId(long logoId) {
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByLogoId(logoId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByLogoId(logoId);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
+		}
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_ORGANIZATION_WHERE);
+
+		sb.append(_FINDER_COLUMN_LOGOID_LOGOID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Organization.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(logoId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_LOGOID_LOGOID_2 =
+		"organization.logoId = ?";
 
 	private FinderPath _finderPathWithPaginationFindByC_P;
 	private FinderPath _finderPathWithoutPaginationFindByC_P;
@@ -4124,231 +2984,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and parentOrganizationId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByC_P_Last(
-			long companyId, long parentOrganizationId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByC_P_Last(
-			companyId, parentOrganizationId, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", parentOrganizationId=");
-		sb.append(parentOrganizationId);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and parentOrganizationId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByC_P_Last(
-		long companyId, long parentOrganizationId,
-		OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByC_P(companyId, parentOrganizationId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByC_P(
-			companyId, parentOrganizationId, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where companyId = &#63; and parentOrganizationId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByC_P_PrevAndNext(
-			long organizationId, long companyId, long parentOrganizationId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByC_P_PrevAndNext(
-				session, organization, companyId, parentOrganizationId,
-				orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = getByC_P_PrevAndNext(
-				session, organization, companyId, parentOrganizationId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByC_P_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		long parentOrganizationId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_P_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_P_PARENTORGANIZATIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(parentOrganizationId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where companyId = &#63; and parentOrganizationId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -4407,6 +3042,15 @@ public class OrganizationPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_P(
 				companyId, parentOrganizationId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_P(
+					companyId, parentOrganizationId, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -4489,213 +3133,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where companyId = &#63; and parentOrganizationId = &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByC_P_PrevAndNext(
-			long organizationId, long companyId, long parentOrganizationId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_P_PrevAndNext(
-				organizationId, companyId, parentOrganizationId,
-				orderByComparator);
-		}
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByC_P_PrevAndNext(
-				session, organization, companyId, parentOrganizationId,
-				orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByC_P_PrevAndNext(
-				session, organization, companyId, parentOrganizationId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByC_P_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		long parentOrganizationId,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_P_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_P_PARENTORGANIZATIONID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(parentOrganizationId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4789,6 +3226,15 @@ public class OrganizationPersistenceImpl
 	public int filterCountByC_P(long companyId, long parentOrganizationId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_P(companyId, parentOrganizationId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByC_P(
+				companyId, parentOrganizationId);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5085,243 +3531,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and treePath LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param treePath the tree path
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByC_LikeT_Last(
-			long companyId, String treePath,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByC_LikeT_Last(
-			companyId, treePath, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", treePathLIKE");
-		sb.append(treePath);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and treePath LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param treePath the tree path
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByC_LikeT_Last(
-		long companyId, String treePath,
-		OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByC_LikeT(companyId, treePath);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByC_LikeT(
-			companyId, treePath, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where companyId = &#63; and treePath LIKE &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param treePath the tree path
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByC_LikeT_PrevAndNext(
-			long organizationId, long companyId, String treePath,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		treePath = Objects.toString(treePath, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByC_LikeT_PrevAndNext(
-				session, organization, companyId, treePath, orderByComparator,
-				true);
-
-			array[1] = organization;
-
-			array[2] = getByC_LikeT_PrevAndNext(
-				session, organization, companyId, treePath, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByC_LikeT_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		String treePath, OrderByComparator<Organization> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_LIKET_COMPANYID_2);
-
-		boolean bindTreePath = false;
-
-		if (treePath.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_LIKET_TREEPATH_3);
-		}
-		else {
-			bindTreePath = true;
-
-			sb.append(_FINDER_COLUMN_C_LIKET_TREEPATH_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (bindTreePath) {
-			queryPos.add(treePath);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where companyId = &#63; and treePath LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -5378,6 +3587,15 @@ public class OrganizationPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_LikeT(
 				companyId, treePath, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_LikeT(
+					companyId, treePath, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		treePath = Objects.toString(treePath, "");
@@ -5473,225 +3691,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where companyId = &#63; and treePath LIKE &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param treePath the tree path
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByC_LikeT_PrevAndNext(
-			long organizationId, long companyId, String treePath,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_LikeT_PrevAndNext(
-				organizationId, companyId, treePath, orderByComparator);
-		}
-
-		treePath = Objects.toString(treePath, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByC_LikeT_PrevAndNext(
-				session, organization, companyId, treePath, orderByComparator,
-				true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByC_LikeT_PrevAndNext(
-				session, organization, companyId, treePath, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByC_LikeT_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		String treePath, OrderByComparator<Organization> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_LIKET_COMPANYID_2);
-
-		boolean bindTreePath = false;
-
-		if (treePath.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_LIKET_TREEPATH_3);
-		}
-		else {
-			bindTreePath = true;
-
-			sb.append(_FINDER_COLUMN_C_LIKET_TREEPATH_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (bindTreePath) {
-			queryPos.add(treePath);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -5796,6 +3795,15 @@ public class OrganizationPersistenceImpl
 	public int filterCountByC_LikeT(long companyId, String treePath) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_LikeT(companyId, treePath);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByC_LikeT(
+				companyId, treePath);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		treePath = Objects.toString(treePath, "");
@@ -6311,242 +4319,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByC_LikeN_Last(
-			long companyId, String name,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByC_LikeN_Last(
-			companyId, name, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", nameLIKE");
-		sb.append(name);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByC_LikeN_Last(
-		long companyId, String name,
-		OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByC_LikeN(companyId, name);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByC_LikeN(
-			companyId, name, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByC_LikeN_PrevAndNext(
-			long organizationId, long companyId, String name,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		name = Objects.toString(name, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByC_LikeN_PrevAndNext(
-				session, organization, companyId, name, orderByComparator,
-				true);
-
-			array[1] = organization;
-
-			array[2] = getByC_LikeN_PrevAndNext(
-				session, organization, companyId, name, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByC_LikeN_PrevAndNext(
-		Session session, Organization organization, long companyId, String name,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_LIKEN_COMPANYID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where companyId = &#63; and name LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -6601,6 +4373,15 @@ public class OrganizationPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_LikeN(
 				companyId, name, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_LikeN(
+					companyId, name, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		name = Objects.toString(name, "");
@@ -6696,224 +4477,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByC_LikeN_PrevAndNext(
-			long organizationId, long companyId, String name,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_LikeN_PrevAndNext(
-				organizationId, companyId, name, orderByComparator);
-		}
-
-		name = Objects.toString(name, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByC_LikeN_PrevAndNext(
-				session, organization, companyId, name, orderByComparator,
-				true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByC_LikeN_PrevAndNext(
-				session, organization, companyId, name, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByC_LikeN_PrevAndNext(
-		Session session, Organization organization, long companyId, String name,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_LIKEN_COMPANYID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -7018,6 +4581,14 @@ public class OrganizationPersistenceImpl
 	public int filterCountByC_LikeN(long companyId, String name) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_LikeN(companyId, name);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByC_LikeN(companyId, name);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		name = Objects.toString(name, "");
@@ -7339,79 +4910,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where organizationId &gt; &#63; and companyId = &#63; and parentOrganizationId = &#63;.
-	 *
-	 * @param organizationId the organization ID
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByGtO_C_P_Last(
-			long organizationId, long companyId, long parentOrganizationId,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByGtO_C_P_Last(
-			organizationId, companyId, parentOrganizationId, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("organizationId>");
-		sb.append(organizationId);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append(", parentOrganizationId=");
-		sb.append(parentOrganizationId);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where organizationId &gt; &#63; and companyId = &#63; and parentOrganizationId = &#63;.
-	 *
-	 * @param organizationId the organization ID
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByGtO_C_P_Last(
-		long organizationId, long companyId, long parentOrganizationId,
-		OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByGtO_C_P(
-			organizationId, companyId, parentOrganizationId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByGtO_C_P(
-			organizationId, companyId, parentOrganizationId, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where organizationId &gt; &#63; and companyId = &#63; and parentOrganizationId = &#63;.
 	 *
 	 * @param organizationId the organization ID
@@ -7475,6 +4973,15 @@ public class OrganizationPersistenceImpl
 			return findByGtO_C_P(
 				organizationId, companyId, parentOrganizationId, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGtO_C_P(
+					organizationId, companyId, parentOrganizationId,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -7668,6 +5175,15 @@ public class OrganizationPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByGtO_C_P(
 				organizationId, companyId, parentOrganizationId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByGtO_C_P(
+				organizationId, companyId, parentOrganizationId);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -7993,254 +5509,6 @@ public class OrganizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and parentOrganizationId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization
-	 * @throws NoSuchOrganizationException if a matching organization could not be found
-	 */
-	@Override
-	public Organization findByC_P_LikeN_Last(
-			long companyId, long parentOrganizationId, String name,
-			OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		Organization organization = fetchByC_P_LikeN_Last(
-			companyId, parentOrganizationId, name, orderByComparator);
-
-		if (organization != null) {
-			return organization;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", parentOrganizationId=");
-		sb.append(parentOrganizationId);
-
-		sb.append(", nameLIKE");
-		sb.append(name);
-
-		sb.append("}");
-
-		throw new NoSuchOrganizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last organization in the ordered set where companyId = &#63; and parentOrganizationId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching organization, or <code>null</code> if a matching organization could not be found
-	 */
-	@Override
-	public Organization fetchByC_P_LikeN_Last(
-		long companyId, long parentOrganizationId, String name,
-		OrderByComparator<Organization> orderByComparator) {
-
-		int count = countByC_P_LikeN(companyId, parentOrganizationId, name);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Organization> list = findByC_P_LikeN(
-			companyId, parentOrganizationId, name, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set where companyId = &#63; and parentOrganizationId = &#63; and name LIKE &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] findByC_P_LikeN_PrevAndNext(
-			long organizationId, long companyId, long parentOrganizationId,
-			String name, OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		name = Objects.toString(name, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = getByC_P_LikeN_PrevAndNext(
-				session, organization, companyId, parentOrganizationId, name,
-				orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = getByC_P_LikeN_PrevAndNext(
-				session, organization, companyId, parentOrganizationId, name,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization getByC_P_LikeN_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		long parentOrganizationId, String name,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_ORGANIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_P_LIKEN_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_P_LIKEN_PARENTORGANIZATIONID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_P_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_C_P_LIKEN_NAME_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(OrganizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(parentOrganizationId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the organizations that the user has permission to view where companyId = &#63; and parentOrganizationId = &#63; and name LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -8304,6 +5572,15 @@ public class OrganizationPersistenceImpl
 			return findByC_P_LikeN(
 				companyId, parentOrganizationId, name, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_P_LikeN(
+					companyId, parentOrganizationId, name, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		name = Objects.toString(name, "");
@@ -8403,231 +5680,6 @@ public class OrganizationPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the organizations before and after the current organization in the ordered set of organizations that the user has permission to view where companyId = &#63; and parentOrganizationId = &#63; and name LIKE &#63;.
-	 *
-	 * @param organizationId the primary key of the current organization
-	 * @param companyId the company ID
-	 * @param parentOrganizationId the parent organization ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next organization
-	 * @throws NoSuchOrganizationException if a organization with the primary key could not be found
-	 */
-	@Override
-	public Organization[] filterFindByC_P_LikeN_PrevAndNext(
-			long organizationId, long companyId, long parentOrganizationId,
-			String name, OrderByComparator<Organization> orderByComparator)
-		throws NoSuchOrganizationException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_P_LikeN_PrevAndNext(
-				organizationId, companyId, parentOrganizationId, name,
-				orderByComparator);
-		}
-
-		name = Objects.toString(name, "");
-
-		Organization organization = findByPrimaryKey(organizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Organization[] array = new OrganizationImpl[3];
-
-			array[0] = filterGetByC_P_LikeN_PrevAndNext(
-				session, organization, companyId, parentOrganizationId, name,
-				orderByComparator, true);
-
-			array[1] = organization;
-
-			array[2] = filterGetByC_P_LikeN_PrevAndNext(
-				session, organization, companyId, parentOrganizationId, name,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Organization filterGetByC_P_LikeN_PrevAndNext(
-		Session session, Organization organization, long companyId,
-		long parentOrganizationId, String name,
-		OrderByComparator<Organization> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ORGANIZATION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_P_LIKEN_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_P_LIKEN_PARENTORGANIZATIONID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_P_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_C_P_LIKEN_NAME_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ORGANIZATION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(OrganizationModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Organization.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, OrganizationImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, OrganizationImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(parentOrganizationId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(organization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Organization> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -8747,6 +5799,15 @@ public class OrganizationPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_P_LikeN(companyId, parentOrganizationId, name);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Organization> organizations = findByC_P_LikeN(
+				companyId, parentOrganizationId, name);
+
+			organizations = InlineSQLHelperUtil.filter(organizations);
+
+			return organizations.size();
 		}
 
 		name = Objects.toString(name, "");
@@ -10705,6 +7766,23 @@ public class OrganizationPersistenceImpl
 			"countByCompanyIdLocations", new String[] {Long.class.getName()},
 			new String[] {"companyId"}, false);
 
+		_finderPathWithPaginationFindByLogoId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByLogoId",
+			new String[] {
+				Long.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {"logoId"}, true);
+
+		_finderPathWithoutPaginationFindByLogoId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByLogoId",
+			new String[] {Long.class.getName()}, new String[] {"logoId"}, true);
+
+		_finderPathCountByLogoId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByLogoId",
+			new String[] {Long.class.getName()}, new String[] {"logoId"},
+			false);
+
 		_finderPathWithPaginationFindByC_P = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_P",
 			new String[] {
@@ -10880,3 +7958,4 @@ public class OrganizationPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:797527338

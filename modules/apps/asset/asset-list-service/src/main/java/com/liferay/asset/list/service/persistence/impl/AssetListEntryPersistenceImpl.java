@@ -341,229 +341,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByUuid_Last(
-			String uuid, OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByUuid_Last(
-			uuid, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByUuid_PrevAndNext(
-			long assetListEntryId, String uuid,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		uuid = Objects.toString(uuid, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, assetListEntry, uuid, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, assetListEntry, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByUuid_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, String uuid,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the asset list entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1111,244 +888,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByUuid_C_PrevAndNext(
-			long assetListEntryId, String uuid, long companyId,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		uuid = Objects.toString(uuid, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, assetListEntry, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, assetListEntry, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByUuid_C_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, String uuid,
-		long companyId, OrderByComparator<AssetListEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the asset list entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1674,216 +1213,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByGroupId_Last(
-			long groupId, OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByGroupId_Last(
-			groupId, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByGroupId_Last(
-		long groupId, OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByGroupId(groupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByGroupId(
-			groupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByGroupId_PrevAndNext(
-			long assetListEntryId, long groupId,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByGroupId_PrevAndNext(
-				session, assetListEntry, groupId, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByGroupId_PrevAndNext(
-				session, assetListEntry, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByGroupId_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1934,6 +1263,16 @@ public class AssetListEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByGroupId(groupId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -2016,205 +1355,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByGroupId_PrevAndNext(
-			long assetListEntryId, long groupId,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByGroupId_PrevAndNext(
-				assetListEntryId, groupId, orderByComparator);
-		}
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByGroupId_PrevAndNext(
-				session, assetListEntry, groupId, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByGroupId_PrevAndNext(
-				session, assetListEntry, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByGroupId_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = any &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -2265,6 +1405,16 @@ public class AssetListEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return findByGroupId(groupIds, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -2694,6 +1844,15 @@ public class AssetListEntryPersistenceImpl
 			return countByGroupId(groupId);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByGroupId(groupId);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(2);
 
 		sb.append(_FILTER_SQL_COUNT_ASSETLISTENTRY_WHERE);
@@ -2740,6 +1899,13 @@ public class AssetListEntryPersistenceImpl
 	public int filterCountByGroupId(long[] groupIds) {
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByGroupId(groupIds);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = InlineSQLHelperUtil.filter(
+				findByGroupId(groupIds), groupIds);
+
+			return assetListEntries.size();
 		}
 
 		if (groupIds == null) {
@@ -3461,244 +2627,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and title LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByG_LikeT_Last(
-			long groupId, String title,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByG_LikeT_Last(
-			groupId, title, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", titleLIKE");
-		sb.append(title);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and title LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByG_LikeT_Last(
-		long groupId, String title,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByG_LikeT(groupId, title);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByG_LikeT(
-			groupId, title, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63; and title LIKE &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByG_LikeT_PrevAndNext(
-			long assetListEntryId, long groupId, String title,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		title = Objects.toString(title, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByG_LikeT_PrevAndNext(
-				session, assetListEntry, groupId, title, orderByComparator,
-				true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByG_LikeT_PrevAndNext(
-				session, assetListEntry, groupId, title, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByG_LikeT_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String title, OrderByComparator<AssetListEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKET_GROUPID_2);
-
-		boolean bindTitle = false;
-
-		if (title.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_TITLE_3);
-		}
-		else {
-			bindTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_TITLE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindTitle) {
-			queryPos.add(title);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63; and title LIKE &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3754,6 +2682,16 @@ public class AssetListEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeT(groupId, title, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeT(
+					groupId, title, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		title = Objects.toString(title, "");
@@ -3853,226 +2791,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63; and title LIKE &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByG_LikeT_PrevAndNext(
-			long assetListEntryId, long groupId, String title,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeT_PrevAndNext(
-				assetListEntryId, groupId, title, orderByComparator);
-		}
-
-		title = Objects.toString(title, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByG_LikeT_PrevAndNext(
-				session, assetListEntry, groupId, title, orderByComparator,
-				true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByG_LikeT_PrevAndNext(
-				session, assetListEntry, groupId, title, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByG_LikeT_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String title, OrderByComparator<AssetListEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKET_GROUPID_2);
-
-		boolean bindTitle = false;
-
-		if (title.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_TITLE_3);
-		}
-		else {
-			bindTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_TITLE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindTitle) {
-			queryPos.add(title);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = any &#63; and title LIKE &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -4129,6 +2847,16 @@ public class AssetListEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return findByG_LikeT(
 				groupIds, title, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeT(
+					groupIds, title, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -4657,6 +3385,16 @@ public class AssetListEntryPersistenceImpl
 			return countByG_LikeT(groupId, title);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByG_LikeT(
+				groupId, title);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
+		}
+
 		title = Objects.toString(title, "");
 
 		StringBundler sb = new StringBundler(3);
@@ -4721,6 +3459,13 @@ public class AssetListEntryPersistenceImpl
 	public int filterCountByG_LikeT(long[] groupIds, String title) {
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByG_LikeT(groupIds, title);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = InlineSQLHelperUtil.filter(
+				findByG_LikeT(groupIds, title), groupIds);
+
+			return assetListEntries.size();
 		}
 
 		if (groupIds == null) {
@@ -5051,230 +3796,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and type = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByG_TY_Last(
-			long groupId, int type,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByG_TY_Last(
-			groupId, type, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and type = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByG_TY_Last(
-		long groupId, int type,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByG_TY(groupId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByG_TY(
-			groupId, type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63; and type = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByG_TY_PrevAndNext(
-			long assetListEntryId, long groupId, int type,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByG_TY_PrevAndNext(
-				session, assetListEntry, groupId, type, orderByComparator,
-				true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByG_TY_PrevAndNext(
-				session, assetListEntry, groupId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByG_TY_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId, int type,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_TY_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_TY_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63; and type = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -5328,6 +3849,16 @@ public class AssetListEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_TY(groupId, type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_TY(
+					groupId, type, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -5410,212 +3941,6 @@ public class AssetListEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63; and type = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByG_TY_PrevAndNext(
-			long assetListEntryId, long groupId, int type,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_TY_PrevAndNext(
-				assetListEntryId, groupId, type, orderByComparator);
-		}
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByG_TY_PrevAndNext(
-				session, assetListEntry, groupId, type, orderByComparator,
-				true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByG_TY_PrevAndNext(
-				session, assetListEntry, groupId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByG_TY_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId, int type,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_TY_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_TY_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -5707,6 +4032,15 @@ public class AssetListEntryPersistenceImpl
 	public int filterCountByG_TY(long groupId, int type) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_TY(groupId, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByG_TY(groupId, type);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -6020,244 +4354,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByG_AET_Last(
-			long groupId, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByG_AET_Last(
-			groupId, assetEntryType, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", assetEntryType=");
-		sb.append(assetEntryType);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByG_AET_Last(
-		long groupId, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByG_AET(groupId, assetEntryType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByG_AET(
-			groupId, assetEntryType, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByG_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByG_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntryType,
-				orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByG_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntryType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByG_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_AET_GROUPID_2);
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63; and assetEntryType = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6315,6 +4411,16 @@ public class AssetListEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_AET(
 				groupId, assetEntryType, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_AET(
+					groupId, assetEntryType, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		assetEntryType = Objects.toString(assetEntryType, "");
@@ -6414,226 +4520,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByG_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_AET_PrevAndNext(
-				assetListEntryId, groupId, assetEntryType, orderByComparator);
-		}
-
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByG_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntryType,
-				orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByG_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntryType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByG_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_AET_GROUPID_2);
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = any &#63; and assetEntryType = any &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -6691,6 +4577,16 @@ public class AssetListEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return findByG_AET(
 				groupIds, assetEntryTypes, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_AET(
+					groupIds, assetEntryTypes, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -7291,6 +5187,16 @@ public class AssetListEntryPersistenceImpl
 			return countByG_AET(groupId, assetEntryType);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByG_AET(
+				groupId, assetEntryType);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
+		}
+
 		assetEntryType = Objects.toString(assetEntryType, "");
 
 		StringBundler sb = new StringBundler(3);
@@ -7355,6 +5261,13 @@ public class AssetListEntryPersistenceImpl
 	public int filterCountByG_AET(long[] groupIds, String[] assetEntryTypes) {
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByG_AET(groupIds, assetEntryTypes);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = InlineSQLHelperUtil.filter(
+				findByG_AET(groupIds, assetEntryTypes), groupIds);
+
+			return assetListEntries.size();
 		}
 
 		if (groupIds == null) {
@@ -7743,268 +5656,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and title LIKE &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByG_LikeT_AET_Last(
-			long groupId, String title, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByG_LikeT_AET_Last(
-			groupId, title, assetEntryType, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", titleLIKE");
-		sb.append(title);
-
-		sb.append(", assetEntryType=");
-		sb.append(assetEntryType);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and title LIKE &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByG_LikeT_AET_Last(
-		long groupId, String title, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByG_LikeT_AET(groupId, title, assetEntryType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByG_LikeT_AET(
-			groupId, title, assetEntryType, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63; and title LIKE &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByG_LikeT_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String title,
-			String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		title = Objects.toString(title, "");
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByG_LikeT_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntryType,
-				orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByG_LikeT_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntryType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByG_LikeT_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String title, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKET_AET_GROUPID_2);
-
-		boolean bindTitle = false;
-
-		if (title.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_TITLE_3);
-		}
-		else {
-			bindTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_TITLE_2);
-		}
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindTitle) {
-			queryPos.add(title);
-		}
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63; and title LIKE &#63; and assetEntryType = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8066,6 +5717,16 @@ public class AssetListEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeT_AET(
 				groupId, title, assetEntryType, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeT_AET(
+					groupId, title, assetEntryType, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		title = Objects.toString(title, "");
@@ -8181,245 +5842,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63; and title LIKE &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByG_LikeT_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String title,
-			String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeT_AET_PrevAndNext(
-				assetListEntryId, groupId, title, assetEntryType,
-				orderByComparator);
-		}
-
-		title = Objects.toString(title, "");
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByG_LikeT_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntryType,
-				orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByG_LikeT_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntryType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByG_LikeT_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String title, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKET_AET_GROUPID_2);
-
-		boolean bindTitle = false;
-
-		if (title.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_TITLE_3);
-		}
-		else {
-			bindTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_TITLE_2);
-		}
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindTitle) {
-			queryPos.add(title);
-		}
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = any &#63; and title LIKE &#63; and assetEntryType = any &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -8483,6 +5905,16 @@ public class AssetListEntryPersistenceImpl
 			return findByG_LikeT_AET(
 				groupIds, title, assetEntryTypes, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeT_AET(
+					groupIds, title, assetEntryTypes, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -9179,6 +6611,16 @@ public class AssetListEntryPersistenceImpl
 			return countByG_LikeT_AET(groupId, title, assetEntryType);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByG_LikeT_AET(
+				groupId, title, assetEntryType);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
+		}
+
 		title = Objects.toString(title, "");
 		assetEntryType = Objects.toString(assetEntryType, "");
 
@@ -9262,6 +6704,13 @@ public class AssetListEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByG_LikeT_AET(groupIds, title, assetEntryTypes);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = InlineSQLHelperUtil.filter(
+				findByG_LikeT_AET(groupIds, title, assetEntryTypes), groupIds);
+
+			return assetListEntries.size();
 		}
 
 		if (groupIds == null) {
@@ -9690,269 +7139,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByG_AES_AET_Last(
-			long groupId, String assetEntrySubtype, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByG_AES_AET_Last(
-			groupId, assetEntrySubtype, assetEntryType, orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", assetEntrySubtype=");
-		sb.append(assetEntrySubtype);
-
-		sb.append(", assetEntryType=");
-		sb.append(assetEntryType);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByG_AES_AET_Last(
-		long groupId, String assetEntrySubtype, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByG_AES_AET(
-			groupId, assetEntrySubtype, assetEntryType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByG_AES_AET(
-			groupId, assetEntrySubtype, assetEntryType, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByG_AES_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String assetEntrySubtype,
-			String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByG_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntrySubtype,
-				assetEntryType, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByG_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntrySubtype,
-				assetEntryType, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByG_AES_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String assetEntrySubtype, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_AES_AET_GROUPID_2);
-
-		boolean bindAssetEntrySubtype = false;
-
-		if (assetEntrySubtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYSUBTYPE_3);
-		}
-		else {
-			bindAssetEntrySubtype = true;
-
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYSUBTYPE_2);
-		}
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindAssetEntrySubtype) {
-			queryPos.add(assetEntrySubtype);
-		}
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -10017,6 +7203,16 @@ public class AssetListEntryPersistenceImpl
 			return findByG_AES_AET(
 				groupId, assetEntrySubtype, assetEntryType, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_AES_AET(
+					groupId, assetEntrySubtype, assetEntryType,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
@@ -10132,245 +7328,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByG_AES_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String assetEntrySubtype,
-			String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_AES_AET_PrevAndNext(
-				assetListEntryId, groupId, assetEntrySubtype, assetEntryType,
-				orderByComparator);
-		}
-
-		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByG_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntrySubtype,
-				assetEntryType, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByG_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, assetEntrySubtype,
-				assetEntryType, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByG_AES_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String assetEntrySubtype, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_AES_AET_GROUPID_2);
-
-		boolean bindAssetEntrySubtype = false;
-
-		if (assetEntrySubtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYSUBTYPE_3);
-		}
-		else {
-			bindAssetEntrySubtype = true;
-
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYSUBTYPE_2);
-		}
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_AES_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindAssetEntrySubtype) {
-			queryPos.add(assetEntrySubtype);
-		}
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = any &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -10435,6 +7392,16 @@ public class AssetListEntryPersistenceImpl
 			return findByG_AES_AET(
 				groupIds, assetEntrySubtype, assetEntryType, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_AES_AET(
+					groupIds, assetEntrySubtype, assetEntryType,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -11055,6 +8022,16 @@ public class AssetListEntryPersistenceImpl
 			return countByG_AES_AET(groupId, assetEntrySubtype, assetEntryType);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByG_AES_AET(
+				groupId, assetEntrySubtype, assetEntryType);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
+		}
+
 		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
 		assetEntryType = Objects.toString(assetEntryType, "");
 
@@ -11139,6 +8116,14 @@ public class AssetListEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByG_AES_AET(
 				groupIds, assetEntrySubtype, assetEntryType);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = InlineSQLHelperUtil.filter(
+				findByG_AES_AET(groupIds, assetEntrySubtype, assetEntryType),
+				groupIds);
+
+			return assetListEntries.size();
 		}
 
 		if (groupIds == null) {
@@ -11567,294 +8552,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and title LIKE &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry
-	 * @throws NoSuchEntryException if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry findByG_LikeT_AES_AET_Last(
-			long groupId, String title, String assetEntrySubtype,
-			String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		AssetListEntry assetListEntry = fetchByG_LikeT_AES_AET_Last(
-			groupId, title, assetEntrySubtype, assetEntryType,
-			orderByComparator);
-
-		if (assetListEntry != null) {
-			return assetListEntry;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", titleLIKE");
-		sb.append(title);
-
-		sb.append(", assetEntrySubtype=");
-		sb.append(assetEntrySubtype);
-
-		sb.append(", assetEntryType=");
-		sb.append(assetEntryType);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset list entry in the ordered set where groupId = &#63; and title LIKE &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset list entry, or <code>null</code> if a matching asset list entry could not be found
-	 */
-	@Override
-	public AssetListEntry fetchByG_LikeT_AES_AET_Last(
-		long groupId, String title, String assetEntrySubtype,
-		String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator) {
-
-		int count = countByG_LikeT_AES_AET(
-			groupId, title, assetEntrySubtype, assetEntryType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetListEntry> list = findByG_LikeT_AES_AET(
-			groupId, title, assetEntrySubtype, assetEntryType, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set where groupId = &#63; and title LIKE &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] findByG_LikeT_AES_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String title,
-			String assetEntrySubtype, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		title = Objects.toString(title, "");
-		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = getByG_LikeT_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntrySubtype,
-				assetEntryType, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = getByG_LikeT_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntrySubtype,
-				assetEntryType, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry getByG_LikeT_AES_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String title, String assetEntrySubtype, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_ASSETLISTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_GROUPID_2);
-
-		boolean bindTitle = false;
-
-		if (title.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_TITLE_3);
-		}
-		else {
-			bindTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_TITLE_2);
-		}
-
-		boolean bindAssetEntrySubtype = false;
-
-		if (assetEntrySubtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYSUBTYPE_3);
-		}
-		else {
-			bindAssetEntrySubtype = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYSUBTYPE_2);
-		}
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetListEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindTitle) {
-			queryPos.add(title);
-		}
-
-		if (bindAssetEntrySubtype) {
-			queryPos.add(assetEntrySubtype);
-		}
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = &#63; and title LIKE &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -11924,6 +8621,16 @@ public class AssetListEntryPersistenceImpl
 			return findByG_LikeT_AES_AET(
 				groupId, title, assetEntrySubtype, assetEntryType, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeT_AES_AET(
+					groupId, title, assetEntrySubtype, assetEntryType,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		title = Objects.toString(title, "");
@@ -12055,262 +8762,6 @@ public class AssetListEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset list entries before and after the current asset list entry in the ordered set of asset list entries that the user has permission to view where groupId = &#63; and title LIKE &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
-	 *
-	 * @param assetListEntryId the primary key of the current asset list entry
-	 * @param groupId the group ID
-	 * @param title the title
-	 * @param assetEntrySubtype the asset entry subtype
-	 * @param assetEntryType the asset entry type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset list entry
-	 * @throws NoSuchEntryException if a asset list entry with the primary key could not be found
-	 */
-	@Override
-	public AssetListEntry[] filterFindByG_LikeT_AES_AET_PrevAndNext(
-			long assetListEntryId, long groupId, String title,
-			String assetEntrySubtype, String assetEntryType,
-			OrderByComparator<AssetListEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeT_AES_AET_PrevAndNext(
-				assetListEntryId, groupId, title, assetEntrySubtype,
-				assetEntryType, orderByComparator);
-		}
-
-		title = Objects.toString(title, "");
-		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
-		assetEntryType = Objects.toString(assetEntryType, "");
-
-		AssetListEntry assetListEntry = findByPrimaryKey(assetListEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetListEntry[] array = new AssetListEntryImpl[3];
-
-			array[0] = filterGetByG_LikeT_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntrySubtype,
-				assetEntryType, orderByComparator, true);
-
-			array[1] = assetListEntry;
-
-			array[2] = filterGetByG_LikeT_AES_AET_PrevAndNext(
-				session, assetListEntry, groupId, title, assetEntrySubtype,
-				assetEntryType, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetListEntry filterGetByG_LikeT_AES_AET_PrevAndNext(
-		Session session, AssetListEntry assetListEntry, long groupId,
-		String title, String assetEntrySubtype, String assetEntryType,
-		OrderByComparator<AssetListEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETLISTENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_GROUPID_2);
-
-		boolean bindTitle = false;
-
-		if (title.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_TITLE_3);
-		}
-		else {
-			bindTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_TITLE_2);
-		}
-
-		boolean bindAssetEntrySubtype = false;
-
-		if (assetEntrySubtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYSUBTYPE_3);
-		}
-		else {
-			bindAssetEntrySubtype = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYSUBTYPE_2);
-		}
-
-		boolean bindAssetEntryType = false;
-
-		if (assetEntryType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYTYPE_3);
-		}
-		else {
-			bindAssetEntryType = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKET_AES_AET_ASSETENTRYTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETLISTENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetListEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetListEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetListEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetListEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindTitle) {
-			queryPos.add(title);
-		}
-
-		if (bindAssetEntrySubtype) {
-			queryPos.add(assetEntrySubtype);
-		}
-
-		if (bindAssetEntryType) {
-			queryPos.add(assetEntryType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetListEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetListEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset list entries that the user has permission to view where groupId = any &#63; and title LIKE &#63; and assetEntrySubtype = &#63; and assetEntryType = &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -12380,6 +8831,16 @@ public class AssetListEntryPersistenceImpl
 			return findByG_LikeT_AES_AET(
 				groupIds, title, assetEntrySubtype, assetEntryType, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeT_AES_AET(
+					groupIds, title, assetEntrySubtype, assetEntryType,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -13093,6 +9554,16 @@ public class AssetListEntryPersistenceImpl
 				groupId, title, assetEntrySubtype, assetEntryType);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = findByG_LikeT_AES_AET(
+				groupId, title, assetEntrySubtype, assetEntryType);
+
+			assetListEntries = InlineSQLHelperUtil.filter(
+				assetListEntries, groupId);
+
+			return assetListEntries.size();
+		}
+
 		title = Objects.toString(title, "");
 		assetEntrySubtype = Objects.toString(assetEntrySubtype, "");
 		assetEntryType = Objects.toString(assetEntryType, "");
@@ -13195,6 +9666,15 @@ public class AssetListEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByG_LikeT_AES_AET(
 				groupIds, title, assetEntrySubtype, assetEntryType);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetListEntry> assetListEntries = InlineSQLHelperUtil.filter(
+				findByG_LikeT_AES_AET(
+					groupIds, title, assetEntrySubtype, assetEntryType),
+				groupIds);
+
+			return assetListEntries.size();
 		}
 
 		if (groupIds == null) {
@@ -14838,3 +11318,4 @@ public class AssetListEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-250966017

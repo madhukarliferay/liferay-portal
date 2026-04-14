@@ -6,10 +6,15 @@
 package com.liferay.site.cms.site.initializer.internal.display.context.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.depot.constants.DepotConstants;
+import com.liferay.depot.model.DepotEntry;
+import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectDefinitionSettingConstants;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
+import com.liferay.object.definition.setting.builder.ObjectDefinitionSettingBuilder;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectFolder;
@@ -32,6 +37,8 @@ import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.Serializable;
+
+import java.util.Collections;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,6 +71,11 @@ public class ViewVersionHistoryDisplayContextTest
 	public void setUp() throws Exception {
 		super.setUp();
 
+		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
+			RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomLocaleStringMap(), DepotConstants.TYPE_SPACE,
+			ServiceContextTestUtil.getServiceContext());
+
 		ObjectFolder objectFolder =
 			objectFolderLocalService.fetchObjectFolderByExternalReferenceCode(
 				ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES,
@@ -71,11 +83,18 @@ public class ViewVersionHistoryDisplayContextTest
 
 		_objectDefinition = addCustomObjectDefinition(
 			objectFolder.getObjectFolderId(), true, true,
-			ObjectDefinitionConstants.SCOPE_SITE,
+			Collections.singletonList(
+				new ObjectDefinitionSettingBuilder(
+				).name(
+					ObjectDefinitionSettingConstants.NAME_ACCEPT_ALL_GROUPS
+				).value(
+					StringPool.TRUE
+				).build()),
+			ObjectDefinitionConstants.SCOPE_DEPOT,
 			WorkflowConstants.STATUS_APPROVED);
 
 		_objectEntry = _objectEntryLocalService.addObjectEntry(
-			group.getGroupId(), TestPropsValues.getUserId(),
+			depotEntry.getGroupId(), TestPropsValues.getUserId(),
 			_objectDefinition.getObjectDefinitionId(),
 			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
 			null,
@@ -89,8 +108,9 @@ public class ViewVersionHistoryDisplayContextTest
 	public void testGetAPIURL() throws Exception {
 		Assert.assertEquals(
 			StringBundler.concat(
-				"/o", _objectDefinition.getRESTContextPath(), StringPool.SLASH,
-				_objectEntry.getObjectEntryId(),
+				"/o", _objectDefinition.getRESTContextPath(), "/scopes/",
+				_objectEntry.getGroupId(), "/by-external-reference-code/",
+				_objectEntry.getExternalReferenceCode(),
 				"/versions?nestedFields=file.thumbnailURL"),
 			ReflectionTestUtil.invoke(
 				_getViewVersionHistoryDisplayContext(
@@ -127,6 +147,9 @@ public class ViewVersionHistoryDisplayContextTest
 
 		return viewVersionHistoryDisplayContext;
 	}
+
+	@Inject
+	private DepotEntryLocalService _depotEntryLocalService;
 
 	@Inject(
 		filter = "component.name=com.liferay.site.cms.site.initializer.internal.fragment.renderer.ViewVersionHistoryJSPFragmentRenderer"

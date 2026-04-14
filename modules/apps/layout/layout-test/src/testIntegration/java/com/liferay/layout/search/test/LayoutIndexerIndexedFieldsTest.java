@@ -24,7 +24,6 @@ import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.search.document.DocumentBuilderFactory;
 import com.liferay.portal.search.model.uid.UIDFactory;
 import com.liferay.portal.search.test.util.FieldValuesAssert;
 import com.liferay.portal.search.test.util.IndexedFieldsFixture;
@@ -111,8 +110,7 @@ public class LayoutIndexerIndexedFieldsTest {
 
 	protected void setUpIndexedFieldsFixture() {
 		indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService, searchEngineHelper, uidFactory,
-			documentBuilderFactory);
+			resourcePermissionLocalService, searchEngineHelper, uidFactory);
 	}
 
 	protected void setUpLayoutFixture() {
@@ -138,10 +136,6 @@ public class LayoutIndexerIndexedFieldsTest {
 	}
 
 	protected Locale defaultLocale;
-
-	@Inject
-	protected DocumentBuilderFactory documentBuilderFactory;
-
 	protected IndexedFieldsFixture indexedFieldsFixture;
 	protected LayoutFixture layoutFixture;
 	protected IndexerFixture<Layout> layoutIndexerFixture;
@@ -177,6 +171,10 @@ public class LayoutIndexerIndexedFieldsTest {
 		).put(
 			Field.GROUP_ID, String.valueOf(layout.getGroupId())
 		).put(
+			Field.PRIORITY, "0.0"
+		).put(
+			Field.PRIORITY + "_Number_sortable", "0"
+		).put(
 			Field.SCOPE_GROUP_ID, String.valueOf(layout.getGroupId())
 		).put(
 			Field.STAGING_GROUP, "false"
@@ -200,6 +198,8 @@ public class LayoutIndexerIndexedFieldsTest {
 			"statusByUserExternalReferenceCode", user.getExternalReferenceCode()
 		).put(
 			"statusByUserId", String.valueOf(layout.getStatusByUserId())
+		).put(
+			"systemLayout", String.valueOf(layout.isSystem())
 		).put(
 			"title_ja_JP", layout.getName(LocaleUtil.JAPAN)
 		).put(

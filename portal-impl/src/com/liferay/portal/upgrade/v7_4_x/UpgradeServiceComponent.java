@@ -8,7 +8,7 @@ package com.liferay.portal.upgrade.v7_4_x;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.common.SQLTransformer;
-import com.liferay.portal.db.DBResourceUtil;
+import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.module.util.BundleUtil;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 
 import java.io.IOException;
+
+import java.net.URL;
 
 import java.util.Properties;
 
@@ -55,18 +57,24 @@ public class UpgradeServiceComponent extends UpgradeProcess {
 					return;
 				}
 
-				Properties properties = PropertiesUtil.load(
-					bundle.getResource("service.properties"));
-
-				String buildNumberServiceProperties = properties.getProperty(
-					"build.number");
-
 				Long buildNumber = (Long)values[1];
 
-				if (!StringUtil.equals(
-						buildNumberServiceProperties, buildNumber.toString())) {
+				URL servicePropertiesURL = bundle.getResource(
+					"service.properties");
 
-					return;
+				if (servicePropertiesURL != null) {
+					Properties properties = PropertiesUtil.load(
+						servicePropertiesURL);
+
+					String buildNumberServiceProperties =
+						properties.getProperty("build.number");
+
+					if (!StringUtil.equals(
+							buildNumberServiceProperties,
+							buildNumber.toString())) {
+
+						return;
+					}
 				}
 
 				String bundleData = _generateXML(bundle);

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -18,8 +18,8 @@ jest.mock('frontend-js-web', () => ({
 	...(jest.requireActual('frontend-js-web') as object),
 	dateUtils: {
 		getFirstDayOfWeek: jest.fn(),
-		getMonthsLong: jest.fn(),
-		getWeekdaysShort: jest.fn(),
+		getMonthsLong: jest.fn().mockReturnValue([]),
+		getWeekdaysShort: jest.fn().mockReturnValue([]),
 	},
 }));
 
@@ -27,13 +27,18 @@ const renderComponent = ({isSubscribed = false} = {}) => {
 	return render(
 		<ContentEditorSidePanel
 			addCommentURL="addCommentURL"
+			assetLibraryId="123"
+			assetType={30982}
+			cmsGroupId="21000"
 			comments={[]}
 			contentAPIURL="contentAPIURL"
 			deleteCommentURL="deleteCommentURL"
 			editCommentURL="editCommentURL"
 			editorConfig={{}}
+			entryClassName=""
 			expirationDate={EXPIRATION_DATE}
-			groupId="21000"
+			getCommentsURL="getCommentsURL"
+			hasUpdatePermission={true}
 			id="contentId"
 			isSubscribed={isSubscribed}
 			reviewDate={REVIEW_DATE}
@@ -45,18 +50,26 @@ const renderComponent = ({isSubscribed = false} = {}) => {
 };
 
 describe('ContentEditorSidePanel', () => {
+	beforeEach(() => {
+		global.Liferay.ThemeDisplay.getTimeZone = jest
+			.fn()
+			.mockReturnValue('utc');
+	});
+
 	it('renders ContentEditorSidePanel', () => {
 		renderComponent();
 
 		['general', 'comments', 'schedule', 'categorization'].forEach((name) =>
-			expect(screen.getByLabelText(name)).toBeInTheDocument()
+			expect(screen.getByTitle(name)).toBeInTheDocument()
 		);
 	});
 
 	it('closes the panel pressing the Close button', async () => {
 		renderComponent();
 
-		await userEvent.click(screen.getByLabelText('general'));
+		const panelButton = screen.getByLabelText('general');
+
+		await userEvent.click(panelButton);
 
 		await waitFor(() => {
 			expect(screen.getByText('general')).toBeInTheDocument();
@@ -66,6 +79,7 @@ describe('ContentEditorSidePanel', () => {
 
 		await waitFor(() => {
 			expect(screen.queryByText('general')).not.toBeInTheDocument();
+			expect(panelButton).toHaveFocus();
 		});
 	});
 
@@ -153,10 +167,10 @@ describe('ContentEditorSidePanel', () => {
 		renderComponent();
 
 		const expirationInput: HTMLInputElement | null = document.querySelector(
-			'[name="expirationDate"]'
+			'[name="ObjectEntry_expirationDate"]'
 		);
 		const reviewInput: HTMLInputElement | null = document.querySelector(
-			'[name="reviewDate"]'
+			'[name="ObjectEntry_reviewDate"]'
 		);
 
 		expect(expirationInput?.value).toBe(EXPIRATION_DATE);

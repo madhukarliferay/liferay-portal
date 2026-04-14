@@ -13,6 +13,7 @@ export class LocalizationInstanceSettingsPage {
 	readonly availableLanguages: Locator;
 	readonly currentLanguages: Locator;
 	readonly defaultLanguage: Locator;
+	readonly defaultLanguageSelect: Locator;
 	readonly moveToAvaiable: Locator;
 	readonly moveToCurrent: Locator;
 	readonly saveButton: Locator;
@@ -21,13 +22,14 @@ export class LocalizationInstanceSettingsPage {
 	constructor(page: Page) {
 		this.instanceSettingsPage = new InstanceSettingsPage(page);
 		this.availableLanguages = page.getByLabel('Available', {exact: true});
-		this.currentLanguages = page.getByLabel('Current', {exact: true});
+		this.currentLanguages = page.getByLabel('In Use', {exact: true});
 		this.defaultLanguage = page.getByRole('option', {selected: true});
+		this.defaultLanguageSelect = page.getByLabel('Default Language');
 		this.moveToAvaiable = page.getByLabel(
-			'Move selected items from Current to Available.'
+			'Move selected items from In Use to Available.'
 		);
 		this.moveToCurrent = page.getByLabel(
-			'Move selected items from Available to Current.'
+			'Move selected items from Available to In Use.'
 		);
 		this.saveButton = page.getByRole('button', {name: 'Save'});
 		this.page = page;
@@ -67,6 +69,12 @@ export class LocalizationInstanceSettingsPage {
 				await this.moveToCurrent.click();
 			}
 		}
+
+		await this.saveSettings();
+	}
+
+	async setDefaultLanguage(language: string) {
+		await this.defaultLanguageSelect.selectOption(language);
 
 		await this.saveSettings();
 	}

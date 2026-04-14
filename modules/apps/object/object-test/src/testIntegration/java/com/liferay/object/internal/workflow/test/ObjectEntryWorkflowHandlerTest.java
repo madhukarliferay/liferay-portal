@@ -248,8 +248,8 @@ public class ObjectEntryWorkflowHandlerTest {
 	private ObjectDefinition _addObjectDefinition() throws Exception {
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, null, false, false, false,
-				false, false, false, false, false, null,
+				null, TestPropsValues.getUserId(), 0, null, true, false, true,
+				false, false, false, false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(StringUtil.randomString()),
 				"A" + StringUtil.randomString(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -260,7 +260,8 @@ public class ObjectEntryWorkflowHandlerTest {
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING,
-						RandomTestUtil.randomString(), "fieldName")));
+						RandomTestUtil.randomString(), "fieldName")),
+				Collections.emptyList(), new ServiceContext());
 
 		return _objectDefinitionLocalService.publishCustomObjectDefinition(
 			TestPropsValues.getUserId(),

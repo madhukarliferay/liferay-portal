@@ -210,52 +210,6 @@ public class SiteFriendlyURLUtil {
 	}
 
 	/**
-	 * Returns the last site friendly url in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site friendly url
-	 * @throws NoSuchFriendlyURLException if a matching site friendly url could not be found
-	 */
-	public static SiteFriendlyURL findByUuid_Last(
-			String uuid, OrderByComparator<SiteFriendlyURL> orderByComparator)
-		throws com.liferay.site.exception.NoSuchFriendlyURLException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last site friendly url in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site friendly url, or <code>null</code> if a matching site friendly url could not be found
-	 */
-	public static SiteFriendlyURL fetchByUuid_Last(
-		String uuid, OrderByComparator<SiteFriendlyURL> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the site friendly urls before and after the current site friendly url in the ordered set where uuid = &#63;.
-	 *
-	 * @param siteFriendlyURLId the primary key of the current site friendly url
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site friendly url
-	 * @throws NoSuchFriendlyURLException if a site friendly url with the primary key could not be found
-	 */
-	public static SiteFriendlyURL[] findByUuid_PrevAndNext(
-			long siteFriendlyURLId, String uuid,
-			OrderByComparator<SiteFriendlyURL> orderByComparator)
-		throws com.liferay.site.exception.NoSuchFriendlyURLException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			siteFriendlyURLId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the site friendly urls where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -450,59 +404,6 @@ public class SiteFriendlyURLUtil {
 	}
 
 	/**
-	 * Returns the last site friendly url in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site friendly url
-	 * @throws NoSuchFriendlyURLException if a matching site friendly url could not be found
-	 */
-	public static SiteFriendlyURL findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SiteFriendlyURL> orderByComparator)
-		throws com.liferay.site.exception.NoSuchFriendlyURLException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last site friendly url in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site friendly url, or <code>null</code> if a matching site friendly url could not be found
-	 */
-	public static SiteFriendlyURL fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SiteFriendlyURL> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the site friendly urls before and after the current site friendly url in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param siteFriendlyURLId the primary key of the current site friendly url
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site friendly url
-	 * @throws NoSuchFriendlyURLException if a site friendly url with the primary key could not be found
-	 */
-	public static SiteFriendlyURL[] findByUuid_C_PrevAndNext(
-			long siteFriendlyURLId, String uuid, long companyId,
-			OrderByComparator<SiteFriendlyURL> orderByComparator)
-		throws com.liferay.site.exception.NoSuchFriendlyURLException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			siteFriendlyURLId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the site friendly urls where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -633,59 +534,6 @@ public class SiteFriendlyURLUtil {
 
 		return getPersistence().fetchByG_C_First(
 			groupId, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last site friendly url in the ordered set where groupId = &#63; and companyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site friendly url
-	 * @throws NoSuchFriendlyURLException if a matching site friendly url could not be found
-	 */
-	public static SiteFriendlyURL findByG_C_Last(
-			long groupId, long companyId,
-			OrderByComparator<SiteFriendlyURL> orderByComparator)
-		throws com.liferay.site.exception.NoSuchFriendlyURLException {
-
-		return getPersistence().findByG_C_Last(
-			groupId, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last site friendly url in the ordered set where groupId = &#63; and companyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching site friendly url, or <code>null</code> if a matching site friendly url could not be found
-	 */
-	public static SiteFriendlyURL fetchByG_C_Last(
-		long groupId, long companyId,
-		OrderByComparator<SiteFriendlyURL> orderByComparator) {
-
-		return getPersistence().fetchByG_C_Last(
-			groupId, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the site friendly urls before and after the current site friendly url in the ordered set where groupId = &#63; and companyId = &#63;.
-	 *
-	 * @param siteFriendlyURLId the primary key of the current site friendly url
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next site friendly url
-	 * @throws NoSuchFriendlyURLException if a site friendly url with the primary key could not be found
-	 */
-	public static SiteFriendlyURL[] findByG_C_PrevAndNext(
-			long siteFriendlyURLId, long groupId, long companyId,
-			OrderByComparator<SiteFriendlyURL> orderByComparator)
-		throws com.liferay.site.exception.NoSuchFriendlyURLException {
-
-		return getPersistence().findByG_C_PrevAndNext(
-			siteFriendlyURLId, groupId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1091,3 +939,4 @@ public class SiteFriendlyURLUtil {
 	private static volatile SiteFriendlyURLPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:503200842

@@ -6,8 +6,9 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {changeTrackingPagesTest} from '../../../fixtures/changeTrackingPagesTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {pagesAdminPagesTest} from '../../../fixtures/pagesAdminPagesTest';
@@ -20,11 +21,14 @@ import {blogsPagesTest} from '../../blogs-web/main/fixtures/blogsPagesTest';
 import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
-	isolatedSiteTest,
 	apiHelpersTest,
 	blogsPagesTest,
 	changeTrackingPagesTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
+	globalMenuPagesTest,
+	isolatedSiteTest,
 	journalPagesTest,
 	pagesAdminPagesTest,
 	pageEditorPagesTest,
@@ -32,9 +36,9 @@ export const test = mergeTests(
 );
 
 test('LPD-42499 Assert correct message appears in Checking changes page', async ({
-	applicationsMenuPage,
 	changeTrackingPage,
 	ctCollection,
+	globalMenuPage,
 	page,
 	pageEditorPage,
 	pagesAdminPage,
@@ -43,7 +47,7 @@ test('LPD-42499 Assert correct message appears in Checking changes page', async 
 }) => {
 	await changeTrackingPage.workOnPublication(ctCollection);
 
-	await applicationsMenuPage.goToSite(site.name);
+	await globalMenuPage.goToSite(site.name);
 
 	const layoutTitle = getRandomString();
 

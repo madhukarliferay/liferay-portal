@@ -63,7 +63,9 @@ import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
@@ -265,7 +267,8 @@ public class CopyItemsMVCActionCommandTest {
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING, "First Name",
-						"firstName")));
+						"firstName")),
+				false);
 
 		InfoItemFormProvider<?> infoItemFormProvider =
 			_infoItemServiceRegistry.getFirstInfoItemService(
@@ -275,7 +278,11 @@ public class CopyItemsMVCActionCommandTest {
 			StringPool.BLANK, _group.getGroupId());
 
 		List<InfoField<?>> allInfoFields = ListUtil.filter(
-			infoForm.getAllInfoFields(), InfoField::isEditable);
+			infoForm.getAllInfoFields(),
+			infoField ->
+				infoField.isEditable() &&
+				!StringUtil.equals(
+					infoField.getName(), "externalReferenceCode"));
 
 		String classNameId = String.valueOf(
 			_portal.getClassNameId(objectDefinition.getClassName()));
@@ -362,7 +369,8 @@ public class CopyItemsMVCActionCommandTest {
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING, "First Name",
-						"firstName")));
+						"firstName")),
+				false);
 
 		InfoItemFormProvider<?> infoItemFormProvider =
 			_infoItemServiceRegistry.getFirstInfoItemService(
@@ -537,8 +545,10 @@ public class CopyItemsMVCActionCommandTest {
 			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 				editableValues, fragmentEntry.getCss(),
 				fragmentEntry.getConfiguration(),
-				fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-				fragmentEntry.getJs(), _layout,
+				fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					fragmentEntry.getGroupId(), _layout.getGroupId()),
+				fragmentEntry.getHtml(), fragmentEntry.getJs(), _layout,
 				fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(),
 				parentItemId, 0, _segmentsExperienceId);
 
@@ -643,8 +653,20 @@ public class CopyItemsMVCActionCommandTest {
 		throws Exception {
 
 		Assert.assertEquals(
-			fragmentEntryLink.getFragmentEntryId(),
-			copiedFragmentEntryLink.getFragmentEntryId());
+			fragmentEntryLink.getFragmentEntryERC(),
+			copiedFragmentEntryLink.getFragmentEntryERC());
+
+		Long groupId1 = ScopeUtil.getItemGroupId(
+			fragmentEntryLink.getCompanyId(),
+			fragmentEntryLink.getFragmentEntryScopeERC(),
+			fragmentEntryLink.getGroupId());
+		Long groupId2 = ScopeUtil.getItemGroupId(
+			copiedFragmentEntryLink.getCompanyId(),
+			copiedFragmentEntryLink.getFragmentEntryScopeERC(),
+			copiedFragmentEntryLink.getGroupId());
+
+		Assert.assertEquals(groupId1, groupId2);
+
 		Assert.assertNotEquals(
 			copiedFragmentEntryLink.getFragmentEntryLinkId(),
 			fragmentEntryLink.getFragmentEntryLinkId());
@@ -653,8 +675,9 @@ public class CopyItemsMVCActionCommandTest {
 		Assert.assertNotEquals(
 			fragmentEntryLink.getNamespace(),
 			copiedFragmentEntryLink.getNamespace());
-		Assert.assertEquals(
-			0, copiedFragmentEntryLink.getOriginalFragmentEntryLinkId());
+		Assert.assertTrue(
+			Validator.isNull(
+				copiedFragmentEntryLink.getOriginalFragmentEntryLinkERC()));
 		Assert.assertEquals(
 			copiedFragmentEntryLink.getType(),
 			copiedFragmentEntryLink.getType());

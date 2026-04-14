@@ -9,13 +9,26 @@
 	display: block;
 	position: relative;
 
-	.panel-notifications-count {
-		display: block;
-		margin: 0;
-		max-width: none;
-		position: absolute;
-		right: calc(100% - 0.7rem);
-		top: -0.4rem;
+	@at-root {
+		.panel-notifications-count {
+			&,
+			html#{$cadmin-selector} .cadmin & {
+				border-radius: $rounded-pill;
+				display: flex;
+				margin: 0;
+				max-width: none;
+				position: absolute;
+				right: calc(100% - 0.7rem);
+				top: -0.4rem;
+			}
+		}
+
+		.badge {
+			&,
+			html#{$cadmin-selector} .cadmin & {
+				margin: 0.25rem;
+			}
+		}
 	}
 
 	.text-default {

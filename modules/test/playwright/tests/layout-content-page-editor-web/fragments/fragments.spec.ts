@@ -41,6 +41,7 @@ const test = mergeTests(
 	featureFlagsTest({
 		'LPD-11235': {enabled: true},
 		'LPD-17564': {enabled: true},
+		'LPD-36105': {enabled: true},
 		'LPD-39304': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
@@ -196,72 +197,6 @@ test.describe('Related Asset Fragment', () => {
 			await expect(newPage.getByText(journalArticleTitle2)).toBeVisible();
 		}
 	);
-});
-
-test.describe('Banner Slider Fragment', () => {
-	test('Check the functionality of the Banner Slider fragment', async ({
-		apiHelpers,
-		page,
-		pageEditorPage,
-		site,
-	}) => {
-
-		// Create a content page with a Banner Slider fragment
-
-		const bannerSliderId = getRandomString();
-
-		const layout = await apiHelpers.headlessDelivery.createSitePage({
-			pageDefinition: getPageDefinition([
-				getFragmentDefinition({
-					id: bannerSliderId,
-					key: 'FEATURED_CONTENT-banner-slider',
-				}),
-			]),
-			siteId: site.id,
-			title: getRandomString(),
-		});
-
-		await pageEditorPage.goto(layout, site.friendlyUrlPath);
-
-		// Change the number of slides
-
-		await pageEditorPage.selectFragment(bannerSliderId);
-
-		await pageEditorPage.changeFragmentConfiguration({
-			fieldLabel: 'Number of Slides',
-			fragmentId: bannerSliderId,
-			tab: 'General',
-			value: '4',
-		});
-
-		// Check that the number of slides is displayed correctly
-
-		expect(await page.getByLabel('Focus slide').count()).toBe(4);
-
-		// Check that the fourth slide is displayed
-
-		await page.getByLabel('Focus Slide 4').click();
-
-		await expect(
-			page.locator('[data-lfr-editable-id="04-01-image"]')
-		).toBeVisible();
-
-		await pageEditorPage.editTextEditable(
-			bannerSliderId,
-			'04-02-title',
-			'New title'
-		);
-
-		// Check the banner slider is displayed correctly in the view mode
-
-		await pageEditorPage.publishPage();
-
-		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`);
-
-		expect(await page.getByLabel('Focus slide').count()).toBe(4);
-
-		await expect(page.getByText('New title')).toBeAttached();
-	});
 });
 
 test.describe('Dropdown Fragment', () => {
@@ -554,14 +489,6 @@ test.describe('External Video', () => {
 				title: 'Life at Liferay - A Look into Liferay Culture',
 			});
 
-			await pageEditorPage.publishPage();
-
-			// Go to view mode and assert video
-
-			await page.goto(
-				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
-			);
-
 			const videoIframeLocator = page
 				.locator('.video-container')
 				.frameLocator('iframe');
@@ -571,6 +498,22 @@ test.describe('External Video', () => {
 					'Life at Liferay - A Look into Liferay Culture'
 				)
 			).toBeVisible();
+
+			await pageEditorPage.publishPage();
+
+			// Assert video in view mode
+
+			await expect(async () => {
+				await page.goto(
+					`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+				);
+
+				await expect(
+					videoIframeLocator.getByText(
+						'Life at Liferay - A Look into Liferay Culture'
+					)
+				).toBeVisible({timeout: 4000});
+			}).toPass();
 		}
 	);
 
@@ -868,7 +811,8 @@ test.describe('Multiselect Fragment', () => {
 
 			await pageEditorPage.mapFormFragment(
 				fragmentId,
-				'Lemon Basket (Default)'
+				'Lemon Basket (Default)',
+				['Lemon Dimensions']
 			);
 
 			// Preview the page with a created object
@@ -913,17 +857,21 @@ test.describe('Multiselect Fragment', () => {
 
 			// Go to display page url and try the form
 
-			await page.goto(
-				`/web${pageManagementSite.friendlyUrlPath}/e/${displayPageTemplateName}/${classNameId}/${classPK}`
-			);
+			await expect(async () => {
+				await page.goto(
+					`/web${pageManagementSite.friendlyUrlPath}/e/${displayPageTemplateName}/${classNameId}/${classPK}`
+				);
 
-			await page.getByText('Submit', {exact: true}).click();
+				await page
+					.getByText('Submit', {exact: true})
+					.click({timeout: 1000});
 
-			await expect(
-				page.getByText(
-					'Thank you. Your information was successfully received.'
-				)
-			).toBeVisible();
+				await expect(
+					page.getByText(
+						'Thank you. Your information was successfully received.'
+					)
+				).toBeVisible({timeout: 2000});
+			}).toPass();
 		}
 	);
 });
@@ -1063,6 +1011,59 @@ test.describe('Paragraph Fragment', () => {
 			await expect(
 				page.getByLabel('Accessibility help')
 			).toBeInViewport();
+		}
+	);
+
+	test(
+		'Can edit text editable with special characters',
+		{tag: ['@LPD-17788', '@LPD-79331']},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create page with a paragraph fragment and go to edit mode
+
+			const fragmentId = getRandomString();
+
+			const fragment = getFragmentDefinition({
+				id: fragmentId,
+				key: 'BASIC_COMPONENT-paragraph',
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([fragment]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Check paragraph editable can be edited
+
+			await pageEditorPage.editTextEditable(
+				fragmentId,
+				'element-text',
+				'New editable "fragment" text'
+			);
+
+			// Publish the page
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Check that the text is displayed
+
+			await expect(
+				page.getByText('New editable "fragment" text')
+			).toBeAttached();
+
+			// Check that the <p> does not have the default margin-bottom
+
+			expect(page.locator('.component-paragraph p')).toHaveCSS(
+				'margin-bottom',
+				'0px'
+			);
 		}
 	);
 });
@@ -1400,7 +1401,6 @@ test.describe('Tabs Fragment', () => {
 		await dragAndDropElement({
 			dragTarget: page.locator('[data-name="Drop Zone"]'),
 			dropTarget: tabDropZone,
-			page,
 		});
 
 		await pageEditorPage.addFragment('Basic Components', 'Heading');
@@ -1416,7 +1416,6 @@ test.describe('Tabs Fragment', () => {
 			dropTarget: page
 				.getByText('Drag and drop fragments or widgets here.')
 				.first(),
-			page,
 		});
 
 		// Check that each tab has the corresponding content

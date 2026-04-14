@@ -132,9 +132,7 @@ public class SLAResultSerDes {
 			sb.append("\"status\": ");
 
 			sb.append("\"");
-
 			sb.append(slaResult.getStatus());
-
 			sb.append("\"");
 		}
 
@@ -380,3 +378,4 @@ public class SLAResultSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:805504211

@@ -486,7 +486,7 @@ public class AccountEntryLocalServiceWrapper
 	public com.liferay.account.model.AccountEntry getOrAddEmptyAccountEntry(
 			String externalReferenceCode, long companyId, long userId,
 			String name, String type)
-		throws Exception {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _accountEntryLocalService.getOrAddEmptyAccountEntry(
 			externalReferenceCode, companyId, userId, name, type);
@@ -713,3 +713,4 @@ public class AccountEntryLocalServiceWrapper
 	private AccountEntryLocalService _accountEntryLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1689896953

@@ -29,14 +29,12 @@ renderResponse.setTitle(LanguageUtil.get(request, "review-changes"));
 		/>
 	</div>
 
-	<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-20131") %>'>
-		<div>
-			<react:component
-				module="{ChangeTrackingOverview} from change-tracking-web"
-				props="<%= viewChangesDisplayContext.getItemsOverview() %>"
-			/>
-		</div>
-	</c:if>
+	<div>
+		<react:component
+			module="{ChangeTrackingOverview} from change-tracking-web"
+			props="<%= viewChangesDisplayContext.getItemsOverview() %>"
+		/>
+	</div>
 
 	<clay:navigation-bar
 		navigationItems="<%= viewChangesDisplayContext.getViewNavigationItems() %>"
@@ -47,7 +45,6 @@ renderResponse.setTitle(LanguageUtil.get(request, "review-changes"));
 			apiURL="<%= viewChangesDisplayContext.getAPIURL() %>"
 			bulkActionDropdownItems="<%= viewChangesDisplayContext.getBulkActionDropdownItems() %>"
 			fdsActionDropdownItems="<%= viewChangesDisplayContext.getFDSActionDropdownItems() %>"
-			fdsFilters="<%= viewChangesDisplayContext.getFDSFilters() %>"
 			fdsSortItemList="<%= viewChangesDisplayContext.getFDSSortItemList() %>"
 			formName="fm"
 			id="<%= PublicationsFDSNames.PUBLICATIONS_CHANGES %>"

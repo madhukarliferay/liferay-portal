@@ -30,8 +30,6 @@ const test = mergeTests(
 	featureFlagsTest({
 		'LPD-11235': {enabled: false},
 		'LPD-17564': {enabled: true},
-		'LPD-21926': {enabled: true},
-		'LPD-32050': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	fragmentsPagesTest,
@@ -427,6 +425,18 @@ test(
 			addLocalizationSelect: true,
 		});
 
+		// Swap to Multiselector Checkbox fragment
+
+		const fragmentId = await pageEditorPage.getFragmentId(
+			'Multiselector Dropdown'
+		);
+
+		await pageEditorPage.swapFragment({
+			folder: 'Form Components',
+			fragmentId,
+			fragmentName: 'Multiselector Checkbox',
+		});
+
 		await pageEditorPage.publishPage();
 
 		// Go to view mode
@@ -683,6 +693,7 @@ test(
 	async ({
 		apiHelpers,
 		displayPageTemplatesPage,
+		localizationSelectPage,
 		page,
 		pageEditorPage,
 		site,
@@ -806,7 +817,6 @@ test(
 		await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
 			{
 				classNameId: className.classNameId,
-				classTypeId: '0',
 				groupId: site.id,
 				name: displayPageTemplateName,
 			}
@@ -833,9 +843,15 @@ test(
 
 		// Go to the object display page
 
-		await page.goto(
-			`/web${site.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
-		);
+		await expect(async () => {
+			await page.goto('/');
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}/e/${displayPageTemplateName}/${className.classNameId}/${objectEntry.id}`
+			);
+
+			await localizationSelectPage.trigger.waitFor({timeout: 10000});
+		}).toPass();
 
 		// Assert that translation is displayed correctly
 
@@ -881,11 +897,7 @@ test(
 
 		// Assert spanish translation is correct
 
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: page.getByRole('option').filter({hasText: 'es-ES'}),
-			trigger: page.getByLabel('Select a language, current language:'),
-		});
+		await localizationSelectPage.switchLanguage('es-ES');
 
 		await expect(checkboxField).not.toBeChecked();
 

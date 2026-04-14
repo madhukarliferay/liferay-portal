@@ -121,47 +121,6 @@ public interface CTSChildPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child
-	 * @throws NoSuchCTSChildException if a matching cts child could not be found
-	 */
-	public CTSChild findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-				orderByComparator)
-		throws NoSuchCTSChildException;
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child, or <code>null</code> if a matching cts child could not be found
-	 */
-	public CTSChild fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-			orderByComparator);
-
-	/**
-	 * Returns the cts childs before and after the current cts child in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctsChildId the primary key of the current cts child
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cts child
-	 * @throws NoSuchCTSChildException if a cts child with the primary key could not be found
-	 */
-	public CTSChild[] findByCompanyId_PrevAndNext(
-			long ctsChildId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-				orderByComparator)
-		throws NoSuchCTSChildException;
-
-	/**
 	 * Removes all the cts childs where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -269,50 +228,6 @@ public interface CTSChildPersistence
 		long companyId, long ctsGrandParentId,
 		com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
 			orderByComparator);
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and ctsGrandParentId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param ctsGrandParentId the cts grand parent ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child
-	 * @throws NoSuchCTSChildException if a matching cts child could not be found
-	 */
-	public CTSChild findByC_C_Last(
-			long companyId, long ctsGrandParentId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-				orderByComparator)
-		throws NoSuchCTSChildException;
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and ctsGrandParentId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param ctsGrandParentId the cts grand parent ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child, or <code>null</code> if a matching cts child could not be found
-	 */
-	public CTSChild fetchByC_C_Last(
-		long companyId, long ctsGrandParentId,
-		com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-			orderByComparator);
-
-	/**
-	 * Returns the cts childs before and after the current cts child in the ordered set where companyId = &#63; and ctsGrandParentId = &#63;.
-	 *
-	 * @param ctsChildId the primary key of the current cts child
-	 * @param companyId the company ID
-	 * @param ctsGrandParentId the cts grand parent ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cts child
-	 * @throws NoSuchCTSChildException if a cts child with the primary key could not be found
-	 */
-	public CTSChild[] findByC_C_PrevAndNext(
-			long ctsChildId, long companyId, long ctsGrandParentId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-				orderByComparator)
-		throws NoSuchCTSChildException;
 
 	/**
 	 * Removes all the cts childs where companyId = &#63; and ctsGrandParentId = &#63; from the database.
@@ -424,50 +339,6 @@ public interface CTSChildPersistence
 		long companyId, long parentCTSChildId,
 		com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
 			orderByComparator);
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and parentCTSChildId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentCTSChildId the parent cts child ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child
-	 * @throws NoSuchCTSChildException if a matching cts child could not be found
-	 */
-	public CTSChild findByC_P_Last(
-			long companyId, long parentCTSChildId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-				orderByComparator)
-		throws NoSuchCTSChildException;
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and parentCTSChildId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentCTSChildId the parent cts child ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child, or <code>null</code> if a matching cts child could not be found
-	 */
-	public CTSChild fetchByC_P_Last(
-		long companyId, long parentCTSChildId,
-		com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-			orderByComparator);
-
-	/**
-	 * Returns the cts childs before and after the current cts child in the ordered set where companyId = &#63; and parentCTSChildId = &#63;.
-	 *
-	 * @param ctsChildId the primary key of the current cts child
-	 * @param companyId the company ID
-	 * @param parentCTSChildId the parent cts child ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cts child
-	 * @throws NoSuchCTSChildException if a cts child with the primary key could not be found
-	 */
-	public CTSChild[] findByC_P_PrevAndNext(
-			long ctsChildId, long companyId, long parentCTSChildId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTSChild>
-				orderByComparator)
-		throws NoSuchCTSChildException;
 
 	/**
 	 * Removes all the cts childs where companyId = &#63; and parentCTSChildId = &#63; from the database.
@@ -606,3 +477,4 @@ public interface CTSChildPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:205729751

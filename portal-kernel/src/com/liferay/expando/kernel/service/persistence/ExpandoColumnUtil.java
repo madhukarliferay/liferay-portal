@@ -212,52 +212,6 @@ public class ExpandoColumnUtil {
 	}
 
 	/**
-	 * Returns the last expando column in the ordered set where tableId = &#63;.
-	 *
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando column
-	 * @throws NoSuchColumnException if a matching expando column could not be found
-	 */
-	public static ExpandoColumn findByTableId_Last(
-			long tableId, OrderByComparator<ExpandoColumn> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchColumnException {
-
-		return getPersistence().findByTableId_Last(tableId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last expando column in the ordered set where tableId = &#63;.
-	 *
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando column, or <code>null</code> if a matching expando column could not be found
-	 */
-	public static ExpandoColumn fetchByTableId_Last(
-		long tableId, OrderByComparator<ExpandoColumn> orderByComparator) {
-
-		return getPersistence().fetchByTableId_Last(tableId, orderByComparator);
-	}
-
-	/**
-	 * Returns the expando columns before and after the current expando column in the ordered set where tableId = &#63;.
-	 *
-	 * @param columnId the primary key of the current expando column
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next expando column
-	 * @throws NoSuchColumnException if a expando column with the primary key could not be found
-	 */
-	public static ExpandoColumn[] findByTableId_PrevAndNext(
-			long columnId, long tableId,
-			OrderByComparator<ExpandoColumn> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchColumnException {
-
-		return getPersistence().findByTableId_PrevAndNext(
-			columnId, tableId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the expando columns that the user has permission to view where tableId = &#63;.
 	 *
 	 * @param tableId the table ID
@@ -304,24 +258,6 @@ public class ExpandoColumnUtil {
 
 		return getPersistence().filterFindByTableId(
 			tableId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the expando columns before and after the current expando column in the ordered set of expando columns that the user has permission to view where tableId = &#63;.
-	 *
-	 * @param columnId the primary key of the current expando column
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next expando column
-	 * @throws NoSuchColumnException if a expando column with the primary key could not be found
-	 */
-	public static ExpandoColumn[] filterFindByTableId_PrevAndNext(
-			long columnId, long tableId,
-			OrderByComparator<ExpandoColumn> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchColumnException {
-
-		return getPersistence().filterFindByTableId_PrevAndNext(
-			columnId, tableId, orderByComparator);
 	}
 
 	/**
@@ -688,3 +624,4 @@ public class ExpandoColumnUtil {
 	private static volatile ExpandoColumnPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1643664205

@@ -121,47 +121,6 @@ public interface CommerceDiscountRulePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce discount rule in the ordered set where commerceDiscountId = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rule
-	 * @throws NoSuchDiscountRuleException if a matching commerce discount rule could not be found
-	 */
-	public CommerceDiscountRule findByCommerceDiscountId_Last(
-			long commerceDiscountId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceDiscountRule> orderByComparator)
-		throws NoSuchDiscountRuleException;
-
-	/**
-	 * Returns the last commerce discount rule in the ordered set where commerceDiscountId = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rule, or <code>null</code> if a matching commerce discount rule could not be found
-	 */
-	public CommerceDiscountRule fetchByCommerceDiscountId_Last(
-		long commerceDiscountId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceDiscountRule>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce discount rules before and after the current commerce discount rule in the ordered set where commerceDiscountId = &#63;.
-	 *
-	 * @param commerceDiscountRuleId the primary key of the current commerce discount rule
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce discount rule
-	 * @throws NoSuchDiscountRuleException if a commerce discount rule with the primary key could not be found
-	 */
-	public CommerceDiscountRule[] findByCommerceDiscountId_PrevAndNext(
-			long commerceDiscountRuleId, long commerceDiscountId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceDiscountRule> orderByComparator)
-		throws NoSuchDiscountRuleException;
-
-	/**
 	 * Removes all the commerce discount rules where commerceDiscountId = &#63; from the database.
 	 *
 	 * @param commerceDiscountId the commerce discount ID
@@ -299,3 +258,4 @@ public interface CommerceDiscountRulePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1372810497

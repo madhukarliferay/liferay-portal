@@ -12,7 +12,7 @@ import SVTable from '../../components/SVTable';
 
 import './SecurityVulnerabilitiesList.css';
 
-import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar/lib/PaginationBarWithBasicItems';
+import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import {useMemo} from 'react';
 import {SVWaves} from '~/assets/SVWaves';
 import {FILTER_OPTIONS} from '~/features/security-vulnerabilities/utils/constants/filterOptions';
@@ -172,12 +172,6 @@ const SecurityVulnerabilitiesList = () => {
 								}
 								params={searchParams}
 								sortOptions={SORT_OPTIONS}
-							/>
-
-							<SVPanel
-								link="https://help.liferay.com/hc/articles/360018875952"
-								linkText="visit-our-help-center"
-								text="for-information-on-previously-addressed-cves-fixed-in-dxp-2024-q1-1-or-earlier-please-x"
 							/>
 
 							<SVPanel

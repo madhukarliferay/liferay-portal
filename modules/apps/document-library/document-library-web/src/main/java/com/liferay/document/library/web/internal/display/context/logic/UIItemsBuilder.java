@@ -69,11 +69,11 @@ import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.staging.StagingGroupHelper;
 import com.liferay.staging.StagingGroupHelperUtil;
 import com.liferay.taglib.security.PermissionsURLTag;
@@ -417,6 +417,8 @@ public class UIItemsBuilder {
 			"imageURL",
 			_dlURLHelper.getPreviewURL(
 				_fileEntry, _fileVersion, _themeDisplay, StringPool.BLANK)
+		).putData(
+			"mimeType", HtmlUtil.escapeAttribute(_fileEntry.getMimeType())
 		).setKey(
 			DLUIItemKeys.EDIT_IMAGE
 		).setLabel(
@@ -828,11 +830,11 @@ public class UIItemsBuilder {
 	}
 
 	public boolean isHistoryActionAvailable() throws PortalException {
-		if (_fileShortcut == null) {
-			return true;
+		if (_fileShortcut != null) {
+			return _fileShortcutDisplayContextHelper.isHistoryActionAvailable();
 		}
 
-		return false;
+		return _fileEntryDisplayContextHelper.isHistoryActionAvailable();
 	}
 
 	public boolean isMoveActionAvailable() throws PortalException {
@@ -936,6 +938,15 @@ public class UIItemsBuilder {
 		}
 
 		return false;
+	}
+
+	public boolean isViewUsagesActionAvailable() throws PortalException {
+		if (_fileShortcut != null) {
+			return _fileShortcutDisplayContextHelper.
+				isViewUsagesActionAvailable();
+		}
+
+		return _fileEntryDisplayContextHelper.isViewUsagesActionAvailable();
 	}
 
 	public boolean isViewVersionActionAvailable() {

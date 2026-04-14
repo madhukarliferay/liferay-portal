@@ -426,6 +426,11 @@ public class FaroProjectWrapper
 		return model.getServices();
 	}
 
+	@Override
+	public Date getStartDate() throws Exception {
+		return model.getStartDate();
+	}
+
 	/**
 	 * Returns the state of this faro project.
 	 *
@@ -454,6 +459,11 @@ public class FaroProjectWrapper
 	@Override
 	public long getSubscriptionModifiedTime() {
 		return model.getSubscriptionModifiedTime();
+	}
+
+	@Override
+	public String getSubscriptionName() throws Exception {
+		return model.getSubscriptionName();
 	}
 
 	/**
@@ -824,3 +834,4 @@ public class FaroProjectWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-16707228

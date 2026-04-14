@@ -46,6 +46,7 @@ public class QuartzUpgradeProcess extends UpgradeProcess {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select job_name, job_data from QUARTZ_JOB_DETAILS where " +
 					"job_name not like '%@%'");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
@@ -101,11 +102,17 @@ public class QuartzUpgradeProcess extends UpgradeProcess {
 						connection.prepareStatement(
 							StringBundler.concat(
 								"select companyId from ", tableName, " where ",
-								columnId, " = ", columnValue));
-					ResultSet resultSet = preparedStatement.executeQuery()) {
+								columnId, " = ?"))) {
 
-					if (resultSet.next()) {
-						companyIds.put(jobName, resultSet.getLong("companyId"));
+					preparedStatement.setLong(1, columnValue);
+
+					try (ResultSet resultSet =
+							preparedStatement.executeQuery()) {
+
+						if (resultSet.next()) {
+							companyIds.put(
+								jobName, resultSet.getLong("companyId"));
+						}
 					}
 				}
 			});

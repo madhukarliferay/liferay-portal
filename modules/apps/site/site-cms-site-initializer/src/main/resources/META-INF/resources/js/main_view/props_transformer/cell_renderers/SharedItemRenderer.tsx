@@ -5,14 +5,14 @@
 
 import ClayIcon from '@clayui/icon';
 import ClayLink from '@clayui/link';
+import ClaySticker from '@clayui/sticker';
 import {ClayTooltipProvider} from '@clayui/tooltip';
+import {replaceTokens} from '@liferay/frontend-data-set-web';
 import {sub} from 'frontend-js-web';
 import React, {useMemo} from 'react';
 
-import formatActionURL from '../../../common/utils/formatActionURL';
-
-const OBJECT_ENTRY_FOLDER_CLASS_NAME =
-	'com.liferay.object.model.ObjectEntryFolder';
+import {OBJECT_ENTRY_FOLDER_CLASS_NAME} from '../../../common/utils/constants';
+import {openSharedItemViewModal} from '../utils/openSharedItemViewModal';
 
 interface ActionItem {
 	data: {id: string};
@@ -30,23 +30,48 @@ export default function SharedItemRenderer({
 	options: {actionId: string};
 	value: string;
 }) {
-	const {fileTypeIcon, fileTypeIconColor, shareable, siteName} = itemData;
+	const {assetType, fileTypeIcon, fileTypeIconColor, siteName} = itemData;
+	const title =
+		value && value !== '' && value !== 'null'
+			? value
+			: Liferay.Language.get('untitled-asset');
+
+	let icon;
+	let iconColor;
+
+	if (fileTypeIcon && fileTypeIconColor) {
+		icon = fileTypeIcon;
+		iconColor = fileTypeIconColor;
+	}
+	else if (assetType?.includes('Web Content')) {
+		icon = 'forms';
+		iconColor = 'content-icon-basic-content';
+	}
+	else if (assetType?.includes('Blog')) {
+		icon = 'blogs';
+		iconColor = 'content-icon-blog';
+	}
+	else {
+		icon = 'web-content';
+		iconColor = 'content-icon-web-content';
+	}
+
+	const isFolder = itemData?.className === OBJECT_ENTRY_FOLDER_CLASS_NAME;
+	const visible = itemData?.visible;
+
+	const shouldOpenModal =
+		!itemData?.actionIds?.includes('UPDATE') && !isFolder && visible;
 
 	const linkHref = useMemo(() => {
 		const {actionId} = options;
 
-		if (!actions.length || !actionId) {
+		if (shouldOpenModal || !actions.length || !actionId || !visible) {
 			return null;
 		}
 
-		const isFolder = itemData?.className === OBJECT_ENTRY_FOLDER_CLASS_NAME;
-		const isUpdate = itemData?.actionIds?.includes('UPDATE');
-
 		const resolvedActionId = isFolder
 			? `${actionId}Folder`
-			: isUpdate
-				? `${actionId}Edit`
-				: actionId;
+			: `${actionId}Edit`;
 
 		const selectedAction = actions.find(
 			({data}) => data?.id === resolvedActionId
@@ -56,36 +81,49 @@ export default function SharedItemRenderer({
 			return null;
 		}
 
-		return formatActionURL(itemData, selectedAction.href);
-	}, [actions, itemData, options]);
+		return replaceTokens(selectedAction.href, itemData);
+	}, [actions, isFolder, itemData, options, shouldOpenModal, visible]);
 
 	return (
 		<span className="align-items-center c-gap-2 d-flex table-list-title">
-			{itemData.fileTypeIcon && itemData.fileTypeIconColor && (
-				<span className={fileTypeIconColor}>
-					<ClayIcon aria-hidden="true" symbol={fileTypeIcon} />
-				</span>
-			)}
+			<ClaySticker className={`flex-shrink-0 ${iconColor}`}>
+				<ClayIcon aria-hidden="true" symbol={icon} />
+			</ClaySticker>
 
-			{linkHref ? (
-				<ClayLink aria-label={value} data-senna-off href={linkHref}>
-					{value}
+			{shouldOpenModal ? (
+				<ClayLink
+					aria-label={title}
+					data-senna-off
+					href="#"
+					onClick={(event: React.MouseEvent) => {
+						event.preventDefault();
+
+						openSharedItemViewModal(itemData);
+					}}
+				>
+					{title}
+				</ClayLink>
+			) : linkHref ? (
+				<ClayLink aria-label={title} data-senna-off href={linkHref}>
+					{title}
 				</ClayLink>
 			) : (
-				<span>{value}</span>
+				<span>{title}</span>
 			)}
 
-			{shareable && (
+			{siteName && (
 				<ClayTooltipProvider>
-					<span
+					<ClaySticker
+						className="flex-shrink-0"
 						data-tooltip-align="top"
+						displayType="unstyled"
 						title={sub(
 							Liferay.Language.get('shared-from-x'),
-							siteName
+							`"${siteName}"`
 						)}
 					>
 						<ClayIcon className="text-secondary" symbol="users" />
-					</span>
+					</ClaySticker>
 				</ClayTooltipProvider>
 			)}
 		</span>

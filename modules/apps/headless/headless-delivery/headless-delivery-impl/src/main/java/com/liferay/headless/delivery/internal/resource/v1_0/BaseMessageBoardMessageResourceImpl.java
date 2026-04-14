@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.MessageBoardMessage;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
@@ -495,27 +496,27 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(messageBoardMessageId);
+		Long resourceId = getPermissionCheckerResourceId(messageBoardMessageId);
 		String resourceName = getPermissionCheckerResourceName(
 			messageBoardMessageId);
-		Long resourceId = getPermissionCheckerResourceId(messageBoardMessageId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(messageBoardMessageId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getMessageBoardMessagePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getMessageBoardMessagePermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putMessageBoardMessagePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putMessageBoardMessagePermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -781,15 +782,15 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteMessageBoardMessagePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteMessageBoardMessagePermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteMessageBoardMessagePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteMessageBoardMessagePermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -1620,13 +1621,13 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(messageBoardMessageId);
+		Long resourceId = getPermissionCheckerResourceId(messageBoardMessageId);
 		String resourceName = getPermissionCheckerResourceName(
 			messageBoardMessageId);
-		Long resourceId = getPermissionCheckerResourceId(messageBoardMessageId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(messageBoardMessageId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1662,23 +1663,22 @@ public abstract class BaseMessageBoardMessageResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(messageBoardMessageId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getMessageBoardMessagePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getMessageBoardMessagePermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putMessageBoardMessagePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putMessageBoardMessagePermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1912,15 +1912,15 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteMessageBoardMessagePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteMessageBoardMessagePermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteMessageBoardMessagePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteMessageBoardMessagePermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -2049,9 +2049,37 @@ public abstract class BaseMessageBoardMessageResourceImpl
 
 		UnsafeFunction<MessageBoardMessage, MessageBoardMessage, Exception>
 			messageBoardMessageUnsafeFunction = messageBoardMessage -> {
-				deleteMessageBoardMessage(messageBoardMessage.getId());
+				if (messageBoardMessage.getId() != null) {
+					try {
+						deleteMessageBoardMessage(messageBoardMessage.getId());
 
-				return messageBoardMessage;
+						return messageBoardMessage;
+					}
+					catch (Exception exception) {
+						if (messageBoardMessage.getExternalReferenceCode() !=
+								null) {
+
+							if (parameters.containsKey("siteId")) {
+								deleteSiteMessageBoardMessageByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									messageBoardMessage.
+										getExternalReferenceCode());
+
+								return messageBoardMessage;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteMessageBoardMessageByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						messageBoardMessage.getExternalReferenceCode());
+
+					return messageBoardMessage;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -2103,20 +2131,20 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
 
-		if (parameters.containsKey("siteId")) {
+		if (parameters.containsKey("messageBoardThreadId")) {
+			return getMessageBoardThreadMessageBoardMessagesPage(
+				_parseLong((String)parameters.get("messageBoardThreadId")),
+				search, null, filter, pagination, sorts);
+		}
+		else if (parameters.containsKey("siteId")) {
 			return getSiteMessageBoardMessagesPage(
 				(Long)parameters.get("siteId"),
 				_parseBoolean((String)parameters.get("flatten")), search, null,
 				filter, pagination, sorts);
 		}
-		else if (parameters.containsKey("messageBoardThreadId")) {
-			return getMessageBoardThreadMessageBoardMessagesPage(
-				_parseLong((String)parameters.get("messageBoardThreadId")),
-				search, null, filter, pagination, sorts);
-		}
 		else {
 			throw new NotSupportedException(
-				"One of the following parameters must be specified: [siteId, messageBoardThreadId]");
+				"One of the following parameters must be specified: [messageBoardThreadId, siteId]");
 		}
 	}
 
@@ -2137,6 +2165,15 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2373,6 +2410,9 @@ public abstract class BaseMessageBoardMessageResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2945,3 +2985,4 @@ public abstract class BaseMessageBoardMessageResourceImpl
 		LogFactoryUtil.getLog(BaseMessageBoardMessageResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-287736674

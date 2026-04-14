@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.list.type.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.admin.list.type.dto.v1_0.ListTypeDefinition;
 import com.liferay.headless.admin.list.type.resource.v1_0.ListTypeDefinitionResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -274,7 +275,7 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions/{listTypeDefinitionId}' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions/{listTypeDefinitionId}' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "permissions": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -324,6 +325,11 @@ public abstract class BaseListTypeDefinitionResourceImpl
 				listTypeDefinition.getName_i18n());
 		}
 
+		if (listTypeDefinition.getPermissions() != null) {
+			existingListTypeDefinition.setPermissions(
+				listTypeDefinition.getPermissions());
+		}
+
 		if (listTypeDefinition.getSystem() != null) {
 			existingListTypeDefinition.setSystem(
 				listTypeDefinition.getSystem());
@@ -338,7 +344,7 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "permissions": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {
@@ -488,7 +494,7 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions/{listTypeDefinitionId}' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions/{listTypeDefinitionId}' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "permissions": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -568,7 +574,7 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions/by-external-reference-code/{externalReferenceCode}' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-list-type/v1.0/list-type-definitions/by-external-reference-code/{externalReferenceCode}' -d $'{"defaultLanguageId": ___, "externalReferenceCode": ___, "listTypeEntries": ___, "name": ___, "name_i18n": ___, "permissions": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -762,6 +768,15 @@ public abstract class BaseListTypeDefinitionResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1385,3 +1400,4 @@ public abstract class BaseListTypeDefinitionResourceImpl
 		LogFactoryUtil.getLog(BaseListTypeDefinitionResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1356929013

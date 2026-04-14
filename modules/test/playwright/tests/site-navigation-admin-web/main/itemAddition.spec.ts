@@ -23,6 +23,7 @@ const test = mergeTests(
 	apiHelpersTest,
 	depotAdminPageTest,
 	featureFlagsTest({
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	isolatedSiteTest,
@@ -602,7 +603,7 @@ test(
 
 		await page.getByText(pageName1).click();
 
-		await page.getByLabel('Use Custom Name When checked').check();
+		await page.getByLabel('Use Custom Name').check();
 
 		const pageName3 = getRandomString();
 
@@ -893,7 +894,11 @@ test(
 
 		await navigationMenusPage.addMenuItemButton.click();
 
-		expect(await navigationMenusPage.getMenuItem('Page')).not.toBeVisible();
+		await expect(
+			await navigationMenusPage.getMenuItem('Page')
+		).not.toBeVisible();
+
+		await navigationMenusPage.addMenuItemButton.click();
 
 		await navigationMenusPage.gotoGlobalSiteNavigationMenuPortlet();
 

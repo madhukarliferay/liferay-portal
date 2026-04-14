@@ -10,6 +10,7 @@ import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldSet;
 import com.liferay.info.field.type.ActionInfoFieldType;
 import com.liferay.info.field.type.ImageInfoFieldType;
+import com.liferay.info.field.type.RelationshipInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.field.type.URLInfoFieldType;
 import com.liferay.info.form.InfoForm;
@@ -30,6 +31,7 @@ import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
@@ -96,7 +98,7 @@ public class ObjectEntryInfoItemFormProviderUtil {
 			unsafeConsumer -> {
 				for (ObjectField objectField :
 						objectFieldLocalService.getObjectFields(
-							objectDefinitionId, false)) {
+							objectDefinitionId)) {
 
 					if (!objectField.compareBusinessType(
 							ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
@@ -131,6 +133,18 @@ public class ObjectEntryInfoItemFormProviderUtil {
 								InfoLocalizedValue.localize(
 									ObjectEntryInfoItemFields.class,
 									"file-name")
+							).build()
+						).infoFieldSetEntry(
+							InfoField.builder(
+							).infoFieldType(
+								ImageInfoFieldType.INSTANCE
+							).namespace(
+								ObjectField.class.getSimpleName()
+							).name(
+								objectField.getObjectFieldId() + "#fileURL"
+							).labelInfoLocalizedValue(
+								InfoLocalizedValue.localize(
+									ObjectEntryInfoItemFields.class, "file-url")
 							).build()
 						).infoFieldSetEntry(
 							InfoField.builder(
@@ -190,18 +204,15 @@ public class ObjectEntryInfoItemFormProviderUtil {
 							objectDefinitionId,
 							ObjectRelationshipConstants.TYPE_ONE_TO_MANY)) {
 
-					if (Objects.equals(
-							objectDefinitionId,
-							objectRelationship.getObjectDefinitionId1()) &&
-						FeatureFlagManagerUtil.isEnabled("LPD-50377")) {
+					if (!FeatureFlagManagerUtil.isEnabled(
+							objectDefinition.getCompanyId(), "LPD-60546")) {
 
 						return;
 					}
 
 					ObjectDefinition relatedObjectDefinition = null;
 
-					if (FeatureFlagManagerUtil.isEnabled("LPD-60546") &&
-						!Objects.equals(
+					if (!Objects.equals(
 							objectDefinitionId,
 							objectRelationship.getObjectDefinitionId1())) {
 
@@ -331,11 +342,12 @@ public class ObjectEntryInfoItemFormProviderUtil {
 								fetchObjectRelationshipByObjectFieldId2(
 									objectField.getObjectFieldId());
 
-						if ((parentObjectDefinition != null) &&
-							Objects.equals(
-								objectRelationship.getObjectDefinitionId1(),
-								parentObjectDefinition.
-									getObjectDefinitionId())) {
+						if (objectRelationship.isEdge() ||
+							((parentObjectDefinition != null) &&
+							 Objects.equals(
+								 objectRelationship.getObjectDefinitionId1(),
+								 parentObjectDefinition.
+									 getObjectDefinitionId()))) {
 
 							continue;
 						}
@@ -362,6 +374,48 @@ public class ObjectEntryInfoItemFormProviderUtil {
 							objectDefinition.isEnableFriendlyURLCustomization(),
 							name, namespace));
 				}
+
+				for (ObjectRelationship objectRelationship :
+						ObjectRelationshipLocalServiceUtil.
+							getObjectRelationships(
+								objectDefinition.getObjectDefinitionId(),
+								ObjectRelationshipConstants.
+									DELETION_TYPE_DISASSOCIATE,
+								false)) {
+
+					if (!objectRelationship.compareType(
+							ObjectRelationshipConstants.TYPE_MANY_TO_MANY)) {
+
+						continue;
+					}
+
+					unsafeConsumer.accept(
+						objectFieldInfoFieldConverter.
+							addRelationshipInfoFieldAttributes(
+								InfoField.builder(
+									namespace
+								).infoFieldType(
+									RelationshipInfoFieldType.INSTANCE
+								).name(
+									ObjectRelationshipConstants.
+										OBJECT_RELATIONSHIP_FIELD_NAME_PREFIX +
+											objectRelationship.getName()
+								).labelInfoLocalizedValue(
+									InfoLocalizedValue.<String>builder(
+									).values(
+										objectRelationship.getLabelMap()
+									).defaultLocale(
+										LocaleUtil.fromLanguageId(
+											objectRelationship.
+												getDefaultLanguageId())
+									).build()
+								).editable(
+									true
+								).localizable(
+									false
+								),
+								objectRelationship));
+				}
 			}
 		).infoFieldSetEntry(
 			unsafeConsumer -> {
@@ -374,7 +428,8 @@ public class ObjectEntryInfoItemFormProviderUtil {
 						Objects.equals(
 							objectDefinition.getObjectDefinitionId(),
 							objectRelationship.getObjectDefinitionId2()) ||
-						!FeatureFlagManagerUtil.isEnabled("LPD-50377")) {
+						FeatureFlagManagerUtil.isEnabled(
+							objectDefinition.getCompanyId(), "LPD-60546")) {
 
 						continue;
 					}
@@ -407,13 +462,22 @@ public class ObjectEntryInfoItemFormProviderUtil {
 
 						Locale locale = entry.getKey();
 
-						fieldSetLabelMap.put(
-							locale,
-							StringBundler.concat(
+						String fieldSetLabel = StringPool.BLANK;
+
+						if (Objects.equals(
+								objectRelationship.getLabel(locale),
+								entry.getValue())) {
+
+							fieldSetLabel = objectRelationship.getLabel(locale);
+						}
+						else {
+							fieldSetLabel = StringBundler.concat(
 								objectRelationship.getLabel(locale),
 								StringPool.SPACE, StringPool.OPEN_PARENTHESIS,
-								entry.getValue(),
-								StringPool.CLOSE_PARENTHESIS));
+								entry.getValue(), StringPool.CLOSE_PARENTHESIS);
+						}
+
+						fieldSetLabelMap.put(locale, fieldSetLabel);
 					}
 
 					unsafeConsumer.accept(

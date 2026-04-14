@@ -110,9 +110,11 @@ test(
 		});
 
 		await test.step('Create a new data source', async () => {
-			await page.getByRole('link', {name: 'Add Data Source'}).click();
+			await page.getByRole('button', {name: 'Add Data Source'}).click();
 
-			await page.getByRole('button', {name: 'Liferay DXP'}).click();
+			await page
+				.getByRole('menuitem', {name: 'Liferay DXP Site'})
+				.click();
 		});
 
 		await test.step('Check the data source connection modal information', async () => {

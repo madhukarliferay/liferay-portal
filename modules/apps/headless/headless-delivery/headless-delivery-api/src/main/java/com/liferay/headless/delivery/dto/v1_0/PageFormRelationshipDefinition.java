@@ -406,6 +406,51 @@ public class PageFormRelationshipDefinition implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _nameSupplier;
 
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "A flag that indicates whether this form relationship can be repeatable."
+	)
+	public Boolean getRepeatable() {
+		if (_repeatableSupplier != null) {
+			repeatable = _repeatableSupplier.get();
+
+			_repeatableSupplier = null;
+		}
+
+		return repeatable;
+	}
+
+	public void setRepeatable(Boolean repeatable) {
+		this.repeatable = repeatable;
+
+		_repeatableSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setRepeatable(
+		UnsafeSupplier<Boolean, Exception> repeatableUnsafeSupplier) {
+
+		_repeatableSupplier = () -> {
+			try {
+				return repeatableUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "A flag that indicates whether this form relationship can be repeatable."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean repeatable;
+
+	@JsonIgnore
+	private Supplier<Boolean> _repeatableSupplier;
+
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -577,6 +622,18 @@ public class PageFormRelationshipDefinition implements Serializable {
 			sb.append("\"");
 		}
 
+		Boolean repeatable = getRepeatable();
+
+		if (repeatable != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"repeatable\": ");
+
+			sb.append(repeatable);
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -678,3 +735,4 @@ public class PageFormRelationshipDefinition implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1770846194

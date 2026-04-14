@@ -26,9 +26,10 @@ interface BasicInfoContainerProps {
 	dbObjectFieldRequired?: boolean;
 	errors: ObjectFieldErrors;
 	handleChange: React.ChangeEventHandler<HTMLInputElement>;
+	hasDepotEntry?: boolean;
 	learnResources: ILearnResourceContext;
 	modelBuilder?: boolean;
-	objectDefinition?: ObjectDefinition;
+	objectDefinition?: ObjectDefinition | ObjectDefinitionNodeData;
 	objectFieldBusinessTypes: ObjectFieldBusinessType[];
 	objectRelationshipId: number;
 	onSubmit?: () => void;
@@ -46,6 +47,7 @@ export function BasicInfoContainer({
 	dbObjectFieldRequired,
 	errors,
 	handleChange,
+	hasDepotEntry,
 	learnResources,
 	modelBuilder = false,
 	objectDefinition,
@@ -108,6 +110,7 @@ export function BasicInfoContainer({
 				editingObjectField
 				errors={errors}
 				handleChange={handleChange}
+				hasDepotEntry={hasDepotEntry}
 				learnResources={learnResources}
 				modelBuilder={modelBuilder}
 				objectDefinition={objectDefinition}
@@ -125,11 +128,13 @@ export function BasicInfoContainer({
 				{values.businessType === 'Attachment' && (
 					<AttachmentProperties
 						errors={errors}
+						modelBuilder={modelBuilder}
 						objectFieldSettings={
 							values.objectFieldSettings as ObjectFieldSetting[]
 						}
 						onSettingsChange={handleSettingsChange}
 						onSubmit={onSubmit}
+						values={values}
 					/>
 				)}
 

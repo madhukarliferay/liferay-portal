@@ -324,7 +324,7 @@ public interface AccountGroupLocalService
 	public AccountGroup getOrAddEmptyAccountGroup(
 			String externalReferenceCode, long companyId, long userId,
 			String name)
-		throws Exception;
+		throws PortalException;
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -384,3 +384,4 @@ public interface AccountGroupLocalService
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-796752675

@@ -7,14 +7,12 @@ package com.liferay.fragment.entry.processor.editable.internal.mapper;
 
 import com.liferay.fragment.entry.processor.editable.mapper.EditableElementMapper;
 import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
+import com.liferay.fragment.entry.processor.helper.LayoutReferenceResolver;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -135,6 +133,10 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 				target = "_self";
 			}
 
+			if (StringUtil.equalsIgnoreCase(target, "_blank")) {
+				linkElement.attr("rel", "noopener noreferrer");
+			}
+
 			linkElement.attr("target", target);
 		}
 
@@ -185,6 +187,20 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 			return StringPool.BLANK;
 		}
 
+		JSONObject layoutJSONObject = jsonObject.getJSONObject("layout");
+
+		if (layoutJSONObject == null) {
+			return StringPool.POUND;
+		}
+
+		Layout layout = _layoutReferenceResolver.resolve(
+			fragmentEntryProcessorContext.getCompanyId(), layoutJSONObject,
+			fragmentEntryProcessorContext.getScopeGroupId());
+
+		if (layout == null) {
+			return StringPool.POUND;
+		}
+
 		HttpServletRequest httpServletRequest =
 			fragmentEntryProcessorContext.getHttpServletRequest();
 
@@ -198,24 +214,6 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 
 		if (themeDisplay == null) {
 			return StringPool.BLANK;
-		}
-
-		JSONObject layoutJSONObject = jsonObject.getJSONObject("layout");
-
-		long groupId = layoutJSONObject.getLong("groupId");
-
-		Group group = _groupLocalService.fetchGroup(groupId);
-
-		if (group == null) {
-			return StringPool.POUND;
-		}
-
-		Layout layout = _layoutLocalService.fetchLayout(
-			groupId, layoutJSONObject.getBoolean("privateLayout"),
-			layoutJSONObject.getLong("layoutId"));
-
-		if (layout == null) {
-			return StringPool.POUND;
 		}
 
 		return _portal.getLayoutRelativeURL(layout, themeDisplay);
@@ -263,10 +261,7 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 	private FragmentEntryProcessorHelper _fragmentEntryProcessorHelper;
 
 	@Reference
-	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private LayoutLocalService _layoutLocalService;
+	private LayoutReferenceResolver _layoutReferenceResolver;
 
 	@Reference
 	private Portal _portal;

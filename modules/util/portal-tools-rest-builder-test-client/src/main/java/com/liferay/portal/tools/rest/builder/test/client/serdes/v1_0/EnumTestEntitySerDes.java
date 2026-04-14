@@ -54,9 +54,7 @@ public class EnumTestEntitySerDes {
 			sb.append("\"testEnum\": ");
 
 			sb.append("\"");
-
 			sb.append(enumTestEntity.getTestEnum());
-
 			sb.append("\"");
 		}
 
@@ -204,3 +202,4 @@ public class EnumTestEntitySerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1088553690

@@ -15,13 +15,26 @@ import com.liferay.batch.engine.BatchEngineTaskExecuteStatus;
 import com.liferay.batch.engine.model.BatchEngineExportTask;
 import com.liferay.batch.engine.service.BatchEngineExportTaskLocalService;
 import com.liferay.blogs.model.BlogsEntry;
+import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.field.util.ObjectFieldUtil;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectField;
+import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
+import com.liferay.object.service.ObjectEntryLocalServiceUtil;
+import com.liferay.object.service.ObjectFieldLocalServiceUtil;
+import com.liferay.object.test.util.ObjectDefinitionTestUtil;
 import com.liferay.petra.io.unsync.UnsyncBufferedReader;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.spring.orm.LastSessionRecorderHelper;
+import com.liferay.portal.kernel.spring.orm.LastSessionRecorderHelperUtil;
 import com.liferay.portal.kernel.test.AssertUtils;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.DataGuard;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
@@ -48,6 +61,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.zip.ZipInputStream;
 
@@ -262,16 +276,81 @@ public class BatchEngineExportTaskExecutorTest
 	}
 
 	@Test
+	@TestInfo("LPD-65748")
+	public void testExportBlogPostingsWithMaxItems() throws Throwable {
+		List<BlogsEntry> blogsEntries = addBlogsEntries();
+
+		_batchEngineExportTask =
+			_batchEngineExportTaskLocalService.createBatchEngineExportTask(
+				RandomTestUtil.randomLong(), null, user.getCompanyId(),
+				user.getUserId(), null, BlogPosting.class.getName(), "JSON",
+				BatchEngineTaskExecuteStatus.INITIAL.name(), null, _parameters,
+				null);
+
+		int maxItems = Math.floorDiv(ROWS_COUNT, 2);
+
+		TransactionInvokerUtil.invoke(
+			TransactionConfig.Factory.create(
+				Propagation.REQUIRED, new Class<?>[] {Exception.class}),
+			() -> {
+				BatchEngineExportTaskExecutor.Result result =
+					_batchEngineExportTaskExecutor.execute(
+						_batchEngineExportTask,
+						new BatchEngineExportTaskExecutor.Settings() {
+
+							@Override
+							public int getMaxItems() {
+								return maxItems;
+							}
+
+							@Override
+							public boolean isCompressContent() {
+								return false;
+							}
+
+							@Override
+							public boolean isPersist() {
+								return false;
+							}
+
+						});
+
+				JSONArray jsonArray = JSONFactoryUtil.createJSONArray(
+					StringUtil.read(result.getInputStream()));
+
+				Assert.assertEquals(maxItems, jsonArray.length());
+
+				BatchEngineExportTask resultBatchEngineExportTask =
+					result.getBatchEngineExportTask();
+
+				Assert.assertEquals(
+					BatchEngineTaskExecuteStatus.COMPLETED.toString(),
+					resultBatchEngineExportTask.getExecuteStatus());
+				Assert.assertEquals(
+					maxItems,
+					resultBatchEngineExportTask.getProcessedItemsCount());
+				Assert.assertEquals(
+					blogsEntries.size(),
+					resultBatchEngineExportTask.getTotalItemsCount());
+
+				return null;
+			});
+	}
+
+	@Test
 	@TestInfo("LPD-50699")
 	public void testExportBlogPostingsWithoutPersistingContent()
 		throws Throwable {
 
 		List<BlogsEntry> blogsEntries = addBlogsEntries();
 
+		int batchEngineExportTasksCount =
+			_batchEngineExportTaskLocalService.getBatchEngineExportTasksCount();
+
 		_batchEngineExportTask =
-			_batchEngineExportTaskLocalService.addBatchEngineExportTask(
-				null, user.getCompanyId(), user.getUserId(), null,
-				BlogPosting.class.getName(), "JSON",
+			_batchEngineExportTaskLocalService.createBatchEngineExportTask(
+				RandomTestUtil.randomLong(), null, user.getCompanyId(),
+				user.getUserId(), null, BlogPosting.class.getName(), "JSON",
 				BatchEngineTaskExecuteStatus.INITIAL.name(), null, _parameters,
 				null);
 
@@ -290,7 +369,7 @@ public class BatchEngineExportTaskExecutorTest
 							}
 
 							@Override
-							public boolean isPersistContent() {
+							public boolean isPersist() {
 								return false;
 							}
 
@@ -301,34 +380,27 @@ public class BatchEngineExportTaskExecutorTest
 
 				Assert.assertTrue(jsonArray.length() >= blogsEntries.size());
 
-				_batchEngineExportTask =
-					_batchEngineExportTaskLocalService.getBatchEngineExportTask(
-						_batchEngineExportTask.getBatchEngineExportTaskId());
+				Assert.assertEquals(
+					batchEngineExportTasksCount,
+					_batchEngineExportTaskLocalService.
+						getBatchEngineExportTasksCount());
 
 				BatchEngineExportTask resultBatchEngineExportTask =
 					result.getBatchEngineExportTask();
 
 				Assert.assertEquals(
-					_batchEngineExportTask, resultBatchEngineExportTask);
-				Assert.assertEquals(
-					_batchEngineExportTask.getMvccVersion(),
-					resultBatchEngineExportTask.getMvccVersion());
-
-				Assert.assertEquals(
 					BatchEngineTaskExecuteStatus.COMPLETED.toString(),
-					_batchEngineExportTask.getExecuteStatus());
+					resultBatchEngineExportTask.getExecuteStatus());
 				Assert.assertEquals(
 					blogsEntries.size(),
-					_batchEngineExportTask.getProcessedItemsCount());
+					resultBatchEngineExportTask.getProcessedItemsCount());
 				Assert.assertEquals(
 					blogsEntries.size(),
-					_batchEngineExportTask.getTotalItemsCount());
+					resultBatchEngineExportTask.getTotalItemsCount());
 
-				Blob content = _batchEngineExportTask.getContent();
+				Blob content = resultBatchEngineExportTask.getContent();
 
-				if (content != null) {
-					Assert.assertEquals(0, content.length());
-				}
+				Assert.assertEquals(0, content.length());
 
 				return null;
 			});
@@ -353,11 +425,54 @@ public class BatchEngineExportTaskExecutorTest
 					}
 
 					@Override
-					public boolean isPersistContent() {
+					public boolean isPersist() {
 						return true;
 					}
 
 				}));
+	}
+
+	@Test
+	public void testExportObjectEntriesLastSessionRecorderCount()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _addPublishedTestObjectDefinition(
+			100);
+
+		CountingLastSessionRecorderHelper countingLastSessionRecorderHelper =
+			new CountingLastSessionRecorderHelper();
+
+		LastSessionRecorderHelper originalLastSessionRecorderHelper =
+			ReflectionTestUtil.getAndSetFieldValue(
+				LastSessionRecorderHelperUtil.class,
+				"_lastSessionRecorderHelper",
+				countingLastSessionRecorderHelper);
+
+		try {
+			_batchEngineExportTask =
+				_batchEngineExportTaskLocalService.addBatchEngineExportTask(
+					null, user.getCompanyId(), user.getUserId(), null,
+					_OBJECT_ENTRY_ITEM_CLASS_NAME, "JSON",
+					BatchEngineTaskExecuteStatus.INITIAL.name(),
+					Arrays.asList("id", "name"),
+					HashMapBuilder.<String, Serializable>put(
+						"groupId", 0L
+					).put(
+						"objectDefinitionId",
+						objectDefinition.getObjectDefinitionId()
+					).build(),
+					objectDefinition.getName());
+
+			_batchEngineExportTaskExecutor.execute(_batchEngineExportTask);
+
+			Assert.assertTrue(countingLastSessionRecorderHelper.getCount() > 0);
+		}
+		finally {
+			ReflectionTestUtil.setFieldValue(
+				LastSessionRecorderHelperUtil.class,
+				"_lastSessionRecorderHelper",
+				originalLastSessionRecorderHelper);
+		}
 	}
 
 	public abstract class BlogPostingMixin {
@@ -371,6 +486,45 @@ public class BatchEngineExportTaskExecutorTest
 		@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 		protected Date dateCreated;
 
+	}
+
+	private ObjectDefinition _addPublishedTestObjectDefinition(int entryCount)
+		throws Exception {
+
+		String objectName = "TestObject" + RandomTestUtil.randomString(8);
+
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionTestUtil.addCustomObjectDefinition(
+				0, objectName,
+				Arrays.asList(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING, "name", "name")));
+
+		ObjectField nameObjectField =
+			ObjectFieldLocalServiceUtil.getObjectField(
+				objectDefinition.getObjectDefinitionId(), "name");
+
+		ObjectDefinitionLocalServiceUtil.updateTitleObjectFieldId(
+			objectDefinition.getObjectDefinitionId(),
+			nameObjectField.getObjectFieldId());
+
+		objectDefinition =
+			ObjectDefinitionLocalServiceUtil.publishCustomObjectDefinition(
+				user.getUserId(), objectDefinition.getObjectDefinitionId());
+
+		for (int i = 0; i < entryCount; i++) {
+			ObjectEntryLocalServiceUtil.addObjectEntry(
+				0, user.getUserId(), objectDefinition.getObjectDefinitionId(),
+				0, null,
+				HashMapBuilder.<String, Serializable>put(
+					"name", "test-object-" + i
+				).build(),
+				ServiceContextTestUtil.getServiceContext(
+					TestPropsValues.getCompanyId(), 0, user.getUserId()));
+		}
+
+		return objectDefinition;
 	}
 
 	private void _assertEmptyFieldNames(LogCapture logCapture) {
@@ -725,6 +879,9 @@ public class BatchEngineExportTaskExecutorTest
 			"com.liferay.batch.engine.internal." +
 				"BatchEngineExportTaskExecutorImpl";
 
+	private static final String _OBJECT_ENTRY_ITEM_CLASS_NAME =
+		"com.liferay.object.rest.dto.v1_0.ObjectEntry";
+
 	private static final ObjectMapper _objectMapper = new ObjectMapper();
 
 	private BatchEngineExportTask _batchEngineExportTask;
@@ -743,5 +900,26 @@ public class BatchEngineExportTaskExecutorTest
 	};
 
 	private Map<String, Serializable> _parameters;
+
+	private static class CountingLastSessionRecorderHelper
+		implements LastSessionRecorderHelper {
+
+		public int getCount() {
+			return _count.get();
+		}
+
+		@Override
+		public void syncLastSessionState() {
+			_count.incrementAndGet();
+		}
+
+		@Override
+		public void syncLastSessionState(boolean portalSessionOnly) {
+			_count.incrementAndGet();
+		}
+
+		private final AtomicInteger _count = new AtomicInteger();
+
+	}
 
 }

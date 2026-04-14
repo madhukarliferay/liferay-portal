@@ -49,6 +49,16 @@ public class WidgetPageSpecificationSerDes {
 
 		sb.append("{");
 
+		if (widgetPageSpecification.getSettings() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"settings\": ");
+
+			sb.append(String.valueOf(widgetPageSpecification.getSettings()));
+		}
+
 		if (widgetPageSpecification.getWidgetPageSections() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -116,16 +126,6 @@ public class WidgetPageSpecificationSerDes {
 			sb.append("\"");
 		}
 
-		if (widgetPageSpecification.getSettings() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"settings\": ");
-
-			sb.append(String.valueOf(widgetPageSpecification.getSettings()));
-		}
-
 		if (widgetPageSpecification.
 				getSiteTemplatePageSpecificationExternalReferenceCode() !=
 					null) {
@@ -155,9 +155,7 @@ public class WidgetPageSpecificationSerDes {
 			sb.append("\"status\": ");
 
 			sb.append("\"");
-
 			sb.append(widgetPageSpecification.getStatus());
-
 			sb.append("\"");
 		}
 
@@ -169,9 +167,7 @@ public class WidgetPageSpecificationSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(widgetPageSpecification.getType());
-
 			sb.append("\"");
 		}
 
@@ -195,6 +191,15 @@ public class WidgetPageSpecificationSerDes {
 		}
 
 		Map<String, String> map = new TreeMap<>();
+
+		if (widgetPageSpecification.getSettings() == null) {
+			map.put("settings", null);
+		}
+		else {
+			map.put(
+				"settings",
+				String.valueOf(widgetPageSpecification.getSettings()));
+		}
 
 		if (widgetPageSpecification.getWidgetPageSections() == null) {
 			map.put("widgetPageSections", null);
@@ -223,15 +228,6 @@ public class WidgetPageSpecificationSerDes {
 				"externalReferenceCode",
 				String.valueOf(
 					widgetPageSpecification.getExternalReferenceCode()));
-		}
-
-		if (widgetPageSpecification.getSettings() == null) {
-			map.put("settings", null);
-		}
-		else {
-			map.put(
-				"settings",
-				String.valueOf(widgetPageSpecification.getSettings()));
 		}
 
 		if (widgetPageSpecification.
@@ -281,7 +277,12 @@ public class WidgetPageSpecificationSerDes {
 
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
-			if (Objects.equals(jsonParserFieldName, "widgetPageSections")) {
+			if (Objects.equals(jsonParserFieldName, "settings")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "widgetPageSections")) {
+
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "customFields")) {
@@ -290,9 +291,6 @@ public class WidgetPageSpecificationSerDes {
 			else if (Objects.equals(
 						jsonParserFieldName, "externalReferenceCode")) {
 
-				return false;
-			}
-			else if (Objects.equals(jsonParserFieldName, "settings")) {
 				return false;
 			}
 			else if (Objects.equals(
@@ -316,7 +314,15 @@ public class WidgetPageSpecificationSerDes {
 			WidgetPageSpecification widgetPageSpecification,
 			String jsonParserFieldName, Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "widgetPageSections")) {
+			if (Objects.equals(jsonParserFieldName, "settings")) {
+				if (jsonParserFieldValue != null) {
+					widgetPageSpecification.setSettings(
+						SettingsSerDes.toDTO((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "widgetPageSections")) {
+
 				if (jsonParserFieldValue != null) {
 					Object[] jsonParserFieldValues =
 						(Object[])jsonParserFieldValue;
@@ -360,12 +366,6 @@ public class WidgetPageSpecificationSerDes {
 				if (jsonParserFieldValue != null) {
 					widgetPageSpecification.setExternalReferenceCode(
 						(String)jsonParserFieldValue);
-				}
-			}
-			else if (Objects.equals(jsonParserFieldName, "settings")) {
-				if (jsonParserFieldValue != null) {
-					widgetPageSpecification.setSettings(
-						SettingsSerDes.toDTO((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(
@@ -473,3 +473,4 @@ public class WidgetPageSpecificationSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-2135229198

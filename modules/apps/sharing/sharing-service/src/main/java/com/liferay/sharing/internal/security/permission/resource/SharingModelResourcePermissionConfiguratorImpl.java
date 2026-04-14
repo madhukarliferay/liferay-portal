@@ -5,15 +5,18 @@
 
 package com.liferay.sharing.internal.security.permission.resource;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.GroupedModel;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionLogic;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.security.permission.contributor.PermissionSQLContributor;
@@ -82,7 +85,8 @@ public class SharingModelResourcePermissionConfiguratorImpl
 				PermissionSQLContributor.class,
 				new SharingPermissionSQLContributor(
 					_classNameLocalService, _groupLocalService,
-					_sharingConfigurationFactory, _userGroupLocalService),
+					_sharingConfigurationFactory, _sharingEntryLocalService,
+					_userGroupLocalService, _userLocalService),
 				new HashMapDictionary<>());
 	}
 
@@ -128,6 +132,9 @@ public class SharingModelResourcePermissionConfiguratorImpl
 	@Reference
 	private UserGroupLocalService _userGroupLocalService;
 
+	@Reference
+	private UserLocalService _userLocalService;
+
 	private class SharingModelResourcePermissionLogic<T extends GroupedModel>
 		implements ModelResourcePermissionLogic<T> {
 
@@ -137,8 +144,20 @@ public class SharingModelResourcePermissionConfiguratorImpl
 				String actionId)
 			throws PortalException {
 
-			SharingEntryAction sharingEntryAction = _sharingEntryActions.get(
-				actionId);
+			if (actionId == null) {
+				return null;
+			}
+
+			SharingEntryAction sharingEntryAction = null;
+
+			if (actionId.startsWith(
+					ActionKeys.DOWNLOAD + StringPool.UNDERLINE)) {
+
+				sharingEntryAction = SharingEntryAction.DOWNLOAD;
+			}
+			else {
+				sharingEntryAction = _sharingEntryActions.get(actionId);
+			}
 
 			if (sharingEntryAction == null) {
 				return null;

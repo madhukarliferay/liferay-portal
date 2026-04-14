@@ -16,20 +16,16 @@ import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService;
 import com.liferay.exportimport.kernel.service.ExportImportLocalService;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlag;
-import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -38,9 +34,7 @@ import com.liferay.users.admin.constants.UsersAdminPortletKeys;
 
 import java.io.File;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,11 +44,6 @@ import org.junit.runner.RunWith;
  * @author Jesus Antonio
  * @author Balazs Breier
  */
-@FeatureFlags(
-	featureFlags = {
-		@FeatureFlag(value = "LPD-35914"), @FeatureFlag(value = "LPD-47858")
-	}
-)
 @RunWith(Arquillian.class)
 public class OrganizationAdminPortletDataHandlerTest {
 
@@ -64,18 +53,6 @@ public class OrganizationAdminPortletDataHandlerTest {
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
-
-	@BeforeClass
-	public static void setUpClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, true, "LPD-35914");
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, false, "LPD-35914");
-	}
 
 	@Test
 	public void testExportImportOrganization() throws Exception {

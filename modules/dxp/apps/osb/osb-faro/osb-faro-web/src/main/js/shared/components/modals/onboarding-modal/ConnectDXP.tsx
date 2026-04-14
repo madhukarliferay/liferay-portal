@@ -278,6 +278,7 @@ const ConnectDXP: React.FC<IConnectDXPWrapperProps & IConnectDXPProps> = ({
 const DxpSyncTable: FC<React.HTMLAttributes<HTMLElement>> = () => {
 	const [dataSource, setDataSources] = useState<DataSource>({
 		contactsSyncDetails: {selected: false},
+		id: '',
 		sitesSyncDetails: {selected: false}
 	});
 	const [getDataSources, {data}] = useLazyQuery<DataSourceSyncData>(
@@ -464,8 +465,11 @@ const TokenInput: FC<ITokenInputProps> = ({token}) => {
 		<>
 			<div className='mb-1'>
 				<Text weight='bold'>
-					{Liferay.Language.get(
-						'copy-this-token-to-your-dxp-instance'
+					{sub(
+						Liferay.Language.get(
+							'copy-this-token-to-your-x-instance'
+						),
+						[Liferay.Language.get('liferay-dxp')]
 					)}
 				</Text>
 			</div>

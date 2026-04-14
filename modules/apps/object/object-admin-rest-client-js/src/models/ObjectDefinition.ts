@@ -11,6 +11,7 @@
 			import {ObjectRelationship} from './ObjectRelationship';
 			import {ObjectValidationRule} from './ObjectValidationRule';
 			import {ObjectView} from './ObjectView';
+			import {Permission} from './Permission';
 			import {Status} from './Status';
 			import {WorkflowDefinitionLink} from './WorkflowDefinitionLink';
 
@@ -31,6 +32,7 @@
 			"defaultLanguageId"?: string;
 			"enableCategorization"?: boolean;
 			"enableComments"?: boolean;
+			"enableFormContainer"?: boolean;
 			"enableFriendlyURLCustomization"?: boolean;
 			"enableIndexSearch"?: boolean;
 			"enableLocalization"?: boolean;
@@ -56,6 +58,7 @@
 			"panelAppOrder"?: string;
 			"panelCategoryKey"?: string;
 			"parameterRequired"?: boolean;
+			"permissions"?: Array<Permission>;
 			"pluralLabel"?: {[key: string]: string;};
 			"portlet"?: boolean;
 			"restContextPath"?: string;
@@ -127,6 +130,11 @@
 		{
 			baseName: "enableComments",
 			name: "enableComments",
+			type: "boolean",
+		},
+		{
+			baseName: "enableFormContainer",
+			name: "enableFormContainer",
 			type: "boolean",
 		},
 		{
@@ -253,6 +261,11 @@
 			baseName: "parameterRequired",
 			name: "parameterRequired",
 			type: "boolean",
+		},
+		{
+			baseName: "permissions",
+			name: "permissions",
+			type: "Array<Permission>",
 		},
 		{
 			baseName: "pluralLabel",

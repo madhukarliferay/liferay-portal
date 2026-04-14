@@ -204,54 +204,6 @@ public class SourceUtil {
 	}
 
 	/**
-	 * Returns the last source in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source
-	 * @throws NoSuchSourceException if a matching source could not be found
-	 */
-	public static Source findByUuid_Last(
-			String uuid, OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last source in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source, or <code>null</code> if a matching source could not be found
-	 */
-	public static Source fetchByUuid_Last(
-		String uuid, OrderByComparator<Source> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the sources before and after the current source in the ordered set where uuid = &#63;.
-	 *
-	 * @param sourceId the primary key of the current source
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next source
-	 * @throws NoSuchSourceException if a source with the primary key could not be found
-	 */
-	public static Source[] findByUuid_PrevAndNext(
-			long sourceId, String uuid,
-			OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			sourceId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the sources where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -446,61 +398,6 @@ public class SourceUtil {
 	}
 
 	/**
-	 * Returns the last source in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source
-	 * @throws NoSuchSourceException if a matching source could not be found
-	 */
-	public static Source findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last source in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source, or <code>null</code> if a matching source could not be found
-	 */
-	public static Source fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<Source> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sources before and after the current source in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sourceId the primary key of the current source
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next source
-	 * @throws NoSuchSourceException if a source with the primary key could not be found
-	 */
-	public static Source[] findByUuid_C_PrevAndNext(
-			long sourceId, String uuid, long companyId,
-			OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			sourceId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the sources where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -621,54 +518,6 @@ public class SourceUtil {
 	}
 
 	/**
-	 * Returns the last source in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source
-	 * @throws NoSuchSourceException if a matching source could not be found
-	 */
-	public static Source findByGroupId_Last(
-			long groupId, OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last source in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source, or <code>null</code> if a matching source could not be found
-	 */
-	public static Source fetchByGroupId_Last(
-		long groupId, OrderByComparator<Source> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sources before and after the current source in the ordered set where groupId = &#63;.
-	 *
-	 * @param sourceId the primary key of the current source
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next source
-	 * @throws NoSuchSourceException if a source with the primary key could not be found
-	 */
-	public static Source[] findByGroupId_PrevAndNext(
-			long sourceId, long groupId,
-			OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			sourceId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sources that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -715,25 +564,6 @@ public class SourceUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sources before and after the current source in the ordered set of sources that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param sourceId the primary key of the current source
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next source
-	 * @throws NoSuchSourceException if a source with the primary key could not be found
-	 */
-	public static Source[] filterFindByGroupId_PrevAndNext(
-			long sourceId, long groupId,
-			OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			sourceId, groupId, orderByComparator);
 	}
 
 	/**
@@ -865,56 +695,6 @@ public class SourceUtil {
 
 		return getPersistence().fetchByCompanyId_First(
 			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last source in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source
-	 * @throws NoSuchSourceException if a matching source could not be found
-	 */
-	public static Source findByCompanyId_Last(
-			long companyId, OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last source in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching source, or <code>null</code> if a matching source could not be found
-	 */
-	public static Source fetchByCompanyId_Last(
-		long companyId, OrderByComparator<Source> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sources before and after the current source in the ordered set where companyId = &#63;.
-	 *
-	 * @param sourceId the primary key of the current source
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next source
-	 * @throws NoSuchSourceException if a source with the primary key could not be found
-	 */
-	public static Source[] findByCompanyId_PrevAndNext(
-			long sourceId, long companyId,
-			OrderByComparator<Source> orderByComparator)
-		throws com.liferay.portal.reports.engine.console.exception.
-			NoSuchSourceException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			sourceId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1096,3 +876,4 @@ public class SourceUtil {
 	private static volatile SourcePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1498096278

@@ -110,6 +110,7 @@ public class ExamResultsRestController extends BaseRestController {
 		try (BufferedReader bufferedReader = new BufferedReader(
 				new InputStreamReader(
 					multipartFile.getInputStream(), StandardCharsets.UTF_8));
+
 			CSVParser csvParser = CSVFormat.DEFAULT.withFirstRecordAsHeader(
 			).parse(
 				bufferedReader
@@ -156,9 +157,9 @@ public class ExamResultsRestController extends BaseRestController {
 						"result",
 						new JSONObject(
 						).put(
-							"name", csvRecord.get(8)
-						).put(
 							"key", StringUtil.toLowerCase(csvRecord.get(8))
+						).put(
+							"name", csvRecord.get(8)
 						)
 					).put(
 						"score", GetterUtil.getInteger(csvRecord.get(7))

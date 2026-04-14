@@ -7,12 +7,14 @@ import {openConfirmModal} from 'frontend-js-components-web';
 import {navigate} from 'frontend-js-web';
 
 import {openPermissionsModal} from '../modals/openPermissionsModal';
+import {openWorkflowTransitionModal} from '../modals/openWorkflowTransitionModal';
 import {resolveModalSize} from '../modals/resolveModalSize';
-import {ESelectionTrigger, IItemsActions} from '../types';
+import {IItemsActions} from '../types';
 import {ACTION_ITEM_TARGETS} from './constants';
 import formatActionURL from './formatActionURL';
 
-const {INFO_PANEL, MODAL_PERMISSIONS} = ACTION_ITEM_TARGETS;
+const {INFO_PANEL, MODAL_PERMISSIONS, MODAL_WORKFLOW_TRANSITION} =
+	ACTION_ITEM_TARGETS;
 
 const handleActionClick = ({
 	action,
@@ -21,6 +23,7 @@ const handleActionClick = ({
 	executeAsyncItemAction,
 	highlightItems,
 	infoPanelOpen,
+	isItemSelected,
 	itemData,
 	itemId,
 	items,
@@ -39,6 +42,7 @@ const handleActionClick = ({
 	executeAsyncItemAction: Function;
 	highlightItems: Function;
 	infoPanelOpen?: boolean;
+	isItemSelected?: boolean;
 	itemData: any;
 	itemId: string | number;
 	items: any[];
@@ -68,10 +72,7 @@ const handleActionClick = ({
 
 	const doAction = ({defaultPrevented}: {defaultPrevented: boolean}) => {
 		if (target === INFO_PANEL && onInfoPanelToggleButtonClick) {
-			onItemSelectionChange?.({
-				item: itemData,
-				trigger: ESelectionTrigger.CONTAINER,
-			});
+			!isItemSelected && onItemSelectionChange?.(itemData);
 
 			!infoPanelOpen && onInfoPanelToggleButtonClick();
 		}
@@ -80,6 +81,13 @@ const handleActionClick = ({
 
 			if (target === MODAL_PERMISSIONS) {
 				openPermissionsModal(url);
+			}
+			else if (target === MODAL_WORKFLOW_TRANSITION) {
+				openWorkflowTransitionModal({
+					action,
+					executeAsyncItemAction,
+					itemId,
+				});
 			}
 			else {
 				openModal({

@@ -17,11 +17,17 @@ public class ObjectDefinitionSettingConstants {
 
 	public static final String NAME_ACCEPTED_GROUP_IDS = "acceptedGroupIds";
 
+	public static final String NAME_OLD_CLASS_NAME = "oldClassName";
+
+	public static final String NAME_OLD_CLASS_NAME_ID = "oldClassNameId";
+
 	public static final String
 		NAME_ROOT_OBJECT_DEFINITION_EXTERNAL_REFERENCE_CODES =
 			"rootObjectDefinitionExternalReferenceCodes";
 
 	public static final String NAME_ROOT_OBJECT_DEFINITION_IDS =
 		"rootObjectDefinitionIds";
+
+	public static final String NAME_VISIBLE = "visible";
 
 }

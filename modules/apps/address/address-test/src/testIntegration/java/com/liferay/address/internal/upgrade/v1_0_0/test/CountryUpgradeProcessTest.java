@@ -12,7 +12,6 @@ import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.base.BaseTable;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CountryLocalization;
@@ -64,10 +63,10 @@ public class CountryUpgradeProcessTest {
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					_company.getCompanyId())) {
 
-			int countryCount = _getCount("Country");
-			int countryLocalizationCount = _getCount("CountryLocalization");
-			int regionCount = _getCount("Region");
-			int regionLocalizationCount = _getCount("RegionLocalization");
+			long countryCount = _getCount("Country");
+			long countryLocalizationCount = _getCount("CountryLocalization");
+			long regionCount = _getCount("Region");
+			long regionLocalizationCount = _getCount("RegionLocalization");
 
 			_delete("Country");
 			_delete("CountryLocalization");
@@ -118,26 +117,29 @@ public class CountryUpgradeProcessTest {
 
 	private void _delete(String tableName) throws Exception {
 		try (Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"delete from ", tableName, " where companyId = ",
-					_company.getCompanyId()))) {
+				"delete from " + tableName + " where companyId = ?")) {
+
+			preparedStatement.setLong(1, _company.getCompanyId());
 
 			preparedStatement.execute();
 		}
 	}
 
-	private int _getCount(String tableName) throws Exception {
+	private long _getCount(String tableName) throws Exception {
 		try (Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"select count(*) from ", tableName, " where companyId = ",
-					_company.getCompanyId()))) {
+				"select count(*) as count from " + tableName +
+					" where companyId = ?")) {
+
+			preparedStatement.setLong(1, _company.getCompanyId());
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				resultSet.next();
 
-				return resultSet.getInt(1);
+				return resultSet.getLong("count");
 			}
 		}
 	}

@@ -84,6 +84,9 @@ public interface TestEntityResource {
 	public Response postTestEntityMultipartBulk(MultipartBody multipartBody)
 		throws Exception;
 
+	public Response postTestEntityMultipartImage(MultipartBody multipartBody)
+		throws Exception;
+
 	public TestEntity putTestEntity(
 			Long testEntityId, Long optionalParameter, TestEntity testEntity)
 		throws Exception;
@@ -192,3 +195,4 @@ public interface TestEntityResource {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:953012982

@@ -10,7 +10,8 @@ import ClayIcon from '@clayui/icon';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useEventListener} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
-import React, {Key, useEffect, useMemo, useState} from 'react';
+import {openToast} from 'frontend-js-components-web';
+import React, {Key, useEffect, useMemo, useRef, useState} from 'react';
 
 import getLocalizedValue from '../../common/utils/getLocalizedValue';
 import {useCache} from '../contexts/CacheContext';
@@ -20,30 +21,43 @@ import {
 	useSelector,
 	useStateDispatch,
 } from '../contexts/StateContext';
+import useIsBeingRenamed from '../hooks/useIsBeingRenamed';
+import selectHistory from '../selectors/selectHistory';
 import selectInvalids from '../selectors/selectInvalids';
+import selectPublishedChildren from '../selectors/selectPublishedChildren';
 import selectSelection from '../selectors/selectSelection';
+import selectStructure from '../selectors/selectStructure';
 import selectStructureChildren from '../selectors/selectStructureChildren';
-import selectStructureERC from '../selectors/selectStructureERC';
-import selectStructureError from '../selectors/selectStructureError';
 import selectStructureLocalizedLabel from '../selectors/selectStructureLocalizedLabel';
 import selectStructureUuid from '../selectors/selectStructureUuid';
 import {
 	ReferencedStructure,
+	RelatedContent,
 	RepeatableGroup,
 	Structure,
 	StructureChild,
 } from '../types/Structure';
 import {Uuid} from '../types/Uuid';
 import {FIELD_TYPE_ICON, FieldType} from '../utils/field';
+import handleAddRepeatableGroup from '../utils/handleAddRepeatableGroup';
+import handleDeleteChildren from '../utils/handleDeleteChildren';
+import handleMoveChildren from '../utils/handleMoveChildren';
+import handleUngroupRepeatableGroup from '../utils/handleUngroupRepeatableGroup';
+import isField from '../utils/isField';
+import isLocked from '../utils/isLocked';
+import isReferenced from '../utils/isReferenced';
+import isRenamable from '../utils/isRenamable';
+import AddChildDropdown from './AddChildDropdown';
 
 type TreeItem = {
 	actions?: Array<{
 		href?: string;
-		label: string;
+		label?: string;
 		onClick?: () => void;
 		symbolLeft?: string;
 		symbolRight?: string;
 		target?: string;
+		type?: 'divider';
 	}>;
 	children?: TreeItem[];
 	editURL?: string;
@@ -52,20 +66,28 @@ type TreeItem = {
 	id: Uuid;
 	invalid?: boolean;
 	label: string;
+	locked?: boolean;
 	name?: string;
-	type?: FieldType | ReferencedStructure['type'] | RepeatableGroup['type'];
+	type?:
+		| FieldType
+		| ReferencedStructure['type']
+		| RelatedContent['type']
+		| RepeatableGroup['type'];
 };
 
 export default function StructureTree({search}: {search: string}) {
 	const dispatch = useStateDispatch();
 
+	const isBeingRenamed = useIsBeingRenamed();
+
 	const children = useSelector(selectStructureChildren);
+	const history = useSelector(selectHistory);
 	const invalids = useSelector(selectInvalids);
+	const publishedChildren = useSelector(selectPublishedChildren);
 	const selection = useSelector(selectSelection);
 	const structureLabel = useSelector(selectStructureLocalizedLabel);
 	const structureUuid = useSelector(selectStructureUuid);
-	const structureError = useSelector(selectStructureError);
-	const structureERC = useSelector(selectStructureERC);
+	const structure = useSelector(selectStructure);
 
 	const {load: loadObjectDefinitions, status: objectDefinitionsStatus} =
 		useCache('object-definitions');
@@ -93,11 +115,13 @@ export default function StructureTree({search}: {search: string}) {
 					children,
 					dispatch,
 					invalids,
+					publishedChildren,
 					search,
-					structureERC,
+					structure,
 				}),
 				icon: 'edit-layout',
 				id: structureUuid,
+				invalid: invalids.has(structureUuid),
 				label: structureLabel,
 				uuid: structureUuid,
 			},
@@ -108,8 +132,9 @@ export default function StructureTree({search}: {search: string}) {
 		hasReferencedStructure,
 		invalids,
 		objectDefinitionsStatus,
+		publishedChildren,
 		search,
-		structureERC,
+		structure,
 		structureLabel,
 		structureUuid,
 	]);
@@ -189,10 +214,53 @@ export default function StructureTree({search}: {search: string}) {
 	return (
 		<ClayTreeView
 			className="px-4 structure-builder__tree"
+			dragAndDrop
+			dragAndDropMode="multiple"
+			dragHandlerVisibility="keyboard"
 			expandedKeys={expandedKeys}
+			itemNameKey="label"
 			items={items}
 			nestedKey="children"
 			onExpandedChange={setExpandedKeys}
+			onItemHover={(ids, target, index, position) => {
+				if (position !== 'middle') {
+					return false;
+				}
+
+				if (target.id === structure.uuid) {
+					return true;
+				}
+
+				if (target.type !== 'repeatable-group') {
+					return false;
+				}
+
+				if (isReferenced({root: structure, uuid: target.id})) {
+					return false;
+				}
+
+				return true;
+			}}
+			onItemInvalidMove={() =>
+				openToast({
+					message: Liferay.Language.get(
+						'items-could-not-be-moved-because-the-target-is-not-allowed'
+					),
+					type: 'danger',
+				})
+			}
+			onItemMove={(ids, parent) => {
+				handleMoveChildren({
+					deletedChildren: history.deletedChildren,
+					dispatch,
+					publishedChildren,
+					structure,
+					targetUuid: parent.id,
+					uuids: [...(ids as Set<Uuid>)],
+				});
+
+				return true;
+			}}
 			onSelect={onSelect}
 			onSelectionChange={setSelectedKeys}
 			selectedKeys={selectedKeys}
@@ -210,8 +278,7 @@ export default function StructureTree({search}: {search: string}) {
 						<ClayIcon
 							className={classNames({
 								'structure-builder__tree-node--field-icon':
-									item.type &&
-									item.type !== 'referenced-structure',
+									isField(item),
 								'structure-builder__tree-node--group-icon':
 									item.type === 'repeatable-group',
 								'structure-builder__tree-node--structure-icon':
@@ -220,69 +287,68 @@ export default function StructureTree({search}: {search: string}) {
 							symbol={item.icon}
 						/>
 
-						<span className="ml-1">{item.label}</span>
-
-						{item.type === 'referenced-structure' ||
-						item.type === 'repeatable-group' ? (
-							<ClayIcon className="ml-2" symbol="repeat" />
-						) : (
-							<></>
-						)}
-
-						{item.invalid ||
-						(item.id === structureUuid && structureError) ? (
-							<ClayIcon
-								className="ml-2 text-danger"
-								symbol="exclamation-full"
-							/>
-						) : (
-							<></>
-						)}
+						<ItemContent item={item} />
 					</ClayTreeView.ItemStack>
 
 					<ClayTreeView.Group items={item.children}>
 						{(childItem, selectedKeys) => (
 							<ClayTreeView.Item
 								actions={
-									childItem.actions?.length ? (
-										<ClayDropDownWithItems
-											items={childItem.actions}
-											trigger={
-												<ClayButtonWithIcon
-													aria-label={Liferay.Language.get(
-														'field-options'
-													)}
-													borderless
-													disabled={
-														selection.length > 1
-													}
+									isBeingRenamed(childItem.id) ? undefined : (
+										<>
+											{childItem.type ===
+												'repeatable-group' &&
+											!isReferenced({
+												root: structure,
+												uuid: childItem.id,
+											}) ? (
+												<AddChildDropdown
+													className="component-action quick-action-item"
 													displayType="unstyled"
-													size="sm"
-													symbol="ellipsis-v"
+													parentUuid={childItem.id}
 												/>
-											}
-										/>
-									) : undefined
+											) : null}
+
+											{childItem.actions?.length ? (
+												<ClayDropDownWithItems
+													items={childItem.actions}
+													trigger={
+														<ClayButtonWithIcon
+															aria-label={Liferay.Language.get(
+																'field-options'
+															)}
+															borderless
+															disabled={
+																selection.length >
+																1
+															}
+															displayType="unstyled"
+															size="sm"
+															symbol="ellipsis-v"
+														/>
+													}
+												/>
+											) : undefined}
+										</>
+									)
 								}
 								className={classNames({
 									active: selectedKeys.has(childItem.id),
 								})}
 							>
 								<ClayIcon
-									className="structure-builder__tree-node--field-icon"
+									className={classNames({
+										'structure-builder__tree-node--field-icon':
+											childItem.type !==
+											'related-content',
+										'structure-builder__tree-node--related-content-icon':
+											childItem.type ===
+											'related-content',
+									})}
 									symbol={childItem.icon}
 								/>
 
-								<span className="ml-1">{childItem.label}</span>
-
-								{childItem.invalid ? (
-									<ClayIcon
-										className="ml-2 text-danger"
-										symbol="exclamation-full"
-									/>
-								) : (
-									<></>
-								)}
+								<ItemContent item={childItem} />
 							</ClayTreeView.Item>
 						)}
 					</ClayTreeView.Group>
@@ -290,6 +356,141 @@ export default function StructureTree({search}: {search: string}) {
 			)}
 		</ClayTreeView>
 	);
+}
+
+function ItemContent({id, item}: {id?: string; item: TreeItem}) {
+	const isBeingRenamed = useIsBeingRenamed();
+
+	if (isBeingRenamed(item.id)) {
+		return <ItemNameInput item={item} />;
+	}
+
+	return (
+		<div className="align-items-center c-gap-2 d-flex ml-1">
+			<span>
+				<ItemLabel id={id} item={item} />
+
+				<ItemStatus item={item} />
+			</span>
+
+			{item.type === 'referenced-structure' ||
+			item.type === 'repeatable-group' ? (
+				<ClayIcon
+					className="mt-0"
+					data-title={Liferay.Language.get('repeatable')}
+					symbol="repeat"
+				/>
+			) : null}
+
+			{item.locked ? (
+				<ClayIcon
+					className="mt-0"
+					data-title={Liferay.Language.get('locked-field')}
+					symbol="lock"
+				/>
+			) : null}
+
+			{item.invalid ? (
+				<ClayIcon
+					className="mt-0 text-danger"
+					data-title={Liferay.Language.get('invalid-element')}
+					symbol="exclamation-full"
+				/>
+			) : null}
+		</div>
+	);
+}
+
+function ItemLabel({id, item}: {id?: string; item: TreeItem}) {
+	const dispatch = useStateDispatch();
+
+	const structure = useSelector(selectStructure);
+
+	return (
+		<span
+			aria-label={
+				item.label ? undefined : Liferay.Language.get('untitled')
+			}
+			id={id}
+			onDoubleClick={() => {
+				if (isRenamable({structure, uuid: item.id})) {
+					dispatch({type: 'set-renaming-item-uuid', uuid: item.id});
+				}
+			}}
+		>
+			{item.label}
+		</span>
+	);
+}
+
+function ItemNameInput({item}: {item: TreeItem}) {
+	const dispatch = useStateDispatch();
+
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	const [name, setName] = useState(item.label);
+
+	const onFinishRenaming = () =>
+		dispatch({name, type: 'rename-item', uuid: item.id});
+
+	useEffect(() => {
+		if (inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, []);
+
+	return (
+		<input
+			className="structure-builder__tree-node--input"
+			onBlur={() => onFinishRenaming()}
+			onChange={(event) => {
+				setName(event.target.value);
+			}}
+			onFocus={() => {
+				if (!inputRef.current) {
+					return;
+				}
+
+				inputRef.current.setSelectionRange(0, name.length);
+			}}
+			onKeyDown={(event) => {
+				if (
+					event.key === 'Enter' ||
+					event.key === 'Escape' ||
+					event.key === 'Tab'
+				) {
+					onFinishRenaming();
+				}
+
+				if (!event.key.match(/[a-z0-9-_ ]/gi)) {
+					event.preventDefault();
+				}
+
+				event.stopPropagation();
+			}}
+			ref={inputRef}
+			type="text"
+			value={name}
+		/>
+	);
+}
+
+function ItemStatus({item: {invalid, locked}}: {item: TreeItem}) {
+	const messages = [];
+
+	if (locked) {
+		messages.push(Liferay.Language.get('locked-field'));
+	}
+
+	if (invalid) {
+		messages.push(Liferay.Language.get('invalid-element'));
+	}
+
+	if (!messages.length) {
+		return null;
+	}
+
+	return <span className="sr-only">{messages.join(' ')}</span>;
 }
 
 function useSelectionMode() {
@@ -352,20 +553,39 @@ function buildItems({
 	children,
 	dispatch,
 	invalids,
-	isReferenced,
+	publishedChildren,
 	search,
-	structureERC,
+	structure,
 }: {
 	children: (ReferencedStructure | RepeatableGroup | Structure)['children'];
 	dispatch: React.Dispatch<Action>;
 	invalids: State['invalids'];
-	isReferenced?: boolean;
+	publishedChildren: State['publishedChildren'];
 	search: string;
-	structureERC: Structure['erc'];
+	structure: Structure;
 }): TreeItem[] {
 	return Array.from(children.values()).reduce(
 		(items: TreeItem[], child: StructureChild) => {
-			if (
+			if (child.type === 'related-content') {
+				const label = getLocalizedValue(child.label);
+
+				if (match(label, search)) {
+					items.push({
+						actions: getItemActions({
+							dispatch,
+							item: child,
+							publishedChildren,
+							structure,
+						}),
+						icon: 'select-from-list',
+						id: child.uuid,
+						invalid: invalids.has(child.uuid),
+						label: getLocalizedValue(child.label),
+						type: 'related-content',
+					});
+				}
+			}
+			else if (
 				child.type === 'referenced-structure' ||
 				child.type === 'repeatable-group'
 			) {
@@ -374,18 +594,17 @@ function buildItems({
 				const item: TreeItem = {
 					actions: getItemActions({
 						dispatch,
-						isReferenced,
 						item: child,
+						publishedChildren,
+						structure,
 					}),
 					children: buildItems({
 						children: child.children,
 						dispatch,
 						invalids,
-						isReferenced:
-							isReferenced ||
-							child.type === 'referenced-structure',
+						publishedChildren,
 						search,
-						structureERC,
+						structure,
 					}),
 					erc: child.erc,
 					icon: 'fieldset',
@@ -411,13 +630,15 @@ function buildItems({
 					items.push({
 						actions: getItemActions({
 							dispatch,
-							isReferenced,
 							item: child,
+							publishedChildren,
+							structure,
 						}),
 						icon: FIELD_TYPE_ICON[child.type],
 						id: child.uuid,
 						invalid: invalids.has(child.uuid),
 						label: getLocalizedValue(child.label),
+						locked: child.locked,
 						type: child.type,
 					});
 				}
@@ -439,13 +660,19 @@ function match(value: string, keyword: string) {
 
 function getItemActions({
 	dispatch,
-	isReferenced,
 	item,
+	publishedChildren,
+	structure,
 }: {
 	dispatch: React.Dispatch<Action>;
-	isReferenced?: boolean;
 	item: StructureChild;
+	publishedChildren: State['publishedChildren'];
+	structure: Structure;
 }) {
+	if (isLocked(item)) {
+		return [];
+	}
+
 	const actions = [];
 
 	if (item.type === 'referenced-structure' && item.erc) {
@@ -458,39 +685,58 @@ function getItemActions({
 		});
 	}
 
-	if (!isReferenced) {
-		if (
-			item.type !== 'referenced-structure' &&
-			item.type !== 'repeatable-group'
-		) {
-			actions.push({
-				label: Liferay.Language.get('create-repeatable-group'),
-				onClick: () =>
-					dispatch({
-						type: 'add-repeatable-group',
-						uuid: item.uuid,
-					}),
-				symbolLeft: 'repeat',
-			});
-		}
+	if (!isReferenced({root: structure, uuid: item.uuid}) && isField(item)) {
+		actions.push({
+			label: Liferay.Language.get('create-repeatable-group'),
+			onClick: () =>
+				handleAddRepeatableGroup({
+					dispatch,
+					publishedChildren,
+					structure,
+					uuids: [item.uuid],
+				}),
+			symbolLeft: 'repeat',
+		});
+	}
 
+	if (actions.length) {
+		actions.push({type: 'divider' as const});
+	}
+
+	if (!isReferenced({root: structure, uuid: item.uuid})) {
 		if (item.type === 'repeatable-group') {
 			actions.push({
 				label: Liferay.Language.get('ungroup'),
 				onClick: () =>
-					dispatch({
-						type: 'ungroup',
+					handleUngroupRepeatableGroup({
+						dispatch,
+						publishedChildren,
 						uuid: item.uuid,
 					}),
 			});
 		}
 
 		actions.push({
-			label: Liferay.Language.get('delete-field'),
-			onClick: () =>
+			label: Liferay.Language.get('duplicate'),
+			onClick: async () => {
 				dispatch({
-					type: 'delete-child',
+					type: 'duplicate-child',
 					uuid: item.uuid,
+				});
+			},
+			symbolLeft: 'copy',
+		});
+
+		actions.push({type: 'divider' as const});
+
+		actions.push({
+			label: Liferay.Language.get('delete-field'),
+			onClick: async () =>
+				handleDeleteChildren({
+					dispatch,
+					publishedChildren,
+					structure,
+					uuids: [item.uuid],
 				}),
 			symbolLeft: 'trash',
 		});

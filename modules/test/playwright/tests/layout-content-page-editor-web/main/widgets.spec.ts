@@ -88,7 +88,10 @@ test(
 
 		await waitForAlert(permissionsIFrame);
 
-		await page.getByLabel('close', {exact: true}).click();
+		await page
+			.locator('.modal-header')
+			.getByLabel('Close', {exact: true})
+			.click();
 
 		// Publish
 
@@ -406,35 +409,16 @@ test(
 
 		await pageEditorPage.addWidget('Tools', 'Language Selector');
 
-		// Open permissions
+		// Remove view permissions
 
 		const widgetId =
 			await pageEditorPage.getFragmentId('Language Selector');
 
-		await pageEditorPage.selectFragment(widgetId);
-
-		await page
-			.locator('.page-editor__topper__item')
-			.getByRole('button', {name: 'Options'})
-			.click();
-
-		const dropdown = page.locator('.dropdown-menu.show');
-
-		await dropdown.getByText('Permissions', {exact: true}).click();
-
-		// Removes view permissions
-
-		const permissionsIFrame = page.frameLocator(
-			'iframe[title="Permissions"]'
+		await pageEditorPage.changeWidgetPermission(
+			widgetId,
+			'#guest_ACTION_VIEW',
+			false
 		);
-
-		await permissionsIFrame.locator('#guest_ACTION_VIEW').uncheck();
-
-		await permissionsIFrame.getByRole('button', {name: 'Save'}).click();
-
-		await waitForAlert(permissionsIFrame);
-
-		await page.getByLabel('close', {exact: true}).click();
 
 		// Publish
 
@@ -444,7 +428,7 @@ test(
 
 		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
 			groupId: site.id,
-			masterLayoutPlid: masterPage.plid,
+			masterLayoutPageTemplateEntryERC: masterPage.externalReferenceCode,
 			title: getRandomString(),
 		});
 
@@ -452,15 +436,17 @@ test(
 
 		await performLogout(page);
 
-		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
+		await expect(async () => {
+			await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
 
-		await expect(
-			page
-				.getByText(
-					'You do not have the roles required to access this portlet.'
-				)
-				.first()
-		).toBeVisible();
+			await expect(
+				page
+					.getByText(
+						'You do not have the roles required to access this portlet.'
+					)
+					.first()
+			).toBeVisible({timeout: 3000});
+		}).toPass();
 	}
 );
 
@@ -509,7 +495,10 @@ test(
 
 		await configurationIFrame.getByRole('button', {name: 'Save'}).click();
 
-		await page.getByLabel('close', {exact: true}).click();
+		await page
+			.locator('.modal-header')
+			.getByLabel('Close', {exact: true})
+			.click();
 
 		await pageEditorPage.publishPage();
 
@@ -530,18 +519,19 @@ test(
 			.getByRole('menuitem', {name: layoutTitle});
 
 		await expect(async () => {
-			await dropdownButton.click();
+			await dropdownButton.click({timeout: 2000});
 
 			await expect(dropdownOption).toBeVisible({timeout: 1000});
 			await expect(dropdownOption).toContainText('deprecated');
 
-			await dropdownOption.click();
+			await dropdownOption.click({timeout: 2000});
+
+			await expect(
+				page.getByText(`${layoutTitle} (Scope) deprecated`)
+			).toBeVisible({timeout: 2000});
 		}).toPass();
 
 		// Check that the page is set as scope
 
-		await expect(
-			page.getByText(`${layoutTitle} (Scope) deprecated`)
-		).toBeVisible();
 	}
 );

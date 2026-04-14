@@ -17,31 +17,28 @@ import {useIsMounted} from '@liferay/frontend-js-react-web';
 import {FDSTableCellHTMLElementBuilderArgs} from '@liferay/js-api/data-set';
 import classNames from 'classnames';
 import {ClientExtension} from 'frontend-js-components-web';
-import {getObjectValueFromPath, throttle} from 'frontend-js-web';
+import {getObjectValueFromPath, sub, throttle} from 'frontend-js-web';
 import React, {useContext, useEffect, useMemo, useRef, useState} from 'react';
 
 import FrontendDataSetContext, {
 	IFrontendDataSetContext,
-	TRenderer,
 } from '../../FrontendDataSetContext';
 import Actions from '../../actions/Actions';
-import {getInternalCellRenderer} from '../../cell_renderers/getInternalCellRenderer';
 import FDSDndProvider from '../../dnd/FDSDndProvider';
 import useFDSDrop from '../../dnd/useFDSDrop';
-import persistVisibleFieldNames, {
-	VisibleFieldNames,
-} from '../../thunks/persistVisibleFieldNames';
+import {getInternalRenderer} from '../../renderers/getInternalRenderer';
 import {
 	ILocalizedItemDetails,
 	getLocalizedValue,
 } from '../../utils/getLocalizedValue';
 import {getInputRendererById} from '../../utils/renderer';
 import {
-	ESelectionTrigger,
 	IItemsActions,
 	ITableSchema,
 	IView,
+	TRenderer,
 	TSort,
+	VisibleFieldNames,
 } from '../../utils/types';
 import ViewsContext, {
 	IViewsContext,
@@ -51,7 +48,7 @@ import getCellColumnClassName from '../utils/getCellColumnClassName';
 
 // @ts-ignore
 
-import {VIEWS_ACTION_TYPES} from '../viewsReducer';
+import {EViewsActionTypes} from '../viewsReducer';
 import TableContext from './TableContext';
 import TableContextProvider from './TableContextProvider';
 
@@ -87,10 +84,16 @@ const getVisibleFields = ({
 	visibleFieldNames,
 }: {
 	fields: Array<any>;
-	visibleFieldNames: Array<string>;
+	visibleFieldNames: VisibleFieldNames;
 }) => {
 	const visibleFields = fields.filter(
-		({fieldName}) => visibleFieldNames[fieldName]
+		({fieldName}: {fieldName: string | string[]}) => {
+			if (Array.isArray(fieldName)) {
+				return visibleFieldNames[fieldName.join(',')];
+			}
+
+			return visibleFieldNames[fieldName.replaceAll('.', ',')];
+		}
 	);
 
 	return visibleFields.length ? visibleFields : fields;
@@ -103,7 +106,7 @@ const Head = ({
 }: {
 	fields: Array<Field>;
 	items: Array<any>;
-	selectionType?: string;
+	selectionType?: 'single' | 'multiple';
 }) => {
 	const {selectable} = useContext(FrontendDataSetContext);
 
@@ -152,6 +155,7 @@ const Head = ({
 };
 
 const Row = ({
+	accessibleName,
 	active,
 	columns,
 	item,
@@ -162,6 +166,7 @@ const Row = ({
 	selectionType,
 	...otherProps
 }: {
+	accessibleName: string;
 	active: boolean;
 	columns: Array<Field>;
 	item: any;
@@ -169,7 +174,7 @@ const Row = ({
 	items: any[];
 	itemsActions: Array<IItemsActions>;
 	onItemSelectionChange: Function;
-	selectionType?: string;
+	selectionType?: 'single' | 'multiple';
 }) => {
 	const {itemsChanges, selectedItemsKey, updateItem} = useContext(
 		FrontendDataSetContext
@@ -206,6 +211,7 @@ const Row = ({
 										item.actionDropdownItems?.length >
 											0) && (
 										<Actions
+											accessibleName={accessibleName}
 											actions={
 												itemsActions ||
 												item.actionDropdownItems
@@ -231,13 +237,13 @@ const Row = ({
 							>
 								{!item.editable && (
 									<SelectionComponent
+										aria-label={sub(
+											Liferay.Language.get('select-x'),
+											accessibleName
+										)}
 										checked={active}
 										onChange={() =>
-											onItemSelectionChange({
-												item,
-												trigger:
-													ESelectionTrigger.INPUT,
-											})
+											onItemSelectionChange(item)
 										}
 										title={Liferay.Language.get(
 											'select-item'
@@ -338,6 +344,7 @@ const Body = ({
 	items,
 	itemsActions,
 	onItemSelectionChange,
+	schema,
 	selectionType,
 }: {
 	fields: Array<Field>;
@@ -349,7 +356,8 @@ const Body = ({
 	items: Array<any>;
 	itemsActions: Array<IItemsActions>;
 	onItemSelectionChange: Function;
-	selectionType?: string;
+	schema: ITableSchema;
+	selectionType?: 'single' | 'multiple';
 }) => {
 	const {
 		allItemsSelectedActive,
@@ -357,6 +365,8 @@ const Body = ({
 		selectedItemsKey,
 		selectedItemsValue,
 	} = useContext(FrontendDataSetContext);
+
+	const {accessibleNameField} = schema;
 
 	const columns: Array<Field> = [
 		...(selectable ? [{fieldName: 'select'}] : []),
@@ -372,8 +382,23 @@ const Body = ({
 				}
 			>
 				{(item: any) => {
+					let accessibleName = Liferay.Language.get('item') ?? '';
+
+					[accessibleNameField, fields[0].fieldName, 'id'].find(
+						(key) => {
+							const value = getLocalizedValue(item, key)?.value;
+							if (!value || typeof value === 'object') {
+								return false;
+							}
+							accessibleName = value;
+
+							return true;
+						}
+					);
+
 					return (
 						<Row
+							accessibleName={accessibleName}
 							active={
 								allItemsSelectedActive ||
 								!!selectedItemsValue?.find(
@@ -414,7 +439,7 @@ function ClayTableRowOptionalDropTarget({
 	onItemSelectionChange: Function;
 }) {
 	const [viewsContext] = useContext(ViewsContext);
-	const {onSelect, selectable} = useContext(FrontendDataSetContext);
+	const {selectable} = useContext(FrontendDataSetContext);
 
 	const {className: dropClassName, dropRef} = useFDSDrop({item});
 
@@ -426,12 +451,7 @@ function ClayTableRowOptionalDropTarget({
 		items,
 		onClick: selectable
 			? () => {
-					onItemSelectionChange({
-						item,
-						trigger: ESelectionTrigger.CONTAINER,
-					});
-
-					onSelect?.({selectedItems: [item]});
+					onItemSelectionChange(item, true);
 				}
 			: undefined,
 		ref: dropRef,
@@ -439,10 +459,8 @@ function ClayTableRowOptionalDropTarget({
 
 	return (
 		<ClayTableRow
-			{...{
-				...props,
-				...(activeView.setItemComponentProps?.({item, props}) ?? {}),
-			}}
+			{...props}
+			{...(activeView.setItemComponentProps?.({item, props}) ?? {})}
 		>
 			{children}
 		</ClayTableRow>
@@ -481,7 +499,7 @@ function HeadCellResizer({
 			const boundingClientRect = cellRef.current.getBoundingClientRect();
 
 			viewsDispatch({
-				type: VIEWS_ACTION_TYPES.UPDATE_FIELD,
+				type: EViewsActionTypes.UPDATE_FIELD,
 				value: {
 					name: columnName,
 					resizable: true,
@@ -511,10 +529,16 @@ function HeadCellResizer({
 	}, [columnName, resizeColumn, updateDraggingColumnName]);
 
 	function initializeDrag() {
+		const originalUserSelect = document.body.style.userSelect;
+
+		document.body.style.userSelect = 'none';
+
 		window.addEventListener('mousemove', handleDrag);
 		window.addEventListener(
 			'mouseup',
 			() => {
+				document.body.style.userSelect = originalUserSelect;
+
 				updateDraggingAllowed(true);
 				updateDraggingColumnName(null);
 				window.removeEventListener('mousemove', handleDrag);
@@ -636,6 +660,7 @@ function CellRenderer({
 
 		if (
 			field.contentRendererClientExtension &&
+			modifiedField &&
 			!modifiedField.clientExtensionResolutionError
 		) {
 			const mergedField = {...field, ...modifiedField};
@@ -663,7 +688,7 @@ function CellRenderer({
 			};
 		}
 
-		return getInternalCellRenderer(contentRenderer);
+		return getInternalRenderer(contentRenderer);
 	}, [customDataRenderers, customRenderers, field, modifiedFields]);
 
 	if (cellRenderer?.type === 'clientExtension') {
@@ -742,15 +767,14 @@ const Table = ({
 	schema: ITableSchema;
 }) => {
 	const {
-		appURL,
-		id,
 		inlineAddingSettings,
 		itemsChanges,
 		nestedItemsKey,
 		nestedItemsReferenceKey,
-		portletId,
 		selectable,
 		selectionType,
+		updateActiveSorts,
+		updateVisibleFields,
 	} = useContext(FrontendDataSetContext);
 
 	const [{sorts, visibleFieldNames}, viewsDispatch] =
@@ -760,14 +784,6 @@ const Table = ({
 		fields: schema.fields,
 		visibleFieldNames,
 	});
-
-	const [visibleColumns, setVisibleColumns] = useState(() =>
-		getVisibleFieldsMap(
-			schema.fields as Array<Field>,
-			visibleFields,
-			selectable
-		)
-	);
 
 	const columnNames = [];
 
@@ -823,10 +839,7 @@ const Table = ({
 			});
 		}
 
-		viewsDispatch({
-			type: VIEWS_ACTION_TYPES.UPDATE_SORTING,
-			value: updatedSorts,
-		});
+		viewsDispatch(updateActiveSorts(updatedSorts));
 	};
 
 	return (
@@ -860,28 +873,31 @@ const Table = ({
 					const visibleFieldNames: VisibleFieldNames = {};
 
 					schema.fields.forEach(({fieldName}) => {
-						if (typeof fieldName === 'string') {
-							visibleFieldNames[fieldName] = false;
+						if (String(fieldName).includes('.')) {
+							fieldName = String(fieldName).replaceAll('.', ',');
 						}
+
+						visibleFieldNames[String(fieldName)] = false;
 					});
 
 					visibleColumns.forEach((value: any, key: any) => {
-						visibleFieldNames[key] = true;
+						if (key.includes('.')) {
+							key = key.replaceAll('.', ',');
+						}
+
+						if (visibleFieldNames[key] !== undefined) {
+							visibleFieldNames[key] = true;
+						}
 					});
 
-					viewsDispatch(
-						persistVisibleFieldNames({
-							appURL,
-							id,
-							portletId,
-							visibleFieldNames,
-						})
-					);
-
-					setVisibleColumns(visibleColumns);
+					viewsDispatch(updateVisibleFields(visibleFieldNames));
 				}}
 				sort={getSorting()}
-				visibleColumns={visibleColumns}
+				visibleColumns={getVisibleFieldsMap(
+					schema.fields as Array<Field>,
+					visibleFields,
+					selectable
+				)}
 			>
 				<Head
 					fields={schema.fields as Array<Field>}
@@ -896,6 +912,7 @@ const Table = ({
 					items={items}
 					itemsActions={itemsActions}
 					onItemSelectionChange={onItemSelectionChange}
+					schema={schema}
 					selectionType={selectionType}
 				/>
 			</ClayTable>

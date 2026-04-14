@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.log.LogCapture;
@@ -100,7 +101,7 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 				null, TestPropsValues.getUserId(), _group.getGroupId(), 0, null,
-				0, 0, RandomTestUtil.randomString(),
+				0, null, RandomTestUtil.randomString(),
 				LayoutPageTemplateEntryTypeConstants.DISPLAY_PAGE, 0, true, 0,
 				0, 0, WorkflowConstants.STATUS_APPROVED, new ServiceContext());
 
@@ -147,7 +148,7 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 				null, TestPropsValues.getUserId(), _group.getGroupId(), 0, null,
-				0, 0, RandomTestUtil.randomString(),
+				0, null, RandomTestUtil.randomString(),
 				LayoutPageTemplateEntryTypeConstants.DISPLAY_PAGE, 0, true, 0,
 				0, 0, WorkflowConstants.STATUS_APPROVED, new ServiceContext());
 
@@ -332,8 +333,10 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 					_group.getGroupId(), TestPropsValues.getUserId()));
 
 		_fragmentEntryLinkLocalService.addFragmentEntryLink(
-			null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-			fragmentEntry.getFragmentEntryId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), _group.getGroupId()),
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				plid),
 			plid, fragmentEntry.getCss(), fragmentEntry.getHtml(),

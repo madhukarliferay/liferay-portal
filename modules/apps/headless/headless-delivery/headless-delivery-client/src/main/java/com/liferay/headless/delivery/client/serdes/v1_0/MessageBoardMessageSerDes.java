@@ -404,9 +404,7 @@ public class MessageBoardMessageSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(messageBoardMessage.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -1093,3 +1091,4 @@ public class MessageBoardMessageSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1569413604

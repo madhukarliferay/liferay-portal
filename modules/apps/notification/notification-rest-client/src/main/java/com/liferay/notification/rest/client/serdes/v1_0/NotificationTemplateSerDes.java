@@ -186,9 +186,7 @@ public class NotificationTemplateSerDes {
 			sb.append("\"editorType\": ");
 
 			sb.append("\"");
-
 			sb.append(notificationTemplate.getEditorType());
-
 			sb.append("\"");
 		}
 
@@ -870,3 +868,4 @@ public class NotificationTemplateSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1183389500

@@ -11,8 +11,8 @@ import com.liferay.jenkins.results.parser.aws.AWSFleetCloud;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -107,6 +107,17 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 
 		if (JenkinsResultsParserUtil.isNullOrEmpty(labelExpression)) {
 			labelExpression = null;
+		}
+		else {
+			for (AWSFleetCloud awsFleetCloud : getAWSFleetClouds()) {
+				if (_matchesLabels(
+						labelExpression, awsFleetCloud.getLabels())) {
+
+					labelExpression = awsFleetCloud.getPrimaryLabel();
+
+					break;
+				}
+			}
 		}
 
 		Map<Long, Integer> batchSizes = _labelBatchSizes.get(labelExpression);
@@ -359,6 +370,24 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	public int getIdleJenkinsSlavesCount() {
 		int idleSlavesCount = 0;
 
+		if (JenkinsResultsParserUtil.isCloudCINode()) {
+			for (AWSFleetCloud awsFleetCloud : getAWSFleetClouds()) {
+				idleSlavesCount += awsFleetCloud.getMaxSize();
+			}
+
+			for (JenkinsSlave jenkinsSlave : _jenkinsSlavesMap.values()) {
+				if (jenkinsSlave.isOffline()) {
+					continue;
+				}
+
+				if (!jenkinsSlave.isIdle()) {
+					idleSlavesCount--;
+				}
+			}
+
+			return idleSlavesCount;
+		}
+
 		for (JenkinsSlave jenkinsSlave : _jenkinsSlavesMap.values()) {
 			if (jenkinsSlave.isOffline()) {
 				continue;
@@ -397,7 +426,9 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	}
 
 	public JenkinsSlave getJenkinsSlave(String jenkinsSlaveName) {
-		if (_jenkinsSlavesMap.isEmpty()) {
+		if (_jenkinsSlavesMap.isEmpty() ||
+			JenkinsResultsParserUtil.isCloudCINode()) {
+
 			update();
 		}
 
@@ -417,7 +448,9 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	}
 
 	public List<JenkinsSlave> getJenkinsSlaves() {
-		if (_jenkinsSlavesMap.isEmpty()) {
+		if (_jenkinsSlavesMap.isEmpty() ||
+			JenkinsResultsParserUtil.isCloudCINode()) {
+
 			update();
 		}
 
@@ -595,6 +628,69 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 		return _slavesPerHost;
 	}
 
+	public int getStartedBuildCountAfter(Date date, boolean topLevelBuilds) {
+		if (_buildCountJSONObject == null) {
+			try {
+				_buildCountJSONObject = JenkinsResultsParserUtil.toJSONObject(
+					getURL() + "api/json?tree=jobs[name,allBuilds[timestamp]]");
+			}
+			catch (IOException ioException) {
+				return 0;
+			}
+		}
+
+		JSONArray jobsJSONArray = _buildCountJSONObject.optJSONArray("jobs");
+
+		if (jobsJSONArray == null) {
+			return 0;
+		}
+
+		int buildCount = 0;
+
+		for (int i = 0; i < jobsJSONArray.length(); i++) {
+			JSONObject jobJSONObject = jobsJSONArray.optJSONObject(i);
+
+			if (jobJSONObject == null) {
+				continue;
+			}
+
+			String jobName = jobJSONObject.getString("name");
+
+			if (topLevelBuilds) {
+				if (!_isTopLevelJobName(jobName)) {
+					continue;
+				}
+			}
+			else {
+				if (_isTopLevelJobName(jobName)) {
+					continue;
+				}
+			}
+
+			JSONArray buildsJSONArray = jobJSONObject.optJSONArray("allBuilds");
+
+			if (buildsJSONArray == null) {
+				continue;
+			}
+
+			for (int j = 0; j < buildsJSONArray.length(); j++) {
+				JSONObject buildJSONObject = buildsJSONArray.optJSONObject(j);
+
+				if (buildJSONObject == null) {
+					continue;
+				}
+
+				Date buildDate = new Date(buildJSONObject.getLong("timestamp"));
+
+				if (buildDate.after(date)) {
+					buildCount++;
+				}
+			}
+		}
+
+		return buildCount;
+	}
+
 	public String getURL() {
 		return _masterURL;
 	}
@@ -757,7 +853,31 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	}
 
 	public boolean matchesLabelExpression(String labelExpression) {
-		return _matchesLabels(labelExpression, getAssignedLabels());
+		if (_matchesLabels(labelExpression, getAssignedLabels())) {
+			return true;
+		}
+
+		for (JenkinsSlave jenkinsSlave : getJenkinsSlaves()) {
+			if (jenkinsSlave.isEC2FleetNodeComputer() ||
+				jenkinsSlave.isOffline()) {
+
+				continue;
+			}
+
+			if (_matchesLabels(
+					labelExpression, jenkinsSlave.getAssignedLabels())) {
+
+				return true;
+			}
+		}
+
+		for (AWSFleetCloud awsFleetCloud : getAWSFleetClouds()) {
+			if (_matchesLabels(labelExpression, awsFleetCloud.getLabels())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	@Override
@@ -780,15 +900,19 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 			return;
 		}
 
+		_labelExpressionLabels.clear();
+
 		if (!isAvailable()) {
 			_assignedLabels.clear();
 			_buildURLs.clear();
 			_jenkinsSlavesMap.clear();
 			_labelBatchSizes.clear();
-			_labelExpressionLabels.clear();
 
 			return;
 		}
+
+		_assignedLabels.clear();
+		_labelBatchSizes.clear();
 
 		JSONObject computerAPIJSONObject = null;
 
@@ -1238,29 +1362,29 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 
 		Set<String> labels = new HashSet<>();
 
-		labels.addAll(getAssignedLabels());
+		if (_matchesLabels(labelExpression, getAssignedLabels())) {
+			labels.addAll(getAssignedLabels());
+		}
 
 		for (JenkinsSlave jenkinsSlave : getJenkinsSlaves()) {
 			if (jenkinsSlave.isEC2FleetNodeComputer()) {
 				continue;
 			}
 
-			labels.addAll(jenkinsSlave.getAssignedLabels());
-		}
+			if (_matchesLabels(
+					labelExpression, jenkinsSlave.getAssignedLabels())) {
 
-		for (AWSFleetCloud awsFleetCloud : getAWSFleetClouds()) {
-			labels.addAll(awsFleetCloud.getLabels());
-		}
-
-		List<String> matchingLabels = new ArrayList<>();
-
-		for (String label : labels) {
-			if (_matchesLabels(labelExpression, Arrays.asList(label))) {
-				matchingLabels.add(label);
+				labels.addAll(jenkinsSlave.getAssignedLabels());
 			}
 		}
 
-		_labelExpressionLabels.put(labelExpression, matchingLabels);
+		for (AWSFleetCloud awsFleetCloud : getAWSFleetClouds()) {
+			if (_matchesLabels(labelExpression, awsFleetCloud.getLabels())) {
+				labels.addAll(awsFleetCloud.getLabels());
+			}
+		}
+
+		_labelExpressionLabels.put(labelExpression, new ArrayList<>(labels));
 
 		return _labelExpressionLabels.get(labelExpression);
 	}
@@ -1286,20 +1410,18 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	private synchronized int _getRecentBatchSizesTotal(String labelExpression) {
 		int recentBatchSizesTotal = 0;
 
+		long currentTimestamp = JenkinsResultsParserUtil.getCurrentTimeMillis();
+
 		if (JenkinsResultsParserUtil.isNullOrEmpty(labelExpression)) {
 			labelExpression = null;
 		}
 
-		long currentTimestamp = JenkinsResultsParserUtil.getCurrentTimeMillis();
+		List<String> labels = _getLabels(labelExpression);
 
 		for (Map.Entry<String, Map<Long, Integer>> labelBatchSizesEntry :
 				_labelBatchSizes.entrySet()) {
 
 			String label = labelBatchSizesEntry.getKey();
-
-			if ((labelExpression != null) && !labelExpression.equals(label)) {
-				continue;
-			}
 
 			Map<Long, Integer> batchSizes = labelBatchSizesEntry.getValue();
 
@@ -1318,7 +1440,11 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 					continue;
 				}
 
-				recentBatchSizesTotal += entry.getValue();
+				if ((labelExpression == null) ||
+					_matchesLabels(label, labels)) {
+
+					recentBatchSizesTotal += entry.getValue();
+				}
 			}
 
 			for (Long expiredTimestamp : expiredTimestamps) {
@@ -1355,6 +1481,41 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 		}
 
 		return usableNodeCount;
+	}
+
+	private boolean _isTopLevelJobName(String jobName) {
+		if (_topLevelJobNames != null) {
+			return _topLevelJobNames.contains(jobName);
+		}
+
+		_topLevelJobNames = new ArrayList<>();
+
+		try {
+			JSONObject topLevelBuildsJSONObject =
+				JenkinsResultsParserUtil.toJSONObject(
+					getURL() + "/view/Top%20Level/api/json?tree=jobs[name]");
+
+			JSONArray jobsJSONArray = topLevelBuildsJSONObject.optJSONArray(
+				"jobs");
+
+			if (jobsJSONArray == null) {
+				return false;
+			}
+
+			for (int i = 0; i < jobsJSONArray.length(); i++) {
+				JSONObject jobJSONObject = jobsJSONArray.optJSONObject(i);
+
+				if (jobJSONObject == null) {
+					continue;
+				}
+
+				_topLevelJobNames.add(jobJSONObject.getString("name"));
+			}
+		}
+		catch (IOException ioException) {
+		}
+
+		return _topLevelJobNames.contains(jobName);
 	}
 
 	private synchronized boolean _isUpdated() {
@@ -1451,6 +1612,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	private long _awsFleetCloudLastUpdateTimestamp;
 	private List<AWSFleetCloud> _awsFleetClouds;
 	private boolean _blacklisted;
+	private JSONObject _buildCountJSONObject;
 	private final Map<String, List<JSONObject>> _buildJSONObjectsMap =
 		new HashMap<>();
 	private final Map<String, Long> _buildsUpdateTimes = new HashMap<>();
@@ -1473,6 +1635,7 @@ public class JenkinsMaster implements JenkinsNode<JenkinsMaster> {
 	private Long _queueUpdateTime;
 	private final Integer _slaveRAM;
 	private final Integer _slavesPerHost;
+	private List<String> _topLevelJobNames;
 	private long _updateTimestamp = -1;
 
 }

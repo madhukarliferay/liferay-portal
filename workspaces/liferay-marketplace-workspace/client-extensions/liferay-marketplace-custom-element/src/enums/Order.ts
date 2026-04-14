@@ -6,6 +6,8 @@
 export enum OrderCustomFields {
 	ANALYTICS_GROUP_ID = 'analytics-group-id',
 	CLOUD_PROVISIONING = 'cloud-provisioning',
+	KORONEIKI_PROJECT = 'koroneiki-project',
+	ORDER_METADATA = 'order-metadata',
 	PROJECT_NAME = 'project-name',
 	TRIAL_END_DATE = 'trial-end-date',
 	TRIAL_ERROR = 'trial-error',
@@ -26,14 +28,17 @@ export enum OrderStatus {
 
 export enum OrderTypes {
 	ADDONS = 'ADDONS',
+	AI_HUB = 'AI_HUB',
 	CLIENT_EXTENSION = 'CLIENT_EXTENSION',
-	CLOUDAPP = 'CLOUDAPP',
+	CLOUD_APP = 'CLOUD_APP',
+	CMP = 'CMP_BETA',
 	COMPOSITE_APP = 'COMPOSITE_APP',
-	DXPAPP = 'DXPAPP',
+	DXP = 'DXP',
+	DXP_APP = 'DXP_APP',
 	LOW_CODE_CONFIGURATION = 'LOW_CODE_CONFIGURATION',
 	OTHER = 'OTHER',
-	SOLUTIONS7 = 'SOLUTIONS7',
 	SOLUTIONS30 = 'SOLUTIONS30',
+	SOLUTIONS7 = 'SOLUTIONS7',
 	SSA_SAAS = 'SSA_SAAS',
 }
 
@@ -44,31 +49,36 @@ export enum OrderWorkflowStatusCode {
 	ON_HOLD = 20,
 	PENDING = 1,
 	PROCESSING = 10,
+	PENDING_PAYMENT = 99,
 }
 
 export enum PaymentStatus {
-	PAID = 0,
-	PENDING = 1,
-	PAYMENT_PENDING = 2,
+	CANCELED = 8,
 	FAILED = 4,
+	PAID = 0,
+	PAYMENT_PENDING = 2,
+	PENDING = 1,
 }
 
 export const orderTypeLabel = {
 	[OrderTypes.ADDONS]: 'Add-Ons',
+	[OrderTypes.AI_HUB]: 'AI Hub',
 	[OrderTypes.CLIENT_EXTENSION]: 'Client Extension',
-	[OrderTypes.CLOUDAPP]: 'Cloud',
+	[OrderTypes.CLOUD_APP]: 'Cloud',
+	[OrderTypes.CMP]: 'Content Marketing Platform',
 	[OrderTypes.COMPOSITE_APP]: 'Composite App',
-	[OrderTypes.DXPAPP]: 'DXP',
+	[OrderTypes.DXP_APP]: 'DXP',
+	[OrderTypes.DXP]: 'DXP Free',
 	[OrderTypes.LOW_CODE_CONFIGURATION]: 'Low-Code Configuration',
 	[OrderTypes.OTHER]: 'Other',
-	[OrderTypes.SSA_SAAS]: 'SSA SaaS',
 	[OrderTypes.SOLUTIONS7]: 'Solutions 7',
 	[OrderTypes.SOLUTIONS30]: 'Solutions 30',
+	[OrderTypes.SSA_SAAS]: 'SSA SaaS',
 } as const;
 
 export const orderWorkflowDisplayType = {
-	[OrderWorkflowStatusCode.COMPLETED]: 'success',
 	[OrderWorkflowStatusCode.CANCELLED]: 'warning',
+	[OrderWorkflowStatusCode.COMPLETED]: 'success',
 	[OrderWorkflowStatusCode.IN_PROGRESS]: 'info',
 	[OrderWorkflowStatusCode.ON_HOLD]: 'secondary',
 	[OrderWorkflowStatusCode.PENDING]: 'warning',
@@ -76,11 +86,12 @@ export const orderWorkflowDisplayType = {
 } as const;
 
 export const orderWorkflowStatusCodeLabels = {
-	[OrderWorkflowStatusCode.CANCELLED]: 'Canceled',
+	[OrderWorkflowStatusCode.CANCELLED]: 'Cancelled',
 	[OrderWorkflowStatusCode.COMPLETED]: 'Completed',
 	[OrderWorkflowStatusCode.IN_PROGRESS]: 'In Progress',
 	[OrderWorkflowStatusCode.ON_HOLD]: 'On Hold',
 	[OrderWorkflowStatusCode.PENDING]: 'Pending',
+	[OrderWorkflowStatusCode.PENDING_PAYMENT]: 'Pending Payment',
 	[OrderWorkflowStatusCode.PROCESSING]: 'Processing',
 } as const;
 
@@ -89,3 +100,30 @@ export const paymentWorkflowDisplayType = {
 	[PaymentStatus.PENDING]: 'secondary',
 	[PaymentStatus.PAYMENT_PENDING]: 'warning',
 } as const;
+
+export function getOrderStatusLabel(order: PlacedOrder) {
+	if (
+		[OrderTypes.ADDONS, OrderTypes.CMP, OrderTypes.DXP].includes(
+			order.orderTypeExternalReferenceCode as OrderTypes
+		)
+	) {
+		return (
+			{
+				[OrderWorkflowStatusCode.CANCELLED]: 'Expired',
+				[OrderWorkflowStatusCode.COMPLETED]: 'Active',
+				[OrderWorkflowStatusCode.IN_PROGRESS]: 'Active',
+				[OrderWorkflowStatusCode.ON_HOLD]: 'Pending',
+				[OrderWorkflowStatusCode.PENDING]: 'Pending',
+				[OrderWorkflowStatusCode.PROCESSING]: 'Pending',
+			}[order.orderStatusInfo.code] || order.orderStatusInfo.label
+		);
+	}
+
+	if (order.orderTypeExternalReferenceCode === OrderTypes.AI_HUB) {
+		if (order.orderStatusInfo.code !== OrderWorkflowStatusCode.COMPLETED) {
+			return 'Requested';
+		}
+	}
+
+	return order.orderStatusInfo.label;
+}

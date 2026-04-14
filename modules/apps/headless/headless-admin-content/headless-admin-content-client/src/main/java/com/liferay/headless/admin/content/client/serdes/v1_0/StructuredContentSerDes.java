@@ -570,9 +570,7 @@ public class StructuredContentSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(structuredContent.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -1427,3 +1425,4 @@ public class StructuredContentSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-921095648

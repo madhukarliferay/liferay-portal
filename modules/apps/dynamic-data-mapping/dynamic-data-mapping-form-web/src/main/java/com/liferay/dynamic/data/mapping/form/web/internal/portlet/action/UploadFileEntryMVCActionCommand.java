@@ -24,16 +24,17 @@ import com.liferay.dynamic.data.mapping.util.DDMFormUtil;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -208,13 +209,13 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 				DDMFormConstants.SERVICE_NAME, folderId, file, uniqueFileName,
 				mimeType, true);
 
+			Role role = _roleLocalService.getRole(
+				themeDisplay.getCompanyId(), RoleConstants.GUEST);
+
 			_resourcePermissionLocalService.removeResourcePermission(
 				themeDisplay.getCompanyId(), DLFileEntry.class.getName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(fileEntry.getFileEntryId()),
-				_roleLocalService.getRole(
-					themeDisplay.getCompanyId(), RoleConstants.GUEST
-				).getRoleId(),
+				String.valueOf(fileEntry.getFileEntryId()), role.getRoleId(),
 				ActionKeys.VIEW);
 
 			return fileEntry;

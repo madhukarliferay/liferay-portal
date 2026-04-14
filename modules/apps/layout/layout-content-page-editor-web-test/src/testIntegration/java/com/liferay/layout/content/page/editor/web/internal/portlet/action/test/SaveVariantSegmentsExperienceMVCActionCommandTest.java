@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -113,7 +114,7 @@ public class SaveVariantSegmentsExperienceMVCActionCommandTest {
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceService.addSegmentsExperience(
-				null, _group.getGroupId(), 0, _layout.getPlid(),
+				null, _group.getGroupId(), null, null, _layout.getPlid(),
 				Collections.singletonMap(
 					LocaleUtil.getSiteDefault(), "Variant 1"),
 				false, new UnicodeProperties(true), _serviceContext);
@@ -206,9 +207,12 @@ public class SaveVariantSegmentsExperienceMVCActionCommandTest {
 
 		return ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			null, fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), layout, fragmentEntry.getFragmentEntryKey(),
-			segmentsExperienceId, fragmentEntry.getType());
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), _draftLayout.getGroupId()),
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), layout,
+			fragmentEntry.getFragmentEntryKey(), segmentsExperienceId,
+			fragmentEntry.getType());
 	}
 
 	private FragmentEntry _getFragmentEntry() throws Exception {

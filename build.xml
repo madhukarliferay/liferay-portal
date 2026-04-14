@@ -20,7 +20,7 @@
 						includes=".liferay-home"
 					/>
 					<fileset
-						dir="${liferay.home}/data/elasticsearch7"
+						dir="${liferay.home}/data/elasticsearch8"
 					/>
 					<fileset
 						dir="${liferay.home}/data/hypersonic"
@@ -283,6 +283,8 @@ message.
 	</target>
 
 	<target name="compile">
+		<lstopwatch action="start" name="compile" />
+
 		<setup-sdk />
 
 		<setup-libs />
@@ -314,6 +316,8 @@ message.
 		<ant dir="portal-test" inheritAll="false" target="compile" />
 
 		<print-current-time />
+
+		<lstopwatch action="total" name="compile" />
 	</target>
 
 	<target name="compile-test">
@@ -389,27 +393,25 @@ message.
 				<if>
 					<equals arg1="${marker.files.lfrbuild.ci.enabled}" arg2="true" />
 					<then>
-						<sequential>
-							<for param="lfrbuild.file">
-								<fileset
-									dir="${project.dir}/modules"
-									includes="**/.lfrbuild-ci"
+						<dirset
+							dir="${project.dir}/modules"
+							id="lfrbuild-ci.dirs"
+						>
+							<present targetdir="${project.dir}/modules">
+								<globmapper
+									from="*"
+									to="*/.lfrbuild-ci"
 								/>
-								<sequential>
-									<local name="lfrbuild.dir" />
+							</present>
+						</dirset>
 
-									<antelope:stringutil property="lfrbuild.dir" string="@{lfrbuild.file}">
-										<antelope:replace regex="\\" replacement="/" />
-									</antelope:stringutil>
+						<pathconvert pathsep=" " property="ci.build.module.deploy.tasks" refid="lfrbuild-ci.dirs">
+							<regexpmapper from=".*modules/([^/]+)/([^/]+)$" to=":\1:\2:deploy" />
+						</pathconvert>
 
-									<antelope:stringutil property="lfrbuild.dir" string="${lfrbuild.dir}">
-										<antelope:replace regex="(.+)\/\.lfrbuild-ci" replacement="$1" />
-									</antelope:stringutil>
-
-									<gradle-execute dir="${lfrbuild.dir}" task="deploy" />
-								</sequential>
-							</for>
-						</sequential>
+						<gradle-execute dir="${project.dir}/modules" task="${ci.build.module.deploy.tasks}">
+							<arg value="--parallel" />
+						</gradle-execute>
 					</then>
 				</if>
 			</then>
@@ -571,6 +573,8 @@ message.
 	</target>
 
 	<target name="install-portal-snapshots">
+		<lstopwatch action="start" name="install.portal.snapshots" />
+
 		<ant dir="portal-impl" inheritAll="false" target="install-portal-snapshot" />
 		<ant dir="portal-kernel" inheritAll="false" target="install-portal-snapshot" />
 		<ant dir="portal-test" inheritAll="false" target="install-portal-snapshot" />
@@ -580,6 +584,8 @@ message.
 		<ant dir="util-java" inheritAll="false" target="install-portal-snapshot" />
 		<ant dir="util-slf4j" inheritAll="false" target="install-portal-snapshot" />
 		<ant dir="util-taglib" inheritAll="false" target="install-portal-snapshot" />
+
+		<lstopwatch action="total" name="install.portal.snapshots" />
 	</target>
 
 	<target name="jar">
@@ -1089,6 +1095,42 @@ This target has been renamed to "snapshot-bundle". Please call "snapshot-bundle"
 					</then>
 				</if>
 			</then>
+			<elseif>
+				<equals arg1="${app.server.type}" arg2="weblogic" />
+				<then>
+					<replace
+						file="${app.server.weblogic.portal.dir}/WEB-INF/web.xml"
+					>
+						<replacetoken><![CDATA[version="6.0"]]></replacetoken>
+						<replacevalue><![CDATA[version="5.0"]]></replacevalue>
+					</replace>
+
+					<replace
+						file="${app.server.weblogic.portal.dir}/WEB-INF/web.xml"
+					>
+						<replacetoken><![CDATA[https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd]]></replacetoken>
+						<replacevalue><![CDATA[https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd]]></replacevalue>
+					</replace>
+
+					<touch file="${app.server.weblogic.portal.dir}/WEB-INF/REDEPLOY" />
+
+					<!-- Temporary workaround for LPD-68782 -->
+
+					<unjar
+						dest="temp-unjar"
+						src="${app.server.shielded-container-lib.portal.dir}/portal-kernel.jar"
+					/>
+
+					<jar
+						basedir="temp-unjar"
+						destfile="${app.server.shielded-container-lib.portal.dir}/portal-kernel.jar"
+						excludes="jakarta/**/*.class"
+						manifest="temp-unjar/META-INF/MANIFEST.MF"
+					/>
+
+					<delete dir="temp-unjar" />
+				</then>
+			</elseif>
 		</if>
 	</target>
 
@@ -1310,19 +1352,6 @@ This target has been renamed to "snapshot-bundle". Please call "snapshot-bundle"
 				<dtd location="${definitions.dir}/liferay-resource-action-mapping_7_2_0.dtd" publicId="-//Liferay//DTD Resource Action Mapping 7.2.0//EN" />
 				<dtd location="${definitions.dir}/liferay-resource-action-mapping_7_3_0.dtd" publicId="-//Liferay//DTD Resource Action Mapping 7.3.0//EN" />
 				<dtd location="${definitions.dir}/liferay-resource-action-mapping_7_4_0.dtd" publicId="-//Liferay//DTD Resource Action Mapping 7.4.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_3_5_0.dtd" publicId="-//Liferay//DTD Service Builder 3.5.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_3_6_1.dtd" publicId="-//Liferay//DTD Service Builder 3.6.1//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_4_0_0.dtd" publicId="-//Liferay//DTD Service Builder 4.0.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_4_2_0.dtd" publicId="-//Liferay//DTD Service Builder 4.2.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_4_3_0.dtd" publicId="-//Liferay//DTD Service Builder 4.3.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_4_3_3.dtd" publicId="-//Liferay//DTD Service Builder 4.3.3//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_4_4_0.dtd" publicId="-//Liferay//DTD Service Builder 4.4.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_5_0_0.dtd" publicId="-//Liferay//DTD Service Builder 5.0.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_5_1_0.dtd" publicId="-//Liferay//DTD Service Builder 5.1.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_5_2_0.dtd" publicId="-//Liferay//DTD Service Builder 5.2.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_6_0_0.dtd" publicId="-//Liferay//DTD Service Builder 6.0.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_6_1_0.dtd" publicId="-//Liferay//DTD Service Builder 6.1.0//EN" />
-				<dtd location="${definitions.dir}/liferay-service-builder_6_2_0.dtd" publicId="-//Liferay//DTD Service Builder 6.2.0//EN" />
 				<dtd location="${definitions.dir}/liferay-service-builder_7_0_0.dtd" publicId="-//Liferay//DTD Service Builder 7.0.0//EN" />
 				<dtd location="${definitions.dir}/liferay-service-builder_7_1_0.dtd" publicId="-//Liferay//DTD Service Builder 7.1.0//EN" />
 				<dtd location="${definitions.dir}/liferay-service-builder_7_2_0.dtd" publicId="-//Liferay//DTD Service Builder 7.2.0//EN" />

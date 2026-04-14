@@ -68,9 +68,7 @@ public class ClassNameReferenceSerDes {
 			sb.append("\"collectionType\": ");
 
 			sb.append("\"");
-
 			sb.append(classNameReference.getCollectionType());
-
 			sb.append("\"");
 		}
 
@@ -239,3 +237,4 @@ public class ClassNameReferenceSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-231401096

@@ -208,54 +208,6 @@ public class SAPEntryUtil {
 	}
 
 	/**
-	 * Returns the last sap entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry
-	 * @throws NoSuchEntryException if a matching sap entry could not be found
-	 */
-	public static SAPEntry findByUuid_Last(
-			String uuid, OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sap entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry, or <code>null</code> if a matching sap entry could not be found
-	 */
-	public static SAPEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<SAPEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] findByUuid_PrevAndNext(
-			long sapEntryId, String uuid,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			sapEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sap entries that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -302,25 +254,6 @@ public class SAPEntryUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set of sap entries that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] filterFindByUuid_PrevAndNext(
-			long sapEntryId, String uuid,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			sapEntryId, uuid, orderByComparator);
 	}
 
 	/**
@@ -463,61 +396,6 @@ public class SAPEntryUtil {
 	}
 
 	/**
-	 * Returns the last sap entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry
-	 * @throws NoSuchEntryException if a matching sap entry could not be found
-	 */
-	public static SAPEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sap entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry, or <code>null</code> if a matching sap entry could not be found
-	 */
-	public static SAPEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SAPEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] findByUuid_C_PrevAndNext(
-			long sapEntryId, String uuid, long companyId,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			sapEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sap entries that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -569,26 +447,6 @@ public class SAPEntryUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set of sap entries that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] filterFindByUuid_C_PrevAndNext(
-			long sapEntryId, String uuid, long companyId,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			sapEntryId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -726,56 +584,6 @@ public class SAPEntryUtil {
 	}
 
 	/**
-	 * Returns the last sap entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry
-	 * @throws NoSuchEntryException if a matching sap entry could not be found
-	 */
-	public static SAPEntry findByCompanyId_Last(
-			long companyId, OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sap entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry, or <code>null</code> if a matching sap entry could not be found
-	 */
-	public static SAPEntry fetchByCompanyId_Last(
-		long companyId, OrderByComparator<SAPEntry> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] findByCompanyId_PrevAndNext(
-			long sapEntryId, long companyId,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			sapEntryId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sap entries that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -822,25 +630,6 @@ public class SAPEntryUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set of sap entries that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] filterFindByCompanyId_PrevAndNext(
-			long sapEntryId, long companyId,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			sapEntryId, companyId, orderByComparator);
 	}
 
 	/**
@@ -987,61 +776,6 @@ public class SAPEntryUtil {
 	}
 
 	/**
-	 * Returns the last sap entry in the ordered set where companyId = &#63; and defaultSAPEntry = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultSAPEntry the default sap entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry
-	 * @throws NoSuchEntryException if a matching sap entry could not be found
-	 */
-	public static SAPEntry findByC_D_Last(
-			long companyId, boolean defaultSAPEntry,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByC_D_Last(
-			companyId, defaultSAPEntry, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sap entry in the ordered set where companyId = &#63; and defaultSAPEntry = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultSAPEntry the default sap entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sap entry, or <code>null</code> if a matching sap entry could not be found
-	 */
-	public static SAPEntry fetchByC_D_Last(
-		long companyId, boolean defaultSAPEntry,
-		OrderByComparator<SAPEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_D_Last(
-			companyId, defaultSAPEntry, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set where companyId = &#63; and defaultSAPEntry = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param companyId the company ID
-	 * @param defaultSAPEntry the default sap entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] findByC_D_PrevAndNext(
-			long sapEntryId, long companyId, boolean defaultSAPEntry,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().findByC_D_PrevAndNext(
-			sapEntryId, companyId, defaultSAPEntry, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sap entries that the user has permission to view where companyId = &#63; and defaultSAPEntry = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1094,26 +828,6 @@ public class SAPEntryUtil {
 
 		return getPersistence().filterFindByC_D(
 			companyId, defaultSAPEntry, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sap entries before and after the current sap entry in the ordered set of sap entries that the user has permission to view where companyId = &#63; and defaultSAPEntry = &#63;.
-	 *
-	 * @param sapEntryId the primary key of the current sap entry
-	 * @param companyId the company ID
-	 * @param defaultSAPEntry the default sap entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sap entry
-	 * @throws NoSuchEntryException if a sap entry with the primary key could not be found
-	 */
-	public static SAPEntry[] filterFindByC_D_PrevAndNext(
-			long sapEntryId, long companyId, boolean defaultSAPEntry,
-			OrderByComparator<SAPEntry> orderByComparator)
-		throws com.liferay.portal.security.service.access.policy.exception.
-			NoSuchEntryException {
-
-		return getPersistence().filterFindByC_D_PrevAndNext(
-			sapEntryId, companyId, defaultSAPEntry, orderByComparator);
 	}
 
 	/**
@@ -1375,3 +1089,4 @@ public class SAPEntryUtil {
 	private static volatile SAPEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1974374794

@@ -27,6 +27,7 @@ import {
 	ReferencedObjectsContext,
 	withReferencedObjectsProvider
 } from './context/referencedObjects';
+import {SegmentEnabledSequentialCard} from 'segment/components/SegmentEnabledSequentialCard';
 import {SegmentStates, SegmentTypes} from 'shared/util/constants';
 
 /**
@@ -47,7 +48,13 @@ export function validateSegmentEditor(criteria) {
 }
 
 const CriteriaBuilderForm = withField(
-	({channelId, field: {name, value}, groupId, ...fieldProps}) => {
+	({
+		channelId,
+		field: {name, value},
+		groupId,
+		segmentType,
+		...fieldProps
+	}) => {
 		const handleChange = criteria => {
 			const {
 				form: {setFieldValue}
@@ -63,6 +70,7 @@ const CriteriaBuilderForm = withField(
 				criteria={value}
 				groupId={groupId}
 				onChange={handleChange}
+				segmentType={segmentType}
 			/>
 		);
 	}
@@ -86,6 +94,7 @@ interface ISegmentEditorProps {
 	) => void;
 	propertyGroupsIList: List<PropertyGroup>;
 	segment: Segment;
+	type: SegmentTypes;
 }
 
 class SegmentEditor extends React.Component<ISegmentEditorProps> {
@@ -95,14 +104,19 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 		segment: new Segment()
 	};
 
+	state = {
+		enabledSequentialSegment: false
+	};
+
 	_formRef = React.createRef<Formik>();
 
 	@autobind
-	createDynamicSegment({criteria, includeAnonymousUsers, name}) {
+	createSegment({criteria, includeAnonymousUsers, name}) {
 		const {
 			channelId,
 			groupId,
-			segment: {id}
+			segment: {id},
+			type
 		} = this.props;
 
 		const request = id
@@ -114,7 +128,7 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 			description: '',
 			includeAnonymousUsers,
 			name: name.trim(),
-			segmentType: SegmentTypes.Dynamic
+			segmentType: type
 		};
 
 		return request({...requestData, channelId, groupId, id});
@@ -137,7 +151,7 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 	handleSubmit(form) {
 		const {onSubmit} = this.props;
 
-		onSubmit(form, this._formRef, this.createDynamicSegment);
+		onSubmit(form, this._formRef, this.createSegment);
 	}
 
 	render() {
@@ -154,7 +168,8 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 					includeAnonymousUsers,
 					name,
 					state: segmentState
-				}
+				},
+				type
 			}
 		} = this;
 
@@ -215,6 +230,7 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 										includeAnonymousUsers={
 											includeAnonymousUsers
 										}
+										segmentType={type}
 										valid={isValid && hasChanges}
 									/>
 
@@ -231,6 +247,23 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 											<div className='contributor-container'>
 												<div className='container-fluid container-fluid-max-xl'>
 													<div className='content-wrapper'>
+														{type ===
+															SegmentTypes.RealTime && (
+															<SegmentEnabledSequentialCard
+																onToggle={value =>
+																	this.setState(
+																		{
+																			enabledSequentialSegment: value
+																		}
+																	)
+																}
+																toggled={
+																	this.state
+																		.enabledSequentialSegment
+																}
+															/>
+														)}
+
 														{segmentState ===
 															SegmentStates.Disabled && (
 															<EmbeddedAlertList
@@ -251,21 +284,22 @@ class SegmentEditor extends React.Component<ISegmentEditorProps> {
 															/>
 														)}
 
-														<div className='sheet'>
-															<CriteriaBuilderForm
-																channelId={
-																	channelId
-																}
-																groupId={
-																	groupId
-																}
-																id={id}
-																name='criteria'
-																validate={
-																	validateSegmentEditor
-																}
-															/>
-														</div>
+														<CriteriaBuilderForm
+															channelId={
+																channelId
+															}
+															enabledSequentialSegment={
+																this.state
+																	.enabledSequentialSegment
+															}
+															groupId={groupId}
+															id={id}
+															name='criteria'
+															segmentType={type}
+															validate={
+																validateSegmentEditor
+															}
+														/>
 													</div>
 												</div>
 											</div>

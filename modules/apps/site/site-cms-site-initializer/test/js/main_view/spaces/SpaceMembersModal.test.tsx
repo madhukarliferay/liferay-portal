@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 
@@ -21,11 +21,13 @@ jest.mock(
 
 const mockUsers = [
 	{
+		externalReferenceCode: 'ERC_1',
 		id: '1',
 		name: 'John Doe',
 		roles: [{id: 1, name: 'Admin'}],
 	},
 	{
+		externalReferenceCode: 'ERC_2',
 		id: '2',
 		name: 'Jane Smith',
 		roles: [{id: 2, name: 'Contributor'}],
@@ -35,7 +37,7 @@ const mockUsers = [
 describe('SpaceMembersModal', () => {
 	const props = {
 		assetLibraryCreatorUserId: '1',
-		assetLibraryId: '123',
+		externalReferenceCode: 'ERC',
 		hasAssignMembersPermission: true,
 	};
 
@@ -98,8 +100,10 @@ describe('SpaceMembersModal', () => {
 			expect(getSpaceUsersSpy).toHaveBeenCalledTimes(1);
 		});
 
-		expect(screen.getByText('all-members')).toBeInTheDocument();
-		expect(screen.getByLabelText('who-has-access')).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByText('all-members')).toBeInTheDocument();
+			expect(screen.getByLabelText('who-has-access')).toBeInTheDocument();
+		});
 	});
 
 	it('displays the members list correctly from the service', async () => {
@@ -127,7 +131,7 @@ describe('SpaceMembersModal', () => {
 	});
 
 	describe('when hasAssignMembersPermission is false', () => {
-		it('renders a disabled add members input and does not render remove buttons', async () => {
+		it('renders a search input instead of the add members input and does not render remove buttons', async () => {
 			render(
 				<SpaceMembersModal
 					{...props}
@@ -136,14 +140,18 @@ describe('SpaceMembersModal', () => {
 			);
 
 			expect(
-				screen.getByRole('combobox', {
+				screen.queryByRole('combobox', {
 					name: 'add-people-to-collaborate',
 				})
+			).not.toBeInTheDocument();
+
+			expect(
+				screen.getByPlaceholderText('search-for-name-or-email')
 			).toBeInTheDocument();
 
 			expect(
-				screen.getByPlaceholderText('enter-name-or-email')
-			).toBeDisabled();
+				screen.getByPlaceholderText('search-for-name-or-email')
+			).not.toBeDisabled();
 
 			await waitFor(() => {
 				expect(screen.getByText(mockUsers[1].name)).toBeInTheDocument();

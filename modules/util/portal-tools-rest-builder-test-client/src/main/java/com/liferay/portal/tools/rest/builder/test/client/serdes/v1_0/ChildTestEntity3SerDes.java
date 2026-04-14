@@ -221,9 +221,7 @@ public class ChildTestEntity3SerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(childTestEntity3.getType());
-
 			sb.append("\"");
 		}
 
@@ -588,3 +586,4 @@ public class ChildTestEntity3SerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1080431968

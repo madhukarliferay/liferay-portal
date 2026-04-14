@@ -71,9 +71,7 @@ public class FragmentLinkValueSerDes {
 			sb.append("\"target\": ");
 
 			sb.append("\"");
-
 			sb.append(fragmentLinkValue.getTarget());
-
 			sb.append("\"");
 		}
 
@@ -238,3 +236,4 @@ public class FragmentLinkValueSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:95810818

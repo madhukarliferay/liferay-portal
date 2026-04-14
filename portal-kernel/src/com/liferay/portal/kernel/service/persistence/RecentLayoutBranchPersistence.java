@@ -119,47 +119,6 @@ public interface RecentLayoutBranchPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last recent layout branch in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching recent layout branch
-	 * @throws NoSuchRecentLayoutBranchException if a matching recent layout branch could not be found
-	 */
-	public RecentLayoutBranch findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-				orderByComparator)
-		throws NoSuchRecentLayoutBranchException;
-
-	/**
-	 * Returns the last recent layout branch in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching recent layout branch, or <code>null</code> if a matching recent layout branch could not be found
-	 */
-	public RecentLayoutBranch fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-			orderByComparator);
-
-	/**
-	 * Returns the recent layout branches before and after the current recent layout branch in the ordered set where groupId = &#63;.
-	 *
-	 * @param recentLayoutBranchId the primary key of the current recent layout branch
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next recent layout branch
-	 * @throws NoSuchRecentLayoutBranchException if a recent layout branch with the primary key could not be found
-	 */
-	public RecentLayoutBranch[] findByGroupId_PrevAndNext(
-			long recentLayoutBranchId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-				orderByComparator)
-		throws NoSuchRecentLayoutBranchException;
-
-	/**
 	 * Removes all the recent layout branches where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -260,47 +219,6 @@ public interface RecentLayoutBranchPersistence
 		long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
 			orderByComparator);
-
-	/**
-	 * Returns the last recent layout branch in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching recent layout branch
-	 * @throws NoSuchRecentLayoutBranchException if a matching recent layout branch could not be found
-	 */
-	public RecentLayoutBranch findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-				orderByComparator)
-		throws NoSuchRecentLayoutBranchException;
-
-	/**
-	 * Returns the last recent layout branch in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching recent layout branch, or <code>null</code> if a matching recent layout branch could not be found
-	 */
-	public RecentLayoutBranch fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-			orderByComparator);
-
-	/**
-	 * Returns the recent layout branches before and after the current recent layout branch in the ordered set where userId = &#63;.
-	 *
-	 * @param recentLayoutBranchId the primary key of the current recent layout branch
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next recent layout branch
-	 * @throws NoSuchRecentLayoutBranchException if a recent layout branch with the primary key could not be found
-	 */
-	public RecentLayoutBranch[] findByUserId_PrevAndNext(
-			long recentLayoutBranchId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-				orderByComparator)
-		throws NoSuchRecentLayoutBranchException;
 
 	/**
 	 * Removes all the recent layout branches where userId = &#63; from the database.
@@ -404,47 +322,6 @@ public interface RecentLayoutBranchPersistence
 		long layoutBranchId,
 		com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
 			orderByComparator);
-
-	/**
-	 * Returns the last recent layout branch in the ordered set where layoutBranchId = &#63;.
-	 *
-	 * @param layoutBranchId the layout branch ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching recent layout branch
-	 * @throws NoSuchRecentLayoutBranchException if a matching recent layout branch could not be found
-	 */
-	public RecentLayoutBranch findByLayoutBranchId_Last(
-			long layoutBranchId,
-			com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-				orderByComparator)
-		throws NoSuchRecentLayoutBranchException;
-
-	/**
-	 * Returns the last recent layout branch in the ordered set where layoutBranchId = &#63;.
-	 *
-	 * @param layoutBranchId the layout branch ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching recent layout branch, or <code>null</code> if a matching recent layout branch could not be found
-	 */
-	public RecentLayoutBranch fetchByLayoutBranchId_Last(
-		long layoutBranchId,
-		com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-			orderByComparator);
-
-	/**
-	 * Returns the recent layout branches before and after the current recent layout branch in the ordered set where layoutBranchId = &#63;.
-	 *
-	 * @param recentLayoutBranchId the primary key of the current recent layout branch
-	 * @param layoutBranchId the layout branch ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next recent layout branch
-	 * @throws NoSuchRecentLayoutBranchException if a recent layout branch with the primary key could not be found
-	 */
-	public RecentLayoutBranch[] findByLayoutBranchId_PrevAndNext(
-			long recentLayoutBranchId, long layoutBranchId,
-			com.liferay.portal.kernel.util.OrderByComparator<RecentLayoutBranch>
-				orderByComparator)
-		throws NoSuchRecentLayoutBranchException;
 
 	/**
 	 * Removes all the recent layout branches where layoutBranchId = &#63; from the database.
@@ -641,3 +518,4 @@ public interface RecentLayoutBranchPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1937788560

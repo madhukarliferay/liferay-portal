@@ -30,8 +30,8 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.InputStream;
 
@@ -267,7 +267,7 @@ public class DLFileVersionCTDisplayRenderer
 
 		return store.getFileAsStream(
 			dlFileVersion.getCompanyId(), dlFileEntry.getDataRepositoryId(),
-			dlFileEntry.getName(), parts[0]);
+			dlFileEntry.getName(), dlFileVersion.getStoreFileName());
 	}
 
 	@Override

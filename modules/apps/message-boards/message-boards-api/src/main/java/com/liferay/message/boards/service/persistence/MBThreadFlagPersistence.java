@@ -121,47 +121,6 @@ public interface MBThreadFlagPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last message boards thread flag in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag
-	 * @throws NoSuchThreadFlagException if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
-	 * Returns the last message boards thread flag in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag, or <code>null</code> if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards thread flags before and after the current message boards thread flag in the ordered set where uuid = &#63;.
-	 *
-	 * @param threadFlagId the primary key of the current message boards thread flag
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread flag
-	 * @throws NoSuchThreadFlagException if a message boards thread flag with the primary key could not be found
-	 */
-	public MBThreadFlag[] findByUuid_PrevAndNext(
-			long threadFlagId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
 	 * Removes all the message boards thread flags where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface MBThreadFlagPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last message boards thread flag in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag
-	 * @throws NoSuchThreadFlagException if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
-	 * Returns the last message boards thread flag in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag, or <code>null</code> if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards thread flags before and after the current message boards thread flag in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param threadFlagId the primary key of the current message boards thread flag
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread flag
-	 * @throws NoSuchThreadFlagException if a message boards thread flag with the primary key could not be found
-	 */
-	public MBThreadFlag[] findByUuid_C_PrevAndNext(
-			long threadFlagId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
 	 * Removes all the message boards thread flags where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface MBThreadFlagPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last message boards thread flag in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag
-	 * @throws NoSuchThreadFlagException if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
-	 * Returns the last message boards thread flag in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag, or <code>null</code> if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards thread flags before and after the current message boards thread flag in the ordered set where userId = &#63;.
-	 *
-	 * @param threadFlagId the primary key of the current message boards thread flag
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread flag
-	 * @throws NoSuchThreadFlagException if a message boards thread flag with the primary key could not be found
-	 */
-	public MBThreadFlag[] findByUserId_PrevAndNext(
-			long threadFlagId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
 	 * Removes all the message boards thread flags where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -610,47 +484,6 @@ public interface MBThreadFlagPersistence
 		long threadId,
 		com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
 			orderByComparator);
-
-	/**
-	 * Returns the last message boards thread flag in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag
-	 * @throws NoSuchThreadFlagException if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag findByThreadId_Last(
-			long threadId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
-
-	/**
-	 * Returns the last message boards thread flag in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread flag, or <code>null</code> if a matching message boards thread flag could not be found
-	 */
-	public MBThreadFlag fetchByThreadId_Last(
-		long threadId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards thread flags before and after the current message boards thread flag in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadFlagId the primary key of the current message boards thread flag
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread flag
-	 * @throws NoSuchThreadFlagException if a message boards thread flag with the primary key could not be found
-	 */
-	public MBThreadFlag[] findByThreadId_PrevAndNext(
-			long threadFlagId, long threadId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBThreadFlag>
-				orderByComparator)
-		throws NoSuchThreadFlagException;
 
 	/**
 	 * Removes all the message boards thread flags where threadId = &#63; from the database.
@@ -838,3 +671,4 @@ public interface MBThreadFlagPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-578589510

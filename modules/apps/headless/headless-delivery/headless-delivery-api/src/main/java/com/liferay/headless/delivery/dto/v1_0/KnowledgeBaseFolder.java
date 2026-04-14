@@ -1006,9 +1006,7 @@ public class KnowledgeBaseFolder implements Serializable {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(viewableBy);
-
 			sb.append("\"");
 		}
 
@@ -1151,3 +1149,4 @@ public class KnowledgeBaseFolder implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1251911820

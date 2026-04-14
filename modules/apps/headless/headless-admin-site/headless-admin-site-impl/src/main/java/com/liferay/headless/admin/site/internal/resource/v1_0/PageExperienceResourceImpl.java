@@ -5,30 +5,40 @@
 
 package com.liferay.headless.admin.site.internal.resource.v1_0;
 
-import com.liferay.headless.admin.site.dto.v1_0.PageElement;
+import com.liferay.fragment.processor.FragmentEntryProcessorRegistry;
 import com.liferay.headless.admin.site.dto.v1_0.PageExperience;
-import com.liferay.headless.admin.site.internal.resource.v1_0.layout.structure.item.importer.LayoutStructureItemImporter;
-import com.liferay.headless.admin.site.internal.resource.v1_0.layout.structure.item.importer.context.LayoutStructureItemImporterContext;
+import com.liferay.headless.admin.site.internal.dto.v1_0.util.DTOConverterContextUtil;
 import com.liferay.headless.admin.site.internal.resource.v1_0.util.GroupUtil;
-import com.liferay.headless.admin.site.internal.resource.v1_0.util.LayoutStructureItemImporterUtil;
 import com.liferay.headless.admin.site.internal.resource.v1_0.util.SegmentsExperienceUtil;
 import com.liferay.headless.admin.site.internal.resource.v1_0.util.ServiceContextUtil;
 import com.liferay.headless.admin.site.resource.v1_0.PageExperienceResource;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalService;
-import com.liferay.layout.util.structure.LayoutStructure;
+import com.liferay.layout.util.LayoutServiceContextHelper;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.service.permission.LayoutPermission;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.pagination.Page;
+import com.liferay.segments.constants.SegmentsActionKeys;
+import com.liferay.segments.constants.SegmentsConstants;
 import com.liferay.segments.exception.NoSuchExperienceException;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.service.SegmentsExperienceService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 
 import java.util.Collections;
 
@@ -46,15 +56,20 @@ import org.osgi.service.component.annotations.ServiceScope;
 public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 
 	@Override
-	public void deleteSiteSiteByExternalReferenceCodePageExperience(
+	@Tags({@Tag(description = "[DEV]", name = "PageExperience")})
+	public void deleteSitePageExperience(
 			String siteExternalReferenceCode,
 			String pageExperienceExternalReferenceCode)
 		throws Exception {
 
-		FeatureFlagManagerUtil.checkEnabled("LPD-35443");
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
 
-		long groupId = GroupUtil.getGroupId(
-			false, contextCompany.getCompanyId(), siteExternalReferenceCode);
+			throw new UnsupportedOperationException();
+		}
+
+		long groupId = GroupUtil.getStagingAwareGroupId(
+			contextCompany.getCompanyId(), siteExternalReferenceCode);
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceService.
@@ -77,12 +92,14 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 	}
 
 	@Override
-	public PageExperience getSiteSiteByExternalReferenceCodePageExperience(
+	public PageExperience getSitePageExperience(
 			String siteExternalReferenceCode,
 			String pageExperienceExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
@@ -96,13 +113,14 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 	}
 
 	@Override
-	public Page<PageExperience>
-			getSiteSiteByExternalReferenceCodePageSpecificationPageExperiencesPage(
-				String siteExternalReferenceCode,
-				String pageSpecificationExternalReferenceCode)
+	public Page<PageExperience> getSitePageSpecificationPageExperiencesPage(
+			String siteExternalReferenceCode,
+			String pageSpecificationExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
@@ -125,21 +143,22 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 	}
 
 	@Override
-	public PageExperience
-			postSiteSiteByExternalReferenceCodePageSpecificationPageExperience(
-				String siteExternalReferenceCode,
-				String pageSpecificationExternalReferenceCode,
-				PageExperience pageExperience)
+	public PageExperience postSitePageSpecificationPageExperience(
+			String siteExternalReferenceCode,
+			String pageSpecificationExternalReferenceCode,
+			PageExperience pageExperience)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
-		long groupId = GroupUtil.getGroupId(
-			false, contextCompany.getCompanyId(), siteExternalReferenceCode);
+		long groupId = GroupUtil.getStagingAwareGroupId(
+			contextCompany.getCompanyId(), siteExternalReferenceCode);
 
-		Layout layout = _layoutLocalService.fetchLayoutByExternalReferenceCode(
+		Layout layout = _layoutLocalService.getLayoutByExternalReferenceCode(
 			pageExperience.getPageSpecificationExternalReferenceCode(),
 			groupId);
 
@@ -147,24 +166,26 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			throw new UnsupportedOperationException();
 		}
 
-		return _addPageExperience(groupId, pageExperience);
+		return _addPageExperience(layout, groupId, pageExperience);
 	}
 
 	@Override
-	public PageExperience putSiteSiteByExternalReferenceCodePageExperience(
+	public PageExperience putSitePageExperience(
 			String siteExternalReferenceCode,
 			String pageExperienceExternalReferenceCode,
 			PageExperience pageExperience)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
-		long groupId = GroupUtil.getGroupId(
-			false, contextCompany.getCompanyId(), siteExternalReferenceCode);
+		long groupId = GroupUtil.getStagingAwareGroupId(
+			contextCompany.getCompanyId(), siteExternalReferenceCode);
 
-		Layout layout = _layoutLocalService.fetchLayoutByExternalReferenceCode(
+		Layout layout = _layoutLocalService.getLayoutByExternalReferenceCode(
 			pageExperience.getPageSpecificationExternalReferenceCode(),
 			groupId);
 
@@ -178,25 +199,30 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 					pageExperienceExternalReferenceCode, groupId);
 
 		if (segmentsExperience == null) {
-			return _addPageExperience(groupId, pageExperience);
+			return _addPageExperience(layout, groupId, pageExperience);
 		}
 
-		if ((pageExperience.getPriority() != null) &&
-			(segmentsExperience.getPriority() !=
-				pageExperience.getPriority())) {
-
-			segmentsExperience =
-				_segmentsExperienceService.updateSegmentsExperiencePriority(
-					segmentsExperience.getSegmentsExperienceId(),
-					GetterUtil.getInteger(pageExperience.getPriority()));
+		if (layout.getPlid() != segmentsExperience.getPlid()) {
+			throw new UnsupportedOperationException();
 		}
 
-		return _toPageExperience(
-			SegmentsExperienceUtil.updateSegmentsExperience(
-				layout, pageExperience, segmentsExperience,
-				ServiceContextUtil.createServiceContext(
-					groupId, contextHttpServletRequest,
-					contextUser.getUserId())));
+		_segmentsExperienceResourcePermission.check(
+			PermissionThreadLocal.getPermissionChecker(), segmentsExperience,
+			ActionKeys.UPDATE);
+
+		try (AutoCloseable autoCloseable =
+				_layoutServiceContextHelper.getServiceContextAutoCloseable(
+					layout, contextUser)) {
+
+			return _toPageExperience(
+				SegmentsExperienceUtil.updateSegmentsExperience(
+					_fragmentEntryProcessorRegistry, _infoItemServiceRegistry,
+					layout, pageExperience, pageExperience.getPriority(),
+					segmentsExperience,
+					ServiceContextUtil.createServiceContext(
+						groupId, contextHttpServletRequest,
+						contextUser.getUserId())));
+		}
 	}
 
 	@Override
@@ -209,45 +235,32 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 		}
 	}
 
-	private void _addLayoutStructureItem(
-			LayoutStructure layoutStructure,
-			LayoutStructureItemImporterContext
-				layoutStructureItemImporterContext,
-			PageElement pageElement)
-		throws Exception {
-
-		LayoutStructureItemImporter layoutStructureItemImporter =
-			LayoutStructureItemImporterUtil.getLayoutStructureItemImporter(
-				pageElement.getPageElementDefinition());
-
-		layoutStructureItemImporter.addLayoutStructureItem(
-			layoutStructure, layoutStructureItemImporterContext, pageElement);
-
-		for (PageElement childPageElement : pageElement.getPageElements()) {
-			_addLayoutStructureItem(
-				layoutStructure, layoutStructureItemImporterContext,
-				childPageElement);
-		}
-	}
-
 	private PageExperience _addPageExperience(
-			long groupId, PageExperience pageExperience)
+			Layout layout, long groupId, PageExperience pageExperience)
 		throws Exception {
 
-		Layout layout = _layoutLocalService.fetchLayoutByExternalReferenceCode(
-			pageExperience.getPageSpecificationExternalReferenceCode(),
-			groupId);
+		if (!_layoutPermission.containsLayoutRestrictedUpdatePermission(
+				PermissionThreadLocal.getPermissionChecker(), layout)) {
 
-		if (layout == null) {
-			throw new UnsupportedOperationException();
+			_portletResourcePermission.check(
+				PermissionThreadLocal.getPermissionChecker(), groupId,
+				SegmentsActionKeys.MANAGE_SEGMENTS_ENTRIES);
 		}
 
-		return _toPageExperience(
-			SegmentsExperienceUtil.addSegmentsExperience(
-				layout, pageExperience,
-				ServiceContextUtil.createServiceContext(
-					groupId, contextHttpServletRequest,
-					contextUser.getUserId())));
+		try (AutoCloseable autoCloseable =
+				_layoutServiceContextHelper.getServiceContextAutoCloseable(
+					layout, contextUser)) {
+
+			SegmentsExperienceUtil.validateSegmentsExperienceLayout(layout);
+
+			return _toPageExperience(
+				SegmentsExperienceUtil.addSegmentsExperience(
+					_fragmentEntryProcessorRegistry, _infoItemServiceRegistry,
+					layout, pageExperience, pageExperience.getPriority(),
+					ServiceContextUtil.createServiceContext(
+						groupId, contextHttpServletRequest,
+						contextUser.getUserId(), pageExperience.getUuid())));
+		}
 	}
 
 	private PageExperience _toPageExperience(
@@ -272,8 +285,27 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 		}
 
 		return _pageExperienceDTOConverter.toDTO(
+			DTOConverterContextUtil.getDTOConverterContext(
+				contextAcceptLanguage,
+				HashMapBuilder.<String, Object>put(
+					"companyId", segmentsExperience.getCompanyId()
+				).put(
+					"scopeGroupId", segmentsExperience.getGroupId()
+				).build(),
+				_dtoConverterRegistry, contextHttpServletRequest,
+				segmentsExperience.getSegmentsExperienceId(), contextUriInfo,
+				contextUser),
 			layoutPageTemplateStructureRel);
 	}
+
+	@Reference
+	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private FragmentEntryProcessorRegistry _fragmentEntryProcessorRegistry;
+
+	@Reference
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -286,11 +318,28 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 	private LayoutPageTemplateStructureRelLocalService
 		_layoutPageTemplateStructureRelLocalService;
 
+	@Reference
+	private LayoutPermission _layoutPermission;
+
+	@Reference
+	private LayoutServiceContextHelper _layoutServiceContextHelper;
+
 	@Reference(
 		target = "(component.name=com.liferay.headless.admin.site.internal.dto.v1_0.converter.PageExperienceDTOConverter)"
 	)
 	private DTOConverter<LayoutPageTemplateStructureRel, PageExperience>
 		_pageExperienceDTOConverter;
+
+	@Reference(
+		target = "(resource.name=" + SegmentsConstants.RESOURCE_NAME + ")"
+	)
+	private PortletResourcePermission _portletResourcePermission;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.segments.model.SegmentsExperience)"
+	)
+	private ModelResourcePermission<SegmentsExperience>
+		_segmentsExperienceResourcePermission;
 
 	@Reference
 	private SegmentsExperienceService _segmentsExperienceService;

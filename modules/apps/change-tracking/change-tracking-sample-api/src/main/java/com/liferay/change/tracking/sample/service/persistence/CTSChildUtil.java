@@ -213,56 +213,6 @@ public class CTSChildUtil {
 	}
 
 	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child
-	 * @throws NoSuchCTSChildException if a matching cts child could not be found
-	 */
-	public static CTSChild findByCompanyId_Last(
-			long companyId, OrderByComparator<CTSChild> orderByComparator)
-		throws com.liferay.change.tracking.sample.exception.
-			NoSuchCTSChildException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child, or <code>null</code> if a matching cts child could not be found
-	 */
-	public static CTSChild fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CTSChild> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cts childs before and after the current cts child in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctsChildId the primary key of the current cts child
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cts child
-	 * @throws NoSuchCTSChildException if a cts child with the primary key could not be found
-	 */
-	public static CTSChild[] findByCompanyId_PrevAndNext(
-			long ctsChildId, long companyId,
-			OrderByComparator<CTSChild> orderByComparator)
-		throws com.liferay.change.tracking.sample.exception.
-			NoSuchCTSChildException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			ctsChildId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cts childs where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -393,61 +343,6 @@ public class CTSChildUtil {
 
 		return getPersistence().fetchByC_C_First(
 			companyId, ctsGrandParentId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and ctsGrandParentId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param ctsGrandParentId the cts grand parent ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child
-	 * @throws NoSuchCTSChildException if a matching cts child could not be found
-	 */
-	public static CTSChild findByC_C_Last(
-			long companyId, long ctsGrandParentId,
-			OrderByComparator<CTSChild> orderByComparator)
-		throws com.liferay.change.tracking.sample.exception.
-			NoSuchCTSChildException {
-
-		return getPersistence().findByC_C_Last(
-			companyId, ctsGrandParentId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and ctsGrandParentId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param ctsGrandParentId the cts grand parent ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child, or <code>null</code> if a matching cts child could not be found
-	 */
-	public static CTSChild fetchByC_C_Last(
-		long companyId, long ctsGrandParentId,
-		OrderByComparator<CTSChild> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			companyId, ctsGrandParentId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cts childs before and after the current cts child in the ordered set where companyId = &#63; and ctsGrandParentId = &#63;.
-	 *
-	 * @param ctsChildId the primary key of the current cts child
-	 * @param companyId the company ID
-	 * @param ctsGrandParentId the cts grand parent ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cts child
-	 * @throws NoSuchCTSChildException if a cts child with the primary key could not be found
-	 */
-	public static CTSChild[] findByC_C_PrevAndNext(
-			long ctsChildId, long companyId, long ctsGrandParentId,
-			OrderByComparator<CTSChild> orderByComparator)
-		throws com.liferay.change.tracking.sample.exception.
-			NoSuchCTSChildException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			ctsChildId, companyId, ctsGrandParentId, orderByComparator);
 	}
 
 	/**
@@ -583,61 +478,6 @@ public class CTSChildUtil {
 
 		return getPersistence().fetchByC_P_First(
 			companyId, parentCTSChildId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and parentCTSChildId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentCTSChildId the parent cts child ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child
-	 * @throws NoSuchCTSChildException if a matching cts child could not be found
-	 */
-	public static CTSChild findByC_P_Last(
-			long companyId, long parentCTSChildId,
-			OrderByComparator<CTSChild> orderByComparator)
-		throws com.liferay.change.tracking.sample.exception.
-			NoSuchCTSChildException {
-
-		return getPersistence().findByC_P_Last(
-			companyId, parentCTSChildId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cts child in the ordered set where companyId = &#63; and parentCTSChildId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param parentCTSChildId the parent cts child ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cts child, or <code>null</code> if a matching cts child could not be found
-	 */
-	public static CTSChild fetchByC_P_Last(
-		long companyId, long parentCTSChildId,
-		OrderByComparator<CTSChild> orderByComparator) {
-
-		return getPersistence().fetchByC_P_Last(
-			companyId, parentCTSChildId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cts childs before and after the current cts child in the ordered set where companyId = &#63; and parentCTSChildId = &#63;.
-	 *
-	 * @param ctsChildId the primary key of the current cts child
-	 * @param companyId the company ID
-	 * @param parentCTSChildId the parent cts child ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cts child
-	 * @throws NoSuchCTSChildException if a cts child with the primary key could not be found
-	 */
-	public static CTSChild[] findByC_P_PrevAndNext(
-			long ctsChildId, long companyId, long parentCTSChildId,
-			OrderByComparator<CTSChild> orderByComparator)
-		throws com.liferay.change.tracking.sample.exception.
-			NoSuchCTSChildException {
-
-		return getPersistence().findByC_P_PrevAndNext(
-			ctsChildId, companyId, parentCTSChildId, orderByComparator);
 	}
 
 	/**
@@ -821,3 +661,4 @@ public class CTSChildUtil {
 	private static volatile CTSChildPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1731895663

@@ -7,8 +7,8 @@ package com.liferay.portal.db.index.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.db.DBResourceUtil;
 import com.liferay.portal.db.index.IndexUpdaterUtil;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
@@ -16,6 +16,8 @@ import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DuplicateUniqueFinderRowsCleaner;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.db.DBResourceUtil;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -23,6 +25,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.sql.Connection;
@@ -191,15 +194,11 @@ public class IndexUpdaterUtilTest {
 
 	@Test
 	public void testUpdateIndexRetry() throws Exception {
-		_db.runSQL(
-			StringBundler.concat(
-				"create table TestTable (id1 INTEGER, id2 INTEGER, column1 ",
-				"INTEGER, column2 INTEGER, column3 INTEGER, column4 INTEGER, ",
-				"primary key (id1, id2))"));
+		_createTestTable();
 
 		try {
-			_db.runSQL("insert into TestTable values(1, 2, 3, 4, 5, 6)");
-			_db.runSQL("insert into TestTable values(11, 12, 13, 14, 5, 6)");
+			_db.runSQL("insert into TestTable values(1, 2, 3, 4, '5', '6')");
+			_db.runSQL("insert into TestTable values(7, 9, 10, 11, '5', '6')");
 
 			boolean upgrading = StartupHelperUtil.isUpgrading();
 
@@ -209,13 +208,13 @@ public class IndexUpdaterUtilTest {
 					() -> StartupHelperUtil.setUpgrading(upgrading);
 				LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 					DuplicateUniqueFinderRowsCleaner.class.getName(),
-					LoggerTestUtil.WARN)) {
+					LoggerTestUtil.INFO)) {
 
 				ReflectionTestUtil.invoke(
 					IndexUpdaterUtil.class, "_updateIndexes",
 					new Class<?>[] {String.class, String.class}, "TestTable",
-					"create unique index IX_TestTable on TestTable(column3, " +
-						"column4)");
+					"create unique index IX_TestTable on TestTable(column3" +
+						"[$COLUMN_LENGTH:255$], column4[$COLUMN_LENGTH:255$])");
 
 				List<LogEntry> logEntries = logCapture.getLogEntries();
 
@@ -232,14 +231,15 @@ public class IndexUpdaterUtilTest {
 			}
 
 			try (Connection connection = DataAccess.getConnection();
+
 				PreparedStatement preparedStatement =
 					connection.prepareStatement(
-						"select count(*) from TestTable")) {
+						"select count(*) as count from TestTable")) {
 
 				try (ResultSet resultSet = preparedStatement.executeQuery()) {
 					Assert.assertTrue(resultSet.next());
 
-					Assert.assertEquals(1, resultSet.getInt(1));
+					Assert.assertEquals(1, resultSet.getLong("count"));
 				}
 
 				List<IndexMetadata> indexMetadatas = _db.getIndexMetadatas(
@@ -250,7 +250,66 @@ public class IndexUpdaterUtilTest {
 			}
 		}
 		finally {
-			_db.runSQL("DROP_TABLE_IF_EXISTS(TestTable)");
+			_dropTestTable();
+		}
+	}
+
+	@Test
+	public void testUpdateIndexUnpopulatedColumn() throws Exception {
+		_createTestTable();
+
+		try {
+			_db.runSQL("insert into TestTable values(1, 2, 3, 4, '', '6')");
+			_db.runSQL("insert into TestTable values(7, 9, 10, 11, '', '6')");
+
+			boolean upgrading = StartupHelperUtil.isUpgrading();
+
+			StartupHelperUtil.setUpgrading(true);
+
+			try (AutoCloseable autoCloseable =
+					() -> StartupHelperUtil.setUpgrading(upgrading);
+				LogCapture duplicateUniqueFinderRowsCleanerLogCapture =
+					LoggerTestUtil.configureLog4JLogger(
+						DuplicateUniqueFinderRowsCleaner.class.getName(),
+						LoggerTestUtil.ERROR);
+				LogCapture indexUpdaterUtilLogCapture =
+					LoggerTestUtil.configureLog4JLogger(
+						IndexUpdaterUtil.class.getName(),
+						LoggerTestUtil.ERROR)) {
+
+				ReflectionTestUtil.invoke(
+					IndexUpdaterUtil.class, "_updateIndexes",
+					new Class<?>[] {String.class, String.class}, "TestTable",
+					"create unique index IX_TestTable on TestTable(column3" +
+						"[$COLUMN_LENGTH:255$], column4[$COLUMN_LENGTH:255$])");
+
+				List<LogEntry> logEntries =
+					duplicateUniqueFinderRowsCleanerLogCapture.getLogEntries();
+
+				Assert.assertEquals(
+					logEntries.toString(), 1, logEntries.size());
+
+				logEntries = indexUpdaterUtilLogCapture.getLogEntries();
+
+				Assert.assertEquals(
+					logEntries.toString(), 1, logEntries.size());
+			}
+
+			try (Connection connection = DataAccess.getConnection();
+
+				PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						"select count(*) as count from TestTable")) {
+
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					Assert.assertTrue(resultSet.next());
+
+					Assert.assertEquals(2, resultSet.getInt("count"));
+				}
+			}
+		}
+		finally {
+			_dropTestTable();
 		}
 	}
 
@@ -287,11 +346,25 @@ public class IndexUpdaterUtilTest {
 		_portalTableIndexName = _getTableIndexName(portalIndexesSQL);
 	}
 
+	private void _createTestTable() throws Exception {
+		DBPartitionUtil.forEachCompanyId(
+			companyId -> _db.runSQL(
+				StringBundler.concat(
+					"create table TestTable (id1 INTEGER, id2 INTEGER, ",
+					"column1 INTEGER, column2 INTEGER, column3 VARCHAR(255), ",
+					"column4 VARCHAR(255), primary key (id1, id2))")));
+	}
+
 	private void _dropIndex(String tableName, String indexName)
 		throws Exception {
 
 		_db.runSQL(
 			StringBundler.concat("drop index ", indexName, " on ", tableName));
+	}
+
+	private void _dropTestTable() throws Exception {
+		DBPartitionUtil.forEachCompanyId(
+			companyId -> _db.runSQL("DROP_TABLE_IF_EXISTS(TestTable)"));
 	}
 
 	private static Connection _connection;
@@ -302,5 +375,8 @@ public class IndexUpdaterUtilTest {
 	private static String _moduleTableIndexName;
 	private static String _portalIndexName;
 	private static String _portalTableIndexName;
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
 
 }

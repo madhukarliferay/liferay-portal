@@ -158,6 +158,7 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -174,7 +175,6 @@ import com.liferay.portal.service.http.GroupServiceHttp;
 import com.liferay.portal.theme.ThemeLoader;
 import com.liferay.portal.theme.ThemeLoaderFactory;
 import com.liferay.portal.util.PortalInstances;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.site.initializer.kernel.util.SiteInitializerThreadLocal;
 import com.liferay.social.kernel.service.SocialActivityLocalService;
 import com.liferay.social.kernel.service.SocialActivitySettingLocalService;
@@ -295,12 +295,13 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 	@Override
 	public Group addGroup(
-			long userId, long parentGroupId, String className, long classPK,
-			long liveGroupId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap, int type,
-			boolean manualMembership, int membershipRestriction,
-			String friendlyURL, boolean site, boolean inheritContent,
-			boolean active, ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long parentGroupId,
+			String className, long classPK, long liveGroupId,
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			int type, String typeSettings, boolean manualMembership,
+			int membershipRestriction, String friendlyURL, boolean site,
+			boolean inheritContent, boolean active,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		// Group
@@ -455,7 +456,9 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				  groupKey.equals(GroupConstants.CALENDAR) ||
 				  groupKey.equals(GroupConstants.CMS) ||
 				  groupKey.equals(GroupConstants.CONTROL_PANEL) ||
-				  groupKey.equals(GroupConstants.FORMS))) {
+				  groupKey.equals(GroupConstants.DSR) ||
+				  groupKey.equals(GroupConstants.FORMS) ||
+				  groupKey.equals(GroupConstants.SEO_STUDIO))) {
 
 				throw new IllegalArgumentException();
 			}
@@ -489,6 +492,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			group.setUuid(serviceContext.getUuid());
 		}
 
+		group.setExternalReferenceCode(externalReferenceCode);
 		group.setCompanyId(user.getCompanyId());
 		group.setCreatorUserId(userId);
 		group.setClassNameId(classNameId);
@@ -553,23 +557,11 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		addPortletDefaultData(group);
 
+		if (Validator.isNotNull(typeSettings)) {
+			group = updateGroup(group.getGroupId(), typeSettings);
+		}
+
 		return group;
-	}
-
-	@Override
-	public Group addGroup(
-			long userId, long parentGroupId, String className, long classPK,
-			long liveGroupId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap, int type,
-			boolean manualMembership, int membershipRestriction,
-			String friendlyURL, boolean site, boolean active,
-			ServiceContext serviceContext)
-		throws PortalException {
-
-		return addGroup(
-			userId, parentGroupId, className, classPK, liveGroupId, nameMap,
-			descriptionMap, type, manualMembership, membershipRestriction,
-			friendlyURL, site, false, active, serviceContext);
 	}
 
 	/**
@@ -672,19 +664,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		if (group == null) {
 			group = addGroup(
-				userId, parentGroupId, className, classPK, liveGroupId, nameMap,
-				descriptionMap, type, manualMembership, membershipRestriction,
-				friendlyURL, site, inheritContent, active, serviceContext);
-
-			group.setExternalReferenceCode(externalReferenceCode);
-
-			group = groupPersistence.update(group);
+				externalReferenceCode, userId, parentGroupId, className,
+				classPK, liveGroupId, nameMap, descriptionMap, type, null,
+				manualMembership, membershipRestriction, friendlyURL, site,
+				inheritContent, active, serviceContext);
 		}
 		else {
 			group = updateGroup(
 				group.getGroupId(), parentGroupId, nameMap, descriptionMap,
-				type, manualMembership, membershipRestriction, friendlyURL,
-				inheritContent, active, serviceContext);
+				type, null, manualMembership, membershipRestriction,
+				friendlyURL, inheritContent, active, serviceContext);
 		}
 
 		return group;
@@ -792,14 +781,14 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		}
 
 		return groupLocalService.addGroup(
-			userId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
+			StringPool.BLANK, userId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
 			Layout.class.getName(), layout.getPlid(),
 			GroupConstants.DEFAULT_LIVE_GROUP_ID,
 			HashMapBuilder.put(
 				LocaleUtil.getDefault(), String.valueOf(layout.getPlid())
 			).build(),
-			null, 0, true, GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null,
-			false, true, null);
+			null, 0, null, true, GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
+			null, false, false, true, null);
 	}
 
 	/**
@@ -869,7 +858,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 					site = false;
 				}
 				else if (groupKey.equals(GroupConstants.GUEST)) {
-					friendlyURL = "/guest";
+					friendlyURL = GroupConstants.GUEST_FRIENDLY_URL;
 					typeSettingsUnicodeProperties =
 						UnicodePropertiesBuilder.create(
 							true
@@ -895,11 +884,12 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				}
 
 				group = groupLocalService.addGroup(
-					guestUserId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
-					className, classPK, GroupConstants.DEFAULT_LIVE_GROUP_ID,
-					getLocalizationMap(groupKey), null, type, true,
+					StringPool.BLANK, guestUserId,
+					GroupConstants.DEFAULT_PARENT_GROUP_ID, className, classPK,
+					GroupConstants.DEFAULT_LIVE_GROUP_ID,
+					getLocalizationMap(groupKey), null, type, null, true,
 					GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, friendlyURL,
-					site, true, null);
+					site, false, true, null);
 
 				if (typeSettingsUnicodeProperties != null) {
 					group.setTypeSettingsProperties(
@@ -2345,15 +2335,29 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		if (inherit) {
 			User user = _userPersistence.findByPrimaryKey(userId);
 
-			return search(
-				user.getCompanyId(), null, null,
-				LinkedHashMapBuilder.<String, Object>put(
-					"usersGroups", Long.valueOf(userId)
-				).build(),
-				start, end);
+			return _getUserGroups(
+				user.getCompanyId(), user.getUserId(), inherit, start, end);
 		}
 
-		return _userPersistence.getGroups(userId, start, end);
+		return _getUserGroups(-1, userId, inherit, start, end);
+	}
+
+	@Override
+	public List<Group> getUserGroups(User user, boolean inherit)
+		throws PortalException {
+
+		return _getUserGroups(
+			user.getCompanyId(), user.getUserId(), inherit, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS);
+	}
+
+	@Override
+	public List<Group> getUserGroups(
+			User user, boolean inherit, int start, int end)
+		throws PortalException {
+
+		return _getUserGroups(
+			user.getCompanyId(), user.getUserId(), inherit, start, end);
 	}
 
 	/**
@@ -2387,6 +2391,11 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		}
 
 		return userGroupGroups;
+	}
+
+	@Override
+	public Map<Long, long[]> getUserInheritedSiteGroupIds(long companyId) {
+		return groupFinder.findByC_C_S_A_UserInheritedGroupIds(companyId);
 	}
 
 	/**
@@ -2592,6 +2601,29 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		}
 
 		return liveGroup.isActive();
+	}
+
+	@Override
+	@Transactional(enabled = false)
+	public boolean isMaintenanceMode(Group group) {
+		if ((group == null) ||
+			!FeatureFlagManagerUtil.isEnabled(
+				group.getCompanyId(), "LPD-82960")) {
+
+			return false;
+		}
+
+		if (group.isStagingGroup()) {
+			Group liveGroup = group.getLiveGroup();
+
+			if (liveGroup == null) {
+				return false;
+			}
+
+			return liveGroup.isMaintenanceMode();
+		}
+
+		return group.isMaintenanceMode();
 	}
 
 	/**
@@ -3809,7 +3841,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	@Override
 	public Group updateGroup(
 			long groupId, long parentGroupId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap, int type,
+			Map<Locale, String> descriptionMap, int type, String typeSettings,
 			boolean manualMembership, int membershipRestriction,
 			String friendlyURL, boolean inheritContent, boolean active,
 			ServiceContext serviceContext)
@@ -3849,9 +3881,11 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		if ((classNameId <= 0) || (type == GroupConstants.TYPE_DEPOT) ||
 			className.equals(Group.class.getName())) {
 
-			validateGroupKey(
-				group.getGroupId(), group.getCompanyId(), groupKey,
-				group.getType(), group.isSite());
+			if (!Objects.equals(group.getGroupKey(), groupKey)) {
+				validateGroupKey(
+					group.getGroupId(), group.getCompanyId(), groupKey,
+					group.getType(), group.isSite());
+			}
 		}
 		else if (className.equals(Organization.class.getName())) {
 			Organization organization =
@@ -3900,6 +3934,42 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		group.setMembershipRestriction(membershipRestriction);
 		group.setFriendlyURL(friendlyURL);
 		group.setInheritContent(inheritContent);
+
+		if (FeatureFlagManagerUtil.isEnabled(
+				group.getCompanyId(), "LPD-82960")) {
+
+			if (Validator.isNotNull(typeSettings)) {
+				UnicodeProperties newTypeSettingsUnicodeProperties =
+					UnicodePropertiesBuilder.create(
+						true
+					).fastLoad(
+						typeSettings
+					).build();
+
+				if (GetterUtil.getBoolean(
+						newTypeSettingsUnicodeProperties.getProperty(
+							GroupConstants.
+								TYPE_SETTINGS_KEY_MAINTENANCE_MODE))) {
+
+					active = false;
+				}
+				else if (active) {
+					newTypeSettingsUnicodeProperties.remove(
+						GroupConstants.TYPE_SETTINGS_KEY_MAINTENANCE_MODE);
+
+					typeSettings = newTypeSettingsUnicodeProperties.toString();
+				}
+			}
+			else if (active && group.isMaintenanceMode()) {
+				UnicodeProperties typeSettingsUnicodeProperties =
+					group.getTypeSettingsProperties();
+
+				typeSettingsUnicodeProperties.remove(
+					GroupConstants.TYPE_SETTINGS_KEY_MAINTENANCE_MODE);
+
+				group.setTypeSettingsProperties(typeSettingsUnicodeProperties);
+			}
+		}
 
 		if (group.isActive() != active) {
 			group.setActive(active);
@@ -3950,6 +4020,10 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		updateAsset(
 			user.getUserId(), group, serviceContext.getAssetCategoryIds(),
 			serviceContext.getAssetTagNames());
+
+		if (Validator.isNotNull(typeSettings)) {
+			group = updateGroup(group.getGroupId(), typeSettings);
+		}
 
 		return group;
 	}
@@ -5081,7 +5155,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 			throw new DuplicateGroupException(
 				StringBundler.concat(
-					"{companyId=", companyId, ", groupId=", groupId,
+					"{companyId=", companyId, ", groupId=", group.getGroupId(),
 					", groupKey=", groupKey, "}"));
 		}
 
@@ -5476,6 +5550,22 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		finally {
 			groupPersistence.closeSession(session);
 		}
+	}
+
+	private List<Group> _getUserGroups(
+			long companyId, long userId, boolean inherit, int start, int end)
+		throws PortalException {
+
+		if (inherit) {
+			return search(
+				companyId, null, null,
+				LinkedHashMapBuilder.<String, Object>put(
+					"usersGroups", userId
+				).build(),
+				start, end);
+		}
+
+		return _userPersistence.getGroups(userId, start, end);
 	}
 
 	private Map<Locale, String> _normalizeNameMap(Map<Locale, String> nameMap) {

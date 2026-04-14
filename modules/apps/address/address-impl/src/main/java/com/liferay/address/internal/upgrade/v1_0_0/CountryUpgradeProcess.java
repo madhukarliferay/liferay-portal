@@ -6,6 +6,7 @@
 package com.liferay.address.internal.upgrade.v1_0_0;
 
 import com.liferay.counter.kernel.service.CounterLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
@@ -76,9 +77,23 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 							PortalInstancePool.getCompanyIds()),
 				companyId -> {
 					try {
-						new CompanyUpgradeProcess(
-							_companyLocalService.fetchCompany(companyId)
-						).populateCompanyCountries();
+						Company company = _companyLocalService.fetchCompany(
+							companyId);
+
+						if (company == null) {
+							if (_log.isDebugEnabled()) {
+								_log.debug(
+									"Unable to find company with ID " +
+										companyId);
+							}
+
+							return;
+						}
+
+						CompanyUpgradeProcess companyUpgradeProcess =
+							new CompanyUpgradeProcess(company);
+
+						companyUpgradeProcess.populateCompanyCountries();
 					}
 					catch (Exception exception) {
 						_log.error(
@@ -101,16 +116,18 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 
 		DB db = DBManagerUtil.getDB();
 
-		List<IndexMetadata> addIndexMetadatas = new ArrayList<>();
+		List<IndexMetadata> addIndexMetadatas = TransformUtil.transform(
+			indexMetadatas,
+			indexMetadata -> {
+				if (!hasIndex(
+						indexMetadata.getTableName(),
+						indexMetadata.getIndexName())) {
 
-		for (IndexMetadata indexMetadata : indexMetadatas) {
-			if (!hasIndex(
-					indexMetadata.getTableName(),
-					indexMetadata.getIndexName())) {
+					return indexMetadata;
+				}
 
-				addIndexMetadatas.add(indexMetadata);
-			}
-		}
+				return null;
+			});
 
 		db.addIndexes(connection, addIndexMetadatas);
 	}
@@ -132,11 +149,13 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 		List<IndexMetadata> droppedIndexMetadatas = new ArrayList<>();
 
 		try {
-			for (IndexMetadata indexMetadata : indexMetadatas) {
-				db.runSQL(indexMetadata.getDropSQL());
+			droppedIndexMetadatas = TransformUtil.transform(
+				indexMetadatas,
+				indexMetadata -> {
+					db.runSQL(connection, indexMetadata.getDropSQL());
 
-				droppedIndexMetadatas.add(indexMetadata);
-			}
+					return indexMetadata;
+				});
 		}
 		catch (Exception exception) {
 			_addIndexes(droppedIndexMetadatas);
@@ -152,12 +171,14 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 		throws Exception {
 
 		try (Statement statement = connection.createStatement();
+
 			ResultSet resultSet = statement.executeQuery(
 				StringBundler.concat(
-					"select max(", columnName, ") from ", tableName))) {
+					"select max(", columnName, ") as maxColumnName from ",
+					tableName))) {
 
 			if (resultSet.next()) {
-				increment(className, (int)resultSet.getLong(1));
+				increment(className, (int)resultSet.getLong("maxColumnName"));
 			}
 		}
 	}
@@ -426,15 +447,14 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 		private boolean _hasCountries(long companyId) throws Exception {
 			try (PreparedStatement preparedStatement =
 					connection.prepareStatement(
-						"select count(*) from Country where companyId = ?")) {
+						"select count(*) as count from Country where " +
+							"companyId = ?")) {
 
 				preparedStatement.setLong(1, companyId);
 
 				try (ResultSet resultSet = preparedStatement.executeQuery()) {
 					while (resultSet.next()) {
-						int count = resultSet.getInt(1);
-
-						if (count > 0) {
+						if (resultSet.getLong("count") > 0) {
 							return true;
 						}
 					}

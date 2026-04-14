@@ -13,9 +13,11 @@ import com.liferay.fragment.input.template.parser.InputTemplateNode;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.util.configuration.FragmentConfigurationField;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
+import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.exception.InfoFormValidationException;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldValue;
+import com.liferay.info.field.RelatedInfoFieldValue;
 import com.liferay.info.field.type.DateInfoFieldType;
 import com.liferay.info.field.type.DateTimeInfoFieldType;
 import com.liferay.info.field.type.FileInfoFieldType;
@@ -44,6 +46,7 @@ import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.taglib.constants.LayoutStructureRendererConstants;
 import com.liferay.layout.util.constants.LayoutDataItemTypeConstants;
 import com.liferay.layout.util.structure.FormStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
@@ -59,6 +62,8 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -67,6 +72,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -83,6 +89,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -195,15 +202,21 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		boolean readOnly = false;
 
 		if (infoField != null) {
-			name = infoField.getName();
+			name = _getName(httpServletRequest, infoField);
 			readOnly = infoField.isReadOnly();
 			localizable = infoField.isLocalizable();
 		}
 
+		boolean inputReadOnly = GetterUtil.getBoolean(
+			_fragmentEntryConfigurationParser.getFieldValue(
+				fragmentEntryLink.getEditableValuesJSONObject(),
+				new FragmentConfigurationField(
+					"inputReadOnly", "boolean", "false", false, "checkbox"),
+				locale));
 		String layoutMode = ParamUtil.getString(
 			httpServletRequest, "p_l_mode", Constants.VIEW);
 
-		if (Objects.equals(layoutMode, Constants.READ)) {
+		if (inputReadOnly || Objects.equals(layoutMode, Constants.READ)) {
 			readOnly = true;
 		}
 
@@ -304,10 +317,10 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 
 		if (infoFormParameterMap != null) {
 			label = String.valueOf(
-				infoFormParameterMap.get(infoField.getName() + "-label"));
+				infoFormParameterMap.get(infoField.getUniqueId() + "-label"));
 
-			Object infoParameterMapValue = infoFormParameterMap.get(
-				infoField.getName());
+			Object infoParameterMapValue = _getInfoParameterMapValue(
+				infoField, infoFormParameterMap, httpServletRequest);
 
 			if (infoParameterMapValue instanceof Map) {
 				Map<Locale, String> map =
@@ -341,6 +354,17 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 				value = String.valueOf(infoFieldValue);
 			}
 		}
+
+		value = HtmlUtil.escape(value);
+
+		Map<Locale, String> escapedValueI18n = new HashMap<>();
+
+		for (Map.Entry<Locale, String> entry : valueI18n.entrySet()) {
+			escapedValueI18n.put(
+				entry.getKey(), HtmlUtil.escape(entry.getValue()));
+		}
+
+		valueI18n = escapedValueI18n;
 
 		InputTemplateNode inputTemplateNode = new InputTemplateNode(
 			errorMessage, inputHelpText, inputLabel, localizable, name,
@@ -410,6 +434,24 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 
 		inputTemplateNode.addAttribute(
 			"fileNameI18n", _jsonFactory.createJSONObject(fileNameI18n));
+
+		Object object = httpServletRequest.getAttribute(
+			InfoDisplayWebKeys.INFO_ITEM);
+
+		if (object instanceof GroupedModel) {
+			GroupedModel groupedModel = (GroupedModel)object;
+
+			inputTemplateNode.addAttribute(
+				"groupId", groupedModel.getGroupId());
+		}
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		Group group = themeDisplay.getScopeGroup();
+
+		inputTemplateNode.addAttribute("isCMS", group.isCMS());
 
 		String previewURL = _getPreviewURL(httpServletRequest, value);
 
@@ -567,7 +609,8 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 			inputTemplateNode.addAttribute(
 				"unlocalizedFieldsMessage",
 				_language.format(
-					locale, "x-field-cannot-be-localized", inputLabel));
+					locale, "x-field-cannot-be-localized",
+					HtmlUtil.escape(inputLabel)));
 			inputTemplateNode.addAttribute(
 				"unlocalizedFieldsState", "disabled");
 
@@ -789,6 +832,89 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		return null;
 	}
 
+	private InfoFieldValue<?> _getInfoFieldValue(
+		List<InfoFieldValue<Object>> infoFieldValues) {
+
+		if (ListUtil.isEmpty(infoFieldValues)) {
+			return null;
+		}
+
+		for (InfoFieldValue<Object> infoFieldValue : infoFieldValues) {
+			InfoField infoField = infoFieldValue.getInfoField();
+
+			String uniqueId = infoField.getUniqueId();
+
+			if (!uniqueId.contains(StringPool.POUND)) {
+				return infoFieldValue;
+			}
+		}
+
+		return null;
+	}
+
+	private Object _getInfoParameterMapValue(
+		InfoField infoField, Map<String, String> infoFormParameterMap,
+		HttpServletRequest httpServletRequest) {
+
+		Object infoParameterMapValue = infoFormParameterMap.get(
+			infoField.getUniqueId());
+
+		if (!(infoParameterMapValue instanceof RelatedInfoFieldValue<?>)) {
+			return infoParameterMapValue;
+		}
+
+		RelatedInfoFieldValue<?> relatedInfoFieldValue =
+			(RelatedInfoFieldValue<?>)infoParameterMapValue;
+
+		String parentExternalReferenceCode =
+			(String)httpServletRequest.getAttribute(
+				LayoutStructureRendererConstants.
+					LAYOUT_PARENT_ITEM_EXTERNAL_REFERENCE_CODE);
+		String relatedItemExternalReferenceCode =
+			(String)httpServletRequest.getAttribute(
+				LayoutStructureRendererConstants.
+					LAYOUT_RELATED_ITEM_EXTERNAL_REFERENCE_CODE);
+
+		InfoFieldValue<?> infoFieldValue =
+			relatedInfoFieldValue.getInfoFieldValue(
+				relatedItemExternalReferenceCode, parentExternalReferenceCode);
+
+		if (infoFieldValue == null) {
+			return StringPool.BLANK;
+		}
+
+		if (infoField.getInfoFieldType() == DateInfoFieldType.INSTANCE) {
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
+				"yyyy-MM-dd");
+
+			try {
+				return simpleDateFormat.format(infoFieldValue.getValue());
+			}
+			catch (IllegalArgumentException illegalArgumentException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(illegalArgumentException);
+				}
+
+				return null;
+			}
+		}
+
+		Object value = infoFieldValue.getValue();
+
+		if (value instanceof List) {
+			return ListUtil.toString((List<?>)value, StringPool.BLANK);
+		}
+
+		if (value instanceof InfoLocalizedValue) {
+			InfoLocalizedValue<?> infoLocalizedValue =
+				(InfoLocalizedValue<?>)value;
+
+			return infoLocalizedValue.getValues();
+		}
+
+		return String.valueOf(value);
+	}
+
 	private String _getInputLabel(
 		String defaultInputLabel, JSONObject editableValuesJSONObject,
 		InfoField<?> infoField, Locale locale) {
@@ -831,6 +957,29 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		}
 
 		return defaultInputLabel;
+	}
+
+	private String _getName(
+		HttpServletRequest httpServletRequest, InfoField<?> infoField) {
+
+		String parentExternalReferenceCode =
+			(String)httpServletRequest.getAttribute(
+				LayoutStructureRendererConstants.
+					LAYOUT_PARENT_ITEM_EXTERNAL_REFERENCE_CODE);
+		String relatedItemExternalReferenceCode =
+			(String)httpServletRequest.getAttribute(
+				LayoutStructureRendererConstants.
+					LAYOUT_RELATED_ITEM_EXTERNAL_REFERENCE_CODE);
+
+		if (Validator.isNotNull(parentExternalReferenceCode) &&
+			Validator.isNotNull(relatedItemExternalReferenceCode)) {
+
+			return StringBundler.concat(
+				infoField.getUniqueId(), "[$", relatedItemExternalReferenceCode,
+				StringPool.DOLLAR, parentExternalReferenceCode, "$]");
+		}
+
+		return infoField.getUniqueId();
 	}
 
 	private String _getPreviewURL(
@@ -909,9 +1058,20 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 			return defaultValue;
 		}
 
+		boolean checkInfoFormName = false;
 		LayoutDisplayPageObjectProvider<?> layoutDisplayPageObjectProvider =
 			(LayoutDisplayPageObjectProvider<?>)httpServletRequest.getAttribute(
-				LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER);
+				LayoutStructureRendererConstants.
+					LAYOUT_RELATED_ITEM_DISPLAY_PAGE_OBJECT_PROVIDER);
+
+		if (layoutDisplayPageObjectProvider == null) {
+			checkInfoFormName = true;
+			layoutDisplayPageObjectProvider =
+				(LayoutDisplayPageObjectProvider<?>)
+					httpServletRequest.getAttribute(
+						LayoutDisplayPageWebKeys.
+							LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER);
+		}
 
 		if (layoutDisplayPageObjectProvider == null) {
 			return defaultValue;
@@ -920,7 +1080,7 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		String className = _infoSearchClassMapperRegistry.getClassName(
 			layoutDisplayPageObjectProvider.getClassName());
 
-		if (!Objects.equals(className, infoFormName)) {
+		if (checkInfoFormName && !Objects.equals(className, infoFormName)) {
 			return defaultValue;
 		}
 
@@ -944,6 +1104,13 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 
 		InfoFieldValue<?> infoFieldValue =
 			infoItemFieldValues.getInfoFieldValue(infoField.getUniqueId());
+
+		if (infoFieldValue == null) {
+			infoFieldValue = _getInfoFieldValue(
+				new ArrayList<>(
+					infoItemFieldValues.getInfoFieldValues(
+						infoField.getName())));
+		}
 
 		if (infoFieldValue == null) {
 			return defaultValue;

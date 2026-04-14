@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.taxonomy.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.TaxonomyVocabulary;
 import com.liferay.headless.admin.taxonomy.resource.v1_0.TaxonomyVocabularyResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -495,14 +496,14 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryTaxonomyVocabularyPermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryTaxonomyVocabularyPermissionsPage", null,
 					portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryTaxonomyVocabularyPermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryTaxonomyVocabularyPermissionsPage", null,
 					portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, roleNames);
@@ -747,117 +748,17 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteTaxonomyVocabularyPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteTaxonomyVocabularyPermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteTaxonomyVocabularyPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteTaxonomyVocabularyPermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
-	}
-
-	protected abstract Page<TaxonomyVocabulary> doGetTaxonomyVocabulariesPage(
-			String search,
-			com.liferay.portal.vulcan.aggregation.Aggregation aggregation,
-			com.liferay.portal.kernel.search.filter.Filter filter,
-			Pagination pagination,
-			com.liferay.portal.kernel.search.Sort[] sorts)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Operation(
-		description = "Gets all taxonomy vocabularies that were created in CMS. Does not retrieve vocabularies created in DXP. CMS vocabularies are distinguished by having a `groupId = 0`."
-	)
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "aggregationTerms"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "fields"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "filter"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "page"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "pageSize"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "restrictFields"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "search"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "sort"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "TaxonomyVocabulary")
-		}
-	)
-	@jakarta.ws.rs.GET
-	@jakarta.ws.rs.Path("/taxonomy-vocabularies")
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public final Page<TaxonomyVocabulary> getTaxonomyVocabulariesPage(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("search")
-			String search,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.vulcan.aggregation.Aggregation aggregation,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.kernel.search.filter.Filter filter,
-			@jakarta.ws.rs.core.Context Pagination pagination,
-			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
-				sorts)
-		throws Exception {
-
-		Page<TaxonomyVocabulary> taxonomyVocabulariesPage =
-			doGetTaxonomyVocabulariesPage(
-				search, aggregation, filter, pagination, sorts);
-
-		for (TaxonomyVocabulary taxonomyVocabulary :
-				taxonomyVocabulariesPage.getItems()) {
-
-			taxonomyVocabulary.setPermissions(
-				() -> NestedFieldsSupplier.supply(
-					"permissions",
-					nestedField -> {
-						Page<Permission> permissionsPage =
-							getTaxonomyVocabularyPermissionsPage(
-								taxonomyVocabulary.getId(), null);
-
-						Collection<Permission> permissions =
-							permissionsPage.getItems();
-
-						return permissions.toArray(
-							new Permission[permissions.size()]);
-					}));
-		}
-
-		return taxonomyVocabulariesPage;
 	}
 
 	protected abstract TaxonomyVocabulary doGetTaxonomyVocabulary(
@@ -971,27 +872,27 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(taxonomyVocabularyId);
+		Long resourceId = getPermissionCheckerResourceId(taxonomyVocabularyId);
 		String resourceName = getPermissionCheckerResourceName(
 			taxonomyVocabularyId);
-		Long resourceId = getPermissionCheckerResourceId(taxonomyVocabularyId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(taxonomyVocabularyId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getTaxonomyVocabularyPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getTaxonomyVocabularyPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putTaxonomyVocabularyPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putTaxonomyVocabularyPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -999,7 +900,7 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/{taxonomyVocabularyId}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/{taxonomyVocabularyId}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "uuid": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates only the fields received in the request body. Any other fields are left untouched."
@@ -1065,6 +966,10 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 		if (taxonomyVocabulary.getPermissions() != null) {
 			existingTaxonomyVocabulary.setPermissions(
 				taxonomyVocabulary.getPermissions());
+		}
+
+		if (taxonomyVocabulary.getUuid() != null) {
+			existingTaxonomyVocabulary.setUuid(taxonomyVocabulary.getUuid());
 		}
 
 		if (taxonomyVocabulary.getViewableBy() != null) {
@@ -1182,7 +1087,7 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/asset-libraries/{assetLibraryId}/taxonomy-vocabularies' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/asset-libraries/{assetLibraryId}/taxonomy-vocabularies' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "uuid": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -1391,7 +1296,7 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/sites/{siteId}/taxonomy-vocabularies' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/sites/{siteId}/taxonomy-vocabularies' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "uuid": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Inserts a new taxonomy vocabulary in a Site."
@@ -1501,185 +1406,6 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 		).build();
 	}
 
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/export-batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "filter"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "search"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "sort"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "contentType"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "fieldNames"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "TaxonomyVocabulary")
-		}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path("/taxonomy-vocabularies/export-batch")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces("application/json")
-	@Override
-	public Response postTaxonomyVocabulariesPageExportBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("search")
-			String search,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.kernel.search.filter.Filter filter,
-			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
-				sorts,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.DefaultValue("JSON")
-			@jakarta.ws.rs.QueryParam("contentType")
-			String contentType,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("fieldNames")
-			String fieldNames)
-		throws Exception {
-
-		vulcanBatchEngineExportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineExportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineExportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineExportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineExportTaskResource.setContextUser(contextUser);
-		vulcanBatchEngineExportTaskResource.setGroupLocalService(
-			groupLocalService);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineExportTaskResource.postExportTask(
-				TaxonomyVocabulary.class.getName(), callbackURL, contentType,
-				fieldNames)
-		).build();
-	}
-
-	protected abstract TaxonomyVocabulary doPostTaxonomyVocabulary(
-			TaxonomyVocabulary taxonomyVocabulary)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates the asset library's taxonomy vocabulary in the given spaces."
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "TaxonomyVocabulary")
-		}
-	)
-	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
-	@jakarta.ws.rs.Path("/taxonomy-vocabularies")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public final TaxonomyVocabulary postTaxonomyVocabulary(
-			TaxonomyVocabulary taxonomyVocabulary)
-		throws Exception {
-
-		Permission[] permissions = taxonomyVocabulary.getPermissions();
-
-		TaxonomyVocabulary postTaxonomyVocabulary = doPostTaxonomyVocabulary(
-			taxonomyVocabulary);
-
-		if (permissions != null) {
-			Page<Permission> permissionsPage =
-				putTaxonomyVocabularyPermissionsPage(
-					postTaxonomyVocabulary.getId(), permissions);
-
-			postTaxonomyVocabulary.setPermissions(
-				() -> NestedFieldsSupplier.supply(
-					"permissions",
-					nestedField -> {
-						Collection<Permission> collection =
-							permissionsPage.getItems();
-
-						return collection.toArray(
-							new Permission[collection.size()]);
-					}));
-		}
-
-		return postTaxonomyVocabulary;
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "TaxonomyVocabulary")
-		}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path("/taxonomy-vocabularies/batch")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces("application/json")
-	@Override
-	public Response postTaxonomyVocabularyBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			Object object)
-		throws Exception {
-
-		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineImportTaskResource.postImportTask(
-				TaxonomyVocabulary.class.getName(), callbackURL, null, object)
-		).build();
-	}
-
 	protected abstract TaxonomyVocabulary
 			doPutAssetLibraryTaxonomyVocabularyByExternalReferenceCode(
 				Long assetLibraryId, String externalReferenceCode,
@@ -1689,7 +1415,7 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/asset-libraries/{assetLibraryId}/taxonomy-vocabularies/by-external-reference-code/{externalReferenceCode}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/asset-libraries/{assetLibraryId}/taxonomy-vocabularies/by-external-reference-code/{externalReferenceCode}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "uuid": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates the asset library's taxonomy vocabulary with the given external reference code, or creates it if it not exists."
@@ -1836,14 +1562,14 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryTaxonomyVocabularyPermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryTaxonomyVocabularyPermissionsPage", null,
 					portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryTaxonomyVocabularyPermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryTaxonomyVocabularyPermissionsPage", null,
 					portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, null);
@@ -1858,7 +1584,7 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/sites/{siteId}/taxonomy-vocabularies/by-external-reference-code/{externalReferenceCode}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/sites/{siteId}/taxonomy-vocabularies/by-external-reference-code/{externalReferenceCode}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "uuid": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates the site's taxonomy vocabulary with the given external reference code, or creates it if it not exists."
@@ -2001,15 +1727,15 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteTaxonomyVocabularyPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteTaxonomyVocabularyPermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteTaxonomyVocabularyPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteTaxonomyVocabularyPermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -2021,7 +1747,7 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/{taxonomyVocabularyId}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/{taxonomyVocabularyId}' -d $'{"assetLibraries": ___, "assetTypes": ___, "description": ___, "description_i18n": ___, "externalReferenceCode": ___, "multiValued": ___, "name": ___, "name_i18n": ___, "permissions": ___, "uuid": ___, "viewableBy": ___, "visibilityType": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Replaces the taxonomy vocabulary with the information sent in the request body. Any missing fields are deleted unless they are required."
@@ -2156,13 +1882,13 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(taxonomyVocabularyId);
+		Long resourceId = getPermissionCheckerResourceId(taxonomyVocabularyId);
 		String resourceName = getPermissionCheckerResourceName(
 			taxonomyVocabularyId);
-		Long resourceId = getPermissionCheckerResourceId(taxonomyVocabularyId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(taxonomyVocabularyId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -2198,23 +1924,22 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(taxonomyVocabularyId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getTaxonomyVocabularyPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getTaxonomyVocabularyPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putTaxonomyVocabularyPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putTaxonomyVocabularyPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -2245,9 +1970,8 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 						(Long)parameters.get("siteId"), taxonomyVocabulary);
 			}
 			else {
-				taxonomyVocabularyUnsafeFunction =
-					taxonomyVocabulary -> postTaxonomyVocabulary(
-						taxonomyVocabulary);
+				throw new NotSupportedException(
+					"One of the following parameters must be specified: [assetLibraryId, siteId]");
 			}
 		}
 
@@ -2297,8 +2021,8 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 									taxonomyVocabulary);
 						}
 						else {
-							persistedTaxonomyVocabulary =
-								postTaxonomyVocabulary(taxonomyVocabulary);
+							throw new NotSupportedException(
+								"One of the following parameters must be specified: [assetLibraryId, siteId]");
 						}
 					}
 
@@ -2363,9 +2087,53 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 
 		UnsafeFunction<TaxonomyVocabulary, TaxonomyVocabulary, Exception>
 			taxonomyVocabularyUnsafeFunction = taxonomyVocabulary -> {
-				deleteTaxonomyVocabulary(taxonomyVocabulary.getId());
+				if (taxonomyVocabulary.getId() != null) {
+					try {
+						deleteTaxonomyVocabulary(taxonomyVocabulary.getId());
 
-				return taxonomyVocabulary;
+						return taxonomyVocabulary;
+					}
+					catch (Exception exception) {
+						if (taxonomyVocabulary.getExternalReferenceCode() !=
+								null) {
+
+							if (parameters.containsKey("assetLibraryId")) {
+								deleteAssetLibraryTaxonomyVocabularyByExternalReferenceCode(
+									(Long)parameters.get("assetLibraryId"),
+									taxonomyVocabulary.
+										getExternalReferenceCode());
+
+								return taxonomyVocabulary;
+							}
+
+							if (parameters.containsKey("siteId")) {
+								deleteSiteTaxonomyVocabularyByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									taxonomyVocabulary.
+										getExternalReferenceCode());
+
+								return taxonomyVocabulary;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("assetLibraryId")) {
+					deleteAssetLibraryTaxonomyVocabularyByExternalReferenceCode(
+						(Long)parameters.get("assetLibraryId"),
+						taxonomyVocabulary.getExternalReferenceCode());
+
+					return taxonomyVocabulary;
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteTaxonomyVocabularyByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						taxonomyVocabulary.getExternalReferenceCode());
+
+					return taxonomyVocabulary;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -2426,8 +2194,8 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 				pagination, sorts);
 		}
 		else {
-			return getTaxonomyVocabulariesPage(
-				search, null, filter, pagination, sorts);
+			throw new NotSupportedException(
+				"One of the following parameters must be specified: [assetLibraryId, siteId]");
 		}
 	}
 
@@ -2448,6 +2216,15 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2666,6 +2443,9 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -3237,3 +3017,4 @@ public abstract class BaseTaxonomyVocabularyResourceImpl
 		LogFactoryUtil.getLog(BaseTaxonomyVocabularyResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1587037421

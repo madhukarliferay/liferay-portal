@@ -560,6 +560,12 @@ public class ResourcePermissionLocalServiceUtil {
 	}
 
 	public static List<ResourcePermission> getResourcePermissions(
+		long companyId, String name, int scope) {
+
+		return getService().getResourcePermissions(companyId, name, scope);
+	}
+
+	public static List<ResourcePermission> getResourcePermissions(
 		long companyId, String name, int scope, long roleId,
 		boolean viewActionId) {
 
@@ -1118,3 +1124,4 @@ public class ResourcePermissionLocalServiceUtil {
 	private static volatile ResourcePermissionLocalService _service;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-573507335

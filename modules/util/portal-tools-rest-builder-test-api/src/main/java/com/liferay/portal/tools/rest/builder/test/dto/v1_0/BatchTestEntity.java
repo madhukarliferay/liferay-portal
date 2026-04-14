@@ -35,9 +35,7 @@ import java.util.function.Supplier;
  * @generated
  */
 @Generated("")
-@GraphQLName(
-	description = "https://www.schema.org/Document", value = "BatchTestEntity"
-)
+@GraphQLName("BatchTestEntity")
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "BatchTestEntity")
 public class BatchTestEntity implements Serializable {
@@ -49,6 +47,96 @@ public class BatchTestEntity implements Serializable {
 	public static BatchTestEntity unsafeToDTO(String json) {
 		return ObjectMapperUtil.unsafeReadValue(BatchTestEntity.class, json);
 	}
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public Boolean getAcceptAllLanguages() {
+		if (_acceptAllLanguagesSupplier != null) {
+			acceptAllLanguages = _acceptAllLanguagesSupplier.get();
+
+			_acceptAllLanguagesSupplier = null;
+		}
+
+		return acceptAllLanguages;
+	}
+
+	public void setAcceptAllLanguages(Boolean acceptAllLanguages) {
+		this.acceptAllLanguages = acceptAllLanguages;
+
+		_acceptAllLanguagesSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setAcceptAllLanguages(
+		UnsafeSupplier<Boolean, Exception> acceptAllLanguagesUnsafeSupplier) {
+
+		_acceptAllLanguagesSupplier = () -> {
+			try {
+				return acceptAllLanguagesUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean acceptAllLanguages;
+
+	@JsonIgnore
+	private Supplier<Boolean> _acceptAllLanguagesSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	@Valid
+	public com.liferay.portal.vulcan.custom.field.CustomField[]
+		getCustomFields() {
+
+		if (_customFieldsSupplier != null) {
+			customFields = _customFieldsSupplier.get();
+
+			_customFieldsSupplier = null;
+		}
+
+		return customFields;
+	}
+
+	public void setCustomFields(
+		com.liferay.portal.vulcan.custom.field.CustomField[] customFields) {
+
+		this.customFields = customFields;
+
+		_customFieldsSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setCustomFields(
+		UnsafeSupplier
+			<com.liferay.portal.vulcan.custom.field.CustomField[], Exception>
+				customFieldsUnsafeSupplier) {
+
+		_customFieldsSupplier = () -> {
+			try {
+				return customFieldsUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected com.liferay.portal.vulcan.custom.field.CustomField[] customFields;
+
+	@JsonIgnore
+	private Supplier<com.liferay.portal.vulcan.custom.field.CustomField[]>
+		_customFieldsSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
 	public String getExternalReferenceCode() {
@@ -282,6 +370,41 @@ public class BatchTestEntity implements Serializable {
 
 		sb.append("{");
 
+		Boolean acceptAllLanguages = getAcceptAllLanguages();
+
+		if (acceptAllLanguages != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"acceptAllLanguages\": ");
+
+			sb.append(acceptAllLanguages);
+		}
+
+		com.liferay.portal.vulcan.custom.field.CustomField[] customFields =
+			getCustomFields();
+
+		if (customFields != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"customFields\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < customFields.length; i++) {
+				sb.append(customFields[i]);
+
+				if ((i + 1) < customFields.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		String externalReferenceCode = getExternalReferenceCode();
 
 		if (externalReferenceCode != null) {
@@ -456,3 +579,4 @@ public class BatchTestEntity implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:2141770516

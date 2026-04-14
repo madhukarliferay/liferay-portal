@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {ObjectDefinition} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/types/ObjectDefinition';
+import {ObjectDefinition} from '../../../../src/main/resources/META-INF/resources/js/common/types/ObjectDefinition';
 import {
 	ReferencedStructure,
 	Structure,
 } from '../../../../src/main/resources/META-INF/resources/js/structure_builder/types/Structure';
 import {Field} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/field';
 import getUuid from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/getUuid';
-import refreshReferencedStructures from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/refreshReferencedStructures';
+import refreshReferencedStructures from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/state/refreshReferencedStructures';
 
 describe('refreshReferencedStructures', () => {
 	it('add new field, update label and keep uuids', () => {
@@ -27,6 +27,7 @@ describe('refreshReferencedStructures', () => {
 				en_US: 'Field',
 			},
 			localized: false,
+			locked: false,
 			name: 'field-name',
 			parent: referencedStructureUuid,
 			required: false,
@@ -44,10 +45,12 @@ describe('refreshReferencedStructures', () => {
 			},
 			name: 'referenced-structure-name',
 			parent: structureUuid,
+			relationshipERC: 'relationship-erc',
 			relationshipName: 'relationship',
 			spaces: [],
 			type: 'referenced-structure',
 			uuid: referencedStructureUuid,
+			workflows: {},
 		};
 
 		const root: Structure = {
@@ -61,14 +64,19 @@ describe('refreshReferencedStructures', () => {
 			name: 'structure-name',
 			spaces: [],
 			status: 'published',
+			system: false,
+			type: 'L_CMS_CONTENT_STRUCTURES',
 			uuid: structureUuid,
+			workflows: {},
 		};
 
 		const objectDefinition: ObjectDefinition = {
+			enableComments: true,
 			enableFriendlyURLCustomization: true,
 			enableIndexSearch: true,
 			enableLocalization: true,
 			enableObjectEntryDraft: true,
+			enableObjectEntryHistory: true,
 			enableObjectEntrySchedule: true,
 			enableObjectEntryVersioning: true,
 			externalReferenceCode: 'referenced-structure-erc',
@@ -92,6 +100,7 @@ describe('refreshReferencedStructures', () => {
 					name: 'field-name',
 					objectFieldSettings: [],
 					required: false,
+					system: false,
 				},
 				{
 					DBType: 'String',
@@ -107,6 +116,7 @@ describe('refreshReferencedStructures', () => {
 					name: 'new-field-name',
 					objectFieldSettings: [],
 					required: false,
+					system: false,
 				},
 			],
 			objectRelationships: [],
@@ -123,7 +133,9 @@ describe('refreshReferencedStructures', () => {
 			root,
 		});
 
-		const updatedReferencedStructure = result.get(referencedStructure.uuid);
+		const updatedReferencedStructure = result.get(
+			referencedStructure.uuid
+		) as ReferencedStructure;
 
 		expect(updatedReferencedStructure.label.en_US).toBe(
 			'Referenced Structure 2'

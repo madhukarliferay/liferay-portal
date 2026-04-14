@@ -6,18 +6,20 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../../fixtures/apiHelpersTest';
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import getRandomString from '../../../../utils/getRandomString';
 import {waitForAlert} from '../../../../utils/waitForAlert';
 
 export const test = mergeTests(
 	apiHelpersTest,
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	loginTest()
 );
 test(
@@ -27,7 +29,6 @@ test(
 		apiHelpers,
 		commerceAdminProductDetailsPage,
 		commerceAdminProductPage,
-		page,
 	}) => {
 		const catalog =
 			await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
@@ -58,10 +59,14 @@ test(
 		await commerceAdminProductPage.gotoProduct(product.name['en_US']);
 
 		await expect(
-			await page.getByText(specification.title.en_US)
+			commerceAdminProductDetailsPage.textTableCell(
+				specification.title.en_US
+			)
 		).toBeVisible();
 
-		await commerceAdminProductDetailsPage.ellipsisProductSpecification.click();
+		await commerceAdminProductDetailsPage
+			.ellipsisProductSpecification(specification.title.en_US)
+			.click();
 		await (
 			await commerceAdminProductDetailsPage.dropdownProductSpecification(
 				'Edit'
@@ -82,7 +87,11 @@ test(
 
 		await commerceAdminProductDetailsPage.closeEditFrame.click();
 
-		await expect(page.getByText(randomSpecificationValue)).toBeVisible();
+		await expect(
+			commerceAdminProductDetailsPage.textTableCell(
+				randomSpecificationValue
+			)
+		).toBeVisible();
 	}
 );
 
@@ -132,6 +141,7 @@ test(
 			);
 			await commerceAdminProductDetailsPage.editOrDeleteProductSpecification(
 				'Edit',
+				specification.title.en_US,
 				'item1'
 			);
 			await commerceAdminProductDetailsPage.visibleToggle.check();
@@ -159,7 +169,6 @@ test(
 		apiHelpers,
 		commerceAdminProductDetailsPage,
 		commerceAdminProductPage,
-		page,
 	}) => {
 		const catalog =
 			await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
@@ -184,7 +193,11 @@ test(
 			'item1'
 		);
 
-		await expect(page.getByText(specification.title.en_US)).toBeVisible();
+		await expect(
+			commerceAdminProductDetailsPage.textTableCell(
+				specification.title.en_US
+			)
+		).toBeVisible();
 
 		await commerceAdminProductDetailsPage.createSpecificationProduct(
 			'Create New Specification',
@@ -192,6 +205,8 @@ test(
 			'item2'
 		);
 
-		await expect(page.getByText('Specification-1')).toBeVisible();
+		await expect(
+			commerceAdminProductDetailsPage.textTableCell('Specification-1')
+		).toBeVisible();
 	}
 );

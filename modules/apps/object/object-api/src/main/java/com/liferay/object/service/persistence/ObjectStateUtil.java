@@ -210,52 +210,6 @@ public class ObjectStateUtil {
 	}
 
 	/**
-	 * Returns the last object state in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state
-	 * @throws NoSuchObjectStateException if a matching object state could not be found
-	 */
-	public static ObjectState findByUuid_Last(
-			String uuid, OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object state in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state, or <code>null</code> if a matching object state could not be found
-	 */
-	public static ObjectState fetchByUuid_Last(
-		String uuid, OrderByComparator<ObjectState> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the object states before and after the current object state in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectStateId the primary key of the current object state
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state
-	 * @throws NoSuchObjectStateException if a object state with the primary key could not be found
-	 */
-	public static ObjectState[] findByUuid_PrevAndNext(
-			long objectStateId, String uuid,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			objectStateId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object states where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -382,59 +336,6 @@ public class ObjectStateUtil {
 
 		return getPersistence().fetchByUuid_C_First(
 			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object state in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state
-	 * @throws NoSuchObjectStateException if a matching object state could not be found
-	 */
-	public static ObjectState findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object state in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state, or <code>null</code> if a matching object state could not be found
-	 */
-	public static ObjectState fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<ObjectState> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object states before and after the current object state in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectStateId the primary key of the current object state
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state
-	 * @throws NoSuchObjectStateException if a object state with the primary key could not be found
-	 */
-	public static ObjectState[] findByUuid_C_PrevAndNext(
-			long objectStateId, String uuid, long companyId,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			objectStateId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -566,56 +467,6 @@ public class ObjectStateUtil {
 	}
 
 	/**
-	 * Returns the last object state in the ordered set where listTypeEntryId = &#63;.
-	 *
-	 * @param listTypeEntryId the list type entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state
-	 * @throws NoSuchObjectStateException if a matching object state could not be found
-	 */
-	public static ObjectState findByListTypeEntryId_Last(
-			long listTypeEntryId,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByListTypeEntryId_Last(
-			listTypeEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object state in the ordered set where listTypeEntryId = &#63;.
-	 *
-	 * @param listTypeEntryId the list type entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state, or <code>null</code> if a matching object state could not be found
-	 */
-	public static ObjectState fetchByListTypeEntryId_Last(
-		long listTypeEntryId,
-		OrderByComparator<ObjectState> orderByComparator) {
-
-		return getPersistence().fetchByListTypeEntryId_Last(
-			listTypeEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object states before and after the current object state in the ordered set where listTypeEntryId = &#63;.
-	 *
-	 * @param objectStateId the primary key of the current object state
-	 * @param listTypeEntryId the list type entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state
-	 * @throws NoSuchObjectStateException if a object state with the primary key could not be found
-	 */
-	public static ObjectState[] findByListTypeEntryId_PrevAndNext(
-			long objectStateId, long listTypeEntryId,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByListTypeEntryId_PrevAndNext(
-			objectStateId, listTypeEntryId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object states where listTypeEntryId = &#63; from the database.
 	 *
 	 * @param listTypeEntryId the list type entry ID
@@ -739,56 +590,6 @@ public class ObjectStateUtil {
 
 		return getPersistence().fetchByObjectStateFlowId_First(
 			objectStateFlowId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object state in the ordered set where objectStateFlowId = &#63;.
-	 *
-	 * @param objectStateFlowId the object state flow ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state
-	 * @throws NoSuchObjectStateException if a matching object state could not be found
-	 */
-	public static ObjectState findByObjectStateFlowId_Last(
-			long objectStateFlowId,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByObjectStateFlowId_Last(
-			objectStateFlowId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object state in the ordered set where objectStateFlowId = &#63;.
-	 *
-	 * @param objectStateFlowId the object state flow ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state, or <code>null</code> if a matching object state could not be found
-	 */
-	public static ObjectState fetchByObjectStateFlowId_Last(
-		long objectStateFlowId,
-		OrderByComparator<ObjectState> orderByComparator) {
-
-		return getPersistence().fetchByObjectStateFlowId_Last(
-			objectStateFlowId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object states before and after the current object state in the ordered set where objectStateFlowId = &#63;.
-	 *
-	 * @param objectStateId the primary key of the current object state
-	 * @param objectStateFlowId the object state flow ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state
-	 * @throws NoSuchObjectStateException if a object state with the primary key could not be found
-	 */
-	public static ObjectState[] findByObjectStateFlowId_PrevAndNext(
-			long objectStateId, long objectStateFlowId,
-			OrderByComparator<ObjectState> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectStateException {
-
-		return getPersistence().findByObjectStateFlowId_PrevAndNext(
-			objectStateId, objectStateFlowId, orderByComparator);
 	}
 
 	/**
@@ -1042,3 +843,4 @@ public class ObjectStateUtil {
 	private static volatile ObjectStatePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:252435635

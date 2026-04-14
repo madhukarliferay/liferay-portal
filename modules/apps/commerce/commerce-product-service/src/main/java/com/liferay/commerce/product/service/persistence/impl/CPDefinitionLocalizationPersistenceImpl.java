@@ -333,224 +333,6 @@ public class CPDefinitionLocalizationPersistenceImpl
 	}
 
 	/**
-	 * Returns the last cp definition localization in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition localization
-	 * @throws NoSuchCPDefinitionLocalizationException if a matching cp definition localization could not be found
-	 */
-	@Override
-	public CPDefinitionLocalization findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			OrderByComparator<CPDefinitionLocalization> orderByComparator)
-		throws NoSuchCPDefinitionLocalizationException {
-
-		CPDefinitionLocalization cpDefinitionLocalization =
-			fetchByCPDefinitionId_Last(CPDefinitionId, orderByComparator);
-
-		if (cpDefinitionLocalization != null) {
-			return cpDefinitionLocalization;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("CPDefinitionId=");
-		sb.append(CPDefinitionId);
-
-		sb.append("}");
-
-		throw new NoSuchCPDefinitionLocalizationException(sb.toString());
-	}
-
-	/**
-	 * Returns the last cp definition localization in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition localization, or <code>null</code> if a matching cp definition localization could not be found
-	 */
-	@Override
-	public CPDefinitionLocalization fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		OrderByComparator<CPDefinitionLocalization> orderByComparator) {
-
-		int count = countByCPDefinitionId(CPDefinitionId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CPDefinitionLocalization> list = findByCPDefinitionId(
-			CPDefinitionId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the cp definition localizations before and after the current cp definition localization in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param cpDefinitionLocalizationId the primary key of the current cp definition localization
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition localization
-	 * @throws NoSuchCPDefinitionLocalizationException if a cp definition localization with the primary key could not be found
-	 */
-	@Override
-	public CPDefinitionLocalization[] findByCPDefinitionId_PrevAndNext(
-			long cpDefinitionLocalizationId, long CPDefinitionId,
-			OrderByComparator<CPDefinitionLocalization> orderByComparator)
-		throws NoSuchCPDefinitionLocalizationException {
-
-		CPDefinitionLocalization cpDefinitionLocalization = findByPrimaryKey(
-			cpDefinitionLocalizationId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CPDefinitionLocalization[] array =
-				new CPDefinitionLocalizationImpl[3];
-
-			array[0] = getByCPDefinitionId_PrevAndNext(
-				session, cpDefinitionLocalization, CPDefinitionId,
-				orderByComparator, true);
-
-			array[1] = cpDefinitionLocalization;
-
-			array[2] = getByCPDefinitionId_PrevAndNext(
-				session, cpDefinitionLocalization, CPDefinitionId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CPDefinitionLocalization getByCPDefinitionId_PrevAndNext(
-		Session session, CPDefinitionLocalization cpDefinitionLocalization,
-		long CPDefinitionId,
-		OrderByComparator<CPDefinitionLocalization> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CPDEFINITIONLOCALIZATION_WHERE);
-
-		sb.append(_FINDER_COLUMN_CPDEFINITIONID_CPDEFINITIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CPDefinitionLocalizationModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(CPDefinitionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						cpDefinitionLocalization)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CPDefinitionLocalization> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the cp definition localizations where CPDefinitionId = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -1142,22 +924,6 @@ public class CPDefinitionLocalizationPersistenceImpl
 			}
 
 			try {
-				cpDefinitionLocalization.setName(
-					SanitizerUtil.sanitize(
-						companyId, groupId, userId,
-						CPDefinitionLocalization.class.getName(),
-						cpDefinitionLocalizationId, ContentTypes.TEXT_PLAIN,
-						Sanitizer.MODE_ALL, cpDefinitionLocalization.getName(),
-						null));
-
-				cpDefinitionLocalization.setShortDescription(
-					SanitizerUtil.sanitize(
-						companyId, groupId, userId,
-						CPDefinitionLocalization.class.getName(),
-						cpDefinitionLocalizationId, ContentTypes.TEXT_HTML,
-						Sanitizer.MODE_ALL,
-						cpDefinitionLocalization.getShortDescription(), null));
-
 				cpDefinitionLocalization.setDescription(
 					SanitizerUtil.sanitize(
 						companyId, groupId, userId,
@@ -1165,14 +931,6 @@ public class CPDefinitionLocalizationPersistenceImpl
 						cpDefinitionLocalizationId, ContentTypes.TEXT_HTML,
 						Sanitizer.MODE_ALL,
 						cpDefinitionLocalization.getDescription(), null));
-
-				cpDefinitionLocalization.setMetaTitle(
-					SanitizerUtil.sanitize(
-						companyId, groupId, userId,
-						CPDefinitionLocalization.class.getName(),
-						cpDefinitionLocalizationId, ContentTypes.TEXT_HTML,
-						Sanitizer.MODE_ALL,
-						cpDefinitionLocalization.getMetaTitle(), null));
 
 				cpDefinitionLocalization.setMetaDescription(
 					SanitizerUtil.sanitize(
@@ -1189,6 +947,30 @@ public class CPDefinitionLocalizationPersistenceImpl
 						cpDefinitionLocalizationId, ContentTypes.TEXT_HTML,
 						Sanitizer.MODE_ALL,
 						cpDefinitionLocalization.getMetaKeywords(), null));
+
+				cpDefinitionLocalization.setMetaTitle(
+					SanitizerUtil.sanitize(
+						companyId, groupId, userId,
+						CPDefinitionLocalization.class.getName(),
+						cpDefinitionLocalizationId, ContentTypes.TEXT_HTML,
+						Sanitizer.MODE_ALL,
+						cpDefinitionLocalization.getMetaTitle(), null));
+
+				cpDefinitionLocalization.setName(
+					SanitizerUtil.sanitize(
+						companyId, groupId, userId,
+						CPDefinitionLocalization.class.getName(),
+						cpDefinitionLocalizationId, ContentTypes.TEXT_PLAIN,
+						Sanitizer.MODE_ALL, cpDefinitionLocalization.getName(),
+						null));
+
+				cpDefinitionLocalization.setShortDescription(
+					SanitizerUtil.sanitize(
+						companyId, groupId, userId,
+						CPDefinitionLocalization.class.getName(),
+						cpDefinitionLocalizationId, ContentTypes.TEXT_HTML,
+						Sanitizer.MODE_ALL,
+						cpDefinitionLocalization.getShortDescription(), null));
 			}
 			catch (SanitizerException sanitizerException) {
 				throw new SystemException(sanitizerException);
@@ -1726,12 +1508,12 @@ public class CPDefinitionLocalizationPersistenceImpl
 		ctMergeColumnNames.add("CPDefinitionId");
 		ctMergeColumnNames.add("languageId");
 		ctMergeColumnNames.add("CProductId");
-		ctMergeColumnNames.add("name");
-		ctMergeColumnNames.add("shortDescription");
 		ctMergeColumnNames.add("description");
-		ctMergeColumnNames.add("metaTitle");
 		ctMergeColumnNames.add("metaDescription");
 		ctMergeColumnNames.add("metaKeywords");
+		ctMergeColumnNames.add("metaTitle");
+		ctMergeColumnNames.add("name");
+		ctMergeColumnNames.add("shortDescription");
 
 		_ctColumnNamesMap.put(
 			CTColumnResolutionType.CONTROL, ctControlColumnNames);
@@ -1864,3 +1646,4 @@ public class CPDefinitionLocalizationPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:650401293

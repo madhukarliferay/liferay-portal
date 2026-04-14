@@ -52,6 +52,11 @@ public interface ObjectEntryFolderService extends BaseService {
 			ServiceContext serviceContext)
 		throws PortalException;
 
+	public ObjectEntryFolder copyObjectEntryFolder(
+			long objectEntryFolderId, long parentObjectEntryFolderId,
+			boolean replace, ServiceContext serviceContext)
+		throws PortalException;
+
 	public ObjectEntryFolder deleteObjectEntryFolder(long objectEntryFolderId)
 		throws PortalException;
 
@@ -88,6 +93,12 @@ public interface ObjectEntryFolderService extends BaseService {
 			long groupId, long companyId, long parentObjectEntryFolderId)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectEntryFolder getOrAddEmptyObjectEntryFolder(
+			String externalReferenceCode, long groupId, long companyId,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -95,22 +106,25 @@ public interface ObjectEntryFolderService extends BaseService {
 	 */
 	public String getOSGiServiceIdentifier();
 
+	public ObjectEntryFolder moveObjectEntryFolder(
+			long objectEntryFolderId, long parentObjectEntryFolderId,
+			boolean replace, ServiceContext serviceContext)
+		throws PortalException;
+
 	public ObjectEntryFolder moveObjectEntryFolderToTrash(
-			long userId, ObjectEntryFolder objectEntryFolder,
-			ServiceContext serviceContext)
+			ObjectEntryFolder objectEntryFolder, ServiceContext serviceContext)
 		throws PortalException;
 
 	public ObjectEntryFolder restoreObjectEntryFolderFromTrash(
-			long userId, ObjectEntryFolder objectEntryFolder,
-			ServiceContext serviceContext)
+			ObjectEntryFolder objectEntryFolder, ServiceContext serviceContext)
 		throws PortalException;
 
 	public void subscribeObjectEntryFolder(
-			long userId, long groupId, long objectEntryFolderId)
+			long groupId, long objectEntryFolderId)
 		throws PortalException;
 
 	public void unsubscribeObjectEntryFolder(
-			long userId, long groupId, long objectEntryFolderId)
+			long groupId, long objectEntryFolderId)
 		throws PortalException;
 
 	public ObjectEntryFolder updateObjectEntryFolder(
@@ -120,3 +134,4 @@ public interface ObjectEntryFolderService extends BaseService {
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1105096765

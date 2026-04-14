@@ -15,9 +15,9 @@ import React, {useState} from 'react';
 
 import {useCache} from '../contexts/CacheContext';
 import {useSelector, useStateDispatch} from '../contexts/StateContext';
+import selectErrors from '../selectors/selectErrors';
 import selectPublishedChildren from '../selectors/selectPublishedChildren';
-import selectValidationErrors from '../selectors/selectValidationErrors';
-import {Field, MultiselectField, SingleSelectField} from '../utils/field';
+import {Field, SelectFromListField} from '../utils/field';
 import AsyncPicker from './AsyncPicker';
 
 export default function PicklistPicker({
@@ -27,26 +27,27 @@ export default function PicklistPicker({
 	disabled?: boolean;
 	field: Field;
 }) {
-	const selectField = field as SingleSelectField | MultiselectField;
+	const selectFromListField = field as SelectFromListField;
 
 	const [selectedKey, setSelectedKey] = useState<React.Key>(
-		selectField.picklistId
+		selectFromListField.picklistId
 	);
 
 	const dispatch = useStateDispatch();
 	const publishedChildren = useSelector(selectPublishedChildren);
-	const validationErrors = useSelector(selectValidationErrors(field.uuid));
+	const errors = useSelector(selectErrors(field.uuid));
 
 	const {data: picklists, load: loadPicklist, status} = useCache('picklists');
 
 	const feedbackId = useId();
 	const pickerId = useId();
 
-	const hasError = validationErrors.has('no-picklist');
 	const isPublished = publishedChildren.has(field.uuid);
 
+	const error = errors.get('picklist');
+
 	return (
-		<ClayForm.Group className={classNames('mb-2', {'has-error': hasError})}>
+		<ClayForm.Group className={classNames('mb-2', {'has-error': error})}>
 			<ClayInput.Group className="align-items-end">
 				<ClayInput.GroupItem>
 					<label htmlFor={pickerId}>
@@ -75,8 +76,9 @@ export default function PicklistPicker({
 
 							if (!selectedKey && noOptionSelected) {
 								dispatch({
-									error: 'no-picklist',
-									type: 'add-validation-error',
+									error: 'empty',
+									property: 'picklist',
+									type: 'add-error',
 									uuid: field.uuid,
 								});
 							}
@@ -143,13 +145,8 @@ export default function PicklistPicker({
 				</ClayInput.GroupItem>
 			</ClayInput.Group>
 
-			{hasError ? (
-				<FieldFeedback
-					errorMessage={Liferay.Language.get(
-						'this-field-is-required'
-					)}
-					id={feedbackId}
-				/>
+			{error ? (
+				<FieldFeedback errorMessage={error} id={feedbackId} />
 			) : null}
 		</ClayForm.Group>
 	);

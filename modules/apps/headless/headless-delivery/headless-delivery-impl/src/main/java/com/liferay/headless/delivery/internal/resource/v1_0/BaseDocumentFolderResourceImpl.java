@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.DocumentFolder;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
@@ -301,15 +302,15 @@ public abstract class BaseDocumentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryDocumentFolderPermissionsPage", portletName,
-					assetLibraryId)
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryDocumentFolderPermissionsPage", null,
+					portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryDocumentFolderPermissionsPage", portletName,
-					assetLibraryId)
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryDocumentFolderPermissionsPage", null,
+					portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, roleNames);
 	}
@@ -673,25 +674,27 @@ public abstract class BaseDocumentFolderResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(documentFolderId);
+		Long resourceId = getPermissionCheckerResourceId(documentFolderId);
 		String resourceName = getPermissionCheckerResourceName(
 			documentFolderId);
-		Long resourceId = getPermissionCheckerResourceId(documentFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(documentFolderId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getDocumentFolderPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDocumentFolderPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putDocumentFolderPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDocumentFolderPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -752,13 +755,15 @@ public abstract class BaseDocumentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteDocumentFolderPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteDocumentFolderPermissionsPage", null, portletName,
+					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteDocumentFolderPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteDocumentFolderPermissionsPage", null, portletName,
+					siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -943,7 +948,7 @@ public abstract class BaseDocumentFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-delivery/v1.0/document-folders/{documentFolderId}' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-delivery/v1.0/document-folders/{documentFolderId}' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "permissions": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates only the fields received in the request body. Any other fields are left untouched."
@@ -1001,6 +1006,11 @@ public abstract class BaseDocumentFolderResourceImpl
 				documentFolder.getParentDocumentFolderId());
 		}
 
+		if (documentFolder.getPermissions() != null) {
+			existingDocumentFolder.setPermissions(
+				documentFolder.getPermissions());
+		}
+
 		if (documentFolder.getViewableBy() != null) {
 			existingDocumentFolder.setViewableBy(
 				documentFolder.getViewableBy());
@@ -1014,7 +1024,7 @@ public abstract class BaseDocumentFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/asset-libraries/{assetLibraryId}/document-folders' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/asset-libraries/{assetLibraryId}/document-folders' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "permissions": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -1196,7 +1206,7 @@ public abstract class BaseDocumentFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/document-folders/{parentDocumentFolderId}/document-folders' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/document-folders/{parentDocumentFolderId}/document-folders' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "permissions": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Creates a new folder in a folder identified by `parentDocumentFolderId`."
@@ -1272,7 +1282,7 @@ public abstract class BaseDocumentFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/document-folders' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/document-folders' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "permissions": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Creates a new document folder."
@@ -1529,15 +1539,15 @@ public abstract class BaseDocumentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryDocumentFolderPermissionsPage", portletName,
-					assetLibraryId)
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryDocumentFolderPermissionsPage", null,
+					portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryDocumentFolderPermissionsPage", portletName,
-					assetLibraryId)
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryDocumentFolderPermissionsPage", null,
+					portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, null);
 	}
@@ -1545,7 +1555,7 @@ public abstract class BaseDocumentFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/document-folders/{documentFolderId}' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/document-folders/{documentFolderId}' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "permissions": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Replaces the document folder with the information sent in the request body. Any missing fields are deleted, unless they are required."
@@ -1693,13 +1703,13 @@ public abstract class BaseDocumentFolderResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(documentFolderId);
+		Long resourceId = getPermissionCheckerResourceId(documentFolderId);
 		String resourceName = getPermissionCheckerResourceName(
 			documentFolderId);
-		Long resourceId = getPermissionCheckerResourceId(documentFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(documentFolderId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1735,21 +1745,22 @@ public abstract class BaseDocumentFolderResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(documentFolderId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getDocumentFolderPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDocumentFolderPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putDocumentFolderPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDocumentFolderPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1889,13 +1900,15 @@ public abstract class BaseDocumentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteDocumentFolderPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteDocumentFolderPermissionsPage", null, portletName,
+					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteDocumentFolderPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteDocumentFolderPermissionsPage", null, portletName,
+					siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -1903,7 +1916,7 @@ public abstract class BaseDocumentFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/documents-folder/by-external-reference-code/{externalReferenceCode}' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/documents-folder/by-external-reference-code/{externalReferenceCode}' -d $'{"customFields": ___, "description": ___, "externalReferenceCode": ___, "name": ___, "parentDocumentFolderId": ___, "permissions": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Replaces the document folder by external reference code with the information sent in the request body, or replaces it if it not exists."
@@ -2093,6 +2106,15 @@ public abstract class BaseDocumentFolderResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2318,6 +2340,9 @@ public abstract class BaseDocumentFolderResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2887,3 +2912,4 @@ public abstract class BaseDocumentFolderResourceImpl
 		LogFactoryUtil.getLog(BaseDocumentFolderResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-2088899589

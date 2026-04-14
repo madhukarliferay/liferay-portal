@@ -120,47 +120,6 @@ public interface ObjectStateTransitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object state transition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition
-	 * @throws NoSuchObjectStateTransitionException if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
-	 * Returns the last object state transition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition, or <code>null</code> if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectStateTransition>
-			orderByComparator);
-
-	/**
-	 * Returns the object state transitions before and after the current object state transition in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectStateTransitionId the primary key of the current object state transition
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state transition
-	 * @throws NoSuchObjectStateTransitionException if a object state transition with the primary key could not be found
-	 */
-	public ObjectStateTransition[] findByUuid_PrevAndNext(
-			long objectStateTransitionId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
 	 * Removes all the object state transitions where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface ObjectStateTransitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object state transition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition
-	 * @throws NoSuchObjectStateTransitionException if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
-	 * Returns the last object state transition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition, or <code>null</code> if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectStateTransition>
-			orderByComparator);
-
-	/**
-	 * Returns the object state transitions before and after the current object state transition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectStateTransitionId the primary key of the current object state transition
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state transition
-	 * @throws NoSuchObjectStateTransitionException if a object state transition with the primary key could not be found
-	 */
-	public ObjectStateTransition[] findByUuid_C_PrevAndNext(
-			long objectStateTransitionId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
 	 * Removes all the object state transitions where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -419,47 +334,6 @@ public interface ObjectStateTransitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object state transition in the ordered set where objectStateFlowId = &#63;.
-	 *
-	 * @param objectStateFlowId the object state flow ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition
-	 * @throws NoSuchObjectStateTransitionException if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition findByObjectStateFlowId_Last(
-			long objectStateFlowId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
-	 * Returns the last object state transition in the ordered set where objectStateFlowId = &#63;.
-	 *
-	 * @param objectStateFlowId the object state flow ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition, or <code>null</code> if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition fetchByObjectStateFlowId_Last(
-		long objectStateFlowId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectStateTransition>
-			orderByComparator);
-
-	/**
-	 * Returns the object state transitions before and after the current object state transition in the ordered set where objectStateFlowId = &#63;.
-	 *
-	 * @param objectStateTransitionId the primary key of the current object state transition
-	 * @param objectStateFlowId the object state flow ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state transition
-	 * @throws NoSuchObjectStateTransitionException if a object state transition with the primary key could not be found
-	 */
-	public ObjectStateTransition[] findByObjectStateFlowId_PrevAndNext(
-			long objectStateTransitionId, long objectStateFlowId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
 	 * Removes all the object state transitions where objectStateFlowId = &#63; from the database.
 	 *
 	 * @param objectStateFlowId the object state flow ID
@@ -563,47 +437,6 @@ public interface ObjectStateTransitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object state transition in the ordered set where sourceObjectStateId = &#63;.
-	 *
-	 * @param sourceObjectStateId the source object state ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition
-	 * @throws NoSuchObjectStateTransitionException if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition findBySourceObjectStateId_Last(
-			long sourceObjectStateId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
-	 * Returns the last object state transition in the ordered set where sourceObjectStateId = &#63;.
-	 *
-	 * @param sourceObjectStateId the source object state ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition, or <code>null</code> if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition fetchBySourceObjectStateId_Last(
-		long sourceObjectStateId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectStateTransition>
-			orderByComparator);
-
-	/**
-	 * Returns the object state transitions before and after the current object state transition in the ordered set where sourceObjectStateId = &#63;.
-	 *
-	 * @param objectStateTransitionId the primary key of the current object state transition
-	 * @param sourceObjectStateId the source object state ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state transition
-	 * @throws NoSuchObjectStateTransitionException if a object state transition with the primary key could not be found
-	 */
-	public ObjectStateTransition[] findBySourceObjectStateId_PrevAndNext(
-			long objectStateTransitionId, long sourceObjectStateId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
 	 * Removes all the object state transitions where sourceObjectStateId = &#63; from the database.
 	 *
 	 * @param sourceObjectStateId the source object state ID
@@ -705,47 +538,6 @@ public interface ObjectStateTransitionPersistence
 		long targetObjectStateId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectStateTransition>
 			orderByComparator);
-
-	/**
-	 * Returns the last object state transition in the ordered set where targetObjectStateId = &#63;.
-	 *
-	 * @param targetObjectStateId the target object state ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition
-	 * @throws NoSuchObjectStateTransitionException if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition findByTargetObjectStateId_Last(
-			long targetObjectStateId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
-
-	/**
-	 * Returns the last object state transition in the ordered set where targetObjectStateId = &#63;.
-	 *
-	 * @param targetObjectStateId the target object state ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object state transition, or <code>null</code> if a matching object state transition could not be found
-	 */
-	public ObjectStateTransition fetchByTargetObjectStateId_Last(
-		long targetObjectStateId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectStateTransition>
-			orderByComparator);
-
-	/**
-	 * Returns the object state transitions before and after the current object state transition in the ordered set where targetObjectStateId = &#63;.
-	 *
-	 * @param objectStateTransitionId the primary key of the current object state transition
-	 * @param targetObjectStateId the target object state ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object state transition
-	 * @throws NoSuchObjectStateTransitionException if a object state transition with the primary key could not be found
-	 */
-	public ObjectStateTransition[] findByTargetObjectStateId_PrevAndNext(
-			long objectStateTransitionId, long targetObjectStateId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectStateTransition> orderByComparator)
-		throws NoSuchObjectStateTransitionException;
 
 	/**
 	 * Removes all the object state transitions where targetObjectStateId = &#63; from the database.
@@ -886,3 +678,4 @@ public interface ObjectStateTransitionPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1333751735

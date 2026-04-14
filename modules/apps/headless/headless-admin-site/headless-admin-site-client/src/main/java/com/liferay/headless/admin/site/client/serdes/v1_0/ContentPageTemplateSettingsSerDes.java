@@ -58,9 +58,7 @@ public class ContentPageTemplateSettingsSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(contentPageTemplateSettings.getType());
-
 			sb.append("\"");
 		}
 
@@ -212,3 +210,4 @@ public class ContentPageTemplateSettingsSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:2083724167

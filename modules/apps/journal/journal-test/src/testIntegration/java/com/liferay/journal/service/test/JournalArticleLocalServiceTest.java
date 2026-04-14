@@ -23,6 +23,11 @@ import com.liferay.asset.link.service.AssetLinkLocalService;
 import com.liferay.data.engine.rest.dto.v2_0.DataDefinition;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.data.engine.rest.test.util.DataDefinitionTestUtil;
+import com.liferay.depot.constants.DepotConstants;
+import com.liferay.depot.model.DepotEntry;
+import com.liferay.depot.model.DepotEntryGroupRel;
+import com.liferay.depot.service.DepotEntryGroupRelLocalService;
+import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
@@ -129,6 +134,8 @@ import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.kernel.xml.Document;
+import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portlet.asset.util.AssetVocabularySettingsHelper;
@@ -606,68 +613,18 @@ public class JournalArticleLocalServiceTest {
 
 	@Test
 	public void testCopyArticle() throws Exception {
-		JournalArticle oldJournalArticle = JournalTestUtil.addArticle(
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
 			_group.getGroupId(),
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "Test-1",
 			RandomTestUtil.randomString());
 
-		JournalArticle thirdJournalArticle = JournalTestUtil.addArticle(
-			_group.getGroupId(),
-			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "Test-2",
-			oldJournalArticle.getContent());
+		_testCopyArticle(journalArticle, " (Copy)", "-copy-");
+		_testCopyArticle(journalArticle, " (Copy 1)", "-copy-1-");
 
-		JournalArticle newJournalArticle =
-			_journalArticleLocalService.copyArticle(
-				oldJournalArticle.getUserId(), oldJournalArticle.getGroupId(),
-				oldJournalArticle.getArticleId(), null, true,
-				oldJournalArticle.getVersion());
+		journalArticle = JournalTestUtil.updateArticle(
+			journalArticle, "Test-2");
 
-		Assert.assertNotEquals(oldJournalArticle, newJournalArticle);
-		Assert.assertNotEquals(
-			thirdJournalArticle.getUrlTitle(), newJournalArticle.getUrlTitle());
-
-		List<ResourcePermission> oldResourcePermissions =
-			_resourcePermissionLocalService.getResourcePermissions(
-				oldJournalArticle.getCompanyId(),
-				JournalArticle.class.getName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(oldJournalArticle.getResourcePrimKey()));
-
-		List<ResourcePermission> newResourcePermissions =
-			_resourcePermissionLocalService.getResourcePermissions(
-				newJournalArticle.getCompanyId(),
-				JournalArticle.class.getName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(newJournalArticle.getResourcePrimKey()));
-
-		Assert.assertEquals(
-			StringBundler.concat(
-				"Old resource permissions: ", oldResourcePermissions,
-				", new resource permissions: ", newResourcePermissions),
-			oldResourcePermissions.size(), newResourcePermissions.size());
-
-		for (int i = 0; i < oldResourcePermissions.size(); i++) {
-			ResourcePermission oldResourcePermission =
-				oldResourcePermissions.get(i);
-			ResourcePermission newResourcePermission =
-				newResourcePermissions.get(i);
-
-			Assert.assertNotEquals(
-				oldResourcePermission, newResourcePermission);
-
-			Assert.assertEquals(
-				oldResourcePermission.getRoleId(),
-				newResourcePermission.getRoleId());
-			Assert.assertEquals(
-				oldResourcePermission.getOwnerId(),
-				newResourcePermission.getOwnerId());
-			Assert.assertEquals(
-				oldResourcePermission.getActionIds(),
-				newResourcePermission.getActionIds());
-			Assert.assertEquals(
-				oldResourcePermission.isViewActionId(),
-				newResourcePermission.isViewActionId());
-		}
+		_testCopyArticle(journalArticle, " (Copy)", "-copy-");
 	}
 
 	@Test
@@ -1246,7 +1203,8 @@ public class JournalArticleLocalServiceTest {
 
 	@Test
 	public void testDeleteDDMStructurePredefinedValues() throws Exception {
-		Tuple tuple = _createJournalArticleWithPredefinedValues("Test Article");
+		Tuple tuple = _createJournalArticleWithPredefinedValues(
+			_group.getGroupId());
 
 		JournalArticle journalArticle = (JournalArticle)tuple.getObject(0);
 		DDMStructure ddmStructure = (DDMStructure)tuple.getObject(1);
@@ -1519,7 +1477,7 @@ public class JournalArticleLocalServiceTest {
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				journalArticle.getDDMStructureId(), true,
+				journalArticle.getDDMStructureKey(), true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		_assetDisplayPageEntryLocalService.addAssetDisplayPageEntry(
@@ -1688,6 +1646,54 @@ public class JournalArticleLocalServiceTest {
 	}
 
 	@Test
+	public void testGetArticleDisplayWithContentFromDepotEntryWithDDMTemplate()
+		throws Exception {
+
+		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			DepotConstants.TYPE_ASSET_LIBRARY,
+			ServiceContextTestUtil.getServiceContext());
+
+		DepotEntryGroupRel depotEntryGroupRel =
+			_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
+				depotEntry.getDepotEntryId(), _group.getGroupId());
+
+		_depotEntryGroupRelLocalService.updateDDMStructuresAvailable(
+			depotEntryGroupRel.getDepotEntryGroupRelId(), true);
+
+		Tuple tuple = _createJournalArticleWithPredefinedValues(
+			depotEntry.getGroupId());
+
+		JournalArticle journalArticle = (JournalArticle)tuple.getObject(0);
+
+		DDMStructure ddmStructure = (DDMStructure)tuple.getObject(1);
+
+		String ddmTemplateScript = RandomTestUtil.randomString();
+
+		DDMTemplate ddmTemplate = DDMTemplateTestUtil.addTemplate(
+			_group.getGroupId(), ddmStructure.getStructureId(),
+			PortalUtil.getClassNameId(JournalArticle.class),
+			TemplateConstants.LANG_TYPE_VM, ddmTemplateScript,
+			LocaleUtil.getSiteDefault());
+
+		String defaultLanguageId = LocaleUtil.toLanguageId(
+			LocaleUtil.getSiteDefault());
+
+		JournalArticleDisplay journalArticleDisplay =
+			_journalArticleLocalService.getArticleDisplay(
+				journalArticle, ddmTemplate.getTemplateKey(), Constants.VIEW,
+				defaultLanguageId, 1, null, _themeDisplay);
+
+		Assert.assertEquals(
+			ddmTemplateScript, journalArticleDisplay.getContent());
+	}
+
+	@Test
 	public void testGetArticleDisplayWithContentFromGlobalSite()
 		throws Exception {
 
@@ -1700,16 +1706,20 @@ public class JournalArticleLocalServiceTest {
 
 		DDMStructure ddmStructure = journalArticle.getDDMStructure();
 
+		String ddmTemplateScript1 = RandomTestUtil.randomString();
+
 		DDMTemplate ddmTemplate1 = DDMTemplateTestUtil.addTemplate(
 			company.getGroupId(), ddmStructure.getStructureId(),
 			PortalUtil.getClassNameId(JournalArticle.class),
-			TemplateConstants.LANG_TYPE_VM, "ddm template 1",
+			TemplateConstants.LANG_TYPE_VM, ddmTemplateScript1,
 			LocaleUtil.getSiteDefault());
+
+		String ddmTemplateScript2 = RandomTestUtil.randomString();
 
 		DDMTemplate ddmTemplate2 = DDMTemplateTestUtil.addTemplate(
 			company.getGroupId(), ddmStructure.getStructureId(),
 			PortalUtil.getClassNameId(JournalArticle.class),
-			TemplateConstants.LANG_TYPE_VM, "ddm template 2",
+			TemplateConstants.LANG_TYPE_VM, ddmTemplateScript2,
 			LocaleUtil.getSiteDefault());
 
 		String defaultLanguageId = LocaleUtil.toLanguageId(
@@ -1721,14 +1731,21 @@ public class JournalArticleLocalServiceTest {
 				defaultLanguageId, 1, null, _themeDisplay);
 
 		Assert.assertEquals(
-			"ddm template 1", journalArticleDisplay.getContent());
+			ddmTemplateScript1, journalArticleDisplay.getContent());
 
 		journalArticleDisplay = _journalArticleLocalService.getArticleDisplay(
 			journalArticle, ddmTemplate2.getTemplateKey(), Constants.VIEW,
 			defaultLanguageId, 1, null, _themeDisplay);
 
 		Assert.assertEquals(
-			"ddm template 2", journalArticleDisplay.getContent());
+			ddmTemplateScript2, journalArticleDisplay.getContent());
+
+		journalArticleDisplay = _journalArticleLocalService.getArticleDisplay(
+			journalArticle, ddmTemplate2.getTemplateKey(), Constants.VIEW,
+			defaultLanguageId, 1, null, null);
+
+		Assert.assertEquals(
+			ddmTemplateScript2, journalArticleDisplay.getContent());
 	}
 
 	@Test
@@ -1822,6 +1839,111 @@ public class JournalArticleLocalServiceTest {
 		Assert.assertEquals(journalArticle, journalArticles.get(0));
 
 		_companyLocalService.deleteCompany(company);
+	}
+
+	@Test
+	public void testGetDocumentByLocaleReturnsDefaultLocaleForUnavailableLocale()
+		throws Exception {
+
+		String content = DDMStructureTestUtil.getSampleStructuredContent(
+			HashMapBuilder.put(
+				LocaleUtil.BRAZIL, RandomTestUtil.randomString()
+			).put(
+				LocaleUtil.US, RandomTestUtil.randomString()
+			).build(),
+			LocaleUtil.US.toString());
+
+		List<Element> rootDynamicElements = _getRootDynamicElements(
+			content, LocaleUtil.US, new String[] {"name"},
+			new Locale[] {LocaleUtil.BRAZIL, LocaleUtil.US}, LocaleUtil.FRANCE);
+
+		Assert.assertEquals(
+			rootDynamicElements.toString(), 1, rootDynamicElements.size());
+
+		_assertDynamicContentElementLanguageId(
+			rootDynamicElements.get(0), LocaleUtil.US);
+	}
+
+	@Test
+	public void testGetDocumentByLocaleReturnsDefaultLocaleWhenRequestingDefaultLocale()
+		throws Exception {
+
+		String content = DDMStructureTestUtil.getSampleStructuredContent(
+			HashMapBuilder.put(
+				LocaleUtil.BRAZIL, RandomTestUtil.randomString()
+			).put(
+				LocaleUtil.US, RandomTestUtil.randomString()
+			).build(),
+			LocaleUtil.US.toString());
+
+		List<Element> rootDynamicElements = _getRootDynamicElements(
+			content, LocaleUtil.US, new String[] {"name"},
+			new Locale[] {LocaleUtil.BRAZIL, LocaleUtil.US}, LocaleUtil.US);
+
+		Assert.assertEquals(
+			rootDynamicElements.toString(), 1, rootDynamicElements.size());
+
+		_assertDynamicContentElementLanguageId(
+			rootDynamicElements.get(0), LocaleUtil.US);
+	}
+
+	@Test
+	public void testGetDocumentByLocaleReturnsSingleLocaleForTranslatedContent()
+		throws Exception {
+
+		String content = DDMStructureTestUtil.getSampleStructuredContent(
+			HashMapBuilder.put(
+				LocaleUtil.BRAZIL, RandomTestUtil.randomString()
+			).put(
+				LocaleUtil.US, RandomTestUtil.randomString()
+			).build(),
+			LocaleUtil.US.toString());
+
+		List<Element> rootDynamicElements = _getRootDynamicElements(
+			content, LocaleUtil.US, new String[] {"name"},
+			new Locale[] {LocaleUtil.BRAZIL, LocaleUtil.US}, LocaleUtil.BRAZIL);
+
+		Assert.assertEquals(
+			rootDynamicElements.toString(), 1, rootDynamicElements.size());
+
+		_assertDynamicContentElementLanguageId(
+			rootDynamicElements.get(0), LocaleUtil.BRAZIL);
+	}
+
+	@Test
+	public void testGetDocumentByLocaleWithPartiallyTranslatedContent()
+		throws Exception {
+
+		String content = StringBundler.concat(
+			"<?xml version=\"1.0\"?>",
+			"<root available-locales=\"en_US,pt_BR,es_ES\" ",
+			"default-locale=\"en_US\">",
+			"<dynamic-element index-type=\"keyword\" name=\"field1\" ",
+			"type=\"text\"><dynamic-content language-id=\"en_US\">",
+			"<![CDATA[Field 1 EN]]></dynamic-content>",
+			"<dynamic-content language-id=\"pt_BR\">",
+			"<![CDATA[Campo 1 BR]]></dynamic-content>",
+			"<dynamic-content language-id=\"es_ES\">",
+			"<![CDATA[Campo 1 ES]]></dynamic-content></dynamic-element>",
+			"<dynamic-element index-type=\"keyword\" name=\"field2\" ",
+			"type=\"text\"><dynamic-content language-id=\"en_US\">",
+			"<![CDATA[Field 2 EN]]></dynamic-content>",
+			"<dynamic-content language-id=\"pt_BR\">",
+			"<![CDATA[Campo 2 BR]]></dynamic-content></dynamic-element>",
+			"</root>");
+
+		List<Element> rootDynamicElements = _getRootDynamicElements(
+			content, LocaleUtil.US, new String[] {"field1", "field2"},
+			new Locale[] {LocaleUtil.BRAZIL, LocaleUtil.SPAIN, LocaleUtil.US},
+			LocaleUtil.SPAIN);
+
+		Assert.assertEquals(
+			rootDynamicElements.toString(), 2, rootDynamicElements.size());
+
+		_assertDynamicContentElementLanguageId(
+			rootDynamicElements.get(0), LocaleUtil.SPAIN);
+		_assertDynamicContentElementLanguageId(
+			rootDynamicElements.get(1), LocaleUtil.US);
 	}
 
 	@Test(expected = PortalException.class)
@@ -2100,6 +2222,9 @@ public class JournalArticleLocalServiceTest {
 		Assert.assertEquals(
 			journalArticle.getResourcePrimKey(),
 			latestArticle.getResourcePrimKey());
+		Assert.assertEquals(
+			journalArticle.getExternalReferenceCode(),
+			latestArticle.getExternalReferenceCode());
 		Assert.assertTrue(
 			updatedJournalArticle.getVersion() < latestArticle.getVersion());
 		Assert.assertEquals(
@@ -2358,7 +2483,8 @@ public class JournalArticleLocalServiceTest {
 
 	@Test
 	public void testUpdateDDMStructurePredefinedValues() throws Exception {
-		Tuple tuple = _createJournalArticleWithPredefinedValues("Test Article");
+		Tuple tuple = _createJournalArticleWithPredefinedValues(
+			_group.getGroupId());
 
 		JournalArticle journalArticle = (JournalArticle)tuple.getObject(0);
 		DDMStructure ddmStructure = (DDMStructure)tuple.getObject(1);
@@ -2489,7 +2615,24 @@ public class JournalArticleLocalServiceTest {
 		Assert.assertEquals(assetTagId, assetTag.getTagId());
 	}
 
-	private Tuple _createJournalArticleWithPredefinedValues(String title)
+	private void _assertDynamicContentElementLanguageId(
+		Element dynamicElement, Locale locale) {
+
+		List<Element> dynamicContentElements = dynamicElement.elements(
+			"dynamic-content");
+
+		Assert.assertEquals(
+			dynamicContentElements.toString(), 1,
+			dynamicContentElements.size());
+
+		Element dymanicContentElement = dynamicContentElements.get(0);
+
+		Assert.assertEquals(
+			LocaleUtil.toLanguageId(locale),
+			dymanicContentElement.attributeValue("language-id"));
+	}
+
+	private Tuple _createJournalArticleWithPredefinedValues(long groupId)
 		throws Exception {
 
 		Set<Locale> availableLocales = DDMFormTestUtil.createAvailableLocales(
@@ -2514,10 +2657,10 @@ public class JournalArticleLocalServiceTest {
 		ddmForm.addDDMFormField(ddmFormField);
 
 		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
-			_group.getGroupId(), JournalArticle.class.getName(), ddmForm);
+			groupId, JournalArticle.class.getName(), ddmForm);
 
 		DDMTemplate ddmTemplate = DDMTemplateTestUtil.addTemplate(
-			_group.getGroupId(), ddmStructure.getStructureId(),
+			groupId, ddmStructure.getStructureId(),
 			PortalUtil.getClassNameId(JournalArticle.class),
 			TemplateConstants.LANG_TYPE_FTL,
 			JournalTestUtil.getSampleTemplateFTL(), LocaleUtil.US);
@@ -2535,7 +2678,7 @@ public class JournalArticleLocalServiceTest {
 			LocaleUtil.US.toString());
 
 		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+			ServiceContextTestUtil.getServiceContext(groupId);
 
 		JournalArticle journalArticle =
 			_journalArticleLocalService.addArticleDefaultValues(
@@ -2543,7 +2686,7 @@ public class JournalArticleLocalServiceTest {
 				_classNameLocalService.getClassNameId(DDMStructure.class),
 				ddmStructure.getStructureId(),
 				HashMapBuilder.put(
-					LocaleUtil.US, title
+					LocaleUtil.US, RandomTestUtil.randomString()
 				).build(),
 				null, content, ddmStructure.getStructureId(),
 				ddmTemplate.getTemplateKey(), null, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2583,6 +2726,37 @@ public class JournalArticleLocalServiceTest {
 			title, StringPool.SPACE, StringPool.OPEN_PARENTHESIS,
 			_language.get(LocaleUtil.getSiteDefault(), "copy"),
 			StringPool.CLOSE_PARENTHESIS);
+	}
+
+	private List<Element> _getRootDynamicElements(
+			String content, Locale defaultLocale, String[] ddmFields,
+			Locale[] locales, Locale requestedLocale)
+		throws Exception {
+
+		Set<Locale> availableLocales = DDMFormTestUtil.createAvailableLocales(
+			locales);
+
+		DDMForm ddmForm = DDMFormTestUtil.createDDMForm(
+			availableLocales, defaultLocale);
+
+		DDMFormTestUtil.addTextDDMFormFields(ddmForm, ddmFields);
+
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName(), ddmForm);
+
+		JournalArticle journalArticle =
+			JournalTestUtil.addArticleWithXMLContent(
+				_group.getGroupId(),
+				JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				JournalArticleConstants.CLASS_NAME_ID_DEFAULT, content,
+				ddmStructure.getStructureKey(), null, defaultLocale);
+
+		Document document = journalArticle.getDocumentByLocale(
+			LocaleUtil.toLanguageId(requestedLocale));
+
+		Element rootElement = document.getRootElement();
+
+		return rootElement.elements("dynamic-element");
 	}
 
 	private ThemeDisplay _getThemeDisplay() throws Exception {
@@ -2633,6 +2807,67 @@ public class JournalArticleLocalServiceTest {
 	private String _readFileToString(String fileName) throws Exception {
 		return new String(
 			FileUtil.getBytes(getClass(), "dependencies/" + fileName));
+	}
+
+	private void _testCopyArticle(
+			JournalArticle journalArticle, String titleSuffix,
+			String urlTitleSuffix)
+		throws Exception {
+
+		JournalArticle journalArticle1 =
+			_journalArticleLocalService.copyArticle(
+				journalArticle.getUserId(), journalArticle.getGroupId(),
+				journalArticle.getArticleId(), null, true,
+				journalArticle.getVersion());
+
+		Assert.assertNotEquals(journalArticle, journalArticle1);
+		Assert.assertEquals(
+			journalArticle.getTitle() + titleSuffix,
+			journalArticle1.getTitle());
+		Assert.assertEquals(
+			journalArticle.getUrlTitle() + urlTitleSuffix,
+			journalArticle1.getUrlTitle());
+
+		List<ResourcePermission> oldResourcePermissions =
+			_resourcePermissionLocalService.getResourcePermissions(
+				journalArticle.getCompanyId(), JournalArticle.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(journalArticle.getResourcePrimKey()));
+
+		List<ResourcePermission> newResourcePermissions =
+			_resourcePermissionLocalService.getResourcePermissions(
+				journalArticle1.getCompanyId(), JournalArticle.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(journalArticle1.getResourcePrimKey()));
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"Old resource permissions: ", oldResourcePermissions,
+				", new resource permissions: ", newResourcePermissions),
+			oldResourcePermissions.size(), newResourcePermissions.size());
+
+		for (int i = 0; i < oldResourcePermissions.size(); i++) {
+			ResourcePermission oldResourcePermission =
+				oldResourcePermissions.get(i);
+			ResourcePermission newResourcePermission =
+				newResourcePermissions.get(i);
+
+			Assert.assertNotEquals(
+				oldResourcePermission, newResourcePermission);
+
+			Assert.assertEquals(
+				oldResourcePermission.getRoleId(),
+				newResourcePermission.getRoleId());
+			Assert.assertEquals(
+				oldResourcePermission.getOwnerId(),
+				newResourcePermission.getOwnerId());
+			Assert.assertEquals(
+				oldResourcePermission.getActionIds(),
+				newResourcePermission.getActionIds());
+			Assert.assertEquals(
+				oldResourcePermission.isViewActionId(),
+				newResourcePermission.isViewActionId());
+		}
 	}
 
 	private String _toJSON(FileEntry fileEntry) {
@@ -2790,6 +3025,12 @@ public class JournalArticleLocalServiceTest {
 
 	@Inject
 	private DDMTemplateLinkLocalService _ddmTemplateLinkLocalService;
+
+	@Inject
+	private DepotEntryGroupRelLocalService _depotEntryGroupRelLocalService;
+
+	@Inject
+	private DepotEntryLocalService _depotEntryLocalService;
 
 	@Inject
 	private DLAppLocalService _dlAppLocalService;

@@ -49,7 +49,7 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface BatchTestEntityResource {
 
-	public Response deleteBatchTestEntityByExternalReferenceCode(
+	public void deleteBatchTestEntityByExternalReferenceCode(
 			String externalReferenceCode)
 		throws Exception;
 
@@ -172,3 +172,4 @@ public interface BatchTestEntityResource {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:567390714

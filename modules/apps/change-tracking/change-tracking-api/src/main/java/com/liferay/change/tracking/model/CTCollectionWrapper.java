@@ -397,6 +397,11 @@ public class CTCollectionWrapper
 	}
 
 	@Override
+	public boolean isInProgress() {
+		return model.isInProgress();
+	}
+
+	@Override
 	public boolean isProduction() {
 		return model.isProduction();
 	}
@@ -647,3 +652,4 @@ public class CTCollectionWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1040640958

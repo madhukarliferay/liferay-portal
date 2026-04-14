@@ -211,54 +211,6 @@ public class SequenceEntryUtil {
 	}
 
 	/**
-	 * Returns the last sequence entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sequence entry
-	 * @throws NoSuchSequenceEntryException if a matching sequence entry could not be found
-	 */
-	public static SequenceEntry findByUuid_Last(
-			String uuid, OrderByComparator<SequenceEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.sequence.exception.
-			NoSuchSequenceEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sequence entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sequence entry, or <code>null</code> if a matching sequence entry could not be found
-	 */
-	public static SequenceEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<SequenceEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the sequence entries before and after the current sequence entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param sequenceEntryId the primary key of the current sequence entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sequence entry
-	 * @throws NoSuchSequenceEntryException if a sequence entry with the primary key could not be found
-	 */
-	public static SequenceEntry[] findByUuid_PrevAndNext(
-			long sequenceEntryId, String uuid,
-			OrderByComparator<SequenceEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.sequence.exception.
-			NoSuchSequenceEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			sequenceEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the sequence entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -388,61 +340,6 @@ public class SequenceEntryUtil {
 
 		return getPersistence().fetchByUuid_C_First(
 			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sequence entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sequence entry
-	 * @throws NoSuchSequenceEntryException if a matching sequence entry could not be found
-	 */
-	public static SequenceEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SequenceEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.sequence.exception.
-			NoSuchSequenceEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sequence entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sequence entry, or <code>null</code> if a matching sequence entry could not be found
-	 */
-	public static SequenceEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SequenceEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sequence entries before and after the current sequence entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sequenceEntryId the primary key of the current sequence entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sequence entry
-	 * @throws NoSuchSequenceEntryException if a sequence entry with the primary key could not be found
-	 */
-	public static SequenceEntry[] findByUuid_C_PrevAndNext(
-			long sequenceEntryId, String uuid, long companyId,
-			OrderByComparator<SequenceEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.sequence.exception.
-			NoSuchSequenceEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			sequenceEntryId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -627,3 +524,4 @@ public class SequenceEntryUtil {
 	private static volatile SequenceEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:176054763

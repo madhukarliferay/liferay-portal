@@ -207,52 +207,6 @@ public class CTEntryUtil {
 	}
 
 	/**
-	 * Returns the last ct entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry
-	 * @throws NoSuchEntryException if a matching ct entry could not be found
-	 */
-	public static CTEntry findByUuid_Last(
-			String uuid, OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry, or <code>null</code> if a matching ct entry could not be found
-	 */
-	public static CTEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<CTEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct entries before and after the current ct entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param ctEntryId the primary key of the current ct entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct entry
-	 * @throws NoSuchEntryException if a ct entry with the primary key could not be found
-	 */
-	public static CTEntry[] findByUuid_PrevAndNext(
-			long ctEntryId, String uuid,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			ctEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ct entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -381,59 +335,6 @@ public class CTEntryUtil {
 	}
 
 	/**
-	 * Returns the last ct entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry
-	 * @throws NoSuchEntryException if a matching ct entry could not be found
-	 */
-	public static CTEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry, or <code>null</code> if a matching ct entry could not be found
-	 */
-	public static CTEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CTEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct entries before and after the current ct entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param ctEntryId the primary key of the current ct entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct entry
-	 * @throws NoSuchEntryException if a ct entry with the primary key could not be found
-	 */
-	public static CTEntry[] findByUuid_C_PrevAndNext(
-			long ctEntryId, String uuid, long companyId,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			ctEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ct entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -452,6 +353,122 @@ public class CTEntryUtil {
 	 */
 	public static int countByUuid_C(String uuid, long companyId) {
 		return getPersistence().countByUuid_C(uuid, companyId);
+	}
+
+	/**
+	 * Returns all the ct entries where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @return the matching ct entries
+	 */
+	public static List<CTEntry> findByUserId(long userId) {
+		return getPersistence().findByUserId(userId);
+	}
+
+	/**
+	 * Returns a range of all the ct entries where userId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CTEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param start the lower bound of the range of ct entries
+	 * @param end the upper bound of the range of ct entries (not inclusive)
+	 * @return the range of matching ct entries
+	 */
+	public static List<CTEntry> findByUserId(long userId, int start, int end) {
+		return getPersistence().findByUserId(userId, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the ct entries where userId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CTEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param start the lower bound of the range of ct entries
+	 * @param end the upper bound of the range of ct entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching ct entries
+	 */
+	public static List<CTEntry> findByUserId(
+		long userId, int start, int end,
+		OrderByComparator<CTEntry> orderByComparator) {
+
+		return getPersistence().findByUserId(
+			userId, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the ct entries where userId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CTEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param userId the user ID
+	 * @param start the lower bound of the range of ct entries
+	 * @param end the upper bound of the range of ct entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching ct entries
+	 */
+	public static List<CTEntry> findByUserId(
+		long userId, int start, int end,
+		OrderByComparator<CTEntry> orderByComparator, boolean useFinderCache) {
+
+		return getPersistence().findByUserId(
+			userId, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first ct entry in the ordered set where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching ct entry
+	 * @throws NoSuchEntryException if a matching ct entry could not be found
+	 */
+	public static CTEntry findByUserId_First(
+			long userId, OrderByComparator<CTEntry> orderByComparator)
+		throws com.liferay.change.tracking.exception.NoSuchEntryException {
+
+		return getPersistence().findByUserId_First(userId, orderByComparator);
+	}
+
+	/**
+	 * Returns the first ct entry in the ordered set where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching ct entry, or <code>null</code> if a matching ct entry could not be found
+	 */
+	public static CTEntry fetchByUserId_First(
+		long userId, OrderByComparator<CTEntry> orderByComparator) {
+
+		return getPersistence().fetchByUserId_First(userId, orderByComparator);
+	}
+
+	/**
+	 * Removes all the ct entries where userId = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 */
+	public static void removeByUserId(long userId) {
+		getPersistence().removeByUserId(userId);
+	}
+
+	/**
+	 * Returns the number of ct entries where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @return the number of matching ct entries
+	 */
+	public static int countByUserId(long userId) {
+		return getPersistence().countByUserId(userId);
 	}
 
 	/**
@@ -554,54 +571,6 @@ public class CTEntryUtil {
 
 		return getPersistence().fetchByCtCollectionId_First(
 			ctCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry
-	 * @throws NoSuchEntryException if a matching ct entry could not be found
-	 */
-	public static CTEntry findByCtCollectionId_Last(
-			long ctCollectionId, OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByCtCollectionId_Last(
-			ctCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry, or <code>null</code> if a matching ct entry could not be found
-	 */
-	public static CTEntry fetchByCtCollectionId_Last(
-		long ctCollectionId, OrderByComparator<CTEntry> orderByComparator) {
-
-		return getPersistence().fetchByCtCollectionId_Last(
-			ctCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct entries before and after the current ct entry in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctEntryId the primary key of the current ct entry
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct entry
-	 * @throws NoSuchEntryException if a ct entry with the primary key could not be found
-	 */
-	public static CTEntry[] findByCtCollectionId_PrevAndNext(
-			long ctEntryId, long ctCollectionId,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByCtCollectionId_PrevAndNext(
-			ctEntryId, ctCollectionId, orderByComparator);
 	}
 
 	/**
@@ -734,59 +703,6 @@ public class CTEntryUtil {
 
 		return getPersistence().fetchByC_MCNI_First(
 			ctCollectionId, modelClassNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where ctCollectionId = &#63; and modelClassNameId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param modelClassNameId the model class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry
-	 * @throws NoSuchEntryException if a matching ct entry could not be found
-	 */
-	public static CTEntry findByC_MCNI_Last(
-			long ctCollectionId, long modelClassNameId,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByC_MCNI_Last(
-			ctCollectionId, modelClassNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where ctCollectionId = &#63; and modelClassNameId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param modelClassNameId the model class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry, or <code>null</code> if a matching ct entry could not be found
-	 */
-	public static CTEntry fetchByC_MCNI_Last(
-		long ctCollectionId, long modelClassNameId,
-		OrderByComparator<CTEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_MCNI_Last(
-			ctCollectionId, modelClassNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct entries before and after the current ct entry in the ordered set where ctCollectionId = &#63; and modelClassNameId = &#63;.
-	 *
-	 * @param ctEntryId the primary key of the current ct entry
-	 * @param ctCollectionId the ct collection ID
-	 * @param modelClassNameId the model class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct entry
-	 * @throws NoSuchEntryException if a ct entry with the primary key could not be found
-	 */
-	public static CTEntry[] findByC_MCNI_PrevAndNext(
-			long ctEntryId, long ctCollectionId, long modelClassNameId,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByC_MCNI_PrevAndNext(
-			ctEntryId, ctCollectionId, modelClassNameId, orderByComparator);
 	}
 
 	/**
@@ -1015,63 +931,6 @@ public class CTEntryUtil {
 
 		return getPersistence().fetchByNotC_MCNI_MCPK_First(
 			ctCollectionId, modelClassNameId, modelClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where ctCollectionId &ne; &#63; and modelClassNameId = &#63; and modelClassPK = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param modelClassNameId the model class name ID
-	 * @param modelClassPK the model class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry
-	 * @throws NoSuchEntryException if a matching ct entry could not be found
-	 */
-	public static CTEntry findByNotC_MCNI_MCPK_Last(
-			long ctCollectionId, long modelClassNameId, long modelClassPK,
-			OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByNotC_MCNI_MCPK_Last(
-			ctCollectionId, modelClassNameId, modelClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct entry in the ordered set where ctCollectionId &ne; &#63; and modelClassNameId = &#63; and modelClassPK = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param modelClassNameId the model class name ID
-	 * @param modelClassPK the model class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct entry, or <code>null</code> if a matching ct entry could not be found
-	 */
-	public static CTEntry fetchByNotC_MCNI_MCPK_Last(
-		long ctCollectionId, long modelClassNameId, long modelClassPK,
-		OrderByComparator<CTEntry> orderByComparator) {
-
-		return getPersistence().fetchByNotC_MCNI_MCPK_Last(
-			ctCollectionId, modelClassNameId, modelClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct entries before and after the current ct entry in the ordered set where ctCollectionId &ne; &#63; and modelClassNameId = &#63; and modelClassPK = &#63;.
-	 *
-	 * @param ctEntryId the primary key of the current ct entry
-	 * @param ctCollectionId the ct collection ID
-	 * @param modelClassNameId the model class name ID
-	 * @param modelClassPK the model class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct entry
-	 * @throws NoSuchEntryException if a ct entry with the primary key could not be found
-	 */
-	public static CTEntry[] findByNotC_MCNI_MCPK_PrevAndNext(
-			long ctEntryId, long ctCollectionId, long modelClassNameId,
-			long modelClassPK, OrderByComparator<CTEntry> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchEntryException {
-
-		return getPersistence().findByNotC_MCNI_MCPK_PrevAndNext(
-			ctEntryId, ctCollectionId, modelClassNameId, modelClassPK,
-			orderByComparator);
 	}
 
 	/**
@@ -1437,3 +1296,4 @@ public class CTEntryUtil {
 	private static volatile CTEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2107762677

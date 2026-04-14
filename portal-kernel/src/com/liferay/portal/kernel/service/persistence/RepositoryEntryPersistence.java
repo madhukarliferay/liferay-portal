@@ -120,47 +120,6 @@ public interface RepositoryEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last repository entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository entry
-	 * @throws NoSuchRepositoryEntryException if a matching repository entry could not be found
-	 */
-	public RepositoryEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-				orderByComparator)
-		throws NoSuchRepositoryEntryException;
-
-	/**
-	 * Returns the last repository entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository entry, or <code>null</code> if a matching repository entry could not be found
-	 */
-	public RepositoryEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the repository entries before and after the current repository entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param repositoryEntryId the primary key of the current repository entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository entry
-	 * @throws NoSuchRepositoryEntryException if a repository entry with the primary key could not be found
-	 */
-	public RepositoryEntry[] findByUuid_PrevAndNext(
-			long repositoryEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-				orderByComparator)
-		throws NoSuchRepositoryEntryException;
-
-	/**
 	 * Removes all the repository entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -320,50 +279,6 @@ public interface RepositoryEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last repository entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository entry
-	 * @throws NoSuchRepositoryEntryException if a matching repository entry could not be found
-	 */
-	public RepositoryEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-				orderByComparator)
-		throws NoSuchRepositoryEntryException;
-
-	/**
-	 * Returns the last repository entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository entry, or <code>null</code> if a matching repository entry could not be found
-	 */
-	public RepositoryEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the repository entries before and after the current repository entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param repositoryEntryId the primary key of the current repository entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository entry
-	 * @throws NoSuchRepositoryEntryException if a repository entry with the primary key could not be found
-	 */
-	public RepositoryEntry[] findByUuid_C_PrevAndNext(
-			long repositoryEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-				orderByComparator)
-		throws NoSuchRepositoryEntryException;
-
-	/**
 	 * Removes all the repository entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -467,47 +382,6 @@ public interface RepositoryEntryPersistence
 		long repositoryId,
 		com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last repository entry in the ordered set where repositoryId = &#63;.
-	 *
-	 * @param repositoryId the repository ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository entry
-	 * @throws NoSuchRepositoryEntryException if a matching repository entry could not be found
-	 */
-	public RepositoryEntry findByRepositoryId_Last(
-			long repositoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-				orderByComparator)
-		throws NoSuchRepositoryEntryException;
-
-	/**
-	 * Returns the last repository entry in the ordered set where repositoryId = &#63;.
-	 *
-	 * @param repositoryId the repository ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository entry, or <code>null</code> if a matching repository entry could not be found
-	 */
-	public RepositoryEntry fetchByRepositoryId_Last(
-		long repositoryId,
-		com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the repository entries before and after the current repository entry in the ordered set where repositoryId = &#63;.
-	 *
-	 * @param repositoryEntryId the primary key of the current repository entry
-	 * @param repositoryId the repository ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository entry
-	 * @throws NoSuchRepositoryEntryException if a repository entry with the primary key could not be found
-	 */
-	public RepositoryEntry[] findByRepositoryId_PrevAndNext(
-			long repositoryEntryId, long repositoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<RepositoryEntry>
-				orderByComparator)
-		throws NoSuchRepositoryEntryException;
 
 	/**
 	 * Removes all the repository entries where repositoryId = &#63; from the database.
@@ -695,3 +569,4 @@ public interface RepositoryEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:43356105

@@ -121,11 +121,19 @@ public class VersionListTypeService extends BaseService {
 				continue;
 			}
 
-			productGroupVersion =
-				StringUtil.toUpperCase(product) + StringPool.SPACE +
-					StringUtil.toUpperCase(productGroupVersion);
+			String productMajorVersion = releaseJSONObject.optString(
+				"productMajorVersion", null);
 
-			_addVersion(product + "Major", productGroupVersion, versionsMap);
+			if (Validator.isNull(productMajorVersion)) {
+				productMajorVersion =
+					StringUtil.toUpperCase(product) + StringPool.SPACE +
+						StringUtil.toUpperCase(productGroupVersion);
+			}
+
+			if (_isSupported(releaseJSONObject.optJSONArray("tags"))) {
+				_addVersion(
+					product + "Major", productMajorVersion, versionsMap);
+			}
 
 			String productVersion = releaseJSONObject.getString(
 				"productVersion");
@@ -134,6 +142,20 @@ public class VersionListTypeService extends BaseService {
 		}
 
 		return versionsMap;
+	}
+
+	private boolean _isSupported(JSONArray tagsJSONArray) {
+		if (tagsJSONArray == null) {
+			return false;
+		}
+
+		for (int i = 0; i < tagsJSONArray.length(); i++) {
+			if (StringUtil.equals(tagsJSONArray.getString(i), "supported")) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private void _updateListTypeDefinition(

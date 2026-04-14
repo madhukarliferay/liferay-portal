@@ -551,6 +551,11 @@ public class PortletLocalServiceWrapper
 	}
 
 	@Override
+	public void removePortletModelResources(long companyId, String portletId) {
+		_portletLocalService.removePortletModelResources(companyId, portletId);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.model.Portlet updatePortlet(
 		long companyId, String portletId, String roles, boolean active) {
 
@@ -602,3 +607,4 @@ public class PortletLocalServiceWrapper
 	private PortletLocalService _portletLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:751490583

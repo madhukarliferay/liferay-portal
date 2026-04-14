@@ -10,11 +10,13 @@ import com.liferay.client.extension.util.spring.boot3.client.LiferayOAuth2Access
 import com.liferay.customer.constants.NotificationTemplateConstants;
 import com.liferay.customer.model.BusinessEvent;
 import com.liferay.customer.permission.BusinessEventPermission;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -25,27 +27,25 @@ import org.json.JSONObject;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * @author Felipe Franca
  */
+@RequestMapping("/object/action/business/event")
 @RestController
 public class ObjectActionBusinessEventRestController
 	extends BaseRestController {
 
-	@RequestMapping(
-		method = RequestMethod.POST, path = "/object/action/business/event"
-	)
+	@PostMapping
 	public ResponseEntity<String> post(
 		@AuthenticationPrincipal Jwt jwt, @RequestBody String json) {
 
@@ -67,8 +67,9 @@ public class ObjectActionBusinessEventRestController
 			_createBusinessEventVersion(
 				jwt, businessEvent, objectActionTriggerKey, systemUpdate);
 
-			_sendNotification(
-				businessEvent, objectActionTriggerKey, systemUpdate);
+			if (businessEvent.isOverdue() && systemUpdate) {
+				_sendNotification(businessEvent);
+			}
 		}
 		catch (Exception exception) {
 			_log.error(exception, exception);
@@ -174,74 +175,23 @@ public class ObjectActionBusinessEventRestController
 		return businessEvent.getLastComment();
 	}
 
-	private JSONObject _getKoroneikiAccountJSONObject(
-			String externalReferenceCode)
-		throws Exception {
-
-		JSONObject koroneikiAccountJSONObject = new JSONObject(
-			get(
-				_getAuthorization(),
-				UriComponentsBuilder.fromPath(
-					"/o/c/koroneikiaccounts/by-external-reference-code/" +
-						externalReferenceCode
-				).build(
-				).toUri()));
-
-		if (koroneikiAccountJSONObject.isEmpty()) {
-			throw new Exception(
-				"No koroneiki account found for external reference code " +
-					externalReferenceCode);
-		}
-
-		return koroneikiAccountJSONObject;
-	}
-
-	private JSONObject _getNotificationTemplateJSONObject(
-			BusinessEvent businessEvent, String objectActionTriggerKey,
-			boolean systemUpdate)
-		throws Exception {
-
-		String externalReferenceCode = null;
-
-		if (StringUtil.equals(objectActionTriggerKey, "onAfterAdd")) {
-			externalReferenceCode =
-				NotificationTemplateConstants.
-					EXTERNAL_REFERENCE_CODE_CREATED_BUSINESS_EVENTS;
-		}
-		else if (businessEvent.isCanceled()) {
-			externalReferenceCode =
-				NotificationTemplateConstants.
-					EXTERNAL_REFERENCE_CODE_CANCELED_BUSINESS_EVENTS;
-		}
-		else if (businessEvent.isCompleted()) {
-			externalReferenceCode =
-				NotificationTemplateConstants.
-					EXTERNAL_REFERENCE_CODE_COMPLETED_BUSINESS_EVENTS;
-		}
-		else if (businessEvent.isOverdue() && systemUpdate) {
-			externalReferenceCode =
-				NotificationTemplateConstants.
-					EXTERNAL_REFERENCE_CODE_OVERDUE_BUSINESS_EVENTS;
-		}
-		else {
-			externalReferenceCode =
-				NotificationTemplateConstants.
-					EXTERNAL_REFERENCE_CODE_UPDATED_BUSINESS_EVENTS;
-		}
-
+	private JSONObject _getNotificationTemplateJSONObject() throws Exception {
 		JSONObject notificationTemplateJSONObject = new JSONObject(
 			get(
 				_getAuthorization(),
 				UriComponentsBuilder.fromPath(
 					"/o/notification/v1.0/notification-templates" +
-						"/by-external-reference-code/" + externalReferenceCode
+						"/by-external-reference-code/" +
+							NotificationTemplateConstants.
+								EXTERNAL_REFERENCE_CODE_OVERDUE_BUSINESS_EVENTS
 				).build(
 				).toUri()));
 
 		if (notificationTemplateJSONObject.isEmpty()) {
 			throw new Exception(
 				"No notification template found for external reference code " +
-					externalReferenceCode);
+					NotificationTemplateConstants.
+						EXTERNAL_REFERENCE_CODE_OVERDUE_BUSINESS_EVENTS);
 		}
 
 		return notificationTemplateJSONObject;
@@ -264,83 +214,29 @@ public class ObjectActionBusinessEventRestController
 		return objectActionTriggerKey;
 	}
 
-	private Map<String, String> _getPlaceholderValues(
-		BusinessEvent businessEvent, JSONObject koroneikiAccountJSONObject) {
-
-		String formattedComment = "";
-
-		if (!StringUtil.equals(businessEvent.getLastComment(), "")) {
-			formattedComment = "<p>" + businessEvent.getLastComment() + "</p>";
-		}
+	private Map<String, String[]> _getPlaceholderValues(
+		BusinessEvent businessEvent) {
 
 		return HashMapBuilder.put(
-			"BUSINESSEVENT_ACTIVITY_HISTORY_PAGE_LINK",
-			businessEvent.getActivityHistoryURL(_customerPortalURL)
-		).put(
-			"BUSINESSEVENT_AUTHOR_FIRST_NAME",
-			businessEvent.getCreatorGivenName()
-		).put(
-			"BUSINESSEVENT_DETAIL_PAGE_LINK",
-			businessEvent.getURL(_customerPortalURL)
-		).put(
-			"BUSINESSEVENT_EDIT_PAGE_LINK",
-			businessEvent.getEditURL(_customerPortalURL)
-		).put(
-			"BUSINESSEVENT_EVENTTYPE", businessEvent.getEventTypeName()
-		).put(
-			"BUSINESSEVENT_LASTCOMMENT", formattedComment
-		).put(
-			"BUSINESSEVENT_NAME", businessEvent.getName()
-		).put(
-			"BUSINESSEVENT_TARGETGOLIVEDATETIME",
-			businessEvent.getTargetGoLiveDate()
-		).put(
-			"PROJECT_NAME", koroneikiAccountJSONObject.getString("name")
-		).build();
-	}
-
-	private String _getRecipientsTo(
-			BusinessEvent businessEvent, JSONObject koroneikiAccountJSONObject,
-			boolean systemUpdate)
-		throws Exception {
-
-		if (businessEvent.isOverdue() && systemUpdate) {
-			JSONObject userAccountJSONObject = _getUserAccountJSONObject(
-				businessEvent.getCreatorId());
-
-			return userAccountJSONObject.getString("emailAddress");
-		}
-
-		String region = koroneikiAccountJSONObject.getString("region");
-
-		String regionPropertyKey = region.toLowerCase(
-		).replace(
-			" ", "."
-		);
-
-		String rsmEmailAddress = _environment.getProperty(
-			"liferay.customer.email.address." + regionPropertyKey + ".rsm");
-
-		if (rsmEmailAddress == null) {
-			throw new Exception("No email address was found for " + region);
-		}
-
-		boolean hasTAMServiceSubscription = _hasTAMServiceSubscription(
-			koroneikiAccountJSONObject.getString("accountKey"));
-
-		if (hasTAMServiceSubscription) {
-			String cxLeadEmailAddress = _environment.getProperty(
-				"liferay.customer.email.address." + regionPropertyKey +
-					".cx.lead");
-
-			if (cxLeadEmailAddress == null) {
-				throw new Exception("No email address was found for " + region);
+			"placeholders",
+			new String[] {
+				"[%BUSINESSEVENT_AUTHOR_FIRST_NAME%]",
+				"[%BUSINESSEVENT_DETAIL_PAGE_LINK%]",
+				"[%BUSINESSEVENT_EDIT_PAGE_LINK%]", "[%BUSINESSEVENT_NAME%]"
 			}
+		).put(
+			"values",
+			() -> {
+				List<String> values = new ArrayList<>();
 
-			return rsmEmailAddress + ", " + cxLeadEmailAddress;
-		}
+				values.add(businessEvent.getCreatorGivenName());
+				values.add(businessEvent.getURL(_customerPortalURL));
+				values.add(businessEvent.getEditURL(_customerPortalURL));
+				values.add(businessEvent.getName());
 
-		return rsmEmailAddress;
+				return ArrayUtil.toStringArray(values);
+			}
+		).build();
 	}
 
 	private String _getSystemUserId() throws Exception {
@@ -371,41 +267,12 @@ public class ObjectActionBusinessEventRestController
 		return userAccountJSONObject;
 	}
 
-	private boolean _hasTAMServiceSubscription(
-			String accountExternalReferenceCode)
-		throws Exception {
-
-		JSONObject accountSubscriptionsJSONObject = new JSONObject(
-			get(
-				_getAuthorization(),
-				UriComponentsBuilder.fromPath(
-					"/o/c/accountsubscriptions"
-				).queryParam(
-					"filter",
-					StringBundler.concat(
-						"accountKey eq '", accountExternalReferenceCode,
-						"' and contains(name, 'Technical Account Management ",
-						"Services')")
-				).build(
-				).toUri()));
-
-		JSONArray accountSubscriptionsJSONArray =
-			accountSubscriptionsJSONObject.getJSONArray("items");
-
-		if (accountSubscriptionsJSONArray.length() > 0) {
-			return true;
-		}
-
-		return false;
-	}
-
 	private boolean _isSystemUpdate(Jwt jwt) throws Exception {
 		return StringUtil.equals(jwt.getSubject(), _getSystemUserId());
 	}
 
 	private JSONArray _parseRecipientsJSONArray(
-			BusinessEvent businessEvent, JSONObject koroneikiAccountJSONObject,
-			JSONArray recipientsJSONArray, boolean systemUpdate)
+			JSONArray recipientsJSONArray, JSONObject userAccountJSONObject)
 		throws Exception {
 
 		JSONObject recipientJSONObject = recipientsJSONArray.getJSONObject(0);
@@ -416,9 +283,7 @@ public class ObjectActionBusinessEventRestController
 		recipientJSONObject.put(
 			"fromName", fromNameJSONObject.getString("en_US")
 		).put(
-			"to",
-			_getRecipientsTo(
-				businessEvent, koroneikiAccountJSONObject, systemUpdate)
+			"to", userAccountJSONObject.getString("emailAddress")
 		);
 
 		return new JSONArray(
@@ -427,25 +292,22 @@ public class ObjectActionBusinessEventRestController
 		);
 	}
 
-	private void _sendNotification(
-			BusinessEvent businessEvent, String objectActionTriggerKey,
-			boolean systemUpdate)
+	private void _sendNotification(BusinessEvent businessEvent)
 		throws Exception {
 
+		JSONObject userAccountJSONObject = _getUserAccountJSONObject(
+			businessEvent.getCreatorId());
+
 		JSONObject notificationTemplateJSONObject =
-			_getNotificationTemplateJSONObject(
-				businessEvent, objectActionTriggerKey, systemUpdate);
+			_getNotificationTemplateJSONObject();
 
 		JSONObject notificationTemplateBodyJSONObject =
 			notificationTemplateJSONObject.getJSONObject("body");
 		JSONObject notificationTemplateSubjectJSONObject =
 			notificationTemplateJSONObject.getJSONObject("subject");
 
-		JSONObject koroneikiAccountJSONObject = _getKoroneikiAccountJSONObject(
-			businessEvent.getAccountExternalReferenceCode());
-
-		Map<String, String> placeholderValues = _getPlaceholderValues(
-			businessEvent, koroneikiAccountJSONObject);
+		Map<String, String[]> placeholderValues = _getPlaceholderValues(
+			businessEvent);
 
 		post(
 			_getAuthorization(),
@@ -453,19 +315,20 @@ public class ObjectActionBusinessEventRestController
 			).put(
 				"body",
 				StringUtil.replace(
-					notificationTemplateBodyJSONObject.getString("en_US"), "[%",
-					"%]", placeholderValues)
+					notificationTemplateBodyJSONObject.getString("en_US"),
+					placeholderValues.get("placeholders"),
+					placeholderValues.get("values"))
 			).put(
 				"recipients",
 				_parseRecipientsJSONArray(
-					businessEvent, koroneikiAccountJSONObject,
 					notificationTemplateJSONObject.getJSONArray("recipients"),
-					systemUpdate)
+					userAccountJSONObject)
 			).put(
 				"subject",
 				StringUtil.replace(
 					notificationTemplateSubjectJSONObject.getString("en_US"),
-					"[%", "%]", placeholderValues)
+					placeholderValues.get("placeholders"),
+					placeholderValues.get("values"))
 			).put(
 				"type", "email"
 			).toString(),
@@ -483,9 +346,6 @@ public class ObjectActionBusinessEventRestController
 
 	@Value("${liferay.customer.portal.url}")
 	private String _customerPortalURL;
-
-	@Autowired
-	private Environment _environment;
 
 	@Autowired
 	private LiferayOAuth2AccessTokenManager _liferayOAuth2AccessTokenManager;

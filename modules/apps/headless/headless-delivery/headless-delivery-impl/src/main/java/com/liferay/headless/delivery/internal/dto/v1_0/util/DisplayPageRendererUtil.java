@@ -26,7 +26,7 @@ import com.liferay.portal.events.ServicePreAction;
 import com.liferay.portal.events.ThemeServicePreAction;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
-import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.servlet.DummyHttpServletResponse;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
@@ -57,7 +57,7 @@ public class DisplayPageRendererUtil {
 		long groupId, Object item,
 		InfoItemServiceRegistry infoItemServiceRegistry,
 		LayoutDisplayPageProviderRegistry layoutDisplayPageProviderRegistry,
-		LayoutLocalService layoutLocalService,
+		LayoutService layoutService,
 		LayoutPageTemplateEntryService layoutPageTemplateEntryService,
 		String methodName) {
 
@@ -104,8 +104,7 @@ public class DisplayPageRendererUtil {
 								new DummyHttpServletResponse(), item,
 								infoItemServiceRegistry,
 								layoutDisplayPageProviderRegistry,
-								layoutLocalService,
-								layoutPageTemplateEntryService);
+								layoutService, layoutPageTemplateEntryService);
 						});
 				}
 			},
@@ -118,7 +117,7 @@ public class DisplayPageRendererUtil {
 			HttpServletResponse httpServletResponse, Object item,
 			InfoItemServiceRegistry infoItemServiceRegistry,
 			LayoutDisplayPageProviderRegistry layoutDisplayPageProviderRegistry,
-			LayoutLocalService layoutLocalService,
+			LayoutService layoutService,
 			LayoutPageTemplateEntryService layoutPageTemplateEntryService)
 		throws Exception {
 
@@ -135,7 +134,7 @@ public class DisplayPageRendererUtil {
 			throw new NoSuchPageTemplateEntryException();
 		}
 
-		Layout layout = layoutLocalService.getLayout(
+		Layout layout = layoutService.getLayout(
 			layoutPageTemplateEntry.getPlid());
 
 		httpServletRequest = DynamicServletRequest.addQueryString(
@@ -155,7 +154,7 @@ public class DisplayPageRendererUtil {
 		httpServletRequest.setAttribute(
 			LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
 			_getLayoutDisplayPageObjectProvider(
-				infoItemDetails.getInfoItemReference(),
+				layout.getCompanyId(), infoItemDetails.getInfoItemReference(),
 				layoutDisplayPageProviderRegistry));
 
 		httpServletRequest.setAttribute(
@@ -184,14 +183,14 @@ public class DisplayPageRendererUtil {
 
 	private static LayoutDisplayPageObjectProvider<?>
 		_getLayoutDisplayPageObjectProvider(
-			InfoItemReference infoItemReference,
+			long companyId, InfoItemReference infoItemReference,
 			LayoutDisplayPageProviderRegistry
 				layoutDisplayPageProviderRegistry) {
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
 			layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(
-					infoItemReference.getClassName());
+					companyId, infoItemReference.getClassName());
 
 		return layoutDisplayPageProvider.getLayoutDisplayPageObjectProvider(
 			infoItemReference);

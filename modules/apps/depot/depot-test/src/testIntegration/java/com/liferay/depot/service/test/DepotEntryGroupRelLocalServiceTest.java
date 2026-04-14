@@ -12,6 +12,7 @@ import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
@@ -131,8 +132,7 @@ public class DepotEntryGroupRelLocalServiceTest {
 				HashMapBuilder.put(
 					LocaleUtil.getDefault(), RandomTestUtil.randomString()
 				).build(),
-				null, true, true, false,
-				ServiceContextTestUtil.getServiceContext());
+				null, true, true, ServiceContextTestUtil.getServiceContext());
 
 		Group group = _setUpLayoutSetPrototypeGroup(layoutSetPrototype);
 
@@ -175,13 +175,13 @@ public class DepotEntryGroupRelLocalServiceTest {
 
 		Assert.assertTrue(depotEntryGroupRel.getDepotEntryId() > 0);
 
-		Assert.assertNotNull(
+		Assert.assertNull(
 			_depotEntryGroupRelLocalService.
-				getDepotEntryGroupRelByDepotEntryIdToGroupId(
+				fetchDepotEntryGroupRelByDepotEntryIdToGroupId(
 					depotEntry.getDepotEntryId(), _group1.getGroupId()));
-		Assert.assertNotNull(
+		Assert.assertNull(
 			_depotEntryGroupRelLocalService.
-				getDepotEntryGroupRelByDepotEntryIdToGroupId(
+				fetchDepotEntryGroupRelByDepotEntryIdToGroupId(
 					depotEntry.getDepotEntryId(), _group2.getGroupId()));
 	}
 
@@ -227,7 +227,7 @@ public class DepotEntryGroupRelLocalServiceTest {
 				depotEntry.getDepotEntryId(), group.getGroupId());
 
 		Assert.assertEquals(
-			3,
+			1,
 			_depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
 				depotEntry));
 
@@ -236,8 +236,7 @@ public class DepotEntryGroupRelLocalServiceTest {
 			HashMapBuilder.put(
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()
 			).build(),
-			null, true, true, false,
-			ServiceContextTestUtil.getServiceContext());
+			null, true, true, ServiceContextTestUtil.getServiceContext());
 
 		int systemEventsCount = _systemEventLocalService.getSystemEventsCount();
 
@@ -247,16 +246,16 @@ public class DepotEntryGroupRelLocalServiceTest {
 		Assert.assertNull(
 			_depotEntryGroupRelLocalService.fetchDepotEntryGroupRel(
 				depotEntryGroupRel.getDepotEntryGroupRelId()));
-		Assert.assertNotNull(
+		Assert.assertNull(
 			_depotEntryGroupRelLocalService.
 				fetchDepotEntryGroupRelByDepotEntryIdToGroupId(
 					depotEntry.getDepotEntryId(), _group1.getGroupId()));
-		Assert.assertNotNull(
+		Assert.assertNull(
 			_depotEntryGroupRelLocalService.
 				fetchDepotEntryGroupRelByDepotEntryIdToGroupId(
 					depotEntry.getDepotEntryId(), _group2.getGroupId()));
 		Assert.assertEquals(
-			2,
+			0,
 			_depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
 				depotEntry));
 		Assert.assertEquals(
@@ -286,7 +285,7 @@ public class DepotEntryGroupRelLocalServiceTest {
 				depotEntry.getDepotEntryId(), group.getGroupId());
 
 		Assert.assertEquals(
-			3,
+			1,
 			_depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
 				depotEntry));
 
@@ -311,7 +310,7 @@ public class DepotEntryGroupRelLocalServiceTest {
 			_depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
 				depotEntry));
 		Assert.assertEquals(
-			systemEventsCount + 3,
+			systemEventsCount + 1,
 			_systemEventLocalService.getSystemEventsCount());
 	}
 
@@ -321,15 +320,15 @@ public class DepotEntryGroupRelLocalServiceTest {
 			DepotConstants.TYPE_ASSET_LIBRARY);
 
 		Group group = _groupLocalService.addGroup(
-			TestPropsValues.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
-			null, 0, 0,
+			StringPool.BLANK, TestPropsValues.getUserId(),
+			GroupConstants.DEFAULT_PARENT_GROUP_ID, null, 0, 0,
 			Collections.singletonMap(
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
 			Collections.singletonMap(
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-			GroupConstants.TYPE_SITE_OPEN, true,
-			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null, true, true,
-			ServiceContextTestUtil.getServiceContext());
+			GroupConstants.TYPE_SITE_OPEN, null, true,
+			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null, true, false,
+			true, ServiceContextTestUtil.getServiceContext());
 
 		int depotEntryGroupRelsCount =
 			_depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount();

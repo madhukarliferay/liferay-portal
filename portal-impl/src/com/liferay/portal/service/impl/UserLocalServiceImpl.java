@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.cache.PortalCacheMapSynchronizeUtil;
 import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCache;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -50,6 +51,7 @@ import com.liferay.portal.kernel.exception.RequiredRoleException;
 import com.liferay.portal.kernel.exception.RequiredUserException;
 import com.liferay.portal.kernel.exception.SendPasswordException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.exception.UserCommentsException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserIdException;
 import com.liferay.portal.kernel.exception.UserLockoutException;
@@ -58,6 +60,7 @@ import com.liferay.portal.kernel.exception.UserReminderQueryException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.exception.UserSmsException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -174,6 +177,7 @@ import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -196,7 +200,7 @@ import com.liferay.portal.security.pwd.PwdAuthenticator;
 import com.liferay.portal.security.pwd.PwdToolkitUtil;
 import com.liferay.portal.security.pwd.RegExpToolkit;
 import com.liferay.portal.service.base.UserLocalServiceBaseImpl;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
 import com.liferay.social.kernel.model.SocialRelation;
@@ -1371,11 +1375,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		// Group
 
 		_groupLocalService.addGroup(
-			user.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
-			User.class.getName(), user.getUserId(),
-			GroupConstants.DEFAULT_LIVE_GROUP_ID, (Map<Locale, String>)null,
-			null, 0, true, GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
-			StringPool.SLASH + screenName, false, true, null);
+			StringPool.BLANK, user.getUserId(),
+			GroupConstants.DEFAULT_PARENT_GROUP_ID, User.class.getName(),
+			user.getUserId(), GroupConstants.DEFAULT_LIVE_GROUP_ID,
+			(Map<Locale, String>)null, null, 0, null, true,
+			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
+			StringPool.SLASH + screenName, false, false, true, null);
 
 		// Groups
 
@@ -1524,18 +1529,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 					TransactionInvokerUtil.invoke(
 						_transactionConfig,
 						() -> {
-							Session session = null;
-
-							try {
-								session = userPersistence.openSession();
-
-								session.apply(
-									connection -> _updateLastLogin(
-										connection, deduplicatedUsers));
-							}
-							finally {
-								userPersistence.closeSession(session);
-							}
+							_updateLastLogin(deduplicatedUsers);
 
 							return null;
 						});
@@ -1945,11 +1939,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 				user.setPassword(PasswordEncryptorUtil.encrypt(password));
 				user.setPasswordEncrypted(true);
+				user.setPasswordModified(true);
 				user.setPasswordUnencrypted(password);
 			}
 
 			user.setPasswordModifiedDate(new Date());
-			user.setPasswordModified(true);
 
 			user = userPersistence.update(user);
 
@@ -3669,6 +3663,35 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		catch (Exception exception) {
 			throw new SystemException(exception);
 		}
+	}
+
+	@Override
+	public int searchCountBySocial(
+		long companyId, long[] groupIds, long[] userGroupIds, String keywords) {
+
+		return userFinder.countByKeywords(
+			companyId, keywords, WorkflowConstants.STATUS_APPROVED,
+			LinkedHashMapBuilder.<String, Object>put(
+				"usersGroups",
+				() -> {
+					if (ArrayUtil.isNotEmpty(groupIds)) {
+						return ArrayUtil.toLongArray(groupIds);
+					}
+
+					return null;
+				}
+			).put(
+				"usersUserGroups",
+				() -> {
+					if (ArrayUtil.isNotEmpty(userGroupIds)) {
+						return ArrayUtil.toLongArray(userGroupIds);
+					}
+
+					return null;
+				}
+			).put(
+				"wildcardMode", WildcardMode.TRAILING
+			).build());
 	}
 
 	@Override
@@ -5535,8 +5558,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		Locale locale = LocaleUtil.fromLanguageId(languageId);
 
 		validate(
-			userId, screenName, emailAddress, firstName, middleName, lastName,
-			smsSn, locale);
+			userId, screenName, emailAddress, comments, firstName, middleName,
+			lastName, smsSn, locale);
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
@@ -6133,10 +6156,16 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		attributes.put("city", city);
 		attributes.put("country", country);
 		attributes.put("emailAddress", emailAddress);
-		attributes.put("firstName", firstName);
-		attributes.put("fullName", fullName);
-		attributes.put("lastName", lastName);
-		attributes.put("middleName", middleName);
+
+		Locale locale = LocaleUtil.getMostRelevantLocale();
+
+		attributes.put(
+			"firstName_" + LocaleUtil.toLanguageId(locale), firstName);
+		attributes.put("fullName_" + LocaleUtil.toLanguageId(locale), fullName);
+		attributes.put("lastName_" + LocaleUtil.toLanguageId(locale), lastName);
+		attributes.put(
+			"middleName_" + LocaleUtil.toLanguageId(locale), middleName);
+
 		attributes.put("params", params);
 		attributes.put("region", region);
 		attributes.put("screenName", screenName);
@@ -6233,7 +6262,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			passwordPolicy.isChangeRequired() &&
 			(user.getLastLoginDate() == null)) {
 
-			user.setPasswordReset(true);
+			Contact contact = user.getContact();
+			User guestUser = getGuestUser(user.getCompanyId());
+
+			user.setPasswordReset(contact.getUserId() != guestUser.getUserId());
 
 			user = userPersistence.update(user);
 		}
@@ -6414,6 +6446,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			else if (!key.equals(Field.GROUP_ID) &&
 					 !key.equals("accountEntryIds") &&
 					 !key.equals("emailAddressDomains") &&
+					 !key.equals("inheritUsersGroups") &&
 					 !key.equals("types") && !key.equals("usersGroups") &&
 					 !key.equals("usersOrgs") &&
 					 !key.equals("usersOrgsCount") &&
@@ -7034,8 +7067,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 	protected void validate(
 			long userId, String screenName, String emailAddress,
-			String firstName, String middleName, String lastName, String smsSn,
-			Locale locale)
+			String comments, String firstName, String middleName,
+			String lastName, String smsSn, Locale locale)
 		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
@@ -7045,6 +7078,14 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		validateEmailAddress(user.getCompanyId(), emailAddress);
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			User.class.getName(), "comments");
+
+		if (Validator.isNotNull(comments) && (comments.length() > maxLength)) {
+			throw new UserCommentsException.MustNotExceedMaximumLength(
+				comments, maxLength);
+		}
 
 		if (!user.isGuestUser()) {
 			if (Validator.isNotNull(emailAddress) &&
@@ -7472,10 +7513,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	private void _updateLastLogin(Connection connection, List<User> users)
 		throws SQLException {
 
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				CustomSQLUtil.get(
-					UserLocalServiceImpl.class.getName() +
-						".updateLastLogin"))) {
+		try (PreparedStatement preparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
+					CustomSQLUtil.get(
+						UserLocalServiceImpl.class.getName() +
+							".updateLastLogin"))) {
 
 			for (User user : users) {
 				preparedStatement.setTimestamp(
@@ -7503,6 +7546,62 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 					EntityCacheUtil.removeResult(
 						UserImpl.class, user.getUserId());
 				}
+			}
+		}
+	}
+
+	private void _updateLastLogin(List<User> users) throws SQLException {
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
+			Map<Long, List<User>> companyUsersMap = new HashMap<>();
+
+			for (User user : users) {
+				List<User> companyUsers = companyUsersMap.computeIfAbsent(
+					user.getCompanyId(), key -> new ArrayList<>());
+
+				companyUsers.add(user);
+			}
+
+			for (Map.Entry<Long, List<User>> entry :
+					companyUsersMap.entrySet()) {
+
+				_companyLocalService.forEachCompanyId(
+					companyId -> {
+						if (PortalInstances.
+								isCurrentCompanyInDeletionProcess() ||
+							!ArrayUtil.contains(
+								PortalInstancePool.getCompanyIds(),
+								companyId)) {
+
+							return;
+						}
+
+						Session session = null;
+
+						try {
+							session = userPersistence.openSession();
+
+							session.apply(
+								connection -> _updateLastLogin(
+									connection, entry.getValue()));
+						}
+						finally {
+							userPersistence.closeSession(session);
+						}
+					},
+					new long[] {entry.getKey()});
+			}
+		}
+		else {
+			Session session = null;
+
+			try {
+				session = userPersistence.openSession();
+
+				session.apply(
+					connection -> _updateLastLogin(connection, users));
+			}
+			finally {
+				userPersistence.closeSession(session);
 			}
 		}
 	}

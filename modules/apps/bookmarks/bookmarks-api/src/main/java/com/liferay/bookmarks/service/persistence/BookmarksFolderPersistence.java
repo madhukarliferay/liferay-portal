@@ -121,47 +121,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where uuid = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByUuid_PrevAndNext(
-			long folderId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Removes all the bookmarks folders where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByUuid_C_PrevAndNext(
-			long folderId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Removes all the bookmarks folders where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where groupId = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByGroupId_PrevAndNext(
-			long folderId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Returns all the bookmarks folders that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -549,21 +423,6 @@ public interface BookmarksFolderPersistence
 		long groupId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set of bookmarks folders that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] filterFindByGroupId_PrevAndNext(
-			long folderId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
 
 	/**
 	 * Removes all the bookmarks folders where groupId = &#63; from the database.
@@ -676,47 +535,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByCompanyId_PrevAndNext(
-			long folderId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Removes all the bookmarks folders where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -826,50 +644,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByG_P_Last(
-			long groupId, long parentFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByG_P_Last(
-		long groupId, long parentFolderId,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByG_P_PrevAndNext(
-			long folderId, long groupId, long parentFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Returns all the bookmarks folders that the user has permission to view where groupId = &#63; and parentFolderId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -913,22 +687,6 @@ public interface BookmarksFolderPersistence
 		long groupId, long parentFolderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set of bookmarks folders that the user has permission to view where groupId = &#63; and parentFolderId = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] filterFindByG_P_PrevAndNext(
-			long folderId, long groupId, long parentFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
 
 	/**
 	 * Removes all the bookmarks folders where groupId = &#63; and parentFolderId = &#63; from the database.
@@ -1051,50 +809,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByC_NotS_Last(
-			long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByC_NotS_Last(
-		long companyId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByC_NotS_PrevAndNext(
-			long folderId, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Removes all the bookmarks folders where companyId = &#63; and status &ne; &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -1212,53 +926,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByG_P_S_Last(
-			long groupId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByG_P_S_Last(
-		long groupId, long parentFolderId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63; and status = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByG_P_S_PrevAndNext(
-			long folderId, long groupId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Returns all the bookmarks folders that the user has permission to view where groupId = &#63; and parentFolderId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1305,23 +972,6 @@ public interface BookmarksFolderPersistence
 		long groupId, long parentFolderId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set of bookmarks folders that the user has permission to view where groupId = &#63; and parentFolderId = &#63; and status = &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] filterFindByG_P_S_PrevAndNext(
-			long folderId, long groupId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
 
 	/**
 	 * Removes all the bookmarks folders where groupId = &#63; and parentFolderId = &#63; and status = &#63; from the database.
@@ -1454,53 +1104,6 @@ public interface BookmarksFolderPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByG_P_NotS_Last(
-			long groupId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByG_P_NotS_Last(
-		long groupId, long parentFolderId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set where groupId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] findByG_P_NotS_PrevAndNext(
-			long folderId, long groupId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
 	 * Returns all the bookmarks folders that the user has permission to view where groupId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1547,23 +1150,6 @@ public interface BookmarksFolderPersistence
 		long groupId, long parentFolderId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
-
-	/**
-	 * Returns the bookmarks folders before and after the current bookmarks folder in the ordered set of bookmarks folders that the user has permission to view where groupId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param folderId the primary key of the current bookmarks folder
-	 * @param groupId the group ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks folder
-	 * @throws NoSuchFolderException if a bookmarks folder with the primary key could not be found
-	 */
-	public BookmarksFolder[] filterFindByG_P_NotS_PrevAndNext(
-			long folderId, long groupId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
 
 	/**
 	 * Removes all the bookmarks folders where groupId = &#63; and parentFolderId = &#63; and status &ne; &#63; from the database.
@@ -1700,38 +1286,6 @@ public interface BookmarksFolderPersistence
 	 * @return the first matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
 	 */
 	public BookmarksFolder fetchByGtF_C_P_NotS_First(
-		long folderId, long companyId, long parentFolderId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-			orderByComparator);
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where folderId &gt; &#63; and companyId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param folderId the folder ID
-	 * @param companyId the company ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder
-	 * @throws NoSuchFolderException if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder findByGtF_C_P_NotS_Last(
-			long folderId, long companyId, long parentFolderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
-				orderByComparator)
-		throws NoSuchFolderException;
-
-	/**
-	 * Returns the last bookmarks folder in the ordered set where folderId &gt; &#63; and companyId = &#63; and parentFolderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param folderId the folder ID
-	 * @param companyId the company ID
-	 * @param parentFolderId the parent folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks folder, or <code>null</code> if a matching bookmarks folder could not be found
-	 */
-	public BookmarksFolder fetchByGtF_C_P_NotS_Last(
 		long folderId, long companyId, long parentFolderId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<BookmarksFolder>
 			orderByComparator);
@@ -1879,3 +1433,4 @@ public interface BookmarksFolderPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1071090911

@@ -151,9 +151,7 @@ public class ClassNameReference
 			sb.append("\"collectionType\": ");
 
 			sb.append("\"");
-
 			sb.append(collectionType);
-
 			sb.append("\"");
 		}
 
@@ -258,3 +256,4 @@ public class ClassNameReference
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-2097632472

@@ -40,6 +40,7 @@ import com.liferay.layout.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.layout.util.CollectionPaginationUtil;
 import com.liferay.layout.util.structure.CollectionStyledLayoutStructureItem;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -53,12 +54,15 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.segments.SegmentsEntryRetriever;
 import com.liferay.segments.context.RequestContextMapper;
+import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsExperience;
+import com.liferay.segments.service.SegmentsEntryLocalServiceUtil;
 import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -175,6 +179,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		return layoutDisplayPageProviderRegistry.
 			getLayoutDisplayPageProviderByClassName(
+				_themeDisplay.getCompanyId(),
 				InfoSearchClassMapperRegistryUtil.getClassName(
 					listObjectReference.getItemType()));
 	}
@@ -231,6 +236,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		_listObjectReference =
 			listObjectReferenceFactory.getListObjectReference(
+				_themeDisplay.getCompanyId(), _themeDisplay.getScopeGroupId(),
 				collectionJSONObject);
 
 		return _listObjectReference;
@@ -374,10 +380,33 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 				(SegmentsEntryLayoutListRetriever<ListObjectReference>)
 					layoutListRetriever;
 
-		if (segmentsEntryLayoutListRetriever.hasSegmentsEntryVariation(
-				listObjectReference, segmentsExperience.getSegmentsEntryId())) {
+		Long groupId = ScopeUtil.getItemGroupId(
+			segmentsExperience.getCompanyId(),
+			segmentsExperience.getSegmentsEntryScopeERC(),
+			segmentsExperience.getGroupId());
 
-			return new long[] {segmentsExperience.getSegmentsEntryId()};
+		if (groupId == null) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					StringBundler.concat(
+						"Unable to resolve group ID for segments experience ",
+						segmentsExperience.getSegmentsExperienceId(),
+						" with segments entry scope external reference code ",
+						segmentsExperience.getSegmentsEntryScopeERC()));
+			}
+		}
+		else {
+			SegmentsEntry segmentsEntry =
+				SegmentsEntryLocalServiceUtil.
+					fetchSegmentsEntryByExternalReferenceCode(
+						segmentsExperience.getSegmentsEntryERC(), groupId);
+
+			if ((segmentsEntry != null) &&
+				segmentsEntryLayoutListRetriever.hasSegmentsEntryVariation(
+					listObjectReference, segmentsEntry.getSegmentsEntryId())) {
+
+				return new long[] {segmentsEntry.getSegmentsEntryId()};
+			}
 		}
 
 		return new long[] {
@@ -615,6 +644,8 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 				_collectionStyledLayoutStructureItem.getNumberOfItems(),
 				_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage(),
 				_collectionStyledLayoutStructureItem.getPaginationType()));
+		defaultLayoutListRetrieverContext.setScopeGroupId(
+			_themeDisplay.getScopeGroupId());
 		defaultLayoutListRetrieverContext.setSegmentsEntryIds(
 			_getSegmentsEntryIds(layoutListRetriever, listObjectReference));
 

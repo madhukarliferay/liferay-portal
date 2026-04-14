@@ -194,6 +194,7 @@ import com.liferay.portal.kernel.util.SubscriptionSender;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.portal.kernel.util.UniqueUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
@@ -4447,14 +4448,13 @@ public class JournalArticleLocalServiceImpl
 				updateJournalArticle(article);
 
 				if (!reindex) {
-					return;
+					return null;
 				}
 
 				indexableActionableDynamicQuery.setCompanyId(
 					article.getCompanyId());
 
-				indexableActionableDynamicQuery.addDocuments(
-					indexer.getDocument(article));
+				return indexer.getDocument(article);
 			});
 
 		indexableActionableDynamicQuery.performActions();
@@ -6087,8 +6087,7 @@ public class JournalArticleLocalServiceImpl
 					updatePreviousApprovedArticle(article);
 
 					if (indexer != null) {
-						indexableActionableDynamicQuery.addDocuments(
-							indexer.getDocument(article));
+						return indexer.getDocument(article);
 					}
 				}
 				catch (PortalException portalException) {
@@ -6098,9 +6097,9 @@ public class JournalArticleLocalServiceImpl
 							portalException);
 					}
 				}
+
+				return null;
 			});
-		indexableActionableDynamicQuery.setTransactionConfig(
-			DefaultActionableDynamicQuery.REQUIRES_NEW_TRANSACTION_CONFIG);
 
 		indexableActionableDynamicQuery.performActions();
 	}
@@ -6456,7 +6455,9 @@ public class JournalArticleLocalServiceImpl
 
 			Group group = _groupLocalService.fetchGroup(groupId);
 
-			if ((group != null) && group.isCompany()) {
+			if ((group != null) && group.isCompany() &&
+				(themeDisplay != null)) {
+
 				groupId = themeDisplay.getScopeGroupId();
 			}
 
@@ -6464,6 +6465,15 @@ public class JournalArticleLocalServiceImpl
 				groupId,
 				_classNameLocalService.getClassNameId(DDMStructure.class),
 				ddmTemplateKey, true);
+
+			if ((ddmTemplate == null) && (themeDisplay != null) &&
+				(article.getGroupId() != themeDisplay.getScopeGroupId())) {
+
+				ddmTemplate = ddmTemplateLocalService.fetchTemplate(
+					themeDisplay.getScopeGroupId(),
+					_classNameLocalService.getClassNameId(DDMStructure.class),
+					ddmTemplateKey, true);
+			}
 
 			if ((ddmTemplate == null) &&
 				!Objects.equals(article.getDDMTemplateKey(), ddmTemplateKey)) {
@@ -7513,7 +7523,11 @@ public class JournalArticleLocalServiceImpl
 
 		targetArticle.setModifiedDate(modifiedDate);
 
-		targetArticle.setExternalReferenceCode(targetArticleId);
+		if (!newArticle) {
+			targetArticle.setExternalReferenceCode(
+				sourceArticle.getExternalReferenceCode());
+		}
+
 		targetArticle.setFolderId(sourceArticle.getFolderId());
 		targetArticle.setTreePath(sourceArticle.getTreePath());
 		targetArticle.setArticleId(targetArticleId);
@@ -7581,13 +7595,13 @@ public class JournalArticleLocalServiceImpl
 			for (Map.Entry<Locale, String> entry : titleMap.entrySet()) {
 				Locale locale = entry.getKey();
 
-				String uniqueUrlTitle = _getUniqueUrlTitle(
+				String uniqueCopyUrlTitle = _getUniqueCopyUrlTitle(
 					groupId, targetArticleId, entry.getValue());
 
-				titleMap.put(locale, uniqueUrlTitle);
+				titleMap.put(locale, uniqueCopyUrlTitle);
 
 				uniqueURLTitleMap.put(
-					locale, JournalUtil.getUrlTitle(id, uniqueUrlTitle));
+					locale, JournalUtil.getUrlTitle(id, uniqueCopyUrlTitle));
 			}
 		}
 
@@ -8286,39 +8300,25 @@ public class JournalArticleLocalServiceImpl
 		return JournalArticleConstants.SMALL_IMAGE_SOURCE_USER_COMPUTER;
 	}
 
-	private String _getUniqueUrlTitle(
-		long groupId, String articleId, String urlTitle) {
+	private String _getUniqueCopyUrlTitle(
+			long groupId, String articleId, String urlTitle)
+		throws PortalException {
 
-		String copy = _language.get(LocaleUtil.getSiteDefault(), "copy");
-		String prefix = urlTitle;
-		String title = urlTitle;
+		return UniqueUtil.getUniqueValue(
+			"copy",
+			uniqueValue -> {
+				JournalArticle article = fetchArticleByUrlTitle(
+					groupId, uniqueValue);
 
-		for (int i = 1;; i++) {
-			JournalArticle article = fetchArticleByUrlTitle(groupId, urlTitle);
+				if ((article == null) ||
+					Objects.equals(articleId, article.getArticleId())) {
 
-			if ((article == null) ||
-				Objects.equals(articleId, article.getArticleId())) {
+					return true;
+				}
 
-				return title;
-			}
-
-			if (i == 1) {
-				title = StringBundler.concat(
-					prefix, StringPool.SPACE, StringPool.OPEN_PARENTHESIS, copy,
-					StringPool.CLOSE_PARENTHESIS);
-				urlTitle = StringBundler.concat(
-					prefix, StringPool.DASH, copy, StringPool.DASH);
-
-				continue;
-			}
-
-			title = StringBundler.concat(
-				prefix, StringPool.SPACE, StringPool.OPEN_PARENTHESIS, copy,
-				StringPool.SPACE, i - 1, StringPool.CLOSE_PARENTHESIS);
-			urlTitle = StringBundler.concat(
-				prefix, StringPool.DASH, copy, StringPool.DASH, i - 1,
-				StringPool.DASH);
-		}
+				return false;
+			},
+			urlTitle);
 	}
 
 	private Map<String, String> _getURLTitleMap(

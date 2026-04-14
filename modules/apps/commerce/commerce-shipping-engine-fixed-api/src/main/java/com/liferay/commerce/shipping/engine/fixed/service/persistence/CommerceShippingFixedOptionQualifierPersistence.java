@@ -126,51 +126,6 @@ public interface CommerceShippingFixedOptionQualifierPersistence
 				<CommerceShippingFixedOptionQualifier> orderByComparator);
 
 	/**
-	 * Returns the last commerce shipping fixed option qualifier in the ordered set where commerceShippingFixedOptionId = &#63;.
-	 *
-	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipping fixed option qualifier
-	 * @throws NoSuchShippingFixedOptionQualifierException if a matching commerce shipping fixed option qualifier could not be found
-	 */
-	public CommerceShippingFixedOptionQualifier
-			findByCommerceShippingFixedOptionId_Last(
-				long commerceShippingFixedOptionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CommerceShippingFixedOptionQualifier> orderByComparator)
-		throws NoSuchShippingFixedOptionQualifierException;
-
-	/**
-	 * Returns the last commerce shipping fixed option qualifier in the ordered set where commerceShippingFixedOptionId = &#63;.
-	 *
-	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipping fixed option qualifier, or <code>null</code> if a matching commerce shipping fixed option qualifier could not be found
-	 */
-	public CommerceShippingFixedOptionQualifier
-		fetchByCommerceShippingFixedOptionId_Last(
-			long commerceShippingFixedOptionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShippingFixedOptionQualifier> orderByComparator);
-
-	/**
-	 * Returns the commerce shipping fixed option qualifiers before and after the current commerce shipping fixed option qualifier in the ordered set where commerceShippingFixedOptionId = &#63;.
-	 *
-	 * @param commerceShippingFixedOptionQualifierId the primary key of the current commerce shipping fixed option qualifier
-	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipping fixed option qualifier
-	 * @throws NoSuchShippingFixedOptionQualifierException if a commerce shipping fixed option qualifier with the primary key could not be found
-	 */
-	public CommerceShippingFixedOptionQualifier[]
-			findByCommerceShippingFixedOptionId_PrevAndNext(
-				long commerceShippingFixedOptionQualifierId,
-				long commerceShippingFixedOptionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CommerceShippingFixedOptionQualifier> orderByComparator)
-		throws NoSuchShippingFixedOptionQualifierException;
-
-	/**
 	 * Removes all the commerce shipping fixed option qualifiers where commerceShippingFixedOptionId = &#63; from the database.
 	 *
 	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
@@ -283,51 +238,6 @@ public interface CommerceShippingFixedOptionQualifierPersistence
 		long classNameId, long commerceShippingFixedOptionId,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceShippingFixedOptionQualifier> orderByComparator);
-
-	/**
-	 * Returns the last commerce shipping fixed option qualifier in the ordered set where classNameId = &#63; and commerceShippingFixedOptionId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipping fixed option qualifier
-	 * @throws NoSuchShippingFixedOptionQualifierException if a matching commerce shipping fixed option qualifier could not be found
-	 */
-	public CommerceShippingFixedOptionQualifier findByC_C_Last(
-			long classNameId, long commerceShippingFixedOptionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShippingFixedOptionQualifier> orderByComparator)
-		throws NoSuchShippingFixedOptionQualifierException;
-
-	/**
-	 * Returns the last commerce shipping fixed option qualifier in the ordered set where classNameId = &#63; and commerceShippingFixedOptionId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipping fixed option qualifier, or <code>null</code> if a matching commerce shipping fixed option qualifier could not be found
-	 */
-	public CommerceShippingFixedOptionQualifier fetchByC_C_Last(
-		long classNameId, long commerceShippingFixedOptionId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceShippingFixedOptionQualifier> orderByComparator);
-
-	/**
-	 * Returns the commerce shipping fixed option qualifiers before and after the current commerce shipping fixed option qualifier in the ordered set where classNameId = &#63; and commerceShippingFixedOptionId = &#63;.
-	 *
-	 * @param commerceShippingFixedOptionQualifierId the primary key of the current commerce shipping fixed option qualifier
-	 * @param classNameId the class name ID
-	 * @param commerceShippingFixedOptionId the commerce shipping fixed option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipping fixed option qualifier
-	 * @throws NoSuchShippingFixedOptionQualifierException if a commerce shipping fixed option qualifier with the primary key could not be found
-	 */
-	public CommerceShippingFixedOptionQualifier[] findByC_C_PrevAndNext(
-			long commerceShippingFixedOptionQualifierId, long classNameId,
-			long commerceShippingFixedOptionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShippingFixedOptionQualifier> orderByComparator)
-		throws NoSuchShippingFixedOptionQualifierException;
 
 	/**
 	 * Removes all the commerce shipping fixed option qualifiers where classNameId = &#63; and commerceShippingFixedOptionId = &#63; from the database.
@@ -539,3 +449,4 @@ public interface CommerceShippingFixedOptionQualifierPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:2041945892

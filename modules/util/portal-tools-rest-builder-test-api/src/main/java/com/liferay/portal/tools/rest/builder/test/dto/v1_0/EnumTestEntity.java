@@ -142,9 +142,7 @@ public class EnumTestEntity implements Serializable {
 			sb.append("\"testEnum\": ");
 
 			sb.append("\"");
-
 			sb.append(testEnum);
-
 			sb.append("\"");
 		}
 
@@ -288,3 +286,4 @@ public class EnumTestEntity implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1036465213

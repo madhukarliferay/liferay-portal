@@ -54,9 +54,7 @@ public class SitemapSettingsSerDes {
 			sb.append("\"changeFrequency\": ");
 
 			sb.append("\"");
-
 			sb.append(sitemapSettings.getChangeFrequency());
-
 			sb.append("\"");
 		}
 
@@ -291,3 +289,4 @@ public class SitemapSettingsSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:525321895

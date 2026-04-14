@@ -42,6 +42,7 @@ import java.lang.reflect.InvocationHandler;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -299,216 +300,6 @@ public class ChangesetEntryPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry
-	 * @throws NoSuchEntryException if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry findByGroupId_Last(
-			long groupId, OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = fetchByGroupId_Last(
-			groupId, orderByComparator);
-
-		if (changesetEntry != null) {
-			return changesetEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry fetchByGroupId_Last(
-		long groupId, OrderByComparator<ChangesetEntry> orderByComparator) {
-
-		int count = countByGroupId(groupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<ChangesetEntry> list = findByGroupId(
-			groupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the changeset entries before and after the current changeset entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param changesetEntryId the primary key of the current changeset entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next changeset entry
-	 * @throws NoSuchEntryException if a changeset entry with the primary key could not be found
-	 */
-	@Override
-	public ChangesetEntry[] findByGroupId_PrevAndNext(
-			long changesetEntryId, long groupId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = findByPrimaryKey(changesetEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			ChangesetEntry[] array = new ChangesetEntryImpl[3];
-
-			array[0] = getByGroupId_PrevAndNext(
-				session, changesetEntry, groupId, orderByComparator, true);
-
-			array[1] = changesetEntry;
-
-			array[2] = getByGroupId_PrevAndNext(
-				session, changesetEntry, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected ChangesetEntry getByGroupId_PrevAndNext(
-		Session session, ChangesetEntry changesetEntry, long groupId,
-		OrderByComparator<ChangesetEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CHANGESETENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(ChangesetEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						changesetEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<ChangesetEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -796,216 +587,6 @@ public class ChangesetEntryPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry
-	 * @throws NoSuchEntryException if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry findByCompanyId_Last(
-			long companyId, OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (changesetEntry != null) {
-			return changesetEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry fetchByCompanyId_Last(
-		long companyId, OrderByComparator<ChangesetEntry> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<ChangesetEntry> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the changeset entries before and after the current changeset entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param changesetEntryId the primary key of the current changeset entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next changeset entry
-	 * @throws NoSuchEntryException if a changeset entry with the primary key could not be found
-	 */
-	@Override
-	public ChangesetEntry[] findByCompanyId_PrevAndNext(
-			long changesetEntryId, long companyId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = findByPrimaryKey(changesetEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			ChangesetEntry[] array = new ChangesetEntryImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, changesetEntry, companyId, orderByComparator, true);
-
-			array[1] = changesetEntry;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, changesetEntry, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected ChangesetEntry getByCompanyId_PrevAndNext(
-		Session session, ChangesetEntry changesetEntry, long companyId,
-		OrderByComparator<ChangesetEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CHANGESETENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(ChangesetEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						changesetEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<ChangesetEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -1303,221 +884,6 @@ public class ChangesetEntryPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where changesetCollectionId = &#63;.
-	 *
-	 * @param changesetCollectionId the changeset collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry
-	 * @throws NoSuchEntryException if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry findByChangesetCollectionId_Last(
-			long changesetCollectionId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = fetchByChangesetCollectionId_Last(
-			changesetCollectionId, orderByComparator);
-
-		if (changesetEntry != null) {
-			return changesetEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("changesetCollectionId=");
-		sb.append(changesetCollectionId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where changesetCollectionId = &#63;.
-	 *
-	 * @param changesetCollectionId the changeset collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry fetchByChangesetCollectionId_Last(
-		long changesetCollectionId,
-		OrderByComparator<ChangesetEntry> orderByComparator) {
-
-		int count = countByChangesetCollectionId(changesetCollectionId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<ChangesetEntry> list = findByChangesetCollectionId(
-			changesetCollectionId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the changeset entries before and after the current changeset entry in the ordered set where changesetCollectionId = &#63;.
-	 *
-	 * @param changesetEntryId the primary key of the current changeset entry
-	 * @param changesetCollectionId the changeset collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next changeset entry
-	 * @throws NoSuchEntryException if a changeset entry with the primary key could not be found
-	 */
-	@Override
-	public ChangesetEntry[] findByChangesetCollectionId_PrevAndNext(
-			long changesetEntryId, long changesetCollectionId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = findByPrimaryKey(changesetEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			ChangesetEntry[] array = new ChangesetEntryImpl[3];
-
-			array[0] = getByChangesetCollectionId_PrevAndNext(
-				session, changesetEntry, changesetCollectionId,
-				orderByComparator, true);
-
-			array[1] = changesetEntry;
-
-			array[2] = getByChangesetCollectionId_PrevAndNext(
-				session, changesetEntry, changesetCollectionId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected ChangesetEntry getByChangesetCollectionId_PrevAndNext(
-		Session session, ChangesetEntry changesetEntry,
-		long changesetCollectionId,
-		OrderByComparator<ChangesetEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CHANGESETENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CHANGESETCOLLECTIONID_CHANGESETCOLLECTIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(ChangesetEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(changesetCollectionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						changesetEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<ChangesetEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -1826,231 +1192,6 @@ public class ChangesetEntryPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry
-	 * @throws NoSuchEntryException if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry findByG_C_Last(
-			long groupId, long classNameId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = fetchByG_C_Last(
-			groupId, classNameId, orderByComparator);
-
-		if (changesetEntry != null) {
-			return changesetEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry fetchByG_C_Last(
-		long groupId, long classNameId,
-		OrderByComparator<ChangesetEntry> orderByComparator) {
-
-		int count = countByG_C(groupId, classNameId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<ChangesetEntry> list = findByG_C(
-			groupId, classNameId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the changeset entries before and after the current changeset entry in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param changesetEntryId the primary key of the current changeset entry
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next changeset entry
-	 * @throws NoSuchEntryException if a changeset entry with the primary key could not be found
-	 */
-	@Override
-	public ChangesetEntry[] findByG_C_PrevAndNext(
-			long changesetEntryId, long groupId, long classNameId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = findByPrimaryKey(changesetEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			ChangesetEntry[] array = new ChangesetEntryImpl[3];
-
-			array[0] = getByG_C_PrevAndNext(
-				session, changesetEntry, groupId, classNameId,
-				orderByComparator, true);
-
-			array[1] = changesetEntry;
-
-			array[2] = getByG_C_PrevAndNext(
-				session, changesetEntry, groupId, classNameId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected ChangesetEntry getByG_C_PrevAndNext(
-		Session session, ChangesetEntry changesetEntry, long groupId,
-		long classNameId, OrderByComparator<ChangesetEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CHANGESETENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_CLASSNAMEID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(ChangesetEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(classNameId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						changesetEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<ChangesetEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -2375,232 +1516,6 @@ public class ChangesetEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last changeset entry in the ordered set where changesetCollectionId = &#63; and classNameId = &#63;.
-	 *
-	 * @param changesetCollectionId the changeset collection ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry
-	 * @throws NoSuchEntryException if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry findByC_C_Last(
-			long changesetCollectionId, long classNameId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = fetchByC_C_Last(
-			changesetCollectionId, classNameId, orderByComparator);
-
-		if (changesetEntry != null) {
-			return changesetEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("changesetCollectionId=");
-		sb.append(changesetCollectionId);
-
-		sb.append(", classNameId=");
-		sb.append(classNameId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last changeset entry in the ordered set where changesetCollectionId = &#63; and classNameId = &#63;.
-	 *
-	 * @param changesetCollectionId the changeset collection ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
-	 */
-	@Override
-	public ChangesetEntry fetchByC_C_Last(
-		long changesetCollectionId, long classNameId,
-		OrderByComparator<ChangesetEntry> orderByComparator) {
-
-		int count = countByC_C(changesetCollectionId, classNameId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<ChangesetEntry> list = findByC_C(
-			changesetCollectionId, classNameId, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the changeset entries before and after the current changeset entry in the ordered set where changesetCollectionId = &#63; and classNameId = &#63;.
-	 *
-	 * @param changesetEntryId the primary key of the current changeset entry
-	 * @param changesetCollectionId the changeset collection ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next changeset entry
-	 * @throws NoSuchEntryException if a changeset entry with the primary key could not be found
-	 */
-	@Override
-	public ChangesetEntry[] findByC_C_PrevAndNext(
-			long changesetEntryId, long changesetCollectionId, long classNameId,
-			OrderByComparator<ChangesetEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		ChangesetEntry changesetEntry = findByPrimaryKey(changesetEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			ChangesetEntry[] array = new ChangesetEntryImpl[3];
-
-			array[0] = getByC_C_PrevAndNext(
-				session, changesetEntry, changesetCollectionId, classNameId,
-				orderByComparator, true);
-
-			array[1] = changesetEntry;
-
-			array[2] = getByC_C_PrevAndNext(
-				session, changesetEntry, changesetCollectionId, classNameId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected ChangesetEntry getByC_C_PrevAndNext(
-		Session session, ChangesetEntry changesetEntry,
-		long changesetCollectionId, long classNameId,
-		OrderByComparator<ChangesetEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CHANGESETENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_C_CHANGESETCOLLECTIONID_2);
-
-		sb.append(_FINDER_COLUMN_C_C_CLASSNAMEID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(ChangesetEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(changesetCollectionId);
-
-		queryPos.add(classNameId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						changesetEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<ChangesetEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the changeset entries where changesetCollectionId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param changesetCollectionId the changeset collection ID
@@ -2675,6 +1590,245 @@ public class ChangesetEntryPersistenceImpl
 		"changesetEntry.changesetCollectionId = ? AND ";
 
 	private static final String _FINDER_COLUMN_C_C_CLASSNAMEID_2 =
+		"changesetEntry.classNameId = ?";
+
+	private FinderPath _finderPathFetchByC_CERC_C;
+
+	/**
+	 * Returns the changeset entry where changesetCollectionId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; or throws a <code>NoSuchEntryException</code> if it could not be found.
+	 *
+	 * @param changesetCollectionId the changeset collection ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @return the matching changeset entry
+	 * @throws NoSuchEntryException if a matching changeset entry could not be found
+	 */
+	@Override
+	public ChangesetEntry findByC_CERC_C(
+			long changesetCollectionId, String classExternalReferenceCode,
+			long classNameId)
+		throws NoSuchEntryException {
+
+		ChangesetEntry changesetEntry = fetchByC_CERC_C(
+			changesetCollectionId, classExternalReferenceCode, classNameId);
+
+		if (changesetEntry == null) {
+			StringBundler sb = new StringBundler(8);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("changesetCollectionId=");
+			sb.append(changesetCollectionId);
+
+			sb.append(", classExternalReferenceCode=");
+			sb.append(classExternalReferenceCode);
+
+			sb.append(", classNameId=");
+			sb.append(classNameId);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchEntryException(sb.toString());
+		}
+
+		return changesetEntry;
+	}
+
+	/**
+	 * Returns the changeset entry where changesetCollectionId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param changesetCollectionId the changeset collection ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @return the matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
+	 */
+	@Override
+	public ChangesetEntry fetchByC_CERC_C(
+		long changesetCollectionId, String classExternalReferenceCode,
+		long classNameId) {
+
+		return fetchByC_CERC_C(
+			changesetCollectionId, classExternalReferenceCode, classNameId,
+			true);
+	}
+
+	/**
+	 * Returns the changeset entry where changesetCollectionId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param changesetCollectionId the changeset collection ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching changeset entry, or <code>null</code> if a matching changeset entry could not be found
+	 */
+	@Override
+	public ChangesetEntry fetchByC_CERC_C(
+		long changesetCollectionId, String classExternalReferenceCode,
+		long classNameId, boolean useFinderCache) {
+
+		classExternalReferenceCode = Objects.toString(
+			classExternalReferenceCode, "");
+
+		Object[] finderArgs = null;
+
+		if (useFinderCache) {
+			finderArgs = new Object[] {
+				changesetCollectionId, classExternalReferenceCode, classNameId
+			};
+		}
+
+		Object result = null;
+
+		if (useFinderCache) {
+			result = finderCache.getResult(
+				_finderPathFetchByC_CERC_C, finderArgs, this);
+		}
+
+		if (result instanceof ChangesetEntry) {
+			ChangesetEntry changesetEntry = (ChangesetEntry)result;
+
+			if ((changesetCollectionId !=
+					changesetEntry.getChangesetCollectionId()) ||
+				!Objects.equals(
+					classExternalReferenceCode,
+					changesetEntry.getClassExternalReferenceCode()) ||
+				(classNameId != changesetEntry.getClassNameId())) {
+
+				result = null;
+			}
+		}
+
+		if (result == null) {
+			StringBundler sb = new StringBundler(5);
+
+			sb.append(_SQL_SELECT_CHANGESETENTRY_WHERE);
+
+			sb.append(_FINDER_COLUMN_C_CERC_C_CHANGESETCOLLECTIONID_2);
+
+			boolean bindClassExternalReferenceCode = false;
+
+			if (classExternalReferenceCode.isEmpty()) {
+				sb.append(_FINDER_COLUMN_C_CERC_C_CLASSEXTERNALREFERENCECODE_3);
+			}
+			else {
+				bindClassExternalReferenceCode = true;
+
+				sb.append(_FINDER_COLUMN_C_CERC_C_CLASSEXTERNALREFERENCECODE_2);
+			}
+
+			sb.append(_FINDER_COLUMN_C_CERC_C_CLASSNAMEID_2);
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				queryPos.add(changesetCollectionId);
+
+				if (bindClassExternalReferenceCode) {
+					queryPos.add(classExternalReferenceCode);
+				}
+
+				queryPos.add(classNameId);
+
+				List<ChangesetEntry> list = query.list();
+
+				if (list.isEmpty()) {
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathFetchByC_CERC_C, finderArgs, list);
+					}
+				}
+				else {
+					ChangesetEntry changesetEntry = list.get(0);
+
+					result = changesetEntry;
+
+					cacheResult(changesetEntry);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
+		else {
+			return (ChangesetEntry)result;
+		}
+	}
+
+	/**
+	 * Removes the changeset entry where changesetCollectionId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; from the database.
+	 *
+	 * @param changesetCollectionId the changeset collection ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @return the changeset entry that was removed
+	 */
+	@Override
+	public ChangesetEntry removeByC_CERC_C(
+			long changesetCollectionId, String classExternalReferenceCode,
+			long classNameId)
+		throws NoSuchEntryException {
+
+		ChangesetEntry changesetEntry = findByC_CERC_C(
+			changesetCollectionId, classExternalReferenceCode, classNameId);
+
+		return remove(changesetEntry);
+	}
+
+	/**
+	 * Returns the number of changeset entries where changesetCollectionId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63;.
+	 *
+	 * @param changesetCollectionId the changeset collection ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @return the number of matching changeset entries
+	 */
+	@Override
+	public int countByC_CERC_C(
+		long changesetCollectionId, String classExternalReferenceCode,
+		long classNameId) {
+
+		ChangesetEntry changesetEntry = fetchByC_CERC_C(
+			changesetCollectionId, classExternalReferenceCode, classNameId);
+
+		if (changesetEntry == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String
+		_FINDER_COLUMN_C_CERC_C_CHANGESETCOLLECTIONID_2 =
+			"changesetEntry.changesetCollectionId = ? AND ";
+
+	private static final String
+		_FINDER_COLUMN_C_CERC_C_CLASSEXTERNALREFERENCECODE_2 =
+			"changesetEntry.classExternalReferenceCode = ? AND ";
+
+	private static final String
+		_FINDER_COLUMN_C_CERC_C_CLASSEXTERNALREFERENCECODE_3 =
+			"(changesetEntry.classExternalReferenceCode IS NULL OR changesetEntry.classExternalReferenceCode = '') AND ";
+
+	private static final String _FINDER_COLUMN_C_CERC_C_CLASSNAMEID_2 =
 		"changesetEntry.classNameId = ?";
 
 	private FinderPath _finderPathFetchByC_C_C;
@@ -2909,6 +2063,15 @@ public class ChangesetEntryPersistenceImpl
 			changesetEntry);
 
 		finderCache.putResult(
+			_finderPathFetchByC_CERC_C,
+			new Object[] {
+				changesetEntry.getChangesetCollectionId(),
+				changesetEntry.getClassExternalReferenceCode(),
+				changesetEntry.getClassNameId()
+			},
+			changesetEntry);
+
+		finderCache.putResult(
 			_finderPathFetchByC_C_C,
 			new Object[] {
 				changesetEntry.getChangesetCollectionId(),
@@ -2990,6 +2153,15 @@ public class ChangesetEntryPersistenceImpl
 		ChangesetEntryModelImpl changesetEntryModelImpl) {
 
 		Object[] args = new Object[] {
+			changesetEntryModelImpl.getChangesetCollectionId(),
+			changesetEntryModelImpl.getClassExternalReferenceCode(),
+			changesetEntryModelImpl.getClassNameId()
+		};
+
+		finderCache.putResult(
+			_finderPathFetchByC_CERC_C, args, changesetEntryModelImpl);
+
+		args = new Object[] {
 			changesetEntryModelImpl.getChangesetCollectionId(),
 			changesetEntryModelImpl.getClassNameId(),
 			changesetEntryModelImpl.getClassPK()
@@ -3550,6 +2722,18 @@ public class ChangesetEntryPersistenceImpl
 			new String[] {Long.class.getName(), Long.class.getName()},
 			new String[] {"changesetCollectionId", "classNameId"}, false);
 
+		_finderPathFetchByC_CERC_C = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByC_CERC_C",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Long.class.getName()
+			},
+			new String[] {
+				"changesetCollectionId", "classExternalReferenceCode",
+				"classNameId"
+			},
+			true);
+
 		_finderPathFetchByC_C_C = new FinderPath(
 			FINDER_CLASS_NAME_ENTITY, "fetchByC_C_C",
 			new String[] {
@@ -3629,3 +2813,4 @@ public class ChangesetEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:137402750

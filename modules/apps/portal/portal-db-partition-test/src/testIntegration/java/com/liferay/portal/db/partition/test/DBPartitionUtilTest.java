@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.rule.CompanyProviderClassTestRule;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
@@ -39,7 +40,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 import java.util.ArrayList;
@@ -119,7 +119,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@Test
 	@TestInfo("LPS-198239")
 	public void testAccessDefaultCompanyByCompanyThreadLocal()
-		throws SQLException {
+		throws Exception {
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
@@ -256,8 +256,8 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@TestInfo("LPS-200849")
 	public void testExportAndImportDBPartition() throws Exception {
 		try {
-			int companyCount = _getDefaultSchemaCount("Company");
-			int virtualHostCount = _getDefaultSchemaCount("VirtualHost");
+			long companyCount = _getDefaultSchemaCount("Company");
+			long virtualHostCount = _getDefaultSchemaCount("VirtualHost");
 
 			addDBPartitions();
 			insertPartitionRequiredData();
@@ -526,25 +526,26 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@Test
 	@TestInfo("LPS-130898")
 	public void testForEachCompanyId() throws Exception {
-		boolean originalDatabasePartitionThreadPoolEnabled =
-			ReflectionTestUtil.getFieldValue(
-				DBPartitionUtil.class,
-				"_DATABASE_PARTITION_THREAD_POOL_ENABLED");
-
 		try {
 			addDBPartitions();
 
 			insertPartitionRequiredData();
 
-			_testForEachCompanyId(false);
-			_testForEachCompanyId(true);
+			try (SafeCloseable safeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"DATABASE_PARTITION_THREAD_POOL_ENABLED", false)) {
+
+				_testForEachCompanyId();
+			}
+
+			try (SafeCloseable safeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"DATABASE_PARTITION_THREAD_POOL_ENABLED", true)) {
+
+				_testForEachCompanyId();
+			}
 		}
 		finally {
-			ReflectionTestUtil.setFieldValue(
-				DBPartitionUtil.class,
-				"_DATABASE_PARTITION_THREAD_POOL_ENABLED",
-				originalDatabasePartitionThreadPoolEnabled);
-
 			deletePartitionRequiredData();
 			removeDBPartitions();
 		}
@@ -623,11 +624,11 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 		}
 	}
 
-	private int _getCount(long companyId, String tableName) throws Exception {
+	private long _getCount(long companyId, String tableName) throws Exception {
 		return _getCount(companyId, getPartitionName(companyId), tableName);
 	}
 
-	private int _getCount(
+	private long _getCount(
 			long companyId, String partitionName, String tableName)
 		throws Exception {
 
@@ -639,57 +640,65 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select count(1) from ", partitionName, StringPool.PERIOD,
-					tableName, whereClause));
+					"select count(1) as count from ", partitionName,
+					StringPool.PERIOD, tableName, whereClause));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (resultSet.next()) {
-				return resultSet.getInt(1);
+				return resultSet.getLong("count");
 			}
 		}
 
 		throw new Exception("Table does not exist");
 	}
 
-	private int _getDefaultSchemaCount(String tableName) throws Exception {
+	private long _getDefaultSchemaCount(String tableName) throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select count(1) from " + tableName);
+				"select count(1) as count from " + tableName);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (resultSet.next()) {
-				return resultSet.getInt(1);
+				return resultSet.getLong("count");
 			}
 		}
 
 		throw new Exception("Table does not exist");
 	}
 
-	private int _getJobsCount(String partitionName) throws Exception {
+	private long _getJobsCount(String partitionName) throws Exception {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select count(1) as count from " + partitionName +
+					".QUARTZ_JOB_DETAILS where JOB_GROUP = ?")) {
+
+			preparedStatement.setString(1, _JOB_GROUP_NAME);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong("count");
+				}
+			}
+		}
+
+		throw new Exception("Table does not exist");
+	}
+
+	private long _getJobsCountByCompany(long companyId) throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select count(1) from ", partitionName,
-					".QUARTZ_JOB_DETAILS where JOB_GROUP = '", _JOB_GROUP_NAME,
-					"'"));
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"select count(1) as count from ",
+					getPartitionName(companyId),
+					".QUARTZ_JOB_DETAILS where JOB_GROUP = ? and JOB_NAME ",
+					"like ?"))) {
 
-			if (resultSet.next()) {
-				return resultSet.getInt(1);
-			}
-		}
+			preparedStatement.setString(1, _JOB_GROUP_NAME);
+			preparedStatement.setString(2, "%@" + companyId);
 
-		throw new Exception("Table does not exist");
-	}
-
-	private int _getJobsCountByCompany(long companyId) throws Exception {
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"select count(1) from ", getPartitionName(companyId),
-					".QUARTZ_JOB_DETAILS where JOB_GROUP = '", _JOB_GROUP_NAME,
-					"' and JOB_NAME like '%@", companyId, "'"));
-			ResultSet resultSet = preparedStatement.executeQuery()) {
-
-			if (resultSet.next()) {
-				return resultSet.getInt(1);
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong("count");
+				}
 			}
 		}
 
@@ -717,7 +726,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 		return objectNames;
 	}
 
-	private int _getQuartzTableCount(long companyId, String tableName)
+	private long _getQuartzTableCount(long companyId, String tableName)
 		throws Exception {
 
 		String whereClause = null;
@@ -731,12 +740,14 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select count(1) from ", getPartitionName(companyId),
-					StringPool.PERIOD, tableName, whereClause));
+					"select count(1) as count from ",
+					getPartitionName(companyId), StringPool.PERIOD, tableName,
+					whereClause));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (resultSet.next()) {
-				return resultSet.getInt(1);
+				return resultSet.getLong("count");
 			}
 		}
 
@@ -791,14 +802,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 			StorageType.PERSISTED);
 	}
 
-	private void _testForEachCompanyId(
-			boolean databasePartitionThreadPoolEnabled)
-		throws Exception {
-
-		ReflectionTestUtil.setFieldValue(
-			DBPartitionUtil.class, "_DATABASE_PARTITION_THREAD_POOL_ENABLED",
-			databasePartitionThreadPoolEnabled);
-
+	private void _testForEachCompanyId() throws Exception {
 		List<Long> companyIds = new CopyOnWriteArrayList<>();
 
 		DBPartitionUtil.forEachCompanyId(

@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.persistence.PortletPersistence;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
@@ -224,11 +225,12 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 					connection.prepareStatement(
 						"select value, classNameId from ClassName_ order by " +
 							"classNameId asc limit 1; ");
+
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
 				if (resultSet.next()) {
-					classNameValue = resultSet.getString(1);
-					classNameId = resultSet.getLong(2);
+					classNameValue = resultSet.getString("value");
+					classNameId = resultSet.getLong("classNameId");
 				}
 			}
 		}
@@ -258,15 +260,16 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 						companyId)) {
 
-				int rowCount = -1;
+				long rowCount = -1;
 
 				try (PreparedStatement preparedStatement =
 						connection.prepareStatement(
-							"select count(1) from Configuration_");
+							"select count(1) as count from Configuration_");
+
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
 					if (resultSet.next()) {
-						rowCount = resultSet.getInt(1);
+						rowCount = resultSet.getLong("count");
 					}
 				}
 
@@ -299,13 +302,14 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 						"select resourceActionId, name, actionId, " +
 							"bitwiseValue from ResourceAction order by " +
 								"resourceActionId asc limit 1;");
+
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
 				if (resultSet.next()) {
-					actionId = resultSet.getString(3);
-					bitwiseValue = resultSet.getLong(4);
-					name = resultSet.getString(2);
-					resourceActionId = resultSet.getLong(1);
+					actionId = resultSet.getString("actionId");
+					bitwiseValue = resultSet.getLong("bitwiseValue");
+					name = resultSet.getString("name");
+					resourceActionId = resultSet.getLong("resourceActionId");
 				}
 			}
 		}
@@ -751,10 +755,9 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 	public void testIllegalDatabasePartitionSchemaNamePrefix()
 		throws Exception {
 
-		try (AutoCloseable autoCloseable =
-				ReflectionTestUtil.setFieldValueWithAutoCloseable(
-					DBPartitionUtil.class,
-					"_DATABASE_PARTITION_SCHEMA_NAME_PREFIX",
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DATABASE_PARTITION_SCHEMA_NAME_PREFIX",
 					"VeryLongIdentifier")) {
 
 			DBPartitionUtil.checkDatabasePartitionSchemaNamePrefix();

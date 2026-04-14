@@ -210,52 +210,6 @@ public class ObjectLayoutUtil {
 	}
 
 	/**
-	 * Returns the last object layout in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout
-	 * @throws NoSuchObjectLayoutException if a matching object layout could not be found
-	 */
-	public static ObjectLayout findByUuid_Last(
-			String uuid, OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout, or <code>null</code> if a matching object layout could not be found
-	 */
-	public static ObjectLayout fetchByUuid_Last(
-		String uuid, OrderByComparator<ObjectLayout> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layouts before and after the current object layout in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectLayoutId the primary key of the current object layout
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout
-	 * @throws NoSuchObjectLayoutException if a object layout with the primary key could not be found
-	 */
-	public static ObjectLayout[] findByUuid_PrevAndNext(
-			long objectLayoutId, String uuid,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			objectLayoutId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object layouts where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -385,59 +339,6 @@ public class ObjectLayoutUtil {
 	}
 
 	/**
-	 * Returns the last object layout in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout
-	 * @throws NoSuchObjectLayoutException if a matching object layout could not be found
-	 */
-	public static ObjectLayout findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout, or <code>null</code> if a matching object layout could not be found
-	 */
-	public static ObjectLayout fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<ObjectLayout> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layouts before and after the current object layout in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectLayoutId the primary key of the current object layout
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout
-	 * @throws NoSuchObjectLayoutException if a object layout with the primary key could not be found
-	 */
-	public static ObjectLayout[] findByUuid_C_PrevAndNext(
-			long objectLayoutId, String uuid, long companyId,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			objectLayoutId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object layouts where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -563,56 +464,6 @@ public class ObjectLayoutUtil {
 
 		return getPersistence().fetchByObjectDefinitionId_First(
 			objectDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout
-	 * @throws NoSuchObjectLayoutException if a matching object layout could not be found
-	 */
-	public static ObjectLayout findByObjectDefinitionId_Last(
-			long objectDefinitionId,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByObjectDefinitionId_Last(
-			objectDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout, or <code>null</code> if a matching object layout could not be found
-	 */
-	public static ObjectLayout fetchByObjectDefinitionId_Last(
-		long objectDefinitionId,
-		OrderByComparator<ObjectLayout> orderByComparator) {
-
-		return getPersistence().fetchByObjectDefinitionId_Last(
-			objectDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layouts before and after the current object layout in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectLayoutId the primary key of the current object layout
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout
-	 * @throws NoSuchObjectLayoutException if a object layout with the primary key could not be found
-	 */
-	public static ObjectLayout[] findByObjectDefinitionId_PrevAndNext(
-			long objectLayoutId, long objectDefinitionId,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByObjectDefinitionId_PrevAndNext(
-			objectLayoutId, objectDefinitionId, orderByComparator);
 	}
 
 	/**
@@ -746,59 +597,6 @@ public class ObjectLayoutUtil {
 
 		return getPersistence().fetchByC_DOL_First(
 			companyId, defaultObjectLayout, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where companyId = &#63; and defaultObjectLayout = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultObjectLayout the default object layout
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout
-	 * @throws NoSuchObjectLayoutException if a matching object layout could not be found
-	 */
-	public static ObjectLayout findByC_DOL_Last(
-			long companyId, boolean defaultObjectLayout,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByC_DOL_Last(
-			companyId, defaultObjectLayout, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where companyId = &#63; and defaultObjectLayout = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultObjectLayout the default object layout
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout, or <code>null</code> if a matching object layout could not be found
-	 */
-	public static ObjectLayout fetchByC_DOL_Last(
-		long companyId, boolean defaultObjectLayout,
-		OrderByComparator<ObjectLayout> orderByComparator) {
-
-		return getPersistence().fetchByC_DOL_Last(
-			companyId, defaultObjectLayout, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layouts before and after the current object layout in the ordered set where companyId = &#63; and defaultObjectLayout = &#63;.
-	 *
-	 * @param objectLayoutId the primary key of the current object layout
-	 * @param companyId the company ID
-	 * @param defaultObjectLayout the default object layout
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout
-	 * @throws NoSuchObjectLayoutException if a object layout with the primary key could not be found
-	 */
-	public static ObjectLayout[] findByC_DOL_PrevAndNext(
-			long objectLayoutId, long companyId, boolean defaultObjectLayout,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByC_DOL_PrevAndNext(
-			objectLayoutId, companyId, defaultObjectLayout, orderByComparator);
 	}
 
 	/**
@@ -941,61 +739,6 @@ public class ObjectLayoutUtil {
 
 		return getPersistence().fetchByODI_DOL_First(
 			objectDefinitionId, defaultObjectLayout, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where objectDefinitionId = &#63; and defaultObjectLayout = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param defaultObjectLayout the default object layout
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout
-	 * @throws NoSuchObjectLayoutException if a matching object layout could not be found
-	 */
-	public static ObjectLayout findByODI_DOL_Last(
-			long objectDefinitionId, boolean defaultObjectLayout,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByODI_DOL_Last(
-			objectDefinitionId, defaultObjectLayout, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout in the ordered set where objectDefinitionId = &#63; and defaultObjectLayout = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param defaultObjectLayout the default object layout
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout, or <code>null</code> if a matching object layout could not be found
-	 */
-	public static ObjectLayout fetchByODI_DOL_Last(
-		long objectDefinitionId, boolean defaultObjectLayout,
-		OrderByComparator<ObjectLayout> orderByComparator) {
-
-		return getPersistence().fetchByODI_DOL_Last(
-			objectDefinitionId, defaultObjectLayout, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layouts before and after the current object layout in the ordered set where objectDefinitionId = &#63; and defaultObjectLayout = &#63;.
-	 *
-	 * @param objectLayoutId the primary key of the current object layout
-	 * @param objectDefinitionId the object definition ID
-	 * @param defaultObjectLayout the default object layout
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout
-	 * @throws NoSuchObjectLayoutException if a object layout with the primary key could not be found
-	 */
-	public static ObjectLayout[] findByODI_DOL_PrevAndNext(
-			long objectLayoutId, long objectDefinitionId,
-			boolean defaultObjectLayout,
-			OrderByComparator<ObjectLayout> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutException {
-
-		return getPersistence().findByODI_DOL_PrevAndNext(
-			objectLayoutId, objectDefinitionId, defaultObjectLayout,
-			orderByComparator);
 	}
 
 	/**
@@ -1183,3 +926,4 @@ public class ObjectLayoutUtil {
 	private static volatile ObjectLayoutPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1785268780

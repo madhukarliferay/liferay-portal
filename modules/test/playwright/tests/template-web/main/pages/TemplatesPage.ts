@@ -164,6 +164,22 @@ export class TemplatesPage {
 		});
 	}
 
+	async goToViewUsages(widgetTemplateName: string) {
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {
+				exact: true,
+				name: 'View Usages',
+			}),
+			trigger: this.page
+				.locator('tr')
+				.filter({hasText: widgetTemplateName})
+				.getByLabel('Show Actions'),
+		});
+
+		await this.page.waitForURL(/view_widget_templates_usages/);
+	}
+
 	async getTemplateKey() {
 		await this.page.getByLabel('Properties').click();
 

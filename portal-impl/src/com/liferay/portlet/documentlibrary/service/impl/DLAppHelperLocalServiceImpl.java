@@ -384,9 +384,7 @@ public class DLAppHelperLocalServiceImpl
 					});
 				indexableActionableDynamicQuery.setCompanyId(companyId);
 				indexableActionableDynamicQuery.setPerformActionMethod(
-					(DLFileEntry dlFileEntry) ->
-						indexableActionableDynamicQuery.addDocuments(
-							indexer.getDocument(dlFileEntry)));
+					indexer::getDocument);
 
 				indexableActionableDynamicQuery.performActions();
 

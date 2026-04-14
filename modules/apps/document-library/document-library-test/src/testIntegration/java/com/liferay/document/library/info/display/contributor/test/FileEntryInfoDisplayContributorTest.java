@@ -45,11 +45,11 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.portlet.PortletPreferences;
 
@@ -299,7 +299,7 @@ public class FileEntryInfoDisplayContributorTest {
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
-				_portal.getClassNameId(FileEntry.class.getName()), 0);
+				_portal.getClassNameId(FileEntry.class.getName()), null);
 
 		_assetDisplayPageEntryLocalService.addAssetDisplayPageEntry(
 			dlFileEntry.getUserId(), _group.getGroupId(),

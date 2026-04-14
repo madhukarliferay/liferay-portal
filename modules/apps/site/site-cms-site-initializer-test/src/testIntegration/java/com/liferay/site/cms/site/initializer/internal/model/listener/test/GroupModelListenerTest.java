@@ -6,36 +6,29 @@
 package com.liferay.site.cms.site.initializer.internal.model.listener.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.batch.engine.unit.BatchEngineUnitProcessor;
-import com.liferay.batch.engine.unit.BatchEngineUnitReader;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.object.constants.ObjectDefinitionConstants;
-import com.liferay.object.constants.ObjectEntryFolderConstants;
-import com.liferay.object.constants.ObjectFolderConstants;
-import com.liferay.object.model.ObjectFolder;
-import com.liferay.object.rest.filter.factory.FilterFactory;
-import com.liferay.object.service.ObjectEntryFolderLocalService;
-import com.liferay.object.service.ObjectFolderLocalService;
-import com.liferay.petra.sql.dsl.expression.Predicate;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
-import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.site.cms.site.initializer.util.CMSDefaultPermissionUtil;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.site.cms.site.initializer.test.util.CMSTestUtil;
 
-import java.io.File;
-
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,61 +37,49 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-
 /**
  * @author Adolfo Pérez
  */
+@FeatureFlag("LPD-17564")
 @RunWith(Arquillian.class)
 public class GroupModelListenerTest {
 
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
-		if (_isCMSSiteInitialized()) {
-			return;
-		}
-
-		// These tests require the instance to be created with the feature
-		// flag LPD-17564 enabled. On CI, feature flags are enabled on
-		// demand for each test, but not during instance initialization.
-		// Until the feature flag LPD-17564 is removed, run the batch
-		// engine unit processor manually so that the object definitions
-		// are created.
-
-		Bundle testBundle = FrameworkUtil.getBundle(
-			GroupModelListenerTest.class);
-
-		BundleContext bundleContext = testBundle.getBundleContext();
-
-		for (Bundle bundle : bundleContext.getBundles()) {
-			if (!Objects.equals(
-					bundle.getSymbolicName(),
-					"com.liferay.site.initializer.cms")) {
-
-				continue;
-			}
-
-			_deleteFile(bundle, "01.object.folder");
-			_deleteFile(bundle, "02.object.definition");
-
-			CompletableFuture<Void> completableFuture =
-				_batchEngineUnitProcessor.processBatchEngineUnits(
-					_batchEngineUnitReader.getBatchEngineUnits(bundle));
-
-			completableFuture.join();
-		}
+		_cmsGroup = CMSTestUtil.getOrAddGroup(GroupModelListenerTest.class);
 	}
 
-	@FeatureFlag("LPD-17564")
 	@Test
-	public void testAddDepotEntry() throws Exception {
+	public void testUpdateDepotEntry() throws Exception {
+		Layout layout = _getRecycleBinLayout(_cmsGroup);
+
+		Assert.assertFalse(layout.isHidden());
+
+		DepotEntry depotEntry = _addDepotEntry();
+
+		Group depotGroup = depotEntry.getGroup();
+
+		_setTrashEnabled(depotGroup, Boolean.TRUE.toString());
+
+		Assert.assertTrue(
+			GetterUtil.getBoolean(
+				depotGroup.getTypeSettingsProperty("trashEnabled")));
+
+		_setTrashEnabled(depotGroup, Boolean.FALSE.toString());
+
+		Assert.assertFalse(
+			GetterUtil.getBoolean(
+				depotGroup.getTypeSettingsProperty("trashEnabled")));
+	}
+
+	private DepotEntry _addDepotEntry() throws Exception {
 		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
 			HashMapBuilder.put(
 				LocaleUtil.getDefault(), StringUtil.randomString()
@@ -109,93 +90,42 @@ public class GroupModelListenerTest {
 			DepotConstants.TYPE_SPACE,
 			ServiceContextTestUtil.getServiceContext());
 
-		Group group = depotEntry.getGroup();
+		_depotEntries.add(depotEntry);
 
-		JSONObject jsonObject = CMSDefaultPermissionUtil.getJSONObject(
-			depotEntry.getCompanyId(), depotEntry.getUserId(),
-			group.getExternalReferenceCode(), depotEntry.getModelClassName(),
-			_filterFactory);
-
-		Assert.assertTrue(
-			jsonObject.has(
-				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS));
-		Assert.assertTrue(
-			jsonObject.has(
-				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES));
-		Assert.assertTrue(jsonObject.has("OBJECT_ENTRY_FOLDER"));
+		return depotEntry;
 	}
 
-	@FeatureFlag("LPD-17564")
-	@Test
-	public void testDeleteDepotEntry() throws Exception {
-		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
-			HashMapBuilder.put(
-				LocaleUtil.getDefault(), StringUtil.randomString()
-			).build(),
-			HashMapBuilder.put(
-				LocaleUtil.getDefault(), StringUtil.randomString()
-			).build(),
-			DepotConstants.TYPE_SPACE,
-			ServiceContextTestUtil.getServiceContext());
-
-		Group group = depotEntry.getGroup();
-
-		_depotEntryLocalService.deleteDepotEntry(depotEntry.getDepotEntryId());
-
-		Assert.assertNull(
-			CMSDefaultPermissionUtil.fetchObjectEntry(
-				depotEntry.getCompanyId(), depotEntry.getUserId(),
-				group.getExternalReferenceCode(),
-				depotEntry.getModelClassName(), _filterFactory));
-		Assert.assertEquals(
-			0,
-			_objectEntryFolderLocalService.getObjectEntryFoldersCount(
-				depotEntry.getGroupId(), depotEntry.getCompanyId(),
-				ObjectEntryFolderConstants.
-					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT));
+	private Layout _getRecycleBinLayout(Group group) throws Exception {
+		return _layoutLocalService.getLayoutByFriendlyURL(
+			group.getGroupId(), false, "/recycle-bin");
 	}
 
-	private void _deleteFile(Bundle bundle, String fileName) {
-		File file = bundle.getDataFile(
-			".com.liferay.site.initializer.cms.internal.batch." + fileName +
-				".batch.engine.data.json.0.processed");
+	private void _setTrashEnabled(Group group, String value) throws Exception {
+		UnicodeProperties unicodeProperties = group.getTypeSettingsProperties();
 
-		if ((file != null) && file.exists()) {
-			file.delete();
+		if (value == null) {
+			unicodeProperties.remove("trashEnabled");
 		}
-	}
-
-	private boolean _isCMSSiteInitialized() throws Exception {
-		ObjectFolder objectFolder =
-			_objectFolderLocalService.fetchObjectFolderByExternalReferenceCode(
-				ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES,
-				TestPropsValues.getCompanyId());
-
-		if (objectFolder != null) {
-			return true;
+		else {
+			unicodeProperties.setProperty("trashEnabled", value);
 		}
 
-		return false;
+		_groupLocalService.updateGroup(
+			group.getGroupId(), unicodeProperties.toString());
 	}
 
-	@Inject
-	private BatchEngineUnitProcessor _batchEngineUnitProcessor;
+	private Group _cmsGroup;
 
-	@Inject
-	private BatchEngineUnitReader _batchEngineUnitReader;
+	@DeleteAfterTestRun
+	private final List<DepotEntry> _depotEntries = new ArrayList<>();
 
 	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;
 
-	@Inject(
-		filter = "filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT
-	)
-	private FilterFactory<Predicate> _filterFactory;
+	@Inject
+	private GroupLocalService _groupLocalService;
 
 	@Inject
-	private ObjectEntryFolderLocalService _objectEntryFolderLocalService;
-
-	@Inject
-	private ObjectFolderLocalService _objectFolderLocalService;
+	private LayoutLocalService _layoutLocalService;
 
 }

@@ -207,52 +207,6 @@ public class AddressUtil {
 	}
 
 	/**
-	 * Returns the last address in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByUuid_Last(
-			String uuid, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByUuid_Last(
-		String uuid, OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where uuid = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByUuid_PrevAndNext(
-			long addressId, String uuid,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			addressId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the addresses where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -381,59 +335,6 @@ public class AddressUtil {
 	}
 
 	/**
-	 * Returns the last address in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByUuid_C_PrevAndNext(
-			long addressId, String uuid, long companyId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			addressId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the addresses where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -556,54 +457,6 @@ public class AddressUtil {
 	}
 
 	/**
-	 * Returns the last address in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByCompanyId_Last(
-			long companyId, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByCompanyId_Last(
-		long companyId, OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where companyId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByCompanyId_PrevAndNext(
-			long addressId, long companyId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			addressId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the addresses where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -717,52 +570,6 @@ public class AddressUtil {
 		long userId, OrderByComparator<Address> orderByComparator) {
 
 		return getPersistence().fetchByUserId_First(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByUserId_Last(
-			long userId, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByUserId_Last(
-		long userId, OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where userId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByUserId_PrevAndNext(
-			long addressId, long userId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			addressId, userId, orderByComparator);
 	}
 
 	/**
@@ -886,54 +693,6 @@ public class AddressUtil {
 	}
 
 	/**
-	 * Returns the last address in the ordered set where countryId = &#63;.
-	 *
-	 * @param countryId the country ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByCountryId_Last(
-			long countryId, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByCountryId_Last(
-			countryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where countryId = &#63;.
-	 *
-	 * @param countryId the country ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByCountryId_Last(
-		long countryId, OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByCountryId_Last(
-			countryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where countryId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param countryId the country ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByCountryId_PrevAndNext(
-			long addressId, long countryId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByCountryId_PrevAndNext(
-			addressId, countryId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the addresses where countryId = &#63; from the database.
 	 *
 	 * @param countryId the country ID
@@ -1051,54 +810,6 @@ public class AddressUtil {
 
 		return getPersistence().fetchByRegionId_First(
 			regionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where regionId = &#63;.
-	 *
-	 * @param regionId the region ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByRegionId_Last(
-			long regionId, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByRegionId_Last(
-			regionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where regionId = &#63;.
-	 *
-	 * @param regionId the region ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByRegionId_Last(
-		long regionId, OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByRegionId_Last(
-			regionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where regionId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param regionId the region ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByRegionId_PrevAndNext(
-			long addressId, long regionId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByRegionId_PrevAndNext(
-			addressId, regionId, orderByComparator);
 	}
 
 	/**
@@ -1231,59 +942,6 @@ public class AddressUtil {
 	}
 
 	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByC_C_Last(
-			long companyId, long classNameId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_Last(
-			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByC_C_Last(
-		long companyId, long classNameId,
-		OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByC_C_PrevAndNext(
-			long addressId, long companyId, long classNameId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			addressId, companyId, classNameId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the addresses where companyId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -1302,6 +960,137 @@ public class AddressUtil {
 	 */
 	public static int countByC_C(long companyId, long classNameId) {
 		return getPersistence().countByC_C(companyId, classNameId);
+	}
+
+	/**
+	 * Returns all the addresses where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @return the matching addresses
+	 */
+	public static List<Address> findByCN_CPK(long classNameId, long classPK) {
+		return getPersistence().findByCN_CPK(classNameId, classPK);
+	}
+
+	/**
+	 * Returns a range of all the addresses where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AddressModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param start the lower bound of the range of addresses
+	 * @param end the upper bound of the range of addresses (not inclusive)
+	 * @return the range of matching addresses
+	 */
+	public static List<Address> findByCN_CPK(
+		long classNameId, long classPK, int start, int end) {
+
+		return getPersistence().findByCN_CPK(classNameId, classPK, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the addresses where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AddressModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param start the lower bound of the range of addresses
+	 * @param end the upper bound of the range of addresses (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching addresses
+	 */
+	public static List<Address> findByCN_CPK(
+		long classNameId, long classPK, int start, int end,
+		OrderByComparator<Address> orderByComparator) {
+
+		return getPersistence().findByCN_CPK(
+			classNameId, classPK, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the addresses where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AddressModelImpl</code>.
+	 * </p>
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param start the lower bound of the range of addresses
+	 * @param end the upper bound of the range of addresses (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching addresses
+	 */
+	public static List<Address> findByCN_CPK(
+		long classNameId, long classPK, int start, int end,
+		OrderByComparator<Address> orderByComparator, boolean useFinderCache) {
+
+		return getPersistence().findByCN_CPK(
+			classNameId, classPK, start, end, orderByComparator,
+			useFinderCache);
+	}
+
+	/**
+	 * Returns the first address in the ordered set where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching address
+	 * @throws NoSuchAddressException if a matching address could not be found
+	 */
+	public static Address findByCN_CPK_First(
+			long classNameId, long classPK,
+			OrderByComparator<Address> orderByComparator)
+		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
+
+		return getPersistence().findByCN_CPK_First(
+			classNameId, classPK, orderByComparator);
+	}
+
+	/**
+	 * Returns the first address in the ordered set where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching address, or <code>null</code> if a matching address could not be found
+	 */
+	public static Address fetchByCN_CPK_First(
+		long classNameId, long classPK,
+		OrderByComparator<Address> orderByComparator) {
+
+		return getPersistence().fetchByCN_CPK_First(
+			classNameId, classPK, orderByComparator);
+	}
+
+	/**
+	 * Removes all the addresses where classNameId = &#63; and classPK = &#63; from the database.
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 */
+	public static void removeByCN_CPK(long classNameId, long classPK) {
+		getPersistence().removeByCN_CPK(classNameId, classPK);
+	}
+
+	/**
+	 * Returns the number of addresses where classNameId = &#63; and classPK = &#63;.
+	 *
+	 * @param classNameId the class name ID
+	 * @param classPK the class pk
+	 * @return the number of matching addresses
+	 */
+	public static int countByCN_CPK(long classNameId, long classPK) {
+		return getPersistence().countByCN_CPK(classNameId, classPK);
 	}
 
 	/**
@@ -1421,62 +1210,6 @@ public class AddressUtil {
 
 		return getPersistence().fetchByC_C_C_First(
 			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByC_C_C_Last(
-			long companyId, long classNameId, long classPK,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByC_C_C_Last(
-		long companyId, long classNameId, long classPK,
-		OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByC_C_C_PrevAndNext(
-			long addressId, long companyId, long classNameId, long classPK,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_PrevAndNext(
-			addressId, companyId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -1633,66 +1366,6 @@ public class AddressUtil {
 
 		return getPersistence().fetchByC_C_C_L_First(
 			companyId, classNameId, classPK, listTypeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and listTypeId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param listTypeId the list type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByC_C_C_L_Last(
-			long companyId, long classNameId, long classPK, long listTypeId,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_L_Last(
-			companyId, classNameId, classPK, listTypeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and listTypeId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param listTypeId the list type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByC_C_C_L_Last(
-		long companyId, long classNameId, long classPK, long listTypeId,
-		OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_L_Last(
-			companyId, classNameId, classPK, listTypeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and listTypeId = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param listTypeId the list type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByC_C_C_L_PrevAndNext(
-			long addressId, long companyId, long classNameId, long classPK,
-			long listTypeId, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_L_PrevAndNext(
-			addressId, companyId, classNameId, classPK, listTypeId,
-			orderByComparator);
 	}
 
 	/**
@@ -1967,66 +1640,6 @@ public class AddressUtil {
 	}
 
 	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and mailing = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param mailing the mailing
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByC_C_C_M_Last(
-			long companyId, long classNameId, long classPK, boolean mailing,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_M_Last(
-			companyId, classNameId, classPK, mailing, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and mailing = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param mailing the mailing
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByC_C_C_M_Last(
-		long companyId, long classNameId, long classPK, boolean mailing,
-		OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_M_Last(
-			companyId, classNameId, classPK, mailing, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and mailing = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param mailing the mailing
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByC_C_C_M_PrevAndNext(
-			long addressId, long companyId, long classNameId, long classPK,
-			boolean mailing, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_M_PrevAndNext(
-			addressId, companyId, classNameId, classPK, mailing,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the addresses where companyId = &#63; and classNameId = &#63; and classPK = &#63; and mailing = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -2184,66 +1797,6 @@ public class AddressUtil {
 
 		return getPersistence().fetchByC_C_C_P_First(
 			companyId, classNameId, classPK, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address
-	 * @throws NoSuchAddressException if a matching address could not be found
-	 */
-	public static Address findByC_C_C_P_Last(
-			long companyId, long classNameId, long classPK, boolean primary,
-			OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_P_Last(
-			companyId, classNameId, classPK, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the last address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching address, or <code>null</code> if a matching address could not be found
-	 */
-	public static Address fetchByC_C_C_P_Last(
-		long companyId, long classNameId, long classPK, boolean primary,
-		OrderByComparator<Address> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_P_Last(
-			companyId, classNameId, classPK, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the addresses before and after the current address in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param addressId the primary key of the current address
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next address
-	 * @throws NoSuchAddressException if a address with the primary key could not be found
-	 */
-	public static Address[] findByC_C_C_P_PrevAndNext(
-			long addressId, long companyId, long classNameId, long classPK,
-			boolean primary, OrderByComparator<Address> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchAddressException {
-
-		return getPersistence().findByC_C_C_P_PrevAndNext(
-			addressId, companyId, classNameId, classPK, primary,
-			orderByComparator);
 	}
 
 	/**
@@ -2505,3 +2058,4 @@ public class AddressUtil {
 	private static volatile AddressPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:717765126

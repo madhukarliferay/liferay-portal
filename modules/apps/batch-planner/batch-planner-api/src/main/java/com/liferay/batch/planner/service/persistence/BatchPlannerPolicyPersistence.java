@@ -121,47 +121,6 @@ public interface BatchPlannerPolicyPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last batch planner policy in the ordered set where batchPlannerPlanId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the batch planner plan ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner policy
-	 * @throws NoSuchPolicyException if a matching batch planner policy could not be found
-	 */
-	public BatchPlannerPolicy findByBatchPlannerPlanId_Last(
-			long batchPlannerPlanId,
-			com.liferay.portal.kernel.util.OrderByComparator<BatchPlannerPolicy>
-				orderByComparator)
-		throws NoSuchPolicyException;
-
-	/**
-	 * Returns the last batch planner policy in the ordered set where batchPlannerPlanId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the batch planner plan ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner policy, or <code>null</code> if a matching batch planner policy could not be found
-	 */
-	public BatchPlannerPolicy fetchByBatchPlannerPlanId_Last(
-		long batchPlannerPlanId,
-		com.liferay.portal.kernel.util.OrderByComparator<BatchPlannerPolicy>
-			orderByComparator);
-
-	/**
-	 * Returns the batch planner policies before and after the current batch planner policy in the ordered set where batchPlannerPlanId = &#63;.
-	 *
-	 * @param batchPlannerPolicyId the primary key of the current batch planner policy
-	 * @param batchPlannerPlanId the batch planner plan ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner policy
-	 * @throws NoSuchPolicyException if a batch planner policy with the primary key could not be found
-	 */
-	public BatchPlannerPolicy[] findByBatchPlannerPlanId_PrevAndNext(
-			long batchPlannerPolicyId, long batchPlannerPlanId,
-			com.liferay.portal.kernel.util.OrderByComparator<BatchPlannerPolicy>
-				orderByComparator)
-		throws NoSuchPolicyException;
-
-	/**
 	 * Removes all the batch planner policies where batchPlannerPlanId = &#63; from the database.
 	 *
 	 * @param batchPlannerPlanId the batch planner plan ID
@@ -350,3 +309,4 @@ public interface BatchPlannerPolicyPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1725703874

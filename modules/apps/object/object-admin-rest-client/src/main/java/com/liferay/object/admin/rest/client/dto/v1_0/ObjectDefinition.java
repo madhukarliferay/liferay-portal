@@ -265,6 +265,27 @@ public class ObjectDefinition implements Cloneable, Serializable {
 
 	protected Boolean enableComments;
 
+	public Boolean getEnableFormContainer() {
+		return enableFormContainer;
+	}
+
+	public void setEnableFormContainer(Boolean enableFormContainer) {
+		this.enableFormContainer = enableFormContainer;
+	}
+
+	public void setEnableFormContainer(
+		UnsafeSupplier<Boolean, Exception> enableFormContainerUnsafeSupplier) {
+
+		try {
+			enableFormContainer = enableFormContainerUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean enableFormContainer;
+
 	public Boolean getEnableFriendlyURLCustomization() {
 		return enableFriendlyURLCustomization;
 	}
@@ -820,6 +841,35 @@ public class ObjectDefinition implements Cloneable, Serializable {
 
 	protected Boolean parameterRequired;
 
+	public com.liferay.object.admin.rest.client.permission.Permission[]
+		getPermissions() {
+
+		return permissions;
+	}
+
+	public void setPermissions(
+		com.liferay.object.admin.rest.client.permission.Permission[]
+			permissions) {
+
+		this.permissions = permissions;
+	}
+
+	public void setPermissions(
+		UnsafeSupplier
+			<com.liferay.object.admin.rest.client.permission.Permission[],
+			 Exception> permissionsUnsafeSupplier) {
+
+		try {
+			permissions = permissionsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected com.liferay.object.admin.rest.client.permission.Permission[]
+		permissions;
+
 	public Map<String, String> getPluralLabel() {
 		return pluralLabel;
 	}
@@ -1072,3 +1122,4 @@ public class ObjectDefinition implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:2104552871

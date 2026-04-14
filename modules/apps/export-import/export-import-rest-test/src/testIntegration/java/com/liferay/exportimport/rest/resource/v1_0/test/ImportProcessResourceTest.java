@@ -11,15 +11,12 @@ import com.liferay.exportimport.kernel.background.task.BackgroundTaskExecutorNam
 import com.liferay.exportimport.rest.client.dto.v1_0.ImportProcess;
 import com.liferay.portal.background.task.model.BackgroundTask;
 import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
-import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.vulcan.util.GroupUtil;
 import com.liferay.staging.StagingGroupHelper;
@@ -29,30 +26,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
 /**
  * @author Petteri Karttunen
  */
-@FeatureFlag("LPD-35914")
 @RunWith(Arquillian.class)
 public class ImportProcessResourceTest
 	extends BaseImportProcessResourceTestCase {
-
-	@BeforeClass
-	public static void setUpClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, true, "LPD-35914");
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, false, "LPD-35914");
-	}
 
 	@Before
 	@Override

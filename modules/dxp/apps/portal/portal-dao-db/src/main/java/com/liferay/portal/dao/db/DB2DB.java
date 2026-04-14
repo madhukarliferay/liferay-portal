@@ -5,6 +5,8 @@
 
 package com.liferay.portal.dao.db;
 
+import com.liferay.petra.io.unsync.UnsyncBufferedReader;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -12,8 +14,6 @@ import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -215,7 +215,7 @@ public class DB2DB extends BaseDB {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				if (resultSet.next()) {
-					return resultSet.getString(1);
+					return resultSet.getString("value");
 				}
 			}
 		}
@@ -232,8 +232,7 @@ public class DB2DB extends BaseDB {
 	@Override
 	public String getRecreateSQL(String databaseName) {
 		return StringBundler.concat(
-			"drop database ", databaseName, ";\n", "create database ",
-			databaseName,
+			"drop database ", databaseName, ";\ncreate database ", databaseName,
 			" pagesize 32768 temporary tablespace managed by automatic ",
 			"storage;\n");
 	}
@@ -482,10 +481,12 @@ public class DB2DB extends BaseDB {
 					"sysproc.admin_get_tab_info(current_schema, '",
 					StringUtil.toUpperCase(tableName),
 					"')) where reorg_pending = 'Y'"));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (resultSet.next()) {
-				int numReorgRecAlters = resultSet.getInt(1);
+				int numReorgRecAlters = resultSet.getInt(
+					"num_reorg_rec_alters");
 
 				if (numReorgRecAlters >= 1) {
 					reorgTableRequired = true;

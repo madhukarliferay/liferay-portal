@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.BlogPosting;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
@@ -368,24 +369,26 @@ public abstract class BaseBlogPostingResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(blogPostingId);
+		Long groupId = getPermissionCheckerGroupId(blogPostingId);
 		Long resourceId = getPermissionCheckerResourceId(blogPostingId);
+		String resourceName = getPermissionCheckerResourceName(blogPostingId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(blogPostingId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getBlogPostingPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getBlogPostingPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putBlogPostingPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putBlogPostingPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -503,6 +506,58 @@ public abstract class BaseBlogPostingResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/blog-postings/by-friendly-url-path/{friendlyUrlPath}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "friendlyUrlPath"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "fields"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "nestedFields"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "restrictFields"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "BlogPosting")}
+	)
+	@jakarta.ws.rs.GET
+	@jakarta.ws.rs.Path(
+		"/sites/{siteId}/blog-postings/by-friendly-url-path/{friendlyUrlPath: .+}"
+	)
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public BlogPosting getSiteBlogPostingByFriendlyUrlPath(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteId")
+			Long siteId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("friendlyUrlPath")
+			String friendlyUrlPath)
+		throws Exception {
+
+		return new BlogPosting();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/blog-postings/permissions'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -554,13 +609,15 @@ public abstract class BaseBlogPostingResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteBlogPostingPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteBlogPostingPermissionsPage", null, portletName,
+					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteBlogPostingPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteBlogPostingPermissionsPage", null, portletName,
+					siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -1085,12 +1142,12 @@ public abstract class BaseBlogPostingResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(blogPostingId);
+		Long groupId = getPermissionCheckerGroupId(blogPostingId);
 		Long resourceId = getPermissionCheckerResourceId(blogPostingId);
+		String resourceName = getPermissionCheckerResourceName(blogPostingId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(blogPostingId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1126,21 +1183,22 @@ public abstract class BaseBlogPostingResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(blogPostingId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getBlogPostingPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getBlogPostingPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putBlogPostingPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putBlogPostingPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1263,13 +1321,15 @@ public abstract class BaseBlogPostingResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteBlogPostingPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteBlogPostingPermissionsPage", null, portletName,
+					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteBlogPostingPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteBlogPostingPermissionsPage", null, portletName,
+					siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -1443,9 +1503,34 @@ public abstract class BaseBlogPostingResourceImpl
 
 		UnsafeFunction<BlogPosting, BlogPosting, Exception>
 			blogPostingUnsafeFunction = blogPosting -> {
-				deleteBlogPosting(blogPosting.getId());
+				if (blogPosting.getId() != null) {
+					try {
+						deleteBlogPosting(blogPosting.getId());
 
-				return blogPosting;
+						return blogPosting;
+					}
+					catch (Exception exception) {
+						if (blogPosting.getExternalReferenceCode() != null) {
+							if (parameters.containsKey("siteId")) {
+								deleteSiteBlogPostingByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									blogPosting.getExternalReferenceCode());
+
+								return blogPosting;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteBlogPostingByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						blogPosting.getExternalReferenceCode());
+
+					return blogPosting;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -1523,6 +1608,15 @@ public abstract class BaseBlogPostingResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1739,6 +1833,9 @@ public abstract class BaseBlogPostingResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2307,3 +2404,4 @@ public abstract class BaseBlogPostingResourceImpl
 		LogFactoryUtil.getLog(BaseBlogPostingResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1017479736

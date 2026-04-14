@@ -40,6 +40,8 @@ import com.liferay.headless.commerce.admin.channel.resource.v1_0.TermResource;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
@@ -879,34 +881,23 @@ public class Query {
 				shippingFixedOptionTermId));
 	}
 
-	@GraphQLTypeExtension(Channel.class)
-	public class
-		GetAccountAddressByExternalReferenceCodeAccountAddressChannelsPageTypeExtension {
+	@GraphQLTypeExtension(ChannelAccount.class)
+	public class GetChannelTypeExtension {
 
-		public GetAccountAddressByExternalReferenceCodeAccountAddressChannelsPageTypeExtension(
-			Channel channel) {
-
-			_channel = channel;
+		public GetChannelTypeExtension(ChannelAccount channelAccount) {
+			_channelAccount = channelAccount;
 		}
 
-		@GraphQLField
-		public AccountAddressChannelPage
-				accountAddressByExternalReferenceCodeAccountAddressChannels(
-					@GraphQLName("pageSize") int pageSize,
-					@GraphQLName("page") int page)
-			throws Exception {
-
+		@GraphQLField(description = "Retrive information of the given Channel.")
+		public Channel channel() throws Exception {
 			return _applyComponentServiceObjects(
-				_accountAddressChannelResourceComponentServiceObjects,
+				_channelResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				accountAddressChannelResource -> new AccountAddressChannelPage(
-					accountAddressChannelResource.
-						getAccountAddressByExternalReferenceCodeAccountAddressChannelsPage(
-							_channel.getExternalReferenceCode(),
-							Pagination.of(page, pageSize))));
+				channelResource -> channelResource.getChannel(
+					_channelAccount.getChannelId()));
 		}
 
-		private Channel _channel;
+		private ChannelAccount _channelAccount;
 
 	}
 
@@ -935,116 +926,31 @@ public class Query {
 
 	}
 
-	@GraphQLTypeExtension(ChannelAccount.class)
-	public class GetChannelTypeExtension {
-
-		public GetChannelTypeExtension(ChannelAccount channelAccount) {
-			_channelAccount = channelAccount;
-		}
-
-		@GraphQLField(description = "Retrive information of the given Channel.")
-		public Channel channel() throws Exception {
-			return _applyComponentServiceObjects(
-				_channelResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				channelResource -> channelResource.getChannel(
-					_channelAccount.getChannelId()));
-		}
-
-		private ChannelAccount _channelAccount;
-
-	}
-
 	@GraphQLTypeExtension(Channel.class)
 	public class
-		GetChannelByExternalReferenceCodeChannelAccountsPageTypeExtension {
+		GetAccountAddressByExternalReferenceCodeAccountAddressChannelsPageTypeExtension {
 
-		public GetChannelByExternalReferenceCodeChannelAccountsPageTypeExtension(
+		public GetAccountAddressByExternalReferenceCodeAccountAddressChannelsPageTypeExtension(
 			Channel channel) {
 
 			_channel = channel;
 		}
 
 		@GraphQLField
-		public ChannelAccountPage byExternalReferenceCodeChannelAccounts(
-				@GraphQLName("pageSize") int pageSize,
-				@GraphQLName("page") int page)
+		public AccountAddressChannelPage
+				accountAddressByExternalReferenceCodeAccountAddressChannels(
+					@GraphQLName("pageSize") int pageSize,
+					@GraphQLName("page") int page)
 			throws Exception {
 
 			return _applyComponentServiceObjects(
-				_channelAccountResourceComponentServiceObjects,
+				_accountAddressChannelResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				channelAccountResource -> new ChannelAccountPage(
-					channelAccountResource.
-						getChannelByExternalReferenceCodeChannelAccountsPage(
+				accountAddressChannelResource -> new AccountAddressChannelPage(
+					accountAddressChannelResource.
+						getAccountAddressByExternalReferenceCodeAccountAddressChannelsPage(
 							_channel.getExternalReferenceCode(),
 							Pagination.of(page, pageSize))));
-		}
-
-		private Channel _channel;
-
-	}
-
-	@GraphQLTypeExtension(Channel.class)
-	public class
-		GetChannelByExternalReferenceCodeProductDisplayPagesPageTypeExtension {
-
-		public GetChannelByExternalReferenceCodeProductDisplayPagesPageTypeExtension(
-			Channel channel) {
-
-			_channel = channel;
-		}
-
-		@GraphQLField
-		public ProductDisplayPagePage
-				byExternalReferenceCodeProductDisplayPages(
-					@GraphQLName("search") String search,
-					@GraphQLName("filter") String filterString,
-					@GraphQLName("pageSize") int pageSize,
-					@GraphQLName("page") int page,
-					@GraphQLName("sort") String sortsString)
-			throws Exception {
-
-			return _applyComponentServiceObjects(
-				_productDisplayPageResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				productDisplayPageResource -> new ProductDisplayPagePage(
-					productDisplayPageResource.
-						getChannelByExternalReferenceCodeProductDisplayPagesPage(
-							_channel.getExternalReferenceCode(), search,
-							_filterBiFunction.apply(
-								productDisplayPageResource, filterString),
-							Pagination.of(page, pageSize),
-							_sortsBiFunction.apply(
-								productDisplayPageResource, sortsString))));
-		}
-
-		private Channel _channel;
-
-	}
-
-	@GraphQLTypeExtension(Channel.class)
-	public class
-		GetChannelByExternalReferenceCodeDefaultCategoryDisplayPageTypeExtension {
-
-		public GetChannelByExternalReferenceCodeDefaultCategoryDisplayPageTypeExtension(
-			Channel channel) {
-
-			_channel = channel;
-		}
-
-		@GraphQLField
-		public DefaultCategoryDisplayPage
-				byExternalReferenceCodeDefaultCategoryDisplayPage()
-			throws Exception {
-
-			return _applyComponentServiceObjects(
-				_defaultCategoryDisplayPageResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				defaultCategoryDisplayPageResource ->
-					defaultCategoryDisplayPageResource.
-						getChannelByExternalReferenceCodeDefaultCategoryDisplayPage(
-							_channel.getExternalReferenceCode()));
 		}
 
 		private Channel _channel;
@@ -1091,6 +997,64 @@ public class Query {
 
 	@GraphQLTypeExtension(Channel.class)
 	public class
+		GetChannelByExternalReferenceCodeChannelAccountsPageTypeExtension {
+
+		public GetChannelByExternalReferenceCodeChannelAccountsPageTypeExtension(
+			Channel channel) {
+
+			_channel = channel;
+		}
+
+		@GraphQLField
+		public ChannelAccountPage byExternalReferenceCodeChannelAccounts(
+				@GraphQLName("pageSize") int pageSize,
+				@GraphQLName("page") int page)
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_channelAccountResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				channelAccountResource -> new ChannelAccountPage(
+					channelAccountResource.
+						getChannelByExternalReferenceCodeChannelAccountsPage(
+							_channel.getExternalReferenceCode(),
+							Pagination.of(page, pageSize))));
+		}
+
+		private Channel _channel;
+
+	}
+
+	@GraphQLTypeExtension(Channel.class)
+	public class
+		GetChannelByExternalReferenceCodeDefaultCategoryDisplayPageTypeExtension {
+
+		public GetChannelByExternalReferenceCodeDefaultCategoryDisplayPageTypeExtension(
+			Channel channel) {
+
+			_channel = channel;
+		}
+
+		@GraphQLField
+		public DefaultCategoryDisplayPage
+				byExternalReferenceCodeDefaultCategoryDisplayPage()
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_defaultCategoryDisplayPageResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				defaultCategoryDisplayPageResource ->
+					defaultCategoryDisplayPageResource.
+						getChannelByExternalReferenceCodeDefaultCategoryDisplayPage(
+							_channel.getExternalReferenceCode()));
+		}
+
+		private Channel _channel;
+
+	}
+
+	@GraphQLTypeExtension(Channel.class)
+	public class
 		GetChannelByExternalReferenceCodeDefaultProductDisplayPageTypeExtension {
 
 		public GetChannelByExternalReferenceCodeDefaultProductDisplayPageTypeExtension(
@@ -1111,6 +1075,44 @@ public class Query {
 					defaultProductDisplayPageResource.
 						getChannelByExternalReferenceCodeDefaultProductDisplayPage(
 							_channel.getExternalReferenceCode()));
+		}
+
+		private Channel _channel;
+
+	}
+
+	@GraphQLTypeExtension(Channel.class)
+	public class
+		GetChannelByExternalReferenceCodeProductDisplayPagesPageTypeExtension {
+
+		public GetChannelByExternalReferenceCodeProductDisplayPagesPageTypeExtension(
+			Channel channel) {
+
+			_channel = channel;
+		}
+
+		@GraphQLField
+		public ProductDisplayPagePage
+				byExternalReferenceCodeProductDisplayPages(
+					@GraphQLName("search") String search,
+					@GraphQLName("filter") String filterString,
+					@GraphQLName("pageSize") int pageSize,
+					@GraphQLName("page") int page,
+					@GraphQLName("sort") String sortsString)
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_productDisplayPageResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				productDisplayPageResource -> new ProductDisplayPagePage(
+					productDisplayPageResource.
+						getChannelByExternalReferenceCodeProductDisplayPagesPage(
+							_channel.getExternalReferenceCode(), search,
+							_filterBiFunction.apply(
+								productDisplayPageResource, filterString),
+							Pagination.of(page, pageSize),
+							_sortsBiFunction.apply(
+								productDisplayPageResource, sortsString))));
 		}
 
 		private Channel _channel;
@@ -1684,6 +1686,10 @@ public class Query {
 		accountResource.setContextUriInfo(_uriInfo);
 		accountResource.setContextUser(_user);
 		accountResource.setGroupLocalService(_groupLocalService);
+		accountResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		accountResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		accountResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1700,6 +1706,10 @@ public class Query {
 		accountAddressChannelResource.setContextUriInfo(_uriInfo);
 		accountAddressChannelResource.setContextUser(_user);
 		accountAddressChannelResource.setGroupLocalService(_groupLocalService);
+		accountAddressChannelResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		accountAddressChannelResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		accountAddressChannelResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1716,6 +1726,10 @@ public class Query {
 		categoryDisplayPageResource.setContextUriInfo(_uriInfo);
 		categoryDisplayPageResource.setContextUser(_user);
 		categoryDisplayPageResource.setGroupLocalService(_groupLocalService);
+		categoryDisplayPageResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		categoryDisplayPageResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		categoryDisplayPageResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1729,6 +1743,10 @@ public class Query {
 		channelResource.setContextUriInfo(_uriInfo);
 		channelResource.setContextUser(_user);
 		channelResource.setGroupLocalService(_groupLocalService);
+		channelResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		channelResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		channelResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1745,6 +1763,10 @@ public class Query {
 		channelAccountResource.setContextUriInfo(_uriInfo);
 		channelAccountResource.setContextUser(_user);
 		channelAccountResource.setGroupLocalService(_groupLocalService);
+		channelAccountResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		channelAccountResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		channelAccountResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1764,6 +1786,10 @@ public class Query {
 		defaultCategoryDisplayPageResource.setContextUser(_user);
 		defaultCategoryDisplayPageResource.setGroupLocalService(
 			_groupLocalService);
+		defaultCategoryDisplayPageResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		defaultCategoryDisplayPageResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		defaultCategoryDisplayPageResource.setRoleLocalService(
 			_roleLocalService);
 	}
@@ -1783,6 +1809,10 @@ public class Query {
 		defaultProductDisplayPageResource.setContextUser(_user);
 		defaultProductDisplayPageResource.setGroupLocalService(
 			_groupLocalService);
+		defaultProductDisplayPageResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		defaultProductDisplayPageResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		defaultProductDisplayPageResource.setRoleLocalService(
 			_roleLocalService);
 	}
@@ -1797,6 +1827,10 @@ public class Query {
 		orderTypeResource.setContextUriInfo(_uriInfo);
 		orderTypeResource.setContextUser(_user);
 		orderTypeResource.setGroupLocalService(_groupLocalService);
+		orderTypeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderTypeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderTypeResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1816,6 +1850,10 @@ public class Query {
 		paymentMethodGroupRelOrderTypeResource.setContextUser(_user);
 		paymentMethodGroupRelOrderTypeResource.setGroupLocalService(
 			_groupLocalService);
+		paymentMethodGroupRelOrderTypeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		paymentMethodGroupRelOrderTypeResource.
+			setResourcePermissionLocalService(_resourcePermissionLocalService);
 		paymentMethodGroupRelOrderTypeResource.setRoleLocalService(
 			_roleLocalService);
 	}
@@ -1835,6 +1873,10 @@ public class Query {
 		paymentMethodGroupRelTermResource.setContextUser(_user);
 		paymentMethodGroupRelTermResource.setGroupLocalService(
 			_groupLocalService);
+		paymentMethodGroupRelTermResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		paymentMethodGroupRelTermResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		paymentMethodGroupRelTermResource.setRoleLocalService(
 			_roleLocalService);
 	}
@@ -1852,6 +1894,10 @@ public class Query {
 		productDisplayPageResource.setContextUriInfo(_uriInfo);
 		productDisplayPageResource.setContextUser(_user);
 		productDisplayPageResource.setGroupLocalService(_groupLocalService);
+		productDisplayPageResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		productDisplayPageResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		productDisplayPageResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1871,6 +1917,10 @@ public class Query {
 		shippingFixedOptionOrderTypeResource.setContextUser(_user);
 		shippingFixedOptionOrderTypeResource.setGroupLocalService(
 			_groupLocalService);
+		shippingFixedOptionOrderTypeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		shippingFixedOptionOrderTypeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		shippingFixedOptionOrderTypeResource.setRoleLocalService(
 			_roleLocalService);
 	}
@@ -1890,6 +1940,10 @@ public class Query {
 		shippingFixedOptionTermResource.setContextUser(_user);
 		shippingFixedOptionTermResource.setGroupLocalService(
 			_groupLocalService);
+		shippingFixedOptionTermResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		shippingFixedOptionTermResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		shippingFixedOptionTermResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1906,6 +1960,10 @@ public class Query {
 		shippingMethodResource.setContextUriInfo(_uriInfo);
 		shippingMethodResource.setContextUser(_user);
 		shippingMethodResource.setGroupLocalService(_groupLocalService);
+		shippingMethodResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		shippingMethodResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		shippingMethodResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1920,6 +1978,10 @@ public class Query {
 		taxCategoryResource.setContextUriInfo(_uriInfo);
 		taxCategoryResource.setContextUser(_user);
 		taxCategoryResource.setGroupLocalService(_groupLocalService);
+		taxCategoryResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		taxCategoryResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		taxCategoryResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1933,6 +1995,9 @@ public class Query {
 		termResource.setContextUriInfo(_uriInfo);
 		termResource.setContextUser(_user);
 		termResource.setGroupLocalService(_groupLocalService);
+		termResource.setResourceActionLocalService(_resourceActionLocalService);
+		termResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		termResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1978,6 +2043,8 @@ public class Query {
 	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
+	private ResourceActionLocalService _resourceActionLocalService;
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 	private RoleLocalService _roleLocalService;
 	private BiFunction<Object, String, com.liferay.portal.kernel.search.Sort[]>
 		_sortsBiFunction;
@@ -1985,3 +2052,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1191397783

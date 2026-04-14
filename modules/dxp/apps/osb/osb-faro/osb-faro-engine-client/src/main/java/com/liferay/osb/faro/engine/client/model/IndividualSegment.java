@@ -57,12 +57,13 @@ public class IndividualSegment {
 		return _embeddedResources;
 	}
 
-	public String getFilter() {
-		return _filter;
-	}
-
 	public String getFilterMetadata() {
 		return _filterMetadata;
+	}
+
+	@JsonProperty("filter")
+	public String getFilterString() {
+		return _filterString;
 	}
 
 	public String getId() {
@@ -85,12 +86,24 @@ public class IndividualSegment {
 		return new Date(_lastActivityDate.getTime());
 	}
 
+	public Date getLastMembershipUpdateDate() {
+		if (_lastMembershipUpdateDate == null) {
+			return null;
+		}
+
+		return new Date(_lastMembershipUpdateDate.getTime());
+	}
+
 	public String getName() {
 		return _name;
 	}
 
 	public String getScope() {
 		return _scope;
+	}
+
+	public SegmentActivation getSegmentActivation() {
+		return _segmentActivation;
 	}
 
 	public String getSegmentType() {
@@ -145,12 +158,12 @@ public class IndividualSegment {
 		_embeddedResources = embeddedResources;
 	}
 
-	public void setFilter(String filter) {
-		_filter = filter;
-	}
-
 	public void setFilterMetadata(String filterMetadata) {
 		_filterMetadata = filterMetadata;
+	}
+
+	public void setFilterString(String filterString) {
+		_filterString = filterString;
 	}
 
 	public void setId(String id) {
@@ -175,12 +188,23 @@ public class IndividualSegment {
 		}
 	}
 
+	public void setLastMembershipUpdateDate(Date lastMembershipUpdateDate) {
+		if (lastMembershipUpdateDate != null) {
+			_lastMembershipUpdateDate = new Date(
+				lastMembershipUpdateDate.getTime());
+		}
+	}
+
 	public void setName(String name) {
 		_name = name;
 	}
 
 	public void setScope(String scope) {
 		_scope = scope;
+	}
+
+	public void setSegmentActivation(SegmentActivation segmentActivation) {
+		_segmentActivation = segmentActivation;
 	}
 
 	public void setSegmentType(String segmentType) {
@@ -215,7 +239,7 @@ public class IndividualSegment {
 
 	public enum Type {
 
-		DYNAMIC, STATIC
+		BATCH, REAL_TIME
 
 	}
 
@@ -227,16 +251,18 @@ public class IndividualSegment {
 	private Date _dateCreated;
 	private Date _dateModified;
 	private Map<String, Object> _embeddedResources = new HashMap<>();
-	private String _filter;
 	private String _filterMetadata;
+	private String _filterString;
 	private String _id;
 	private boolean _includeAnonymousUsers;
 	private long _individualCount;
 	private long _knownIndividualCount;
 	private Date _lastActivityDate;
+	private Date _lastMembershipUpdateDate;
 	private String _name;
 	private String _scope = Scope.PROJECT.name();
-	private String _segmentType = Type.STATIC.name();
+	private SegmentActivation _segmentActivation;
+	private String _segmentType = Type.BATCH.name();
 	private String _state = State.READY.name();
 	private String _status = Status.ACTIVE.name();
 

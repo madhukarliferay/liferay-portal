@@ -651,6 +651,27 @@ public class OrderItem implements Cloneable, Serializable {
 
 	protected String printedNote;
 
+	public Long getProductId() {
+		return productId;
+	}
+
+	public void setProductId(Long productId) {
+		this.productId = productId;
+	}
+
+	public void setProductId(
+		UnsafeSupplier<Long, Exception> productIdUnsafeSupplier) {
+
+		try {
+			productId = productIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long productId;
+
 	public BigDecimal getPromoPrice() {
 		return promoPrice;
 	}
@@ -1157,3 +1178,4 @@ public class OrderItem implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1442883953

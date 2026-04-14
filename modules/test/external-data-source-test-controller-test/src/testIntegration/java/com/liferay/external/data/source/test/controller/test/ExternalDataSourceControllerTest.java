@@ -6,21 +6,20 @@
 package com.liferay.external.data.source.test.controller.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.io.StreamUtil;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.io.unsync.UnsyncPrintWriter;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.db.partition.DBPartition;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
-import com.liferay.portal.kernel.io.unsync.UnsyncPrintWriter;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.StreamUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.InputStream;
 
@@ -66,7 +65,7 @@ public class ExternalDataSourceControllerTest {
 			new AssumeTestRule("assume"), new LiferayIntegrationTestRule());
 
 	public static void assume() {
-		Assume.assumeFalse(DBPartition.isPartitionEnabled());
+		Assume.assumeFalse(PropsValues.DATABASE_PARTITION_ENABLED);
 	}
 
 	@Before
@@ -164,6 +163,7 @@ public class ExternalDataSourceControllerTest {
 		try (InputStream inputStream =
 				ExternalDataSourceControllerTest.class.getResourceAsStream(
 					path);
+
 			JarInputStream jarInputStream = new JarInputStream(inputStream);
 			JarOutputStream jarOutputStream = new JarOutputStream(
 				unsyncByteArrayOutputStream)) {
@@ -267,6 +267,7 @@ public class ExternalDataSourceControllerTest {
 
 			try (UnsyncStringWriter unsyncStringWriter =
 					new UnsyncStringWriter();
+
 				UnsyncPrintWriter unsyncPrintWriter = new UnsyncPrintWriter(
 					unsyncStringWriter)) {
 

@@ -7,8 +7,10 @@ package com.liferay.exportimport.kernel.empty.model;
 
 import com.liferay.petra.function.UnsafeBiFunction;
 import com.liferay.petra.function.UnsafeSupplier;
+import com.liferay.portal.kernel.exception.PortalException;
 
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -18,24 +20,30 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface EmptyModelManager {
 
-	public <T, E extends Exception> T getOrAddEmptyModel(
+	public <T, E extends PortalException> T getOrAddEmptyModel(
 			Class<T> clazz, long companyId,
 			UnsafeSupplier<T, E> emptyModelUnsafeSupplier,
 			String externalReferenceCode,
 			BiFunction<String, Long, T> fetchByExternalReferenceCodeBiFunction,
 			UnsafeBiFunction<String, Long, T, E>
-				getByExternalReferenceCodeUnsafeBiFunction)
+				getByExternalReferenceCodeUnsafeBiFunction,
+			String modelNameLanguageKey)
 		throws E;
 
 	public <T, E extends Exception> T getOrAddEmptyModel(
-			Class<T> clazz, UnsafeSupplier<T, E> emptyModelUnsafeSupplier,
+			String className, Long companyId,
+			UnsafeSupplier<T, E> emptyModelUnsafeSupplier,
 			String externalReferenceCode,
 			BiFunction<String, Long, T> fetchByExternalReferenceCodeBiFunction,
 			UnsafeBiFunction<String, Long, T, E>
 				getByExternalReferenceCodeUnsafeBiFunction,
-			long groupId)
+			long groupId, String modelNameLanguageKey)
 		throws E;
 
 	public boolean isEmptyModel();
+
+	public int solveEmptyModel(
+		String classExternalReferenceCode, String className, long companyId,
+		long groupId, int status, Supplier<Integer> updatedModelStatusSupplier);
 
 }

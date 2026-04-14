@@ -4,6 +4,7 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
+import path from 'path';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
@@ -23,8 +24,6 @@ const test = mergeTests(
 	dataApiHelpersTest,
 	featureFlagsTest({
 		'LPD-17564': {enabled: true},
-		'LPD-32050': {enabled: true},
-		'LPS-179669': {enabled: true},
 	}),
 	loginTest(),
 	fragmentsPagesTest,
@@ -32,17 +31,142 @@ const test = mergeTests(
 	structureBuilderPagesTest
 );
 
-let structureIds = [];
+test(
+	'Shows client-side error when uploading a file that exceeds the maximum file size',
+	{tag: '@LPD-79511'},
+	async ({assetsPage, contentsPage, page, structureBuilderPage}) => {
 
-test.beforeEach(() => {
-	structureIds = [];
-});
+		// Create a structure with an Upload field limited to 1MB
 
-test.afterEach(async ({structureBuilderPage}) => {
-	for (const id of structureIds) {
-		await structureBuilderPage.deleteStructure(Number(id));
+		const structureLabel = `StructureName${getRandomInt()}`;
+
+		await structureBuilderPage.createStructureFromData({
+			label: structureLabel,
+			page: structureBuilderPage,
+		});
+
+		await structureBuilderPage.addField('Upload');
+
+		await structureBuilderPage.changeFieldSettings({
+			maximumFileSize: 1,
+			requestFile: 'computer',
+		});
+
+		await structureBuilderPage.publishStructure();
+
+		// Create a content and upload a file that exceeds the limit
+
+		await contentsPage.goto();
+
+		await assetsPage.createContent(structureLabel);
+
+		const fileChooserPromise = page.waitForEvent('filechooser');
+
+		await page
+			.getByRole('button', {exact: true, name: 'Select File'})
+			.click();
+
+		const fileChooser = await fileChooserPromise;
+
+		await fileChooser.setFiles({
+			buffer: Buffer.alloc(2 * 1024 * 1024),
+			mimeType: 'image/jpeg',
+			name: 'oversized-file.jpg',
+		});
+
+		// Check the error message is shown and the file is not uploaded
+
+		await expect(
+			page.getByText(
+				'Please enter a file with a valid file size no larger than 1 MB.'
+			)
+		).toBeVisible();
+
+		await expect(
+			page.locator('.file-upload').getByText('oversized-file')
+		).not.toBeVisible();
 	}
-});
+);
+
+test(
+	'Upload fields marked to show in the CMS library create visible files',
+	{tag: '@LPD-17564'},
+	async ({assetsPage, contentsPage, page, structureBuilderPage}) => {
+
+		// Create a structure with a CMS library upload field
+
+		const structureLabel = `StructureName${getRandomInt()}`;
+		const contentTitle = getRandomString();
+
+		await structureBuilderPage.createStructureFromData({
+			label: structureLabel,
+			page: structureBuilderPage,
+		});
+
+		await structureBuilderPage.addField('Upload');
+
+		await structureBuilderPage.changeFieldSettings({
+			label: 'Upload to CMS Library',
+			name: 'uploadToCMSLibrary',
+			requestFile: 'computer',
+			showFilesInLibrary: true,
+		});
+
+		await structureBuilderPage.publishStructure();
+
+		// Create a content for the structure and upload a file
+
+		await contentsPage.goto();
+
+		await contentsPage.createContent(structureLabel);
+
+		await contentsPage.fillData([{label: 'Title', value: contentTitle}]);
+
+		// Select the file from the computer
+
+		const fileChooserPromise = page.waitForEvent('filechooser');
+
+		await page
+			.getByRole('button', {exact: true, name: 'Select File'})
+			.click();
+
+		const fileChooser = await fileChooserPromise;
+
+		const fileName = 'file_upload_image_1.jpg';
+
+		await fileChooser.setFiles(
+			path.join(__dirname, `/dependencies/${fileName}`)
+		);
+
+		await expect(page.getByText('file_upload_image_1.jpg')).toBeVisible();
+
+		// Save the content
+
+		await contentsPage.saveContent();
+
+		// Check the file is visible in the CMS Files
+
+		await assetsPage.gotoFiles();
+
+		await expect(
+			assetsPage
+				.getCardItem(fileName)
+				.or(page.getByRole('row', {name: new RegExp(fileName)}))
+		).toBeVisible();
+
+		// Delete files
+
+		await assetsPage.gotoFiles();
+
+		await expect(page.getByText(fileName)).toBeVisible();
+
+		await contentsPage.deleteContent(fileName);
+
+		await contentsPage.goto();
+
+		await contentsPage.deleteContent(contentTitle);
+	}
+);
 
 test(
 	'Custom structure takes title as name field',
@@ -59,7 +183,6 @@ test(
 			label: structureLabel,
 			name: structureLabel,
 			page: structureBuilderPage,
-			structureIds,
 		});
 
 		// Go to CMS Contents
@@ -110,17 +233,19 @@ test(
 		await structureBuilderPage.createStructureFromData({
 			label: structureLabel,
 			page: structureBuilderPage,
-			structureIds,
 		});
 
 		// Add a Single Select field and Multiselect fields
 
-		await structureBuilderPage.addField('Single Select');
-		await structureBuilderPage.addField('Multiselect');
+		await structureBuilderPage.addField('Select from List');
 
 		// Create new picklist from the button "New Picklist"
 
-		await structureBuilderPage.selectFields([{label: 'Single Select'}]);
+		await structureBuilderPage.selectFields([{label: 'Select from List'}]);
+
+		await structureBuilderPage.changeFieldSettings({
+			label: 'Single Select',
+		});
 
 		const pagePromise = context.waitForEvent('page');
 
@@ -161,7 +286,14 @@ test(
 			trigger: picklistPicker,
 		});
 
-		await structureBuilderPage.selectFields([{label: 'Multiselect'}]);
+		await structureBuilderPage.addField('Select from List');
+
+		await structureBuilderPage.selectFields([{label: 'Select from List'}]);
+
+		await structureBuilderPage.changeFieldSettings({
+			label: 'Multiselect',
+			multiselection: true,
+		});
 
 		await clickAndExpectToBeVisible({
 			autoClick: true,
@@ -191,7 +323,17 @@ test(
 			trigger: page.locator('.select-from-list'),
 		});
 
-		await page.getByLabel('Blue').check();
+		const input = page
+			.locator('.multiselector-dropdown')
+			.getByRole('combobox');
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page
+				.locator('.multiselector-dropdown__dropdown-menu')
+				.getByRole('option', {name: 'Blue'}),
+			trigger: input,
+		});
 
 		// Switch to spanish and change values
 
@@ -203,7 +345,13 @@ test(
 			trigger: page.locator('.select-from-list'),
 		});
 
-		await page.getByLabel('Yellow').check();
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page
+				.locator('.multiselector-dropdown__dropdown-menu')
+				.getByRole('option', {name: 'Yellow'}),
+			trigger: input,
+		});
 
 		// Save content, edit it again and check values were persisted
 
@@ -211,7 +359,7 @@ test(
 
 		await contentsPage.editContent(contentTitle);
 
-		await expect(page.getByLabel('Blue')).toBeChecked();
+		await expect(page.locator('.label').getByText('Blue')).toBeVisible();
 
 		await expect(page.getByPlaceholder('Choose an Option')).toHaveValue(
 			'Yellow'
@@ -219,8 +367,8 @@ test(
 
 		await localizationSelectPage.switchLanguage('es-ES');
 
-		await expect(page.getByLabel('Blue')).toBeChecked();
-		await expect(page.getByLabel('Yellow')).toBeChecked();
+		await expect(page.locator('.label').getByText('Blue')).toBeVisible();
+		await expect(page.locator('.label').getByText('Yellow')).toBeVisible();
 
 		await expect(page.getByLabel('Single Select')).toHaveValue('Blue');
 
@@ -229,5 +377,189 @@ test(
 		const picklist = await picklistBuilderPage.getPicklist(picklistName);
 
 		await picklistBuilderPage.deletePicklist(picklist.id);
+	}
+);
+
+test(
+	'Nested entries from referenced structures do not appear in View Usages',
+	{tag: '@LPD-83177'},
+	async ({contentsPage, page, structureBuilderPage, structuresPage}) => {
+
+		// Create a structure that references Basic Web Content
+
+		const structureLabel = getRandomString();
+
+		await structureBuilderPage.createStructureFromData({
+			label: structureLabel,
+			name: `StructureName${getRandomInt()}`,
+			page: structureBuilderPage,
+			publish: false,
+		});
+
+		await structureBuilderPage.addReferencedStructures([
+			'Basic Web Content',
+		]);
+
+		await structureBuilderPage.publishStructure();
+
+		// Create content of the new structure type and fill both titles
+
+		const contentTitle = getRandomString();
+		const nestedContentTitle = getRandomString();
+
+		await contentsPage.goto();
+
+		await contentsPage.createContent(structureLabel);
+
+		await page.getByPlaceholder(`New ${structureLabel}`).fill(contentTitle);
+
+		await page
+			.locator('.lfr-layout-structure-item-form-relationship')
+			.getByRole('textbox', {exact: true, name: 'Title'})
+			.fill(nestedContentTitle);
+
+		await contentsPage.saveContent();
+
+		// Navigate to structures and view usages of Basic Web Content
+
+		await structuresPage.goto();
+
+		await structuresPage.execItemAction({
+			action: 'View Usages',
+			filter: 'Basic Web Content',
+		});
+
+		// Assert the nested entry title is not shown
+
+		await page.locator('.fds').waitFor();
+
+		await expect(
+			page.getByRole('row', {name: nestedContentTitle})
+		).not.toBeVisible();
+
+		// Delete content
+
+		await contentsPage.goto();
+
+		const card = page
+			.locator('tr', {hasText: contentTitle})
+			.or(page.locator('.card-row', {hasText: contentTitle}));
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Delete'}),
+			trigger: card.locator('button'),
+		});
+
+		await page
+			.getByRole('dialog')
+			.getByRole('button', {name: 'Delete Entry'})
+			.click();
+
+		await waitForAlert(page, `Success:${contentTitle} was moved`, {
+			autoClose: false,
+		});
+	}
+);
+
+test(
+	'Content with Upload fragment opens new Item Selector',
+	{tag: '@LPD-67215'},
+	async ({apiHelpers, contentsPage, page, structureBuilderPage}) => {
+		const applicationName = 'cms/basic-documents';
+		const fileName = `file_${getRandomString()}.png`;
+		const structureLabel = `StructureName${getRandomInt()}`;
+		const contentTitle = getRandomString();
+		let objectEntry;
+
+		await test.step('Create a new file', async () => {
+			objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					file: {
+						fileBase64: 'R0lGODlhAQABAAAAACw=',
+						name: fileName,
+					},
+					objectEntryFolderExternalReferenceCode: 'L_FILES',
+					title: fileName,
+				},
+				applicationName,
+				'Default'
+			);
+
+			apiHelpers.data.push({
+				id: objectEntry.file.id,
+				type: 'document',
+			});
+		});
+
+		await test.step('Create a new structure with Upload field from Item Selector', async () => {
+			await structureBuilderPage.createStructureFromData({
+				label: structureLabel,
+				page: structureBuilderPage,
+			});
+
+			await structureBuilderPage.addField('Upload');
+
+			await structureBuilderPage.changeFieldSettings({
+				label: 'Upload from DM',
+				name: 'uploadFromDM',
+				requestFile: 'document-library',
+			});
+
+			await structureBuilderPage.publishStructure();
+		});
+
+		await test.step('Create a content for this structure', async () => {
+			await contentsPage.goto();
+
+			await contentsPage.createContent(structureLabel);
+
+			await contentsPage.fillData([
+				{label: 'Title', value: contentTitle},
+			]);
+
+			// Upload buttons opens new Item Selector
+
+			await page.getByRole('button', {name: 'Select File'}).click();
+
+			await expect(
+				page.getByTestId('visualization-mode-cards')
+			).toBeVisible();
+
+			await page.getByLabel(`Select ${fileName}`).check();
+
+			await page
+				.getByRole('button', {exact: true, name: 'Select'})
+				.click();
+
+			await expect(page.locator('.modal-header')).toBeHidden();
+
+			await contentsPage.saveContent();
+
+			await page.getByLabel(contentTitle).click();
+
+			await expect(page.getByText(`Edit ${contentTitle}`)).toBeVisible();
+
+			await expect(page.getByText(fileName)).toBeVisible();
+		});
+
+		await test.step('Check preselected file', async () => {
+			await page.getByRole('button', {name: 'Select File'}).click();
+
+			await expect(
+				page.getByTestId('visualization-mode-cards')
+			).toBeVisible();
+
+			await expect(page.getByText(`${fileName} Selected`)).toBeVisible();
+
+			await expect(page.getByLabel(`Select ${fileName}`)).toBeChecked();
+		});
+
+		await test.step('Delete file', async () => {
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry.id)
+			);
+		});
 	}
 );

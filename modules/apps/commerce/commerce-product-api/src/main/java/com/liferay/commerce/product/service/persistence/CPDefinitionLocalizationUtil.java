@@ -225,58 +225,6 @@ public class CPDefinitionLocalizationUtil {
 	}
 
 	/**
-	 * Returns the last cp definition localization in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition localization
-	 * @throws NoSuchCPDefinitionLocalizationException if a matching cp definition localization could not be found
-	 */
-	public static CPDefinitionLocalization findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			OrderByComparator<CPDefinitionLocalization> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionLocalizationException {
-
-		return getPersistence().findByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition localization in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition localization, or <code>null</code> if a matching cp definition localization could not be found
-	 */
-	public static CPDefinitionLocalization fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		OrderByComparator<CPDefinitionLocalization> orderByComparator) {
-
-		return getPersistence().fetchByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definition localizations before and after the current cp definition localization in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param cpDefinitionLocalizationId the primary key of the current cp definition localization
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition localization
-	 * @throws NoSuchCPDefinitionLocalizationException if a cp definition localization with the primary key could not be found
-	 */
-	public static CPDefinitionLocalization[] findByCPDefinitionId_PrevAndNext(
-			long cpDefinitionLocalizationId, long CPDefinitionId,
-			OrderByComparator<CPDefinitionLocalization> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionLocalizationException {
-
-		return getPersistence().findByCPDefinitionId_PrevAndNext(
-			cpDefinitionLocalizationId, CPDefinitionId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp definition localizations where CPDefinitionId = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -547,3 +495,4 @@ public class CPDefinitionLocalizationUtil {
 	private static volatile CPDefinitionLocalizationPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-133447577

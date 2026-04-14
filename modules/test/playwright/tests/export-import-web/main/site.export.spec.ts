@@ -5,58 +5,43 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {displayPageTemplatesPagesTest} from '../../../fixtures/displayPageTemplatesPagesTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
+import {masterPagesPagesTest} from '../../../fixtures/masterPagesPagesTest';
+import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
+import {pageTemplatesPagesTest} from '../../../fixtures/pageTemplatesPagesTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
 import {uiElementsPageTest} from '../../../fixtures/uiElementsTest';
 import getRandomString from '../../../utils/getRandomString';
+import {normalizeRestPath} from '../../../utils/normalizeRestPath';
 import {getTempDir} from '../../../utils/temp';
+import {waitForAlert} from '../../../utils/waitForAlert';
+import {pagesPagesTest} from '../../layout-admin-web/main/fixtures/pagesPagesTest';
 import {exportImportPagesTest} from './fixtures/exportImportPagesTest';
 
-export const test = mergeTests(
-	applicationsMenuPageTest,
-	exportImportPagesTest,
+export const baseTest = mergeTests(
 	dataApiHelpersTest,
-	featureFlagsTest({
-		'LPD-35914': {enabled: false, system: true},
-	}),
+	displayPageTemplatesPagesTest,
+	exportImportPagesTest,
+	isolatedSiteTest,
 	loginTest(),
 	productMenuPageTest,
-	uiElementsPageTest
+	uiElementsPageTest,
+	masterPagesPagesTest,
+	pageTemplatesPagesTest,
+	pageEditorPagesTest,
+	pagesPagesTest
 );
 
-export const testWithExportImportAtInstanceLevelFF = mergeTests(
-	applicationsMenuPageTest,
-	exportImportPagesTest,
-	dataApiHelpersTest,
+export const test = mergeTests(
+	baseTest,
 	featureFlagsTest({
-		'LPD-35914': {enabled: true, system: true},
-	}),
-	loginTest()
+		'LPD-35443': {enabled: false},
+	})
 );
-
-async function expectExportName(exportImportPage, taskName: string) {
-	await exportImportPage.goToExport();
-
-	await exportImportPage.newExportButton.click();
-
-	await exportImportPage.exportButton.click();
-
-	await expect(
-		exportImportPage.page
-			.locator('//h2[span[normalize-space()="' + taskName + '"]]')
-			.first()
-			.locator('../..')
-			.getByText('Successful')
-	).toBeVisible();
-
-	const exportFilePath =
-		await exportImportPage.downloadExportProcess(taskName);
-
-	expect(exportFilePath).toMatch(new RegExp(`^${getTempDir()}${taskName}-`));
-}
 
 test('can export at site level with custom export task name', async ({
 	exportImportPage,
@@ -65,34 +50,25 @@ test('can export at site level with custom export task name', async ({
 
 	const taskName = 'MyExport-' + getRandomString();
 
-	await exportImportPage.export(taskName);
-
-	await expect(
-		exportImportPage.page
-			.locator('//h2[span[normalize-space()="' + taskName + '"]]')
-			.first()
-			.locator('../..')
-			.getByText('Successful')
-	).toBeVisible();
-
-	const exportFilePath =
-		await exportImportPage.downloadExportProcess(taskName);
+	const exportFilePath = await exportImportPage.export({taskName});
 
 	expect(exportFilePath).toMatch(new RegExp(`^${getTempDir()}MyExport-`));
 });
 
-test('can export at site level with old file name', async ({
+test('can export at site level with the default file name', async ({
 	exportImportPage,
 }) => {
-	await expectExportName(exportImportPage, 'Pages');
-});
+	await exportImportPage.goToExport();
 
-testWithExportImportAtInstanceLevelFF(
-	'can export at site level with new file name',
-	async ({exportImportPage}) => {
-		await expectExportName(exportImportPage, 'Export');
-	}
-);
+	await exportImportPage.newExportButton.click();
+
+	await exportImportPage.exportButton.click();
+
+	const exportFilePath =
+		await exportImportPage.downloadExportProcess('Export');
+
+	expect(exportFilePath).toMatch(new RegExp(`^${getTempDir()}Export-`));
+});
 
 test('can see corresponding elements at site level', async ({
 	productMenuPage,
@@ -119,7 +95,7 @@ test(
 		await productMenuPage.openProductMenuIfClosed();
 		await productMenuPage.goToPublishingExport();
 
-		uiElementsPage.clickNewButton();
+		await uiElementsPage.clickNewButton();
 
 		const deletionsLabelText =
 			await exportImportPage.deletionsLabel.textContent();
@@ -127,5 +103,246 @@ test(
 		expect(deletionsLabelText?.replace(/\s+/g, ' ').trim()).toBe(
 			'Export Individual Deletions: If this is checked, the delete operations performed will be exported in the LAR file.'
 		);
+	}
+);
+
+test(
+	'can see the correct counts of master page templates at site level',
+	{tag: ['@LPD-67433']},
+	async ({
+		exportImportPage,
+		masterPagesPage,
+		pageTemplatesPage,
+		productMenuPage,
+		site,
+		uiElementsPage,
+	}) => {
+		await masterPagesPage.goto(site.friendlyUrlPath);
+		await masterPagesPage.createNewMaster(getRandomString());
+		await masterPagesPage.createNewMaster(getRandomString());
+
+		await pageTemplatesPage.goto(site.friendlyUrlPath);
+		await pageTemplatesPage.addPageTemplateCollection(getRandomString());
+		await pageTemplatesPage.addWidgetPageTemplate(getRandomString());
+
+		await pageTemplatesPage.goto(site.friendlyUrlPath);
+		await pageTemplatesPage.addWidgetPageTemplate(getRandomString());
+
+		await pageTemplatesPage.goto(site.friendlyUrlPath);
+
+		await productMenuPage.openProductMenuIfClosed();
+		await productMenuPage.goToPublishingExport();
+
+		await uiElementsPage.clickNewButton();
+
+		await exportImportPage.expectPortletCounts(/^\s*Pages\s*/, {
+			registrations: [{counts: {items: 2}, label: 'Master Pages'}],
+		});
+	}
+);
+
+test('cannot see Site Pages checkbox', async ({
+	exportImportPage,
+	productMenuPage,
+}) => {
+	await productMenuPage.openProductMenuIfClosed();
+	await productMenuPage.goToPublishingExport();
+	await productMenuPage.page
+		.getByRole('link', {name: 'Custom Export'})
+		.click();
+
+	await exportImportPage.expectPortletAbsent('Site Pages');
+});
+
+test('Can see deletion counts at site level', async ({
+	apiHelpers,
+	exportImportPage,
+	uiElementsPage,
+}) => {
+	const objectDefinition =
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			scope: 'site',
+			status: {code: 0},
+		});
+
+	apiHelpers.data.push({
+		id: objectDefinition.id,
+		type: 'objectDefinition',
+	});
+
+	const applicationName = `${normalizeRestPath(objectDefinition.restContextPath)}`;
+
+	const objectEntry1 = await apiHelpers.objectEntry.postObjectEntry(
+		{textField: objectDefinition.name},
+		applicationName + '/scopes/Guest'
+	);
+
+	const objectEntry2 = await apiHelpers.objectEntry.postObjectEntry(
+		{textField: objectDefinition.name},
+		applicationName + '/scopes/Guest'
+	);
+
+	await exportImportPage.goToExport();
+	await uiElementsPage.clickNewButton();
+
+	await exportImportPage.deletionsLabel.check();
+
+	await exportImportPage.expectPortletCounts(objectDefinition.name, {
+		counts: {items: 2},
+	});
+
+	await apiHelpers.objectEntry.deleteObjectEntry(
+		applicationName,
+		String(objectEntry1.id)
+	);
+
+	await exportImportPage.refreshCountsLink.click();
+
+	await exportImportPage.expectPortletCounts(objectDefinition.name, {
+		counts: {deletions: 1, items: 1},
+	});
+
+	await apiHelpers.objectEntry.deleteObjectEntry(
+		applicationName,
+		String(objectEntry2.id)
+	);
+
+	await exportImportPage.refreshCountsLink.click();
+
+	await exportImportPage.expectPortletCounts(objectDefinition.name, {
+		counts: {deletions: 2},
+	});
+
+	await exportImportPage.deletionsLabel.uncheck();
+
+	await exportImportPage.expectPortletDeletionsHidden(objectDefinition.name);
+});
+
+test(
+	'Can see the correct deletion counts for multiple registrations at site level',
+	{tag: ['@LPD-67433']},
+	async ({
+		displayPageTemplatesPage,
+		exportImportPage,
+		masterPagesPage,
+		pageEditorPage,
+		pageTemplatesPage,
+		productMenuPage,
+		site,
+		uiElementsPage,
+		utilityPagesPage,
+	}) => {
+		await test.step('Create and delete a display page template folder', async () => {
+			await displayPageTemplatesPage.goto(site.friendlyUrlPath);
+
+			const displayPageTemplateFolderName = getRandomString();
+
+			await displayPageTemplatesPage.createFolder(
+				displayPageTemplateFolderName,
+				getRandomString()
+			);
+			await displayPageTemplatesPage.deleteTemplate(
+				displayPageTemplateFolderName
+			);
+		});
+
+		await test.step('Create and delete a display page template', async () => {
+			await displayPageTemplatesPage.goto(site.friendlyUrlPath);
+
+			const displayPageTemplateName = getRandomString();
+
+			await displayPageTemplatesPage.createTemplate({
+				contentSubtype: 'Basic Web Content',
+				contentType: 'Web Content Article',
+				name: displayPageTemplateName,
+			});
+			await displayPageTemplatesPage.deleteTemplate(
+				displayPageTemplateName
+			);
+		});
+
+		await test.step('Create and delete a master page', async () => {
+			await masterPagesPage.goto(site.friendlyUrlPath);
+
+			const masterPageName = getRandomString();
+
+			await masterPagesPage.createNewMaster(masterPageName);
+			await masterPagesPage.deleteMaster(masterPageName);
+		});
+
+		await test.step('Create and delete a page template set and a page template', async () => {
+			await pageTemplatesPage.goto(site.friendlyUrlPath);
+
+			const pageTemplateCollectionName = getRandomString();
+
+			await pageTemplatesPage.addPageTemplateCollection(
+				pageTemplateCollectionName
+			);
+
+			await pageTemplatesPage.goto(site.friendlyUrlPath);
+
+			const contentPageTemplateName = getRandomString();
+
+			await pageTemplatesPage.addContentPageTemplate(
+				contentPageTemplateName
+			);
+
+			await pageEditorPage.publishButton.click();
+
+			await waitForAlert(
+				pageTemplatesPage.page,
+				'Success:The page template was published successfully.'
+			);
+
+			await pageTemplatesPage.deletePageTemplate(contentPageTemplateName);
+			await pageTemplatesPage.deletePageTemplateCollection(
+				pageTemplateCollectionName
+			);
+		});
+
+		await test.step('Create and delete a utility page', async () => {
+			await utilityPagesPage.goto(site.friendlyUrlPath);
+
+			const utilityPageName = getRandomString();
+
+			await utilityPagesPage.createPage({
+				name: utilityPageName,
+				type: '404 Error',
+			});
+			await utilityPagesPage.markAsDefault(utilityPageName);
+			await utilityPagesPage.deletePage(utilityPageName);
+		});
+
+		await test.step('Assert deletion counts are correct', async () => {
+			await productMenuPage.openProductMenuIfClosed();
+			await productMenuPage.goToPublishingExport();
+
+			await uiElementsPage.clickNewButton();
+
+			await exportImportPage.expectPortletDeletionsHidden('Pages');
+
+			await exportImportPage.deletionsLabel.check();
+
+			await exportImportPage.expectPortletCounts('Pages', {
+				counts: {deletions: 6},
+				registrations: [
+					{
+						counts: {deletions: 1},
+						label: 'Display Page Template Folders',
+					},
+					{
+						counts: {deletions: 1},
+						label: 'Display Page Templates',
+					},
+					{counts: {deletions: 1}, label: 'Master Pages'},
+					{
+						counts: {deletions: 1},
+						label: /^\s*Page Templates\s*/,
+					},
+					{counts: {deletions: 1}, label: 'Page Template Sets'},
+					{counts: {deletions: 1}, label: 'Utility Pages'},
+				],
+			});
+		});
 	}
 );

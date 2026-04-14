@@ -210,52 +210,6 @@ public class MBDiscussionUtil {
 	}
 
 	/**
-	 * Returns the last message boards discussion in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards discussion
-	 * @throws NoSuchDiscussionException if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion findByUuid_Last(
-			String uuid, OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message boards discussion in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards discussion, or <code>null</code> if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion fetchByUuid_Last(
-		String uuid, OrderByComparator<MBDiscussion> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the message boards discussions before and after the current message boards discussion in the ordered set where uuid = &#63;.
-	 *
-	 * @param discussionId the primary key of the current message boards discussion
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards discussion
-	 * @throws NoSuchDiscussionException if a message boards discussion with the primary key could not be found
-	 */
-	public static MBDiscussion[] findByUuid_PrevAndNext(
-			long discussionId, String uuid,
-			OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			discussionId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message boards discussions where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -445,59 +399,6 @@ public class MBDiscussionUtil {
 
 		return getPersistence().fetchByUuid_C_First(
 			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message boards discussion in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards discussion
-	 * @throws NoSuchDiscussionException if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message boards discussion in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards discussion, or <code>null</code> if a matching message boards discussion could not be found
-	 */
-	public static MBDiscussion fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<MBDiscussion> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message boards discussions before and after the current message boards discussion in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param discussionId the primary key of the current message boards discussion
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards discussion
-	 * @throws NoSuchDiscussionException if a message boards discussion with the primary key could not be found
-	 */
-	public static MBDiscussion[] findByUuid_C_PrevAndNext(
-			long discussionId, String uuid, long companyId,
-			OrderByComparator<MBDiscussion> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchDiscussionException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			discussionId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -801,3 +702,4 @@ public class MBDiscussionUtil {
 	private static volatile MBDiscussionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1653615113

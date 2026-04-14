@@ -24,6 +24,25 @@ const config = {
 		'whatwg-fetch',
 		resolveModule('main.jsx')
 	],
+	experiments: {
+		outputModule: true
+	},
+	externals: [
+		({request}, callback) => {
+			if (
+				request?.startsWith('@clayui/') &&
+				!request?.startsWith('@clayui/css')
+			) {
+				return callback(null, request);
+			}
+			callback();
+		},
+		{
+			react: 'react',
+			'react-dom': 'react-dom'
+		}
+	],
+	externalsType: 'module',
 	module: {
 		rules: [
 			{
@@ -36,7 +55,6 @@ const config = {
 					alias: {
 						assets: resolveModule('assets'),
 						'cerebro-shared': resolveModule('cerebro-shared'),
-						'clay-charts-react': resolveModule('clay-charts-react'),
 						commerce: resolveModule('commerce'),
 						contacts: resolveModule('contacts'),
 						'custom-types': resolveModule('custom-types'),
@@ -141,6 +159,7 @@ const config = {
 	},
 	output: {
 		filename: 'main.js',
+		module: true,
 		path: path.resolve('src/main/resources/META-INF/resources/dist'),
 		pathinfo: false,
 		publicPath: PUBLIC_PATH

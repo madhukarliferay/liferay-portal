@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterRegistry;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -39,13 +40,25 @@ public class ViewFilesSectionDisplayContext
 		ObjectDefinitionSettingLocalService objectDefinitionSettingLocalService,
 		ModelResourcePermission<ObjectEntryFolder>
 			objectEntryFolderModelResourcePermission,
-		Portal portal) {
+		Portal portal,
+		TranslationInfoItemFieldValuesExporterRegistry
+			translationInfoItemFieldValuesExporterRegistry) {
 
 		super(
 			depotEntryLocalService, dlConfiguration, groupLocalService,
 			httpServletRequest, language, objectDefinitionService,
 			objectDefinitionSettingLocalService,
-			objectEntryFolderModelResourcePermission, portal);
+			objectEntryFolderModelResourcePermission, portal,
+			translationInfoItemFieldValuesExporterRegistry);
+	}
+
+	@Override
+	public Map<String, Object> getAdditionalProps() {
+		Map<String, Object> additionalProps = super.getAdditionalProps();
+
+		additionalProps.put("galleryViewEnabled", true);
+
+		return additionalProps;
 	}
 
 	@Override
@@ -53,7 +66,8 @@ public class ViewFilesSectionDisplayContext
 		return HashMapBuilder.<String, Object>put(
 			"description",
 			LanguageUtil.get(
-				httpServletRequest, "click-new-to-create-your-first-file")
+				httpServletRequest,
+				"click-new-or-drag-and-drop-your-files-here")
 		).put(
 			"image", "/states/cms_empty_state_files.svg"
 		).put(
@@ -67,7 +81,7 @@ public class ViewFilesSectionDisplayContext
 			super.getFDSActionDropdownItems();
 
 		fdsActionDropdownItems.add(
-			5,
+			9,
 			new FDSActionDropdownItem(
 				StringPool.BLANK, "info-circle-open", "show-details",
 				LanguageUtil.get(httpServletRequest, "show-details"), null,
@@ -78,12 +92,13 @@ public class ViewFilesSectionDisplayContext
 
 	@Override
 	protected String getCMSSectionFilterString() {
-		return appendStatus("cmsRoot eq true and cmsSection eq 'files'");
+		return appendStatus(
+			appendGroupIds("cmsRoot eq true and cmsSection eq 'files'"));
 	}
 
 	@Override
 	protected String getEmptyStateDescriptionKey() {
-		return "click-new-to-create-your-first-file";
+		return "click-new-or-drag-and-drop-your-files-here";
 	}
 
 }

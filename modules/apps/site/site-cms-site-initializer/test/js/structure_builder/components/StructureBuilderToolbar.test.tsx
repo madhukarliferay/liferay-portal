@@ -3,17 +3,18 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import StructureService from '../../../../src/main/resources/META-INF/resources/js/common/services/StructureService';
 import StructureBuilderToolbar from '../../../../src/main/resources/META-INF/resources/js/structure_builder/components/StructureBuilderToolbar';
-import StructureService from '../../../../src/main/resources/META-INF/resources/js/structure_builder/services/StructureService';
 import {Structure} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/types/Structure';
 import {Field} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/field';
 import getUuid from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/getUuid';
 import {addParams, mockNavigate} from '../../__mocks__/frontend-js-web';
+import {MockCacheProvider} from '../mocks/MockCacheProvider';
 import {MockState, MockStateProvider} from '../mocks/MockStateProvider';
 
 jest.mock('@liferay/layout-js-components-web', () => {
@@ -49,9 +50,11 @@ const renderComponent = (state: MockState) => {
 	};
 
 	return render(
-		<MockStateProvider state={{...state, structure}}>
-			<StructureBuilderToolbar />
-		</MockStateProvider>
+		<MockCacheProvider objectDefinitions={{}}>
+			<MockStateProvider state={{...state, structure}}>
+				<StructureBuilderToolbar />
+			</MockStateProvider>
+		</MockCacheProvider>
 	);
 };
 
@@ -150,7 +153,12 @@ describe('StructureBuilderToolbar', () => {
 
 	it('Shows warning modal when a published field has been deleted', async () => {
 		renderComponent({
-			history: {deletedChildren: true},
+			history: {
+				deletedChildren: [{} as Field],
+				deletedGroupERCs: [],
+				deletedRelationships: [],
+				modifiedNames: new Set(),
+			},
 			structure: {status: 'published'},
 		});
 
@@ -163,7 +171,7 @@ describe('StructureBuilderToolbar', () => {
 				require('@liferay/layout-js-components-web').openConfirmModal
 			).toBeCalledWith(
 				expect.objectContaining({
-					text: 'you-removed-one-or-more-fields-from-the-structure',
+					text: 'you-have-made-changes-to-the-content-structure-that-may-impact-existing-stored-data-once-published',
 				})
 			);
 		});
@@ -172,7 +180,7 @@ describe('StructureBuilderToolbar', () => {
 		expect(StructureService.updateStructure).not.toBeCalled();
 	});
 
-	it('Shows modal to publish when trying to customize experience and the structure is not published', async () => {
+	it('Shows modal to publish when trying to customize editor and the structure is not published', async () => {
 		renderComponent({
 			structure: {status: 'new'},
 		});
@@ -180,24 +188,23 @@ describe('StructureBuilderToolbar', () => {
 		const managementBar: HTMLElement | null =
 			document.querySelector('.component-tbar')!;
 
-		const customizeExperienceButton = within(managementBar).getByText(
-			'customize-experience'
-		);
+		const customizeEditorButton =
+			within(managementBar).getByText('customize-editor');
 
-		await userEvent.click(customizeExperienceButton);
+		await userEvent.click(customizeEditorButton);
 
 		await waitFor(() => {
 			expect(
 				require('@liferay/layout-js-components-web').openConfirmModal
 			).toBeCalledWith(
 				expect.objectContaining({
-					text: 'to-customize-the-experience-you-need-to-publish-the-structure-first',
+					text: 'to-customize-the-editor-you-need-to-publish-the-content-structure-first',
 				})
 			);
 		});
 	});
 
-	it('Shows modal to publish when trying to customize experience and the structure is published and there are changes', async () => {
+	it('Shows modal to publish when trying to customize editor and the structure is published and there are changes', async () => {
 		renderComponent({
 			structure: {status: 'published'},
 			unsavedChanges: true,
@@ -206,50 +213,53 @@ describe('StructureBuilderToolbar', () => {
 		const managementBar: HTMLElement | null =
 			document.querySelector('.component-tbar')!;
 
-		const customizeExperienceButton = within(managementBar).getByText(
-			'customize-experience'
-		);
+		const customizeEditorButton =
+			within(managementBar).getByText('customize-editor');
 
-		await userEvent.click(customizeExperienceButton);
+		await userEvent.click(customizeEditorButton);
 
 		await waitFor(() => {
 			expect(
 				require('@liferay/layout-js-components-web').openConfirmModal
 			).toBeCalledWith(
 				expect.objectContaining({
-					text: 'to-customize-the-experience-you-need-to-publish-the-structure-first',
+					text: 'to-customize-the-editor-you-need-to-publish-the-content-structure-first',
 				})
 			);
 		});
 	});
 
-	it('Shows modal to publish when trying to customize experience and the structure is published and some fields have been deleted', async () => {
+	it('Shows modal to publish when trying to customize editor and the structure is published and some fields have been deleted', async () => {
 		renderComponent({
-			history: {deletedChildren: true},
+			history: {
+				deletedChildren: [{} as Field],
+				deletedGroupERCs: [],
+				deletedRelationships: [],
+				modifiedNames: new Set(),
+			},
 			structure: {status: 'published'},
 		});
 
 		const managementBar: HTMLElement | null =
 			document.querySelector('.component-tbar')!;
 
-		const customizeExperienceButton = within(managementBar).getByText(
-			'customize-experience'
-		);
+		const customizeEditorButton =
+			within(managementBar).getByText('customize-editor');
 
-		await userEvent.click(customizeExperienceButton);
+		await userEvent.click(customizeEditorButton);
 
 		await waitFor(() => {
 			expect(
 				require('@liferay/layout-js-components-web').openConfirmModal
 			).toBeCalledWith(
 				expect.objectContaining({
-					text: 'to-customize-the-experience-you-need-to-publish-the-structure-first.-you-removed-one-or-more-fields-from-the-structure',
+					text: 'to-customize-the-editor-you-need-to-publish-the-content-structure-first.-you-have-made-changes-to-the-content-structure-that-may-impact-existing-stored-data-once-published',
 				})
 			);
 		});
 	});
 
-	it('Navigates to customize experience if the structure is published', async () => {
+	it('Navigates to customize editor if the structure is published', async () => {
 		const expectedUrl =
 			'http://localhost:8080/edit?backURL=http%3A%2F%2Flocalhost%3A8080%2Fstructure-builder%3FobjectDefinitionExternalReferenceCode%3Dstructure-erc&objectDefinitionExternalReferenceCode=structure-erc';
 
@@ -262,11 +272,10 @@ describe('StructureBuilderToolbar', () => {
 		const managementBar: HTMLElement | null =
 			document.querySelector('.component-tbar')!;
 
-		const customizeExperienceButton = within(managementBar).getByText(
-			'customize-experience'
-		);
+		const customizeEditorButton =
+			within(managementBar).getByText('customize-editor');
 
-		await userEvent.click(customizeExperienceButton);
+		await userEvent.click(customizeEditorButton);
 
 		await waitFor(() => {
 			expect(mockNavigate).toBeCalledWith(

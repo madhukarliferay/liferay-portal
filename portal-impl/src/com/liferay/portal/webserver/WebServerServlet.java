@@ -20,11 +20,12 @@ import com.liferay.document.library.kernel.processor.VideoProcessorUtil;
 import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
 import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.document.library.kernel.util.DLUtil;
-import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.image.ImageToolUtil;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
@@ -43,7 +44,6 @@ import com.liferay.portal.kernel.model.ImageConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.Organization;
-import com.liferay.portal.kernel.model.OrganizationTable;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.portlet.PortletProvider;
@@ -103,6 +103,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -115,7 +116,6 @@ import com.liferay.portal.kernel.webdav.WebDAVUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.impl.ImageImpl;
 import com.liferay.portal.util.PortalInstances;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.users.admin.kernel.file.uploads.UserFileUploadsSettings;
 
 import jakarta.servlet.ServletConfig;
@@ -468,13 +468,22 @@ public class WebServerServlet extends HttpServlet {
 
 		String path = GetterUtil.getString(httpServletRequest.getPathInfo());
 
-		if (path.startsWith("/company_logo") ||
-			path.startsWith("/layout_set_logo") || path.startsWith("/logo")) {
+		if (path.startsWith("/account_logo") ||
+			path.startsWith("/organization_logo")) {
+
+			return ImageToolUtil.getDefaultOrganizationLogo();
+		}
+		else if (path.startsWith("/company_logo") ||
+				 path.startsWith("/layout_set_logo") ||
+				 path.startsWith("/logo")) {
 
 			return ImageToolUtil.getDefaultCompanyLogo();
 		}
-		else if (path.startsWith("/organization_logo")) {
-			return ImageToolUtil.getDefaultOrganizationLogo();
+		else if (path.startsWith("/company_group_logo")) {
+			return ImageToolUtil.getDefaultCompanyGroupLogo();
+		}
+		else if (path.startsWith("/liferay_logo")) {
+			return ImageToolUtil.getDefaultLiferayLogo();
 		}
 		else if (path.startsWith("/user_female_portrait")) {
 			return ImageToolUtil.getDefaultUserFemalePortrait();
@@ -689,16 +698,7 @@ public class WebServerServlet extends HttpServlet {
 			Organization organization = null;
 
 			List<Organization> organizations =
-				OrganizationLocalServiceUtil.dslQuery(
-					DSLQueryFactoryUtil.select(
-						OrganizationTable.INSTANCE
-					).from(
-						OrganizationTable.INSTANCE
-					).where(
-						OrganizationTable.INSTANCE.logoId.eq(imageId)
-					).limit(
-						0, 1
-					));
+				OrganizationLocalServiceUtil.getOrganizationsByLogoId(imageId);
 
 			if (ListUtil.isNotEmpty(organizations)) {
 				organization = organizations.get(0);
@@ -1026,7 +1026,10 @@ public class WebServerServlet extends HttpServlet {
 
 		if (_processCompanyInactiveRequest(
 				httpServletRequest, httpServletResponse,
-				fileEntry.getCompanyId())) {
+				fileEntry.getCompanyId()) ||
+			_processGroupMaintenanceModeRequest(
+				httpServletRequest, httpServletResponse,
+				fileEntry.getGroupId())) {
 
 			return;
 		}
@@ -1224,7 +1227,7 @@ public class WebServerServlet extends HttpServlet {
 			cacheControlValue = HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE;
 		}
 
-		httpServletResponse.addHeader(
+		httpServletResponse.setHeader(
 			HttpHeaders.CACHE_CONTROL,
 			FileEntryHttpHeaderCustomizerUtil.getHttpHeaderValue(
 				fileEntry, HttpHeaders.CACHE_CONTROL, cacheControlValue));
@@ -1257,7 +1260,7 @@ public class WebServerServlet extends HttpServlet {
 		FileEntry fileEntry = DLAppLocalServiceUtil.getFileEntry(
 			groupId, folderId, title);
 
-		httpServletResponse.addHeader(
+		httpServletResponse.setHeader(
 			HttpHeaders.CACHE_CONTROL,
 			FileEntryHttpHeaderCustomizerUtil.getHttpHeaderValue(
 				fileEntry, HttpHeaders.CACHE_CONTROL,
@@ -1332,7 +1335,10 @@ public class WebServerServlet extends HttpServlet {
 		if ((fileEntry == null) ||
 			_processCompanyInactiveRequest(
 				httpServletRequest, httpServletResponse,
-				fileEntry.getCompanyId())) {
+				fileEntry.getCompanyId()) ||
+			_processGroupMaintenanceModeRequest(
+				httpServletRequest, httpServletResponse,
+				fileEntry.getGroupId())) {
 
 			return;
 		}
@@ -1350,7 +1356,7 @@ public class WebServerServlet extends HttpServlet {
 			fileName = trashTitleResolver.getOriginalTitle(fileName);
 		}
 
-		httpServletResponse.addHeader(
+		httpServletResponse.setHeader(
 			HttpHeaders.CACHE_CONTROL,
 			FileEntryHttpHeaderCustomizerUtil.getHttpHeaderValue(
 				fileEntry, HttpHeaders.CACHE_CONTROL,
@@ -1566,10 +1572,16 @@ public class WebServerServlet extends HttpServlet {
 
 		User user = _getUser(httpServletRequest);
 
-		Group group = _getGroup(user.getCompanyId(), pathArray[1]);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					ParamUtil.getLong(
+						httpServletRequest, "previewCTCollectionId"))) {
 
-		return fileEntryFriendlyURLResolver.resolveFriendlyURL(
-			group.getGroupId(), pathArray[2]);
+			Group group = _getGroup(user.getCompanyId(), pathArray[1]);
+
+			return fileEntryFriendlyURLResolver.resolveFriendlyURL(
+				group.getGroupId(), pathArray[2]);
+		}
 	}
 
 	private void _checkCompanyAndGroup(
@@ -1981,6 +1993,46 @@ public class WebServerServlet extends HttpServlet {
 		if (_log.isDebugEnabled()) {
 			_log.debug("Processed company inactive request");
 		}
+
+		return true;
+	}
+
+	private boolean _processGroupMaintenanceModeRequest(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, long groupId)
+		throws Exception {
+
+		Group group = GroupLocalServiceUtil.fetchGroup(groupId);
+
+		if ((group == null) || GroupLocalServiceUtil.isLiveGroupActive(group)) {
+			return false;
+		}
+
+		if (GroupLocalServiceUtil.isMaintenanceMode(group)) {
+			PermissionChecker permissionChecker =
+				PermissionThreadLocal.getPermissionChecker();
+
+			if ((permissionChecker != null) &&
+				permissionChecker.isGroupAdmin(groupId)) {
+
+				return false;
+			}
+
+			PortalUtil.sendError(
+				HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+				new PortalException(
+					"this-site-is-temporarily-unavailable-for-maintenance"),
+				httpServletRequest, httpServletResponse);
+
+			return true;
+		}
+
+		InactiveRequestHandler inactiveRequestHandler =
+			_inactiveRequestHandlerSnapshot.get();
+
+		inactiveRequestHandler.processInactiveRequest(
+			httpServletRequest, httpServletResponse,
+			"this-site-is-inactive-please-contact-the-administrator");
 
 		return true;
 	}

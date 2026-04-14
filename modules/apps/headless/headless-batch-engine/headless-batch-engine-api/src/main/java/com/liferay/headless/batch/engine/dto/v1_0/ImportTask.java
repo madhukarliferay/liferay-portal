@@ -776,9 +776,7 @@ public class ImportTask implements Serializable {
 			sb.append("\"executeStatus\": ");
 
 			sb.append("\"");
-
 			sb.append(executeStatus);
-
 			sb.append("\"");
 		}
 
@@ -842,9 +840,7 @@ public class ImportTask implements Serializable {
 			sb.append("\"importStrategy\": ");
 
 			sb.append("\"");
-
 			sb.append(importStrategy);
-
 			sb.append("\"");
 		}
 
@@ -858,9 +854,7 @@ public class ImportTask implements Serializable {
 			sb.append("\"operation\": ");
 
 			sb.append("\"");
-
 			sb.append(operation);
-
 			sb.append("\"");
 		}
 
@@ -1120,3 +1114,4 @@ public class ImportTask implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1509814280

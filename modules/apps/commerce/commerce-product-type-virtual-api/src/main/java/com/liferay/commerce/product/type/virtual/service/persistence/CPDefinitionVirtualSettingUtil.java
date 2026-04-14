@@ -219,56 +219,6 @@ public class CPDefinitionVirtualSettingUtil {
 	}
 
 	/**
-	 * Returns the last cp definition virtual setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition virtual setting
-	 * @throws NoSuchCPDefinitionVirtualSettingException if a matching cp definition virtual setting could not be found
-	 */
-	public static CPDefinitionVirtualSetting findByUuid_Last(
-			String uuid,
-			OrderByComparator<CPDefinitionVirtualSetting> orderByComparator)
-		throws com.liferay.commerce.product.type.virtual.exception.
-			NoSuchCPDefinitionVirtualSettingException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition virtual setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition virtual setting, or <code>null</code> if a matching cp definition virtual setting could not be found
-	 */
-	public static CPDefinitionVirtualSetting fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<CPDefinitionVirtualSetting> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definition virtual settings before and after the current cp definition virtual setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPDefinitionVirtualSettingId the primary key of the current cp definition virtual setting
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition virtual setting
-	 * @throws NoSuchCPDefinitionVirtualSettingException if a cp definition virtual setting with the primary key could not be found
-	 */
-	public static CPDefinitionVirtualSetting[] findByUuid_PrevAndNext(
-			long CPDefinitionVirtualSettingId, String uuid,
-			OrderByComparator<CPDefinitionVirtualSetting> orderByComparator)
-		throws com.liferay.commerce.product.type.virtual.exception.
-			NoSuchCPDefinitionVirtualSettingException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CPDefinitionVirtualSettingId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp definition virtual settings where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -467,61 +417,6 @@ public class CPDefinitionVirtualSettingUtil {
 
 		return getPersistence().fetchByUuid_C_First(
 			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition virtual setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition virtual setting
-	 * @throws NoSuchCPDefinitionVirtualSettingException if a matching cp definition virtual setting could not be found
-	 */
-	public static CPDefinitionVirtualSetting findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPDefinitionVirtualSetting> orderByComparator)
-		throws com.liferay.commerce.product.type.virtual.exception.
-			NoSuchCPDefinitionVirtualSettingException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition virtual setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition virtual setting, or <code>null</code> if a matching cp definition virtual setting could not be found
-	 */
-	public static CPDefinitionVirtualSetting fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CPDefinitionVirtualSetting> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definition virtual settings before and after the current cp definition virtual setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPDefinitionVirtualSettingId the primary key of the current cp definition virtual setting
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition virtual setting
-	 * @throws NoSuchCPDefinitionVirtualSettingException if a cp definition virtual setting with the primary key could not be found
-	 */
-	public static CPDefinitionVirtualSetting[] findByUuid_C_PrevAndNext(
-			long CPDefinitionVirtualSettingId, String uuid, long companyId,
-			OrderByComparator<CPDefinitionVirtualSetting> orderByComparator)
-		throws com.liferay.commerce.product.type.virtual.exception.
-			NoSuchCPDefinitionVirtualSettingException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPDefinitionVirtualSettingId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -791,3 +686,4 @@ public class CPDefinitionVirtualSettingUtil {
 	private static volatile CPDefinitionVirtualSettingPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-141743977

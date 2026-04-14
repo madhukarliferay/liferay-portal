@@ -213,54 +213,6 @@ public class RememberMeTokenUtil {
 	}
 
 	/**
-	 * Returns the last remember me token in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token
-	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
-	 */
-	public static RememberMeToken findByUserId_Last(
-			long userId, OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last remember me token in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token, or <code>null</code> if a matching remember me token could not be found
-	 */
-	public static RememberMeToken fetchByUserId_Last(
-		long userId, OrderByComparator<RememberMeToken> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the remember me tokens before and after the current remember me token in the ordered set where userId = &#63;.
-	 *
-	 * @param rememberMeTokenId the primary key of the current remember me token
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next remember me token
-	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
-	 */
-	public static RememberMeToken[] findByUserId_PrevAndNext(
-			long rememberMeTokenId, long userId,
-			OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			rememberMeTokenId, userId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the remember me tokens where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -385,58 +337,6 @@ public class RememberMeTokenUtil {
 
 		return getPersistence().fetchByLteExpirationDate_First(
 			expirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the last remember me token in the ordered set where expirationDate &le; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token
-	 * @throws NoSuchRememberMeTokenException if a matching remember me token could not be found
-	 */
-	public static RememberMeToken findByLteExpirationDate_Last(
-			Date expirationDate,
-			OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByLteExpirationDate_Last(
-			expirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the last remember me token in the ordered set where expirationDate &le; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching remember me token, or <code>null</code> if a matching remember me token could not be found
-	 */
-	public static RememberMeToken fetchByLteExpirationDate_Last(
-		Date expirationDate,
-		OrderByComparator<RememberMeToken> orderByComparator) {
-
-		return getPersistence().fetchByLteExpirationDate_Last(
-			expirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the remember me tokens before and after the current remember me token in the ordered set where expirationDate &le; &#63;.
-	 *
-	 * @param rememberMeTokenId the primary key of the current remember me token
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next remember me token
-	 * @throws NoSuchRememberMeTokenException if a remember me token with the primary key could not be found
-	 */
-	public static RememberMeToken[] findByLteExpirationDate_PrevAndNext(
-			long rememberMeTokenId, Date expirationDate,
-			OrderByComparator<RememberMeToken> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchRememberMeTokenException {
-
-		return getPersistence().findByLteExpirationDate_PrevAndNext(
-			rememberMeTokenId, expirationDate, orderByComparator);
 	}
 
 	/**
@@ -620,3 +520,4 @@ public class RememberMeTokenUtil {
 	private static volatile RememberMeTokenPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1111522942

@@ -119,47 +119,6 @@ public interface PhonePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last phone in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where uuid = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByUuid_PrevAndNext(
-			long phoneId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
 	 * Removes all the phones where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -268,50 +227,6 @@ public interface PhonePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last phone in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByUuid_C_PrevAndNext(
-			long phoneId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
 	 * Removes all the phones where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -416,47 +331,6 @@ public interface PhonePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last phone in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where companyId = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByCompanyId_PrevAndNext(
-			long phoneId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
 	 * Removes all the phones where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -556,47 +430,6 @@ public interface PhonePersistence
 		long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<Phone>
 			orderByComparator);
-
-	/**
-	 * Returns the last phone in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where userId = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByUserId_PrevAndNext(
-			long phoneId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
 
 	/**
 	 * Removes all the phones where userId = &#63; from the database.
@@ -705,50 +538,6 @@ public interface PhonePersistence
 		long companyId, long classNameId,
 		com.liferay.portal.kernel.util.OrderByComparator<Phone>
 			orderByComparator);
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByC_C_Last(
-			long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByC_C_Last(
-		long companyId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByC_C_PrevAndNext(
-			long phoneId, long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
 
 	/**
 	 * Removes all the phones where companyId = &#63; and classNameId = &#63; from the database.
@@ -866,53 +655,6 @@ public interface PhonePersistence
 		long companyId, long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<Phone>
 			orderByComparator);
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByC_C_C_Last(
-			long companyId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByC_C_C_Last(
-		long companyId, long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByC_C_C_PrevAndNext(
-			long phoneId, long companyId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
 
 	/**
 	 * Removes all the phones where companyId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
@@ -1041,57 +783,6 @@ public interface PhonePersistence
 		long companyId, long classNameId, long classPK, boolean primary,
 		com.liferay.portal.kernel.util.OrderByComparator<Phone>
 			orderByComparator);
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone
-	 * @throws NoSuchPhoneException if a matching phone could not be found
-	 */
-	public Phone findByC_C_C_P_Last(
-			long companyId, long classNameId, long classPK, boolean primary,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
-
-	/**
-	 * Returns the last phone in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching phone, or <code>null</code> if a matching phone could not be found
-	 */
-	public Phone fetchByC_C_C_P_Last(
-		long companyId, long classNameId, long classPK, boolean primary,
-		com.liferay.portal.kernel.util.OrderByComparator<Phone>
-			orderByComparator);
-
-	/**
-	 * Returns the phones before and after the current phone in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param phoneId the primary key of the current phone
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next phone
-	 * @throws NoSuchPhoneException if a phone with the primary key could not be found
-	 */
-	public Phone[] findByC_C_C_P_PrevAndNext(
-			long phoneId, long companyId, long classNameId, long classPK,
-			boolean primary,
-			com.liferay.portal.kernel.util.OrderByComparator<Phone>
-				orderByComparator)
-		throws NoSuchPhoneException;
 
 	/**
 	 * Removes all the phones where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63; from the database.
@@ -1285,3 +976,4 @@ public interface PhonePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:869863562

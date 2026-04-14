@@ -326,227 +326,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection findByUuid_Last(
-			String uuid, OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (ctCollection != null) {
-			return ctCollection;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchCollectionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection fetchByUuid_Last(
-		String uuid, OrderByComparator<CTCollection> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTCollection> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where uuid = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] findByUuid_PrevAndNext(
-			long ctCollectionId, String uuid,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		uuid = Objects.toString(uuid, "");
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, ctCollection, uuid, orderByComparator, true);
-
-			array[1] = ctCollection;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, ctCollection, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection getByUuid_PrevAndNext(
-		Session session, CTCollection ctCollection, String uuid,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CTCOLLECTION_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTCollectionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -597,6 +376,15 @@ public class CTCollectionPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -692,217 +480,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] filterFindByUuid_PrevAndNext(
-			long ctCollectionId, String uuid,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByUuid_PrevAndNext(
-				ctCollectionId, uuid, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = filterGetByUuid_PrevAndNext(
-				session, ctCollection, uuid, orderByComparator, true);
-
-			array[1] = ctCollection;
-
-			array[2] = filterGetByUuid_PrevAndNext(
-				session, ctCollection, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection filterGetByUuid_PrevAndNext(
-		Session session, CTCollection ctCollection, String uuid,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTCOLLECTION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTCollection.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTCollectionImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTCollectionImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct collections where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -988,6 +565,14 @@ public class CTCollectionPersistenceImpl
 	public int filterCountByUuid(String uuid) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = findByUuid(uuid);
+
+			ctCollections = InlineSQLHelperUtil.filter(ctCollections);
+
+			return ctCollections.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1303,242 +888,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (ctCollection != null) {
-			return ctCollection;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchCollectionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTCollection> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] findByUuid_C_PrevAndNext(
-			long ctCollectionId, String uuid, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		uuid = Objects.toString(uuid, "");
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, ctCollection, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = ctCollection;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, ctCollection, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection getByUuid_C_PrevAndNext(
-		Session session, CTCollection ctCollection, String uuid, long companyId,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CTCOLLECTION_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTCollectionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -1592,6 +941,15 @@ public class CTCollectionPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1691,224 +1049,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] filterFindByUuid_C_PrevAndNext(
-			long ctCollectionId, String uuid, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByUuid_C_PrevAndNext(
-				ctCollectionId, uuid, companyId, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = filterGetByUuid_C_PrevAndNext(
-				session, ctCollection, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = ctCollection;
-
-			array[2] = filterGetByUuid_C_PrevAndNext(
-				session, ctCollection, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection filterGetByUuid_C_PrevAndNext(
-		Session session, CTCollection ctCollection, String uuid, long companyId,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTCOLLECTION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTCollection.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTCollectionImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTCollectionImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct collections where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -2003,6 +1143,14 @@ public class CTCollectionPersistenceImpl
 	public int filterCountByUuid_C(String uuid, long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = findByUuid_C(uuid, companyId);
+
+			ctCollections = InlineSQLHelperUtil.filter(ctCollections);
+
+			return ctCollections.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -2294,215 +1442,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection findByCompanyId_Last(
-			long companyId, OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (ctCollection != null) {
-			return ctCollection;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchCollectionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CTCollection> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTCollection> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] findByCompanyId_PrevAndNext(
-			long ctCollectionId, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, ctCollection, companyId, orderByComparator, true);
-
-			array[1] = ctCollection;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, ctCollection, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection getByCompanyId_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CTCOLLECTION_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTCollectionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2553,6 +1492,15 @@ public class CTCollectionPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2635,204 +1583,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] filterFindByCompanyId_PrevAndNext(
-			long ctCollectionId, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				ctCollectionId, companyId, orderByComparator);
-		}
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, ctCollection, companyId, orderByComparator, true);
-
-			array[1] = ctCollection;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, ctCollection, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection filterGetByCompanyId_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTCOLLECTION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTCollection.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTCollectionImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTCollectionImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct collections where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -2906,6 +1656,14 @@ public class CTCollectionPersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = findByCompanyId(companyId);
+
+			ctCollections = InlineSQLHelperUtil.filter(ctCollections);
+
+			return ctCollections.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -3186,229 +1944,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-
-		if (ctCollection != null) {
-			return ctCollection;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", userId=");
-		sb.append(userId);
-
-		sb.append("}");
-
-		throw new NoSuchCollectionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		int count = countByC_U(companyId, userId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTCollection> list = findByC_U(
-			companyId, userId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] findByC_U_PrevAndNext(
-			long ctCollectionId, long companyId, long userId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = getByC_U_PrevAndNext(
-				session, ctCollection, companyId, userId, orderByComparator,
-				true);
-
-			array[1] = ctCollection;
-
-			array[2] = getByC_U_PrevAndNext(
-				session, ctCollection, companyId, userId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection getByC_U_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId, long userId,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CTCOLLECTION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_U_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_U_USERID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTCollectionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3462,6 +1997,15 @@ public class CTCollectionPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_U(companyId, userId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_U(
+					companyId, userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -3548,211 +2092,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] filterFindByC_U_PrevAndNext(
-			long ctCollectionId, long companyId, long userId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_U_PrevAndNext(
-				ctCollectionId, companyId, userId, orderByComparator);
-		}
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = filterGetByC_U_PrevAndNext(
-				session, ctCollection, companyId, userId, orderByComparator,
-				true);
-
-			array[1] = ctCollection;
-
-			array[2] = filterGetByC_U_PrevAndNext(
-				session, ctCollection, companyId, userId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection filterGetByC_U_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId, long userId,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTCOLLECTION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_U_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_U_USERID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTCollection.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTCollectionImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTCollectionImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct collections where companyId = &#63; and userId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -3834,6 +2173,14 @@ public class CTCollectionPersistenceImpl
 	public int filterCountByC_U(long companyId, long userId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_U(companyId, userId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = findByC_U(companyId, userId);
+
+			ctCollections = InlineSQLHelperUtil.filter(ctCollections);
+
+			return ctCollections.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -4125,230 +2472,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection findByC_SVI_Last(
-			long companyId, long schemaVersionId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = fetchByC_SVI_Last(
-			companyId, schemaVersionId, orderByComparator);
-
-		if (ctCollection != null) {
-			return ctCollection;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", schemaVersionId=");
-		sb.append(schemaVersionId);
-
-		sb.append("}");
-
-		throw new NoSuchCollectionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection fetchByC_SVI_Last(
-		long companyId, long schemaVersionId,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		int count = countByC_SVI(companyId, schemaVersionId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTCollection> list = findByC_SVI(
-			companyId, schemaVersionId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] findByC_SVI_PrevAndNext(
-			long ctCollectionId, long companyId, long schemaVersionId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = getByC_SVI_PrevAndNext(
-				session, ctCollection, companyId, schemaVersionId,
-				orderByComparator, true);
-
-			array[1] = ctCollection;
-
-			array[2] = getByC_SVI_PrevAndNext(
-				session, ctCollection, companyId, schemaVersionId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection getByC_SVI_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId,
-		long schemaVersionId, OrderByComparator<CTCollection> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CTCOLLECTION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_SVI_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_SVI_SCHEMAVERSIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTCollectionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(schemaVersionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and schemaVersionId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -4406,6 +2529,15 @@ public class CTCollectionPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_SVI(
 				companyId, schemaVersionId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_SVI(
+					companyId, schemaVersionId, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -4492,212 +2624,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] filterFindByC_SVI_PrevAndNext(
-			long ctCollectionId, long companyId, long schemaVersionId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_SVI_PrevAndNext(
-				ctCollectionId, companyId, schemaVersionId, orderByComparator);
-		}
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = filterGetByC_SVI_PrevAndNext(
-				session, ctCollection, companyId, schemaVersionId,
-				orderByComparator, true);
-
-			array[1] = ctCollection;
-
-			array[2] = filterGetByC_SVI_PrevAndNext(
-				session, ctCollection, companyId, schemaVersionId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection filterGetByC_SVI_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId,
-		long schemaVersionId, OrderByComparator<CTCollection> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTCOLLECTION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_SVI_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_SVI_SCHEMAVERSIONID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTCollection.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTCollectionImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTCollectionImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(schemaVersionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct collections where companyId = &#63; and schemaVersionId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -4779,6 +2705,15 @@ public class CTCollectionPersistenceImpl
 	public int filterCountByC_SVI(long companyId, long schemaVersionId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_SVI(companyId, schemaVersionId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = findByC_SVI(
+				companyId, schemaVersionId);
+
+			ctCollections = InlineSQLHelperUtil.filter(ctCollections);
+
+			return ctCollections.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5067,229 +3002,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection findByC_S_Last(
-			long companyId, int status,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = fetchByC_S_Last(
-			companyId, status, orderByComparator);
-
-		if (ctCollection != null) {
-			return ctCollection;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchCollectionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	@Override
-	public CTCollection fetchByC_S_Last(
-		long companyId, int status,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		int count = countByC_S(companyId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTCollection> list = findByC_S(
-			companyId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] findByC_S_PrevAndNext(
-			long ctCollectionId, long companyId, int status,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = getByC_S_PrevAndNext(
-				session, ctCollection, companyId, status, orderByComparator,
-				true);
-
-			array[1] = ctCollection;
-
-			array[2] = getByC_S_PrevAndNext(
-				session, ctCollection, companyId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection getByC_S_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId, int status,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CTCOLLECTION_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_S_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTCollectionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -5343,6 +3055,15 @@ public class CTCollectionPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_S(companyId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_S(
+					companyId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -5429,211 +3150,6 @@ public class CTCollectionPersistenceImpl
 	}
 
 	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63; and status = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	@Override
-	public CTCollection[] filterFindByC_S_PrevAndNext(
-			long ctCollectionId, long companyId, int status,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws NoSuchCollectionException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_S_PrevAndNext(
-				ctCollectionId, companyId, status, orderByComparator);
-		}
-
-		CTCollection ctCollection = findByPrimaryKey(ctCollectionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTCollection[] array = new CTCollectionImpl[3];
-
-			array[0] = filterGetByC_S_PrevAndNext(
-				session, ctCollection, companyId, status, orderByComparator,
-				true);
-
-			array[1] = ctCollection;
-
-			array[2] = filterGetByC_S_PrevAndNext(
-				session, ctCollection, companyId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTCollection filterGetByC_S_PrevAndNext(
-		Session session, CTCollection ctCollection, long companyId, int status,
-		OrderByComparator<CTCollection> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTCOLLECTION_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_S_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_CTCOLLECTION_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTCollectionModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTCollection.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTCollectionImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTCollectionImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctCollection)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTCollection> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and status = any &#63;.
 	 *
 	 * @param companyId the company ID
@@ -5688,6 +3204,15 @@ public class CTCollectionPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_S(
 				companyId, statuses, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_S(
+					companyId, statuses, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		if (statuses == null) {
@@ -6136,6 +3661,14 @@ public class CTCollectionPersistenceImpl
 			return countByC_S(companyId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = findByC_S(companyId, status);
+
+			ctCollections = InlineSQLHelperUtil.filter(ctCollections);
+
+			return ctCollections.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_CTCOLLECTION_WHERE);
@@ -6187,6 +3720,13 @@ public class CTCollectionPersistenceImpl
 	public int filterCountByC_S(long companyId, int[] statuses) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_S(companyId, statuses);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTCollection> ctCollections = InlineSQLHelperUtil.filter(
+				findByC_S(companyId, statuses));
+
+			return ctCollections.size();
 		}
 
 		if (statuses == null) {
@@ -7326,3 +4866,4 @@ public class CTCollectionPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1515956140

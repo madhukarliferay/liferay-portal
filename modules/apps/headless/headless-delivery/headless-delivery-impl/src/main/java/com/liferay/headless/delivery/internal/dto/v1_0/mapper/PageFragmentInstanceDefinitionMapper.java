@@ -23,6 +23,7 @@ import com.liferay.headless.delivery.dto.v1_0.Fragment;
 import com.liferay.headless.delivery.dto.v1_0.FragmentField;
 import com.liferay.headless.delivery.dto.v1_0.FragmentFieldAction;
 import com.liferay.headless.delivery.dto.v1_0.FragmentFieldBackgroundImage;
+import com.liferay.headless.delivery.dto.v1_0.FragmentFieldDate;
 import com.liferay.headless.delivery.dto.v1_0.FragmentFieldHTML;
 import com.liferay.headless.delivery.dto.v1_0.FragmentFieldImage;
 import com.liferay.headless.delivery.dto.v1_0.FragmentFieldText;
@@ -69,6 +70,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -128,8 +130,7 @@ public class PageFragmentInstanceDefinitionMapper {
 		String rendererKey = fragmentEntryLink.getRendererKey();
 
 		FragmentEntry fragmentEntry = _getFragmentEntry(
-			_fragmentCollectionContributorRegistry,
-			fragmentEntryLink.getFragmentEntryId(), rendererKey);
+			_fragmentCollectionContributorRegistry, fragmentEntryLink);
 
 		return new PageFragmentInstanceDefinition() {
 			{
@@ -272,8 +273,7 @@ public class PageFragmentInstanceDefinitionMapper {
 			else {
 				value = _fragmentEntryConfigurationParser.getFieldValue(
 					fragmentEntryLink.getConfigurationJSONObject(),
-					fragmentEntryLink.getEditableValuesJSONObject(),
-					LocaleUtil.getMostRelevantLocale(), key);
+					fragmentEntryLink.getEditableValuesJSONObject(), key);
 			}
 
 			if (value == null) {
@@ -311,10 +311,9 @@ public class PageFragmentInstanceDefinitionMapper {
 	private FragmentEntry _getFragmentEntry(
 		FragmentCollectionContributorRegistry
 			fragmentCollectionContributorRegistry,
-		long fragmentEntryId, String rendererKey) {
+		FragmentEntryLink fragmentEntryLink) {
 
-		FragmentEntry fragmentEntry =
-			_fragmentEntryLocalService.fetchFragmentEntry(fragmentEntryId);
+		FragmentEntry fragmentEntry = fragmentEntryLink.fetchFragmentEntry();
 
 		if (fragmentEntry != null) {
 			return fragmentEntry;
@@ -323,7 +322,7 @@ public class PageFragmentInstanceDefinitionMapper {
 		Map<String, FragmentEntry> fragmentEntries =
 			fragmentCollectionContributorRegistry.getFragmentEntries();
 
-		return fragmentEntries.get(rendererKey);
+		return fragmentEntries.get(fragmentEntryLink.getRendererKey());
 	}
 
 	private FragmentField[] _getFragmentFields(
@@ -337,18 +336,52 @@ public class PageFragmentInstanceDefinitionMapper {
 		JSONObject editableValuesJSONObject =
 			fragmentEntryLink.getEditableValuesJSONObject();
 
-		if (editableValuesJSONObject == null) {
-			return null;
+		JSONObject processedEditableValuesJSONObject =
+			_jsonFactory.createJSONObject();
+
+		String editableValues = fragmentEntryLink.getEditableValues();
+		String fragmentEntryLinkNamespace = fragmentEntryLink.getNamespace();
+
+		if (editableValues.contains(fragmentEntryLinkNamespace)) {
+			for (String key : editableValuesJSONObject.keySet()) {
+				Object value = editableValuesJSONObject.get(key);
+
+				if (!(value instanceof JSONObject)) {
+					processedEditableValuesJSONObject.put(key, value);
+
+					continue;
+				}
+
+				JSONObject duplicatedJSONObject =
+					_jsonFactory.createJSONObject();
+
+				JSONObject jsonObject = (JSONObject)value;
+
+				for (String curKey : jsonObject.keySet()) {
+					duplicatedJSONObject.put(
+						StringUtil.replace(
+							curKey, fragmentEntryLinkNamespace,
+							"[$NAMESPACE$]"),
+						jsonObject.get(curKey));
+				}
+
+				processedEditableValuesJSONObject.put(
+					key, duplicatedJSONObject);
+			}
+		}
+
+		if (SetUtil.isEmpty(processedEditableValuesJSONObject.keySet())) {
+			processedEditableValuesJSONObject = editableValuesJSONObject;
 		}
 
 		List<FragmentField> fragmentFields = new ArrayList<>(
 			_getBackgroundImageFragmentFields(
-				editableValuesJSONObject.getJSONObject(
+				processedEditableValuesJSONObject.getJSONObject(
 					FragmentEntryProcessorConstants.
 						KEY_BACKGROUND_IMAGE_FRAGMENT_ENTRY_PROCESSOR),
 				saveMapping));
 
-		JSONObject jsonObject = editableValuesJSONObject.getJSONObject(
+		JSONObject jsonObject = processedEditableValuesJSONObject.getJSONObject(
 			FragmentEntryProcessorConstants.
 				KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
 
@@ -735,6 +768,11 @@ public class PageFragmentInstanceDefinitionMapper {
 								textJSONObject, saveInlineContent, saveMapping);
 						}
 
+						if (Objects.equals(type, "date-time")) {
+							return _toFragmentFieldDate(
+								textJSONObject, saveMapping);
+						}
+
 						if (Objects.equals(type, "html")) {
 							return _toFragmentFieldHTML(
 								textJSONObject, saveMapping);
@@ -851,6 +889,51 @@ public class PageFragmentInstanceDefinitionMapper {
 		};
 	}
 
+	private FragmentFieldDate _toFragmentFieldDate(
+		JSONObject jsonObject, boolean saveMapping) {
+
+		return new FragmentFieldDate() {
+			{
+				setDate(
+					() -> {
+						if (FragmentMappedValueUtil.isSaveFragmentMappedValue(
+								jsonObject, saveMapping)) {
+
+							return _toFragmentMappedValue(
+								_toDefaultMappingValue(jsonObject, null),
+								jsonObject);
+						}
+
+						return null;
+					});
+				setDateFormat(
+					() -> {
+						JSONObject configJSONObject = jsonObject.getJSONObject(
+							"config");
+
+						if (configJSONObject == null) {
+							return null;
+						}
+
+						JSONObject dateFormatJSONObject =
+							configJSONObject.getJSONObject("dateFormat");
+
+						if (dateFormatJSONObject == null) {
+							return null;
+						}
+
+						return new FragmentInlineValue() {
+							{
+								setValue_i18n(
+									() -> JSONUtil.toStringMap(
+										dateFormatJSONObject));
+							}
+						};
+					});
+			}
+		};
+	}
+
 	private FragmentFieldHTML _toFragmentFieldHTML(
 		JSONObject jsonObject, boolean saveMapping) {
 
@@ -944,7 +1027,6 @@ public class PageFragmentInstanceDefinitionMapper {
 		return new FragmentFieldText() {
 			{
 				setFragmentLink(() -> _toFragmentLink(jsonObject, saveMapping));
-
 				setText(
 					() -> {
 						if (FragmentMappedValueUtil.isSaveFragmentMappedValue(

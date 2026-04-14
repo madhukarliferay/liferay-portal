@@ -68,9 +68,7 @@ public class NavigationSettingsSerDes {
 			sb.append("\"targetType\": ");
 
 			sb.append("\"");
-
 			sb.append(navigationSettings.getTargetType());
-
 			sb.append("\"");
 		}
 
@@ -237,3 +235,4 @@ public class NavigationSettingsSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1789997670

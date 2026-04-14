@@ -218,56 +218,6 @@ public class AccountGroupRelUtil {
 	}
 
 	/**
-	 * Returns the last account group rel in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group rel
-	 * @throws NoSuchGroupRelException if a matching account group rel could not be found
-	 */
-	public static AccountGroupRel findByAccountGroupId_Last(
-			long accountGroupId,
-			OrderByComparator<AccountGroupRel> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupRelException {
-
-		return getPersistence().findByAccountGroupId_Last(
-			accountGroupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group rel in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group rel, or <code>null</code> if a matching account group rel could not be found
-	 */
-	public static AccountGroupRel fetchByAccountGroupId_Last(
-		long accountGroupId,
-		OrderByComparator<AccountGroupRel> orderByComparator) {
-
-		return getPersistence().fetchByAccountGroupId_Last(
-			accountGroupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account group rels before and after the current account group rel in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupRelId the primary key of the current account group rel
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group rel
-	 * @throws NoSuchGroupRelException if a account group rel with the primary key could not be found
-	 */
-	public static AccountGroupRel[] findByAccountGroupId_PrevAndNext(
-			long accountGroupRelId, long accountGroupId,
-			OrderByComparator<AccountGroupRel> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupRelException {
-
-		return getPersistence().findByAccountGroupId_PrevAndNext(
-			accountGroupRelId, accountGroupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the account group rels where accountGroupId = &#63; from the database.
 	 *
 	 * @param accountGroupId the account group ID
@@ -398,59 +348,6 @@ public class AccountGroupRelUtil {
 
 		return getPersistence().fetchByA_C_First(
 			accountGroupId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group rel in the ordered set where accountGroupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group rel
-	 * @throws NoSuchGroupRelException if a matching account group rel could not be found
-	 */
-	public static AccountGroupRel findByA_C_Last(
-			long accountGroupId, long classNameId,
-			OrderByComparator<AccountGroupRel> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupRelException {
-
-		return getPersistence().findByA_C_Last(
-			accountGroupId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group rel in the ordered set where accountGroupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group rel, or <code>null</code> if a matching account group rel could not be found
-	 */
-	public static AccountGroupRel fetchByA_C_Last(
-		long accountGroupId, long classNameId,
-		OrderByComparator<AccountGroupRel> orderByComparator) {
-
-		return getPersistence().fetchByA_C_Last(
-			accountGroupId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account group rels before and after the current account group rel in the ordered set where accountGroupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param accountGroupRelId the primary key of the current account group rel
-	 * @param accountGroupId the account group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group rel
-	 * @throws NoSuchGroupRelException if a account group rel with the primary key could not be found
-	 */
-	public static AccountGroupRel[] findByA_C_PrevAndNext(
-			long accountGroupRelId, long accountGroupId, long classNameId,
-			OrderByComparator<AccountGroupRel> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupRelException {
-
-		return getPersistence().findByA_C_PrevAndNext(
-			accountGroupRelId, accountGroupId, classNameId, orderByComparator);
 	}
 
 	/**
@@ -585,59 +482,6 @@ public class AccountGroupRelUtil {
 
 		return getPersistence().fetchByC_C_First(
 			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group rel
-	 * @throws NoSuchGroupRelException if a matching account group rel could not be found
-	 */
-	public static AccountGroupRel findByC_C_Last(
-			long classNameId, long classPK,
-			OrderByComparator<AccountGroupRel> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupRelException {
-
-		return getPersistence().findByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group rel, or <code>null</code> if a matching account group rel could not be found
-	 */
-	public static AccountGroupRel fetchByC_C_Last(
-		long classNameId, long classPK,
-		OrderByComparator<AccountGroupRel> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the account group rels before and after the current account group rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param accountGroupRelId the primary key of the current account group rel
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group rel
-	 * @throws NoSuchGroupRelException if a account group rel with the primary key could not be found
-	 */
-	public static AccountGroupRel[] findByC_C_PrevAndNext(
-			long accountGroupRelId, long classNameId, long classPK,
-			OrderByComparator<AccountGroupRel> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupRelException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			accountGroupRelId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -901,3 +745,4 @@ public class AccountGroupRelUtil {
 	private static volatile AccountGroupRelPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-76988344

@@ -75,9 +75,7 @@ public class HistogramMetricSerDes {
 			sb.append("\"unit\": ");
 
 			sb.append("\"");
-
 			sb.append(histogramMetric.getUnit());
-
 			sb.append("\"");
 		}
 
@@ -278,3 +276,4 @@ public class HistogramMetricSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1707367955

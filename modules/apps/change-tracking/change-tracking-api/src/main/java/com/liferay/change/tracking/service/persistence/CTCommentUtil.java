@@ -214,54 +214,6 @@ public class CTCommentUtil {
 	}
 
 	/**
-	 * Returns the last ct comment in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct comment
-	 * @throws NoSuchCommentException if a matching ct comment could not be found
-	 */
-	public static CTComment findByCtCollectionId_Last(
-			long ctCollectionId, OrderByComparator<CTComment> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCommentException {
-
-		return getPersistence().findByCtCollectionId_Last(
-			ctCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct comment in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct comment, or <code>null</code> if a matching ct comment could not be found
-	 */
-	public static CTComment fetchByCtCollectionId_Last(
-		long ctCollectionId, OrderByComparator<CTComment> orderByComparator) {
-
-		return getPersistence().fetchByCtCollectionId_Last(
-			ctCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct comments before and after the current ct comment in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCommentId the primary key of the current ct comment
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct comment
-	 * @throws NoSuchCommentException if a ct comment with the primary key could not be found
-	 */
-	public static CTComment[] findByCtCollectionId_PrevAndNext(
-			long ctCommentId, long ctCollectionId,
-			OrderByComparator<CTComment> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCommentException {
-
-		return getPersistence().findByCtCollectionId_PrevAndNext(
-			ctCommentId, ctCollectionId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ct comments where ctCollectionId = &#63; from the database.
 	 *
 	 * @param ctCollectionId the ct collection ID
@@ -380,54 +332,6 @@ public class CTCommentUtil {
 
 		return getPersistence().fetchByCtEntryId_First(
 			ctEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct comment in the ordered set where ctEntryId = &#63;.
-	 *
-	 * @param ctEntryId the ct entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct comment
-	 * @throws NoSuchCommentException if a matching ct comment could not be found
-	 */
-	public static CTComment findByCtEntryId_Last(
-			long ctEntryId, OrderByComparator<CTComment> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCommentException {
-
-		return getPersistence().findByCtEntryId_Last(
-			ctEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct comment in the ordered set where ctEntryId = &#63;.
-	 *
-	 * @param ctEntryId the ct entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct comment, or <code>null</code> if a matching ct comment could not be found
-	 */
-	public static CTComment fetchByCtEntryId_Last(
-		long ctEntryId, OrderByComparator<CTComment> orderByComparator) {
-
-		return getPersistence().fetchByCtEntryId_Last(
-			ctEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct comments before and after the current ct comment in the ordered set where ctEntryId = &#63;.
-	 *
-	 * @param ctCommentId the primary key of the current ct comment
-	 * @param ctEntryId the ct entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct comment
-	 * @throws NoSuchCommentException if a ct comment with the primary key could not be found
-	 */
-	public static CTComment[] findByCtEntryId_PrevAndNext(
-			long ctCommentId, long ctEntryId,
-			OrderByComparator<CTComment> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCommentException {
-
-		return getPersistence().findByCtEntryId_PrevAndNext(
-			ctCommentId, ctEntryId, orderByComparator);
 	}
 
 	/**
@@ -607,3 +511,4 @@ public class CTCommentUtil {
 	private static volatile CTCommentPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1111239426

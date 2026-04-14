@@ -8,6 +8,7 @@ package com.liferay.object.internal.deployer;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryOrganizationRelLocalService;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationCategory;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.notification.handler.NotificationHandler;
@@ -42,6 +43,7 @@ import com.liferay.object.internal.workflow.ObjectEntryWorkflowHandler;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectLayout;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.related.models.ObjectRelatedModelsPredicateProvider;
@@ -60,8 +62,6 @@ import com.liferay.object.service.ObjectLayoutLocalService;
 import com.liferay.object.service.ObjectLayoutTabLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectViewLocalService;
-import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
-import com.liferay.object.tree.Edge;
 import com.liferay.object.tree.Node;
 import com.liferay.object.tree.ObjectDefinitionTreeFactory;
 import com.liferay.object.tree.Tree;
@@ -87,20 +87,20 @@ import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.trash.TrashHandler;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
-import com.liferay.portal.language.override.service.PLOEntryLocalService;
-import com.liferay.portal.search.batch.DynamicQueryBatchIndexingActionableFactory;
 import com.liferay.portal.search.localization.SearchLocalizationHelper;
+import com.liferay.portal.search.ml.embedding.text.TextEmbeddingDocumentContributor;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 import com.liferay.portal.search.spi.model.index.contributor.ModelIndexerWriterContributor;
 import com.liferay.portal.search.spi.model.query.contributor.KeywordQueryContributor;
 import com.liferay.portal.search.spi.model.query.contributor.ModelPreFilterContributor;
 import com.liferay.portal.search.spi.model.registrar.ModelSearchConfigurator;
 import com.liferay.portal.search.spi.model.result.contributor.ModelSummaryContributor;
+import com.liferay.portal.workflow.kaleo.service.KaleoDefinitionLocalService;
 import com.liferay.sharing.security.permission.SharingPermissionChecker;
 import com.liferay.sharing.security.permission.resource.SharingModelResourcePermissionConfigurator;
 import com.liferay.user.associated.data.anonymizer.UADAnonymizer;
@@ -131,9 +131,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			accountEntryOrganizationRelLocalService,
 		AssetEntryLocalService assetEntryLocalService,
 		BundleContext bundleContext,
-		DynamicQueryBatchIndexingActionableFactory
-			dynamicQueryBatchIndexingActionableFactory,
+		DLFileEntryLocalService dlFileEntryLocalService,
 		GroupLocalService groupLocalService,
+		KaleoDefinitionLocalService kaleoDefinitionLocalService,
 		ListTypeLocalService listTypeLocalService,
 		ObjectActionLocalService objectActionLocalService,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
@@ -148,8 +148,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		ObjectRelationshipLocalService objectRelationshipLocalService,
 		ObjectScopeProviderRegistry objectScopeProviderRegistry,
 		ObjectViewLocalService objectViewLocalService,
-		OrganizationLocalService organizationLocalService,
-		PLOEntryLocalService ploEntryLocalService, Portal portal,
+		OrganizationLocalService organizationLocalService, Portal portal,
 		PortletLocalService portletLocalService,
 		ResourceActions resourceActions, UserLocalService userLocalService,
 		ResourcePermissionLocalService resourcePermissionLocalService,
@@ -157,6 +156,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		SharingModelResourcePermissionConfigurator
 			sharingModelResourcePermissionConfigurator,
 		SystemEventLocalService systemEventLocalService,
+		TextEmbeddingDocumentContributor textEmbeddingDocumentContributor,
 		WorkflowDefinitionLinkLocalService workflowDefinitionLinkLocalService,
 		ModelPreFilterContributor workflowStatusModelPreFilterContributor,
 		UserGroupRoleLocalService userGroupRoleLocalService) {
@@ -166,9 +166,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			accountEntryOrganizationRelLocalService;
 		_assetEntryLocalService = assetEntryLocalService;
 		_bundleContext = bundleContext;
-		_dynamicQueryBatchIndexingActionableFactory =
-			dynamicQueryBatchIndexingActionableFactory;
+		_dlFileEntryLocalService = dlFileEntryLocalService;
 		_groupLocalService = groupLocalService;
+		_kaleoDefinitionLocalService = kaleoDefinitionLocalService;
 		_listTypeLocalService = listTypeLocalService;
 		_objectActionLocalService = objectActionLocalService;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
@@ -185,7 +185,6 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		_objectScopeProviderRegistry = objectScopeProviderRegistry;
 		_objectViewLocalService = objectViewLocalService;
 		_organizationLocalService = organizationLocalService;
-		_ploEntryLocalService = ploEntryLocalService;
 		_portal = portal;
 		_portletLocalService = portletLocalService;
 		_resourceActions = resourceActions;
@@ -195,6 +194,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		_sharingModelResourcePermissionConfigurator =
 			sharingModelResourcePermissionConfigurator;
 		_systemEventLocalService = systemEventLocalService;
+		_textEmbeddingDocumentContributor = textEmbeddingDocumentContributor;
 		_workflowDefinitionLinkLocalService =
 			workflowDefinitionLinkLocalService;
 		_workflowStatusModelPreFilterContributor =
@@ -212,10 +212,6 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		Map<String, List<ServiceRegistration<?>>> serviceRegistrationsMap =
 			new ConcurrentHashMap<>();
 
-		Map<Long, List<ObjectAction>> objectActionsMap =
-			_objectActionLocalService.getObjectActionsMap(
-				companyId, true, ObjectActionTriggerConstants.KEY_STANDALONE);
-
 		if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-34594")) {
 			ObjectDefinitionTreeUtil.populateRootObjectDefinitionIds(
 				objectDefinitions,
@@ -226,6 +222,11 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 							NAME_ROOT_OBJECT_DEFINITION_IDS));
 		}
 
+		Map<Long, List<ObjectAction>> objectActionsMap =
+			_objectActionLocalService.getObjectActionsMap(
+				companyId, true, ObjectActionTriggerConstants.KEY_STANDALONE);
+		Map<Long, List<ObjectField>> objectFieldsMap =
+			_objectFieldLocalService.getObjectFieldsMap(companyId);
 		Map<Long, List<ObjectLayout>> objectLayoutsMap =
 			_objectLayoutLocalService.getObjectLayoutsMap(companyId);
 		Map<Long, List<ObjectRelationship>> objectRelationshipsMap =
@@ -238,12 +239,14 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			serviceRegistrationsMap.put(
 				DBPartitionUtil.getPartitionKey(objectDefinitionId),
 				_deploy(
+					objectActionsMap.getOrDefault(
+						objectDefinitionId, Collections.emptyList()),
 					objectDefinition,
+					objectFieldsMap.getOrDefault(
+						objectDefinitionId, Collections.emptyList()),
 					objectLayoutsMap.getOrDefault(
 						objectDefinitionId, Collections.emptyList()),
-					objectRelationshipsMap,
-					objectActionsMap.getOrDefault(
-						objectDefinitionId, Collections.emptyList())));
+					objectRelationshipsMap));
 		}
 
 		return serviceRegistrationsMap;
@@ -253,7 +256,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	public List<ServiceRegistration<?>> deploy(
 		ObjectDefinition objectDefinition) {
 
-		return _deploy(objectDefinition, null, null, null);
+		return _deploy(null, objectDefinition, null, null, null);
 	}
 
 	@Override
@@ -271,9 +274,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	}
 
 	private List<ServiceRegistration<?>> _deploy(
-		ObjectDefinition objectDefinition, List<ObjectLayout> objectLayouts,
-		Map<Long, List<ObjectRelationship>> objectRelationshipsMap,
-		List<ObjectAction> standaloneObjectActions) {
+		List<ObjectAction> objectActions, ObjectDefinition objectDefinition,
+		List<ObjectField> objectFields, List<ObjectLayout> objectLayouts,
+		Map<Long, List<ObjectRelationship>> objectRelationshipsMap) {
 
 		if (objectDefinition.isUnmodifiableSystemObject()) {
 			return Collections.emptyList();
@@ -281,12 +284,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 		try {
 			ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-				_objectActionLocalService, objectDefinition,
-				objectRelationshipsMap,
-				(ObjectDefinitionPersistence)
-					_objectDefinitionLocalService.getBasePersistence(),
-				_objectDefinitionTreeFactory, _portletLocalService,
-				_resourceActions, standaloneObjectActions);
+				_objectActionLocalService, objectActions, objectDefinition,
+				_objectFieldLocalService, objectFields, _portletLocalService,
+				_resourceActions);
 		}
 		catch (Exception exception) {
 			return ReflectionUtil.throwException(exception);
@@ -298,9 +298,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			ObjectEntryModelIndexerWriterContributor
 				objectEntryModelIndexerWriterContributor =
 					new ObjectEntryModelIndexerWriterContributor(
-						_dynamicQueryBatchIndexingActionableFactory,
-						objectDefinition.getObjectDefinitionId(),
-						_objectEntryLocalService);
+						objectDefinition, _objectDefinitionLocalService,
+						_objectEntryLocalService, _objectFieldLocalService,
+						_objectFolderLocalService);
 			ObjectEntryModelSummaryContributor
 				objectEntryModelSummaryContributor =
 					new ObjectEntryModelSummaryContributor();
@@ -322,11 +322,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					ModelDocumentContributor.class,
 					new ObjectEntryModelDocumentContributor(
 						_accountEntryOrganizationRelLocalService,
-						objectDefinition.getClassName(),
-						_objectDefinitionLocalService,
+						_dlFileEntryLocalService,
 						_objectEntryFolderLocalService,
-						_objectEntryLocalService, _objectFieldLocalService,
-						_objectFolderLocalService),
+						_textEmbeddingDocumentContributor),
 					HashMapDictionaryBuilder.<String, Object>put(
 						"indexer.class.name", objectDefinition.getClassName()
 					).build()),
@@ -447,80 +445,76 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					_objectFieldLocalService,
 					_objectRelationshipLocalService)));
 
-		if (!objectDefinition.isRootDescendantNode()) {
-			ConsumerSupplier<ModelResourcePermissionLogic<ObjectEntry>>
-				consumerSupplier = new ConsumerSupplier<>();
-			PortletResourcePermission portletResourcePermission =
-				PortletResourcePermissionFactory.create(
-					objectDefinition.getResourceName(),
-					new ObjectEntryPortletResourcePermissionLogic(
-						_accountEntryLocalService, _groupLocalService,
-						_objectDefinitionLocalService,
-						_organizationLocalService));
+		ConsumerSupplier<ModelResourcePermissionLogic<ObjectEntry>>
+			consumerSupplier = new ConsumerSupplier<>();
+		PortletResourcePermission portletResourcePermission =
+			PortletResourcePermissionFactory.create(
+				objectDefinition.getResourceName(),
+				new ObjectEntryPortletResourcePermissionLogic(
+					_accountEntryLocalService, _groupLocalService,
+					_objectDefinitionLocalService, _organizationLocalService));
 
-			ModelResourcePermission<ObjectEntry> modelResourcePermission =
-				new ObjectEntryModelResourcePermission(
-					_accountEntryLocalService,
-					_accountEntryOrganizationRelLocalService,
-					_groupLocalService, objectDefinition.getClassName(),
-					_objectActionLocalService, _objectDefinitionLocalService,
-					_objectEntryLocalService, consumerSupplier,
-					_objectFieldLocalService, portletResourcePermission,
-					_resourcePermissionLocalService,
-					_userGroupRoleLocalService);
+		ModelResourcePermission<ObjectEntry> modelResourcePermission =
+			new ObjectEntryModelResourcePermission(
+				_accountEntryLocalService,
+				_accountEntryOrganizationRelLocalService, _groupLocalService,
+				objectDefinition.getClassName(), _objectActionLocalService,
+				_objectDefinitionLocalService, _objectEntryLocalService,
+				consumerSupplier, _objectFieldLocalService,
+				portletResourcePermission, _resourcePermissionLocalService,
+				_userGroupRoleLocalService);
 
-			serviceRegistrations.add(
-				_bundleContext.registerService(
-					ModelResourcePermission.class, modelResourcePermission,
-					HashMapDictionaryBuilder.<String, Object>put(
-						"com.liferay.object", "true"
-					).put(
-						"model.class.name", objectDefinition.getClassName()
-					).build()));
+		serviceRegistrations.add(
+			_bundleContext.registerService(
+				ModelResourcePermission.class, modelResourcePermission,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"com.liferay.object", "true"
+				).put(
+					"model.class.name", objectDefinition.getClassName()
+				).build()));
 
-			serviceRegistrations.add(
-				_bundleContext.registerService(
-					PortletResourcePermission.class, portletResourcePermission,
-					HashMapDictionaryBuilder.<String, Object>put(
-						"com.liferay.object", "true"
-					).put(
-						"resource.name", objectDefinition.getResourceName()
-					).build()));
+		serviceRegistrations.add(
+			_bundleContext.registerService(
+				PortletResourcePermission.class, portletResourcePermission,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"com.liferay.object", "true"
+				).put(
+					"resource.name", objectDefinition.getResourceName()
+				).build()));
 
-			_sharingModelResourcePermissionConfigurator.configure(
-				modelResourcePermission, consumerSupplier);
+		_sharingModelResourcePermissionConfigurator.configure(
+			modelResourcePermission, consumerSupplier);
 
-			serviceRegistrations.add(
-				_bundleContext.registerService(
-					SharingPermissionChecker.class,
-					new ObjectEntrySharingPermissionChecker(
-						modelResourcePermission),
-					HashMapDictionaryBuilder.<String, Object>put(
-						"com.liferay.object", "true"
-					).put(
-						"model.class.name", objectDefinition.getClassName()
-					).build()));
+		serviceRegistrations.add(
+			_bundleContext.registerService(
+				SharingPermissionChecker.class,
+				new ObjectEntrySharingPermissionChecker(
+					modelResourcePermission),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"com.liferay.object", "true"
+				).put(
+					"model.class.name", objectDefinition.getClassName()
+				).build()));
 
-			serviceRegistrations.add(
-				_bundleContext.registerService(
-					TrashHandler.class,
-					new ObjectEntryTrashHandler(
-						objectDefinition, _objectDefinitionLocalService,
-						_objectEntryService, _systemEventLocalService),
-					HashMapDictionaryBuilder.<String, Object>put(
-						"model.class.name", objectDefinition.getClassName()
-					).build()));
-			serviceRegistrations.add(
-				_bundleContext.registerService(
-					WorkflowHandler.class,
-					new ObjectEntryWorkflowHandler(
-						objectDefinition, _objectDefinitionLocalService,
-						_objectEntryLocalService,
-						_workflowDefinitionLinkLocalService),
-					HashMapDictionaryBuilder.<String, Object>put(
-						"model.class.name", objectDefinition.getClassName()
-					).build()));
-		}
+		serviceRegistrations.add(
+			_bundleContext.registerService(
+				TrashHandler.class,
+				new ObjectEntryTrashHandler(
+					objectDefinition, _objectDefinitionLocalService,
+					_objectEntryService, _systemEventLocalService),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"model.class.name", objectDefinition.getClassName()
+				).build()));
+		serviceRegistrations.add(
+			_bundleContext.registerService(
+				WorkflowHandler.class,
+				new ObjectEntryWorkflowHandler(
+					_kaleoDefinitionLocalService, objectDefinition,
+					_objectDefinitionLocalService, _objectEntryLocalService,
+					_workflowDefinitionLinkLocalService),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"model.class.name", objectDefinition.getClassName()
+				).build()));
 
 		ObjectLayout objectLayout = null;
 
@@ -552,9 +546,11 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 				objectRelationships);
 
 		try {
-			if (objectDefinition.isRootNode()) {
+			if (ArrayUtil.isNotEmpty(
+					objectDefinition.getRootObjectDefinitionIds())) {
+
 				_registerRootObjectLayoutTabScreenNavigationCategories(
-					objectDefinition.getRootObjectDefinitionId());
+					objectDefinition.getObjectDefinitionId());
 			}
 		}
 		catch (PortalException portalException) {
@@ -582,10 +578,11 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	}
 
 	private void _registerRootObjectLayoutTabScreenNavigationCategories(
-			long rootObjectDefinitionId)
+			long objectDefinitionId)
 		throws PortalException {
 
-		Tree tree = _objectDefinitionTreeFactory.create(rootObjectDefinitionId);
+		Tree tree = _objectDefinitionTreeFactory.create(
+			false, true, objectDefinitionId);
 
 		Iterator<Node> iterator = tree.iterator();
 
@@ -593,31 +590,16 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			Node node = iterator.next();
 
 			ObjectDefinition objectDefinition =
-				_objectDefinitionLocalService.fetchObjectDefinition(
+				_objectDefinitionLocalService.getObjectDefinition(
 					node.getPrimaryKey());
 
-			if (objectDefinition == null) {
-				continue;
-			}
+			List<ObjectRelationship> objectRelationships =
+				_objectRelationshipLocalService.getObjectRelationships(
+					objectDefinition.getObjectDefinitionId());
 
-			List<Node> childNodes = node.getChildNodes();
-
-			if (ListUtil.isEmpty(childNodes)) {
+			for (ObjectRelationship objectRelationship : objectRelationships) {
 				_registerRootObjectLayoutTabScreenNavigationCategory(
-					objectDefinition, null);
-
-				continue;
-			}
-
-			for (int i = childNodes.size() - 1; i >= 0; i--) {
-				Node childNode = childNodes.get(i);
-
-				Edge edge = childNode.getEdge();
-
-				_registerRootObjectLayoutTabScreenNavigationCategory(
-					objectDefinition,
-					_objectRelationshipLocalService.fetchObjectRelationship(
-						edge.getObjectRelationshipId()));
+					objectDefinition, objectRelationship);
 			}
 
 			_registerRootObjectLayoutTabScreenNavigationCategory(
@@ -655,9 +637,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		_accountEntryOrganizationRelLocalService;
 	private final AssetEntryLocalService _assetEntryLocalService;
 	private final BundleContext _bundleContext;
-	private final DynamicQueryBatchIndexingActionableFactory
-		_dynamicQueryBatchIndexingActionableFactory;
+	private final DLFileEntryLocalService _dlFileEntryLocalService;
 	private final GroupLocalService _groupLocalService;
+	private final KaleoDefinitionLocalService _kaleoDefinitionLocalService;
 	private final ListTypeLocalService _listTypeLocalService;
 	private final ObjectActionLocalService _objectActionLocalService;
 	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
@@ -676,7 +658,6 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 	private final ObjectViewLocalService _objectViewLocalService;
 	private final OrganizationLocalService _organizationLocalService;
-	private final PLOEntryLocalService _ploEntryLocalService;
 	private final Portal _portal;
 	private final PortletLocalService _portletLocalService;
 	private final ResourceActions _resourceActions;
@@ -688,6 +669,8 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	private final SharingModelResourcePermissionConfigurator
 		_sharingModelResourcePermissionConfigurator;
 	private final SystemEventLocalService _systemEventLocalService;
+	private final TextEmbeddingDocumentContributor
+		_textEmbeddingDocumentContributor;
 	private final UserGroupRoleLocalService _userGroupRoleLocalService;
 	private final UserLocalService _userLocalService;
 	private final WorkflowDefinitionLinkLocalService

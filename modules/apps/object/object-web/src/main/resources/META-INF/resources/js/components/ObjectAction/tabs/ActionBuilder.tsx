@@ -25,6 +25,7 @@ import './ActionBuilder.scss';
 interface ActionBuilderProps {
 	disableGroovyAction: boolean;
 	errors: ActionError;
+	hasUserNotificationHandler: boolean;
 	isApproved: boolean;
 	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: ObjectActionTriggerExecutorItem[];
@@ -51,6 +52,7 @@ const triggerKeys = [
 	'onAfterAdd',
 	'onAfterAttachmentDownload',
 	'onAfterDelete',
+	'onAfterLogin',
 	'onAfterRootUpdate',
 	'onAfterUpdate',
 ];
@@ -58,6 +60,7 @@ const triggerKeys = [
 export default function ActionBuilder({
 	disableGroovyAction,
 	errors,
+	hasUserNotificationHandler,
 	isApproved,
 	objectActionCodeEditorElements,
 	objectActionExecutors,
@@ -236,7 +239,7 @@ export default function ActionBuilder({
 				</ClayAlert>
 			)}
 
-			{Liferay.FeatureFlags['LPD-32050'] && hasLocalizedField && (
+			{hasLocalizedField && (
 				<ClayAlert
 					className="lfr-objects__side-panel-content-container"
 					displayType="info"
@@ -344,6 +347,7 @@ export default function ActionBuilder({
 				currentObjectDefinitionFields={currentObjectDefinitionFields}
 				disableGroovyAction={disableGroovyAction}
 				errors={errors}
+				hasUserNotificationHandler={hasUserNotificationHandler}
 				newObjectActionExecutors={newObjectActionExecutors}
 				objectActionCodeEditorElements={objectActionCodeEditorElements}
 				objectActionExecutors={objectActionExecutors}

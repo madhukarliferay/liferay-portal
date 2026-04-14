@@ -7,10 +7,12 @@ package com.liferay.change.tracking.web.internal.display.context;
 
 import com.liferay.change.tracking.model.CTEntry;
 import com.liferay.change.tracking.spi.display.CTDisplayRendererRegistry;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.Table;
 import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -38,6 +40,7 @@ import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.portal.search.sort.SortOrder;
 import com.liferay.portal.search.sort.Sorts;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +50,50 @@ import java.util.Set;
  * @author Samuel Trong Tran
  */
 public class DisplayContextUtil {
+
+	public static Map<Long, Document> getCTEntryDocuments(
+		long ctCollectionId, ThemeDisplay themeDisplay) {
+
+		Searcher searcher = _searcherSnapshot.get();
+
+		SearchRequestBuilderFactory searchRequestBuilderFactory =
+			_searchRequestBuilderFactorySnapshot.get();
+
+		SearchRequestBuilder searchRequestBuilder =
+			searchRequestBuilderFactory.builder(
+			).companyId(
+				themeDisplay.getCompanyId()
+			).emptySearchEnabled(
+				true
+			).fields(
+				"changeType", Field.ENTRY_CLASS_PK, Field.GROUP_ID,
+				"modelClassNameId", "modelClassPK", Field.MODIFIED_DATE,
+				Field.STATUS,
+				Field.getLocalizedName(themeDisplay.getLocale(), Field.TITLE)
+			).modelIndexerClasses(
+				CTEntry.class
+			).withSearchContext(
+				searchContext -> {
+					searchContext.setAttribute(
+						"ctCollectionId", ctCollectionId);
+					searchContext.setAttribute("showHideable", Boolean.TRUE);
+				}
+			);
+
+		SearchResponse searchResponse = searcher.search(
+			searchRequestBuilder.build());
+
+		List<Document> documents = searchResponse.getDocuments();
+
+		Map<Long, Document> ctEntryDocuments = new HashMap<>(documents.size());
+
+		for (Document document : documents) {
+			ctEntryDocuments.put(
+				document.getLong(Field.ENTRY_CLASS_PK), document);
+		}
+
+		return ctEntryDocuments;
+	}
 
 	public static Map<Long, String> getSiteNames(
 		long ctCollectionId, boolean showHideable, ThemeDisplay themeDisplay) {
@@ -185,16 +232,22 @@ public class DisplayContextUtil {
 
 		JSONObject userInfoJSONObject = JSONFactoryUtil.createJSONObject();
 
-		List<User> users = userLocalService.dslQuery(
-			DSLQueryFactoryUtil.selectDistinct(
-				UserTable.INSTANCE
-			).from(
-				UserTable.INSTANCE
-			).innerJoinON(
-				innerJoinTable, innerJoinPredicate
-			).where(
-				wherePredicate
-			));
+		List<User> users = null;
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setProductionModeWithSafeCloseable()) {
+
+			users = userLocalService.dslQuery(
+				DSLQueryFactoryUtil.selectDistinct(
+					UserTable.INSTANCE
+				).from(
+					UserTable.INSTANCE
+				).innerJoinON(
+					innerJoinTable, innerJoinPredicate
+				).where(
+					wherePredicate
+				));
+		}
 
 		for (User user : users) {
 			String portraitURL = StringPool.BLANK;

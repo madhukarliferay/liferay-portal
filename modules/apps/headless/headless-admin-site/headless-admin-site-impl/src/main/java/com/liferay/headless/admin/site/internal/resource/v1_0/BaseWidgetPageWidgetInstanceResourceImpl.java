@@ -1,10 +1,11 @@
 /**
- * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.headless.admin.site.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.admin.site.dto.v1_0.WidgetPageWidgetInstance;
 import com.liferay.headless.admin.site.resource.v1_0.WidgetPageWidgetInstanceResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -103,80 +104,20 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public void
-			deleteSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
-				String widgetInstanceExternalReferenceCode)
+	public void deleteSiteSitePageWidgetInstance(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
+			String widgetInstanceExternalReferenceCode)
 		throws Exception {
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Operation(
-		description = "Retrieves all the widget instances of a widget page."
-	)
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "siteExternalReferenceCode"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "sitePageExternalReferenceCode"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "fields"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "nestedFields"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "restrictFields"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(
-				name = "WidgetPageWidgetInstance"
-			)
-		}
-	)
-	@jakarta.ws.rs.GET
-	@jakarta.ws.rs.Path(
-		"/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances"
-	)
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public Page<WidgetPageWidgetInstance>
-			getSiteSiteByExternalReferenceCodeSitePageWidgetInstancesPage(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode)
-		throws Exception {
-
-		return Page.of(Collections.emptyList());
 	}
 
 	/**
@@ -228,29 +169,86 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public WidgetPageWidgetInstance
-			getSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
-				String widgetInstanceExternalReferenceCode)
+	public WidgetPageWidgetInstance getSiteSitePageWidgetInstance(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
+			String widgetInstanceExternalReferenceCode)
 		throws Exception {
 
-		return new WidgetPageWidgetInstance();
+		return null;
 	}
 
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances/{widgetInstanceExternalReferenceCode}' -d $'{"externalReferenceCode": ___, "parentSectionId": ___, "parentWidgetInstanceExternalReferenceCode": ___, "position": ___, "widgetConfig": ___, "widgetInstanceId": ___, "widgetLookAndFeelConfig": ___, "widgetName": ___, "widgetPermissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'GET' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Retrieves all the widget instances of a widget page."
+	)
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteExternalReferenceCode"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "sitePageExternalReferenceCode"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "fields"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "nestedFields"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "restrictFields"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "WidgetPageWidgetInstance"
+			)
+		}
+	)
+	@jakarta.ws.rs.GET
+	@jakarta.ws.rs.Path(
+		"/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances"
+	)
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public Page<WidgetPageWidgetInstance> getSiteSitePageWidgetInstancesPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode)
+		throws Exception {
+
+		return Page.of(Collections.emptyList());
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances/{widgetInstanceExternalReferenceCode}' -d $'{"externalReferenceCode": ___, "parentSectionId": ___, "parentWidgetInstanceExternalReferenceCode": ___, "position": ___, "type": ___, "widgetConfig": ___, "widgetInstanceId": ___, "widgetLookAndFeelConfig": ___, "widgetName": ___, "widgetPermissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates a widget instance of a widget page or widget page template within a site. Updates only the fields received in the request body, leaving any other fields untouched."
@@ -297,25 +295,24 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public WidgetPageWidgetInstance
-			patchSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
-				String widgetInstanceExternalReferenceCode,
-				WidgetPageWidgetInstance widgetPageWidgetInstance)
+	public WidgetPageWidgetInstance patchSiteSitePageWidgetInstance(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
+			String widgetInstanceExternalReferenceCode,
+			WidgetPageWidgetInstance widgetPageWidgetInstance)
 		throws Exception {
 
 		WidgetPageWidgetInstance existingWidgetPageWidgetInstance =
-			getSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
+			getSiteSitePageWidgetInstance(
 				siteExternalReferenceCode, sitePageExternalReferenceCode,
 				widgetInstanceExternalReferenceCode);
 
@@ -343,6 +340,11 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 				widgetPageWidgetInstance.getPosition());
 		}
 
+		if (widgetPageWidgetInstance.getType() != null) {
+			existingWidgetPageWidgetInstance.setType(
+				widgetPageWidgetInstance.getType());
+		}
+
 		if (widgetPageWidgetInstance.getWidgetConfig() != null) {
 			existingWidgetPageWidgetInstance.setWidgetConfig(
 				widgetPageWidgetInstance.getWidgetConfig());
@@ -361,7 +363,7 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 		preparePatch(
 			widgetPageWidgetInstance, existingWidgetPageWidgetInstance);
 
-		return putSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
+		return putSiteSitePageWidgetInstance(
 			siteExternalReferenceCode, sitePageExternalReferenceCode,
 			widgetInstanceExternalReferenceCode,
 			existingWidgetPageWidgetInstance);
@@ -370,7 +372,7 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances' -d $'{"externalReferenceCode": ___, "parentSectionId": ___, "parentWidgetInstanceExternalReferenceCode": ___, "position": ___, "widgetConfig": ___, "widgetInstanceId": ___, "widgetLookAndFeelConfig": ___, "widgetName": ___, "widgetPermissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances' -d $'{"externalReferenceCode": ___, "parentSectionId": ___, "parentWidgetInstanceExternalReferenceCode": ___, "position": ___, "type": ___, "widgetConfig": ___, "widgetInstanceId": ___, "widgetLookAndFeelConfig": ___, "widgetName": ___, "widgetPermissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Adds a new widget instance to a widget page."
@@ -413,26 +415,25 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 	@jakarta.ws.rs.POST
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public WidgetPageWidgetInstance
-			postSiteSiteByExternalReferenceCodeSitePageWidgetInstance(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode,
-				WidgetPageWidgetInstance widgetPageWidgetInstance)
+	public WidgetPageWidgetInstance postSiteSitePageWidgetInstance(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
+			WidgetPageWidgetInstance widgetPageWidgetInstance)
 		throws Exception {
 
-		return new WidgetPageWidgetInstance();
+		return null;
 	}
 
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances/{widgetInstanceExternalReferenceCode}' -d $'{"externalReferenceCode": ___, "parentSectionId": ___, "parentWidgetInstanceExternalReferenceCode": ___, "position": ___, "widgetConfig": ___, "widgetInstanceId": ___, "widgetLookAndFeelConfig": ___, "widgetName": ___, "widgetPermissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances/{widgetInstanceExternalReferenceCode}' -d $'{"externalReferenceCode": ___, "parentSectionId": ___, "parentWidgetInstanceExternalReferenceCode": ___, "position": ___, "type": ___, "widgetConfig": ___, "widgetInstanceId": ___, "widgetLookAndFeelConfig": ___, "widgetName": ___, "widgetPermissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates a widget instance of a widget page or widget page template within a site."
@@ -479,24 +480,23 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@jakarta.ws.rs.PUT
 	@Override
-	public WidgetPageWidgetInstance
-			putSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
-				String widgetInstanceExternalReferenceCode,
-				WidgetPageWidgetInstance widgetPageWidgetInstance)
+	public WidgetPageWidgetInstance putSiteSitePageWidgetInstance(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("widgetInstanceExternalReferenceCode")
+			String widgetInstanceExternalReferenceCode,
+			WidgetPageWidgetInstance widgetPageWidgetInstance)
 		throws Exception {
 
-		return new WidgetPageWidgetInstance();
+		return null;
 	}
 
 	@Override
@@ -573,6 +573,15 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1159,3 +1168,4 @@ public abstract class BaseWidgetPageWidgetInstanceResourceImpl
 		LogFactoryUtil.getLog(BaseWidgetPageWidgetInstanceResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:879996581

@@ -244,9 +244,7 @@ public class ObjectValidationRuleSerDes {
 			sb.append("\"outputType\": ");
 
 			sb.append("\"");
-
 			sb.append(objectValidationRule.getOutputType());
-
 			sb.append("\"");
 		}
 
@@ -725,3 +723,4 @@ public class ObjectValidationRuleSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1346924962

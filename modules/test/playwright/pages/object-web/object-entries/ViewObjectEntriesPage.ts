@@ -7,25 +7,34 @@ import {ObjectField} from '@liferay/object-admin-rest-client-js';
 import {FrameLocator, Locator, Page, expect} from '@playwright/test';
 import path from 'path';
 
-import {getFDSDateFormat} from '../../../tests/object-web/main/utils/dateFormat';
+import {
+	getFDSDateFormat,
+	getFDSDateTimeFormat,
+} from '../../../tests/object-web/utils/dateFormat';
 import {PORTLET_URLS} from '../../../utils/portletUrls';
 
-import type {SupportedBusinessType} from '../../../tests/object-web/main/utils/generateObjectEntry';
+import type {SupportedBusinessType} from '../../../tests/object-web/utils/generateObjectEntry';
 
 export class ViewObjectEntriesPage {
-	readonly addObjectEntryButton: Locator;
 	readonly backButton: Locator;
+	readonly bulkActionButton: Locator;
 	readonly cancelObjectEntryButton: Locator;
 	readonly dateTimeInput: Locator;
+	readonly deleteAllConfirmationModal: Locator;
+	readonly deleteConfirmationModal: Locator;
 	readonly deletionConfirmationModal: Locator;
 	readonly deleteFileButton: Locator;
+	readonly deleteMenuItem: Locator;
+	readonly downloadFileButton: Locator;
 	readonly duplicateEntryErrorMessage: Locator;
 	readonly editObjectEntryForm: Locator;
 	readonly expirationDateInput: Locator;
 	readonly frameSelect: FrameLocator;
+	readonly friendlyUrlInput: Locator;
 	readonly frontendDatasetActions: Locator;
 	readonly frontendDatasetDeleteAction: Locator;
 	readonly frontendDatasetItems: Locator;
+	readonly frontendDatasetPermissionsAction: Locator;
 	readonly frontendDatasetViewAction: Locator;
 	readonly neverExpire: Locator;
 	readonly neverReview: Locator;
@@ -44,6 +53,7 @@ export class ViewObjectEntriesPage {
 	readonly searchBar: Locator;
 	readonly searchButton: Locator;
 	readonly searchContainer: Locator;
+	readonly selectAllPage: Locator;
 	readonly selectFileButton: Locator;
 	readonly selectFileButtonArabic: Locator;
 	readonly selectFileIframe: FrameLocator;
@@ -52,18 +62,26 @@ export class ViewObjectEntriesPage {
 	readonly successMessageArabic: Locator;
 
 	constructor(page: Page) {
-		this.addObjectEntryButton = page
-			.getByTestId('fdsCreationActionButton')
-			.first();
 		this.backButton = page.getByTitle('Back');
+		this.bulkActionButton = page
+			.locator('.management-bar')
+			.getByRole('button', {name: 'Actions'});
 		this.cancelObjectEntryButton = page.getByRole('button', {
 			name: 'Cancel',
 		});
 		this.dateTimeInput = page.getByPlaceholder('__/__/____ __:__ _');
+		this.deleteAllConfirmationModal = page
+			.getByRole('dialog', {name: 'Delete All Entries'})
+			.getByRole('button', {name: 'Delete'});
+		this.deleteConfirmationModal = page
+			.getByRole('dialog', {name: 'Delete Entries'})
+			.getByRole('button', {name: 'Delete'});
 		this.deleteFileButton = page.getByRole('button', {name: 'Delete'});
+		this.deleteMenuItem = page.getByRole('menuitem', {name: 'Delete'});
 		this.deletionConfirmationModal = page
 			.getByRole('dialog')
 			.and(page.getByLabel('Delete Entry'));
+		this.downloadFileButton = page.getByRole('button', {name: 'Download'});
 		this.duplicateEntryErrorMessage = page.getByText(
 			'Error:The field values are already in use. Please choose unique values.'
 		);
@@ -77,6 +95,7 @@ export class ViewObjectEntriesPage {
 		this.frameSelect = page
 			.locator('iframe[title="Select"]')
 			.contentFrame();
+		this.friendlyUrlInput = page.locator('[name$="friendlyURL"]');
 		this.frontendDatasetActions = page.getByRole('button', {
 			name: 'Actions',
 		});
@@ -84,6 +103,9 @@ export class ViewObjectEntriesPage {
 			name: 'Delete',
 		});
 		this.frontendDatasetItems = page.getByRole('cell').getByRole('link');
+		this.frontendDatasetPermissionsAction = page.getByRole('menuitem', {
+			name: 'Permissions',
+		});
 		this.frontendDatasetViewAction = page.getByRole('menuitem', {
 			name: 'View',
 		});
@@ -105,7 +127,7 @@ export class ViewObjectEntriesPage {
 		this.schedulePublicationButton = page
 			.getByLabel('Schedule Publication')
 			.getByRole('button', {name: 'Schedule'});
-		this.schedulePublicationCloseButton = page.getByLabel('close');
+		this.schedulePublicationCloseButton = page.getByLabel('Close');
 		this.schedulePublicationOption = page.getByRole('menuitem', {
 			name: 'Schedule Publication',
 		});
@@ -119,6 +141,9 @@ export class ViewObjectEntriesPage {
 		this.saveObjectEntryButton = page.getByRole('button', {name: 'Save'});
 		this.saveObjectEntryButtonArabic = page.getByRole('button', {
 			name: 'حفظ',
+		});
+		this.selectAllPage = page.getByRole('checkbox', {
+			name: 'Select All Items on the Page',
 		});
 		this.selectFileButton = page.getByRole('button', {name: 'Select File'});
 		this.selectFileButtonArabic = page.getByRole('button', {
@@ -152,10 +177,11 @@ export class ViewObjectEntriesPage {
 		}
 	}
 
-	async clickAddObjectEntry(objectName?: string) {
-		objectName
-			? await this.page.getByLabel('Add ' + objectName).click()
-			: await this.addObjectEntryButton.click();
+	async clickAddObjectEntry(objectDefinitionLabel: string) {
+		await this.page
+			.getByLabel('Add ' + objectDefinitionLabel)
+			.first()
+			.click();
 
 		await this.editObjectEntryForm.waitFor({state: 'visible'});
 	}
@@ -253,7 +279,7 @@ export class ViewObjectEntriesPage {
 			.click();
 
 		await this.selectFileIframe
-			.getByRole('link', {name: 'Liferay DXP'})
+			.getByRole('link', {name: 'Liferay DXP Site'})
 			.click();
 
 		await this.selectFileIframe
@@ -275,7 +301,7 @@ export class ViewObjectEntriesPage {
 			.click();
 
 		await this.selectFileIframeArabic
-			.getByRole('link', {name: 'Liferay DXP'})
+			.getByRole('link', {name: 'موقع Liferay DXP'})
 			.click();
 
 		await this.selectFileIframeArabic
@@ -290,15 +316,19 @@ export class ViewObjectEntriesPage {
 			.click();
 	}
 
-	async selectFileFromUserComputer(dirName: string, fileName: string) {
+	async selectFileFromUserComputer(
+		dirName: string,
+		fileName: string,
+		position?: number
+	) {
 		const fileChooserPromise = this.page.waitForEvent('filechooser');
 
-		await this.selectFileButton.click();
+		await this.selectFileButton.nth(position ?? 0).click();
 
 		const fileChooser = await fileChooserPromise;
 
 		await fileChooser.setFiles(
-			path.join(dirName, 'dependencies', fileName)
+			path.join(dirName, '../dependencies', fileName)
 		);
 	}
 
@@ -313,7 +343,11 @@ export class ViewObjectEntriesPage {
 		);
 	}
 
-	async fillObjectFields({attachmentFileName, objectEntry, objectFields}) {
+	async fillObjectFields({
+		attachmentFileName = '',
+		objectEntry,
+		objectFields,
+	}) {
 		const objectEntries: {
 			businessType: SupportedBusinessType;
 			entry: string;
@@ -322,6 +356,25 @@ export class ViewObjectEntriesPage {
 
 		for (const objectField of objectFields) {
 			switch (objectField.businessType) {
+				case 'Assignee': {
+					await this.page
+						.getByLabel(objectField.label['en_US'], {exact: true})
+						.fill(objectEntry[objectField.name]);
+
+					await this.page
+						.getByRole('option', {
+							name: objectEntry[objectField.name],
+						})
+						.click();
+
+					objectEntries.push({
+						businessType: objectField.businessType,
+						entry: objectEntry[objectField.name],
+						name: objectField.name,
+					});
+
+					break;
+				}
 				case 'Attachment': {
 					await this.selectFileButton.click();
 
@@ -398,13 +451,19 @@ export class ViewObjectEntriesPage {
 							objectEntry[objectField.name].toString(),
 					});
 
-					if (
-						objectField.businessType === 'Date' ||
-						objectField.businessType === 'DateTime'
-					) {
+					if (objectField.businessType === 'Date') {
 						objectEntries.push({
 							businessType: objectField.businessType,
 							entry: getFDSDateFormat(
+								new Date(objectEntry[objectField.name])
+							),
+							name: objectField.name,
+						});
+					}
+					else if (objectField.businessType === 'DateTime') {
+						objectEntries.push({
+							businessType: objectField.businessType,
+							entry: getFDSDateTimeFormat(
 								new Date(objectEntry[objectField.name])
 							),
 							name: objectField.name,

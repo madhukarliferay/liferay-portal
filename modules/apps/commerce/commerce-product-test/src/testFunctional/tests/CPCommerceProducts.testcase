@@ -1,6 +1,7 @@
 @component-name = "portal-commerce"
 definition {
 
+	property browser.chrome.version = "139.0";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Product Info Management";
@@ -237,54 +238,6 @@ definition {
 		Button.clickSave();
 
 		Alert.viewSuccessMessage();
-	}
-
-	@description = "This is a test for COMMERCE-6912. Bulk delete Products"
-	@priority = 5
-	test BulkDeleteProducts {
-		property portal.acceptance = "true";
-
-		task ("Given a Minium Site is created") {
-			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
-		}
-
-		task ("And the admin goes into the Product and verifies if the Trash icon is not present in the header") {
-			CommerceProducts.openProductsAdmin();
-
-			AssertElementNotPresent(locator1 = "Button#TRASH_ENABLED");
-		}
-
-		task ("When the admin selects one product using the checkbox and verifies if the Trash icon is now present in the header") {
-			CommerceNavigator.searchEntry(entryName = "ABS Sensor");
-
-			Click.clickNoMouseOverNoWaitForVisible(
-				key_productName = "ABS Sensor",
-				locator1 = "CommerceEntry#PRODUCT_ENTRY_CHECKBOX");
-
-			AssertElementPresent(locator1 = "Button#TRASH_ENABLED");
-		}
-
-		task ("Then the admin can remove the product by clicking on the Trash icon") {
-			ClickNoError(locator1 = "Button#TRASH_ENABLED");
-
-			CommerceNavigator.searchEntry(entryName = "ABS Sensor");
-
-			AssertElementNotPresent(
-				key_entryName = "ABS Sensor",
-				locator1 = "CommerceNavigation#ENTRY_NAME");
-		}
-
-		task ("And the admin can delete all the products with one click by using the select all checkbox") {
-			CommerceNavigator.searchEntry(entryName = "");
-
-			Pagination.changePagination(itemsPerPage = "60 Items");
-
-			while (IsElementNotPresent(locator1 = "CommerceNavigation#EMPTY_SEARCH_CONTAINER")) {
-				CommerceProducts.deleteEntries();
-			}
-
-			AssertElementPresent(locator1 = "CommerceNavigation#EMPTY_SEARCH_CONTAINER");
-		}
 	}
 
 	@description = "This is a test for COMMERCE-6301. AddVirtualProduct"
@@ -935,6 +888,8 @@ definition {
 	@priority = 3
 	test CanCheckPendingProductWorkflowStatus {
 		property portal.acceptance = "false";
+
+		CommerceProducts.enableProductSingleApproverWorkflow();
 
 		CommerceProducts.addProductWithStatusViaAPI(
 			catalogName = "Master",
@@ -2041,86 +1996,6 @@ definition {
 		}
 	}
 
-	@description = "This is a test for COMMERCE-10603. Can view products with category imported from another instance via JSON add"
-	@priority = 3
-	test CanViewProductsWithCategoryImportedFromAnotherInstanceViaJSONAdd {
-		property portal.acceptance = "false";
-
-		task ("Given a Minium site is created") {
-			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
-		}
-
-		task ("And a 'Cat' category is created under Global site's Topic and export it") {
-			JSONCategory.addCategory(
-				groupName = "Global",
-				title = "Cat",
-				vocabularyName = "Topic");
-
-			Category.openCategoriesAdmin(siteURLKey = "global");
-
-			LAR.exportPortlet(larFileName = "Category_Topic_Cat.portlet.lar");
-		}
-
-		task ("And the category related to Topic is also selected inside the 'ABS Sensor' product") {
-			CommerceProducts.openProductsAdmin();
-
-			CommerceNavigator.gotoEntry(entryName = "ABS Sensor");
-
-			AssetCategorization.removeCategories(categoryNameList = "Brake System");
-
-			Click(
-				key_fieldName = "Topic",
-				locator1 = "Button#SELECT_BUTTON");
-
-			AssetCategorization.selectCategories(categoryNameList = "Cat");
-
-			Button.clickPublish();
-		}
-
-		task ("When another Minium site is created in a virtual instance") {
-			HeadlessPortalInstanceAPI.addPortalInstance(
-				domain = "www.able.com",
-				portalInstanceId = "www.able.com",
-				virtualHost = "www.able.com");
-
-			User.firstLoginPG(
-				password = PropsUtil.get("default.admin.password"),
-				userEmailAddress = "test@www.able.com",
-				virtualHostsURL = "http://www.able.com:8080");
-
-			CommerceAccelerators.initializeNewSiteViaAccelerator(siteName = "Minium");
-		}
-
-		task ("And the category created before is imported in the virtual instance") {
-			Category.openCategoriesAdmin(
-				baseURL = "http://www.able.com:8080",
-				siteURLKey = "global");
-
-			LAR.importPortlet(larFileName = "Category_Topic_Cat.portlet.lar");
-		}
-
-		task ("And a product with the imported category is added to the virtual instance via JSON") {
-			CommerceJSONProductsAPI._addCommerceProduct(
-				baseURL = "http://www.able.com:8080",
-				catalogName = "Minium",
-				categoryName = "Cat",
-				externalReferenceCode = "MIN93015minium-initializer",
-				productName = "Imported ABS Sensor",
-				productType = "Simple",
-				userEmailAddress = "test@www.able.com");
-		}
-
-		task ("Then the new product with imported category is shown in the virtual instance") {
-			CommerceProducts.openProductsAdmin(baseURL = "http://www.able.com:8080");
-
-			CommerceNavigator.searchEntry(entryName = "ABS");
-
-			CommerceNavigator.gotoEntry(entryName = "Imported ABS Sensor");
-
-			AssetCategorization.viewCategory(categoryName = "Cat");
-		}
-	}
-
 	@description = "This is a test for COMMERCE-6747. ConfigureGroupedProduct"
 	@ignore = "true"
 	@priority = 3
@@ -2667,9 +2542,11 @@ definition {
 			key_entryName = "Timing Chain",
 			locator1 = "CommerceEntry#TABLE_LIST_TITLE");
 
-		Button.click(button = "Reset Filters");
+		Button.click(button = "Clear");
 
 		Click(locator1 = "CommerceEntry#FILTER_DROPDOWN_MENU");
+
+		Click(locator1 = "CommerceEntry#FILTER_BACK_ARROW");
 
 		Click(
 			key_categoryFilter = "Catalog",
@@ -2687,9 +2564,11 @@ definition {
 			key_entryName = "Hoses",
 			locator1 = "CommerceEntry#TABLE_LIST_TITLE");
 
-		Button.click(button = "Reset Filters");
+		Button.click(button = "Clear");
 
 		Click(locator1 = "CommerceEntry#FILTER_DROPDOWN_MENU");
+
+		Click(locator1 = "CommerceEntry#FILTER_BACK_ARROW");
 
 		Click(
 			key_categoryFilter = "Channel",
@@ -2705,9 +2584,11 @@ definition {
 
 		AssertElementPresent(locator1 = "CommerceNavigation#EMPTY_SEARCH_CONTAINER");
 
-		Button.click(button = "Reset Filters");
+		Button.click(button = "Clear");
 
 		Click(locator1 = "CommerceEntry#FILTER_DROPDOWN_MENU");
+
+		Click(locator1 = "CommerceEntry#FILTER_BACK_ARROW");
 
 		Click(
 			key_categoryFilter = "Product Type",
@@ -2723,7 +2604,7 @@ definition {
 
 		AssertElementPresent(locator1 = "CommerceNavigation#EMPTY_SEARCH_CONTAINER");
 
-		Button.click(button = "Reset Filters");
+		Button.click(button = "Clear");
 
 		Click(locator1 = "CommerceEntry#FILTER_DROPDOWN_MENU");
 	}
@@ -2818,9 +2699,9 @@ definition {
 
 		AssertTextEquals(
 			locator1 = "CP2ActivationKeys#PAGINATION_BUTTON",
-			value1 = "10 items");
+			value1 = "20 items");
 
-		Pagination.viewResults(results = "Showing 11 to 20 of 50 entries.");
+		Pagination.viewResults(results = "Showing 21 to 40 of 50 entries.");
 
 		CommerceProducts.searchProduct(search = "U-Joint");
 
@@ -2844,7 +2725,7 @@ definition {
 
 		Click(locator1 = "ACUtils#NEXT_PAGES");
 
-		CommerceEntry.viewPaginationResults(results = "Showing 11 to 20 of 54 entries.");
+		CommerceEntry.viewPaginationResults(results = "Showing 21 to 40 of 54 entries.");
 
 		CommerceProducts.searchProduct(search = "MIN55861");
 

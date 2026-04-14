@@ -5,41 +5,48 @@
 
 import React, {useCallback} from 'react';
 
+import {IAssetObjectEntry} from '../../../common/types/AssetType';
 import AssetCategorization from '../../../main_view/info_panel/components/AssetCategorization';
-import {IAssetObjectEntry} from '../../../structure_builder/types/AssetType';
 import {
 	CategorizationFields,
 	UpdateCategorizationProps,
 } from '../ContentEditorSidePanel';
 
 export default function CategorizationPanel({
+	assetLibraryId,
+	assetType,
+	categorizationFields,
+	cmsGroupId,
 	contentAPIURL,
-	groupId,
+	hasUpdatePermission,
 	onUpdateCategorization,
 }: {
+	assetLibraryId: number | string;
+	assetType: number;
+	categorizationFields: CategorizationFields | null;
+	cmsGroupId: number | string;
 	contentAPIURL: string;
-	groupId: string;
+	hasUpdatePermission: boolean;
 	onUpdateCategorization: (props: UpdateCategorizationProps) => void;
 }) {
 	const updateCategorization = useCallback(
 		({keywords = [], taxonomyCategoryBriefs = []}: IAssetObjectEntry) => {
-			const fields: {
-				name: keyof CategorizationFields;
-				value: string;
-			}[] = [
-				{
-					name: 'assetCategoryIds',
-					value: taxonomyCategoryBriefs
+			const fields: CategorizationFields = {
+				assetCategoryIds: {
+					serverValue: taxonomyCategoryBriefs
 						.map(({taxonomyCategoryId: id}) => id)
 						.join(','),
+					value: taxonomyCategoryBriefs,
 				},
-				{
-					name: 'assetTagNames',
-					value: keywords.join(','),
+				assetTagNames: {
+					serverValue: keywords.join(','),
+					value: keywords,
 				},
-			];
+			};
 
-			fields.forEach(onUpdateCategorization);
+			(Object.entries(fields) as UpdateCategorizationProps[]).forEach(
+				onUpdateCategorization
+			);
 		},
 		[onUpdateCategorization]
 	);
@@ -47,11 +54,22 @@ export default function CategorizationPanel({
 	return (
 		<div className="px-3">
 			<AssetCategorization
-				cmsGroupId={groupId}
+				assetLibraryId={assetLibraryId}
+				categorization={{
+					keywords: categorizationFields?.assetTagNames?.value || [],
+					systemProperties: {
+						objectDefinitionBrief: {
+							classNameId: assetType,
+						},
+					} as IAssetObjectEntry['systemProperties'],
+					taxonomyCategoryBriefs:
+						categorizationFields?.assetCategoryIds?.value || [],
+				}}
+				cmsGroupId={cmsGroupId}
 				getObjectEntryURL={contentAPIURL}
+				hasUpdatePermission={hasUpdatePermission}
 				inputSize="sm"
 				onUpdateCategorization={updateCategorization}
-				updateObjectEntryURL={contentAPIURL}
 			/>
 		</div>
 	);

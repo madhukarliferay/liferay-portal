@@ -109,6 +109,9 @@ public class CommerceAvailabilityEstimateModelImpl
 	public static final String ORDER_BY_SQL =
 		" ORDER BY CommerceAvailabilityEstimate.title ASC";
 
+	public static final String ORDER_BY_SQL_INLINE_DISTINCT =
+		" ORDER BY commerceAvailabilityEstimate.title ASC";
+
 	public static final String DATA_SOURCE = "liferayDataSource";
 
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
@@ -1152,3 +1155,4 @@ public class CommerceAvailabilityEstimateModelImpl
 	private CommerceAvailabilityEstimate _escapedModel;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1886647419

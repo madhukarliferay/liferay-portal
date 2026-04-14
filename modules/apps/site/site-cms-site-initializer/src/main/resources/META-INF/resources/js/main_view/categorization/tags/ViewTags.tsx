@@ -3,11 +3,14 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {ClayDropDownWithItems} from '@clayui/drop-down';
+import ClayLink from '@clayui/link';
 import {FrontendDataSet} from '@liferay/frontend-data-set-web';
-import {openModal} from 'frontend-js-components-web';
 import {navigate, sub} from 'frontend-js-web';
-import React from 'react';
+import React, {ComponentProps} from 'react';
 
+import {ActionDropdownItemProps} from '../../../common/components/Breadcrumb';
+import {openCMSModal} from '../../../common/utils/openCMSModal';
 import MultipleSpacesRenderer from '../../props_transformer/cell_renderers/MultipleSpacesRenderer';
 import {executeAsyncItemAction} from '../../props_transformer/utils/executeAsyncItemAction';
 import CategorizationToolbar from '../CategorizationToolbar';
@@ -16,16 +19,24 @@ import EditTagsModal from './EditTagsModal';
 import MergeTagsModal from './MergeTagsModal';
 
 export default function ViewTags({
+	actionItems,
+	cmsGroupId,
 	dataSetId,
+	invalidTagCharacters,
 	tagUsagesURL,
 	tagsURL,
 	vocabulariesURL,
 }: {
+	actionItems: ComponentProps<typeof ClayDropDownWithItems>['items'] &
+		ActionDropdownItemProps;
+	cmsGroupId: number;
 	dataSetId: string;
+	invalidTagCharacters: string;
 	tagUsagesURL: string;
 	tagsURL: string;
 	vocabulariesURL: string;
 }) {
+	const NAME_TABLE_CELL_RENDERER_NAME = 'NameTableCellRenderer';
 	const VIEWS_SPACE_TABLE_CELL_RENDERER_NAME = 'ViewsSpaceTableCellRenderer';
 
 	const creationMenu = {
@@ -33,7 +44,7 @@ export default function ViewTags({
 			{
 				label: Liferay.Language.get('new'),
 				onClick: () => {
-					openModal({
+					openCMSModal({
 						contentComponent: ({
 							closeModal,
 						}: {
@@ -41,7 +52,9 @@ export default function ViewTags({
 						}) =>
 							CreateTagsModal({
 								closeModal,
+								cmsGroupId,
 								dataSetId,
+								invalidTagCharacters,
 							}),
 						size: 'md',
 					});
@@ -72,6 +85,7 @@ export default function ViewTags({
 			schema: {
 				fields: [
 					{
+						contentRenderer: NAME_TABLE_CELL_RENDERER_NAME,
 						fieldName: 'name',
 						label: Liferay.Language.get('title'),
 						sortable: true,
@@ -107,7 +121,7 @@ export default function ViewTags({
 		itemData: any;
 		loadData: () => {};
 	}) => {
-		openModal({
+		openCMSModal({
 			bodyHTML: Liferay.Language.get(
 				'are-you-sure-you-want-to-delete-this-tag'
 			),
@@ -153,7 +167,7 @@ export default function ViewTags({
 		itemData: any;
 		loadData: () => {};
 	}) => {
-		openModal({
+		openCMSModal({
 			contentComponent: ({closeModal}: {closeModal: () => void}) =>
 				EditTagsModal({
 					assetLibraries: itemData.assetLibraries,
@@ -174,14 +188,17 @@ export default function ViewTags({
 		itemData: any;
 		loadData: () => {};
 	}) => {
-		openModal({
+		openCMSModal({
 			contentComponent: ({closeModal}: {closeModal: () => void}) =>
 				MergeTagsModal({
 					closeModal,
+					cmsGroupId,
 					loadData,
-					tagId: itemData.id,
-					tagName: itemData.name,
+					selectIntoTags: [
+						{label: itemData.name, value: itemData.id},
+					],
 				}),
+			id: 'mergeModal',
 			size: 'md',
 		});
 	};
@@ -212,16 +229,44 @@ export default function ViewTags({
 	return (
 		<div className="categorization-section">
 			<CategorizationToolbar
+				actionItems={actionItems}
 				activeTab="tags"
 				tagsURL={tagsURL}
 				vocabulariesURL={vocabulariesURL}
 			/>
 
 			<FrontendDataSet
-				apiURL="/o/headless-admin-taxonomy/v1.0/keywords"
+				apiURL={`/o/headless-admin-taxonomy/v1.0/sites/${cmsGroupId}/keywords`}
 				creationMenu={creationMenu}
 				customRenderers={{
 					tableCell: [
+						{
+							component: ({
+								itemData,
+								loadData,
+								value,
+							}: {
+								itemData: any;
+								loadData: () => {};
+								value: string;
+							}) => (
+								<div className="table-list-title">
+									<ClayLink
+										data-senna-off
+										href="#"
+										onClick={(event: React.MouseEvent) => {
+											event.preventDefault();
+
+											editTag({itemData, loadData});
+										}}
+									>
+										{value}
+									</ClayLink>
+								</div>
+							),
+							name: NAME_TABLE_CELL_RENDERER_NAME,
+							type: 'internal',
+						},
 						{
 							component: MultipleSpacesRenderer,
 							name: VIEWS_SPACE_TABLE_CELL_RENDERER_NAME,
@@ -231,6 +276,7 @@ export default function ViewTags({
 				}}
 				emptyState={emptyState}
 				filters={filters}
+				hideManagementBarInEmptyState={true}
 				id={dataSetId}
 				itemsActions={[
 					{
@@ -245,7 +291,7 @@ export default function ViewTags({
 						data: {
 							permissionKey: 'get',
 						},
-						icon: 'null',
+						icon: 'list-ul',
 						id: 'viewUsages',
 						label: Liferay.Language.get('view-usages'),
 					},
@@ -258,6 +304,7 @@ export default function ViewTags({
 						label: Liferay.Language.get('merge'),
 					},
 					{
+						className: 'text-danger',
 						data: {
 							permissionKey: 'delete',
 						},

@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.log.LogCapture;
@@ -83,8 +84,10 @@ public class FragmentEntryLinkCacheTest {
 		FragmentEntryLink draftLayoutFragmentEntryLink =
 			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 				"{}", fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-				fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-				fragmentEntry.getJs(), draftLayout,
+				fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					fragmentEntry.getGroupId(), draftLayout.getGroupId()),
+				fragmentEntry.getHtml(), fragmentEntry.getJs(), draftLayout,
 				fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(),
 				null, 0,
 				_segmentsExperienceLocalService.
@@ -95,7 +98,7 @@ public class FragmentEntryLinkCacheTest {
 		FragmentEntryLink fragmentEntryLink =
 			_fragmentEntryLinkLocalService.getFragmentEntryLink(
 				layout.getGroupId(),
-				draftLayoutFragmentEntryLink.getFragmentEntryLinkId(),
+				draftLayoutFragmentEntryLink.getExternalReferenceCode(),
 				layout.getPlid());
 
 		Locale locale = _portal.getSiteDefaultLocale(_group);

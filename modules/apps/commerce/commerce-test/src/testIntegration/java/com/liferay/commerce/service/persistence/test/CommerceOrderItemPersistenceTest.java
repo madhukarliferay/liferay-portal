@@ -980,13 +980,6 @@ public class CommerceOrderItemPersistenceTest {
 				new Class<?>[] {String.class}, "groupId"));
 
 		Assert.assertEquals(
-			Long.valueOf(
-				commerceOrderItem.getCommerceInventoryBookedQuantityId()),
-			ReflectionTestUtil.<Long>invoke(
-				commerceOrderItem, "getColumnOriginalValue",
-				new Class<?>[] {String.class}, "CIBookedQuantityId"));
-
-		Assert.assertEquals(
 			commerceOrderItem.getExternalReferenceCode(),
 			ReflectionTestUtil.invoke(
 				commerceOrderItem, "getColumnOriginalValue",
@@ -1178,3 +1171,4 @@ public class CommerceOrderItemPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1671547558

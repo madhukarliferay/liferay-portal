@@ -1481,9 +1481,7 @@ public class WikiPage implements Serializable {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(viewableBy);
-
 			sb.append("\"");
 		}
 
@@ -1638,3 +1636,4 @@ public class WikiPage implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1496336005

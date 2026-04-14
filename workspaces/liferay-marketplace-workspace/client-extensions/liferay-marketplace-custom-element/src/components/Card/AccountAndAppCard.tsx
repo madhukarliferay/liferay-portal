@@ -23,13 +23,18 @@ export function AccountAndAppCard({
 	return (
 		<div className={classNames('card-container', className)}>
 			<div className="card-logo">
-				<img alt="logo" className="card-logo-image" src={logo} />
+				<img
+					alt="logo"
+					className="card-logo-image"
+					draggable="false"
+					src={logo}
+				/>
 			</div>
 
 			<div className="card-info">
-				<span className="card-info-description">{category}</span>
-
 				<span className="card-info-text">{title}</span>
+
+				<span className="card-info-description">{category}</span>
 			</div>
 		</div>
 	);

@@ -166,9 +166,8 @@ public class FragmentEntryStagedModelRepository
 		}
 
 		List<FragmentEntryLink> fragmentEntryLinks =
-			_fragmentEntryLinkLocalService.
-				getFragmentEntryLinksByFragmentEntryId(
-					fragmentEntry.getFragmentEntryId());
+			_fragmentEntryLinkLocalService.getFragmentEntryLinksByFragmentEntry(
+				groupId, fragmentEntry);
 
 		if (ListUtil.isEmpty(fragmentEntryLinks)) {
 			return;

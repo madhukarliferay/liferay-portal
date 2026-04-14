@@ -495,7 +495,7 @@ public class RoleLocalServiceUtil {
 	public static Role getOrAddEmptyRole(
 			String externalReferenceCode, long companyId, long userId,
 			String className, long classPK, String name, int type)
-		throws Exception {
+		throws PortalException {
 
 		return getService().getOrAddEmptyRole(
 			externalReferenceCode, companyId, userId, className, classPK, name,
@@ -1268,3 +1268,4 @@ public class RoleLocalServiceUtil {
 	private static volatile RoleLocalService _service;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1136166111

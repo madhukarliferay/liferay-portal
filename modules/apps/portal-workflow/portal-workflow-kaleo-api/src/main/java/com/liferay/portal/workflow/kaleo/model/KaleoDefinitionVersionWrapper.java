@@ -576,6 +576,13 @@ public class KaleoDefinitionVersionWrapper
 		return model.isIncomplete();
 	}
 
+	@Override
+	public boolean isLatest()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.isLatest();
+	}
+
 	/**
 	 * Returns <code>true</code> if this kaleo definition version is pending.
 	 *
@@ -932,3 +939,4 @@ public class KaleoDefinitionVersionWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-515088621

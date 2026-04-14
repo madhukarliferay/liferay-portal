@@ -157,13 +157,13 @@ public class ObjectDefinitionPersistenceTest {
 
 		newObjectDefinition.setEnableComments(RandomTestUtil.randomBoolean());
 
+		newObjectDefinition.setEnableFormContainer(
+			RandomTestUtil.randomBoolean());
+
 		newObjectDefinition.setEnableFriendlyURLCustomization(
 			RandomTestUtil.randomBoolean());
 
 		newObjectDefinition.setEnableIndexSearch(
-			RandomTestUtil.randomBoolean());
-
-		newObjectDefinition.setEnableLocalization(
 			RandomTestUtil.randomBoolean());
 
 		newObjectDefinition.setEnableObjectEntryDraft(
@@ -275,14 +275,14 @@ public class ObjectDefinitionPersistenceTest {
 			existingObjectDefinition.isEnableComments(),
 			newObjectDefinition.isEnableComments());
 		Assert.assertEquals(
+			existingObjectDefinition.isEnableFormContainer(),
+			newObjectDefinition.isEnableFormContainer());
+		Assert.assertEquals(
 			existingObjectDefinition.isEnableFriendlyURLCustomization(),
 			newObjectDefinition.isEnableFriendlyURLCustomization());
 		Assert.assertEquals(
 			existingObjectDefinition.isEnableIndexSearch(),
 			newObjectDefinition.isEnableIndexSearch());
-		Assert.assertEquals(
-			existingObjectDefinition.isEnableLocalization(),
-			newObjectDefinition.isEnableLocalization());
 		Assert.assertEquals(
 			existingObjectDefinition.isEnableObjectEntryDraft(),
 			newObjectDefinition.isEnableObjectEntryDraft());
@@ -562,8 +562,8 @@ public class ObjectDefinitionPersistenceTest {
 			"titleObjectFieldId", true, "accountEntryRestricted", true,
 			"active", true, "className", true, "dbTableName", true,
 			"enableCategorization", true, "enableComments", true,
-			"enableFriendlyURLCustomization", true, "enableIndexSearch", true,
-			"enableLocalization", true, "enableObjectEntryDraft", true,
+			"enableFormContainer", true, "enableFriendlyURLCustomization", true,
+			"enableIndexSearch", true, "enableObjectEntryDraft", true,
 			"enableObjectEntryHistory", true, "enableObjectEntrySchedule", true,
 			"enableObjectEntrySubscription", true,
 			"enableObjectEntryVersioning", true, "friendlyURLSeparator", true,
@@ -928,12 +928,12 @@ public class ObjectDefinitionPersistenceTest {
 
 		objectDefinition.setEnableComments(RandomTestUtil.randomBoolean());
 
+		objectDefinition.setEnableFormContainer(RandomTestUtil.randomBoolean());
+
 		objectDefinition.setEnableFriendlyURLCustomization(
 			RandomTestUtil.randomBoolean());
 
 		objectDefinition.setEnableIndexSearch(RandomTestUtil.randomBoolean());
-
-		objectDefinition.setEnableLocalization(RandomTestUtil.randomBoolean());
 
 		objectDefinition.setEnableObjectEntryDraft(
 			RandomTestUtil.randomBoolean());
@@ -992,3 +992,4 @@ public class ObjectDefinitionPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1183751314

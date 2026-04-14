@@ -120,47 +120,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByUuid_PrevAndNext(
-			long COREntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -200,21 +159,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		String uuid, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByUuid_PrevAndNext(
-			long COREntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where uuid = &#63; from the database.
@@ -333,50 +277,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByUuid_C_PrevAndNext(
-			long COREntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -420,22 +320,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		String uuid, long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByUuid_C_PrevAndNext(
-			long COREntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where uuid = &#63; and companyId = &#63; from the database.
@@ -557,50 +441,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByC_A_Last(
-			long companyId, boolean active,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByC_A_Last(
-		long companyId, boolean active,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByC_A_PrevAndNext(
-			long COREntryId, long companyId, boolean active,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where companyId = &#63; and active = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -644,22 +484,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		long companyId, boolean active, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where companyId = &#63; and active = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByC_A_PrevAndNext(
-			long COREntryId, long companyId, boolean active,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where companyId = &#63; and active = &#63; from the database.
@@ -782,50 +606,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where companyId = &#63; and type LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByC_LikeType_Last(
-			long companyId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where companyId = &#63; and type LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByC_LikeType_Last(
-		long companyId, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where companyId = &#63; and type LIKE &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByC_LikeType_PrevAndNext(
-			long COREntryId, long companyId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where companyId = &#63; and type LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -869,22 +649,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		long companyId, String type, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where companyId = &#63; and type LIKE &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByC_LikeType_PrevAndNext(
-			long COREntryId, long companyId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where companyId = &#63; and type LIKE &#63; from the database.
@@ -1006,50 +770,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByLtD_S_Last(
-			Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByLtD_S_Last(
-		Date displayDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByLtD_S_PrevAndNext(
-			long COREntryId, Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where displayDate &lt; &#63; and status = &#63;.
 	 *
 	 * @param displayDate the display date
@@ -1093,22 +813,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		Date displayDate, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByLtD_S_PrevAndNext(
-			long COREntryId, Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where displayDate &lt; &#63; and status = &#63; from the database.
@@ -1231,50 +935,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByLtE_S_Last(
-			Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByLtE_S_Last(
-		Date expirationDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByLtE_S_PrevAndNext(
-			long COREntryId, Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where expirationDate &lt; &#63; and status = &#63;.
 	 *
 	 * @param expirationDate the expiration date
@@ -1318,22 +978,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		Date expirationDate, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByLtE_S_PrevAndNext(
-			long COREntryId, Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where expirationDate &lt; &#63; and status = &#63; from the database.
@@ -1462,53 +1106,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry in the ordered set where companyId = &#63; and active = &#63; and type LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry
-	 * @throws NoSuchCOREntryException if a matching cor entry could not be found
-	 */
-	public COREntry findByC_A_LikeType_Last(
-			long companyId, boolean active, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
-	 * Returns the last cor entry in the ordered set where companyId = &#63; and active = &#63; and type LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry, or <code>null</code> if a matching cor entry could not be found
-	 */
-	public COREntry fetchByC_A_LikeType_Last(
-		long companyId, boolean active, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set where companyId = &#63; and active = &#63; and type LIKE &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] findByC_A_LikeType_PrevAndNext(
-			long COREntryId, long companyId, boolean active, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
-
-	/**
 	 * Returns all the cor entries that the user has permission to view where companyId = &#63; and active = &#63; and type LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1555,23 +1152,6 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 		long companyId, boolean active, String type, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntry>
 			orderByComparator);
-
-	/**
-	 * Returns the cor entries before and after the current cor entry in the ordered set of cor entries that the user has permission to view where companyId = &#63; and active = &#63; and type LIKE &#63;.
-	 *
-	 * @param COREntryId the primary key of the current cor entry
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry
-	 * @throws NoSuchCOREntryException if a cor entry with the primary key could not be found
-	 */
-	public COREntry[] filterFindByC_A_LikeType_PrevAndNext(
-			long COREntryId, long companyId, boolean active, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntry>
-				orderByComparator)
-		throws NoSuchCOREntryException;
 
 	/**
 	 * Removes all the cor entries where companyId = &#63; and active = &#63; and type LIKE &#63; from the database.
@@ -1774,3 +1354,4 @@ public interface COREntryPersistence extends BasePersistence<COREntry> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-958138768

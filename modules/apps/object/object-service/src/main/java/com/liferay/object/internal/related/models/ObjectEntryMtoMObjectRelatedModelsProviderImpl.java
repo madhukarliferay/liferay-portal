@@ -48,7 +48,7 @@ public class ObjectEntryMtoMObjectRelatedModelsProviderImpl
 		throws PortalException {
 
 		List<ObjectEntry> relatedModels = getRelatedModels(
-			groupId, objectRelationshipId, null, primaryKey, null,
+			groupId, objectRelationshipId, null, false, primaryKey, null,
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		if (relatedModels.isEmpty()) {
@@ -111,7 +111,8 @@ public class ObjectEntryMtoMObjectRelatedModelsProviderImpl
 
 	public List<ObjectEntry> getRelatedModels(
 			long groupId, long objectRelationshipId, Predicate predicate,
-			long primaryKey, String search, int start, int end, Sort[] sorts)
+			boolean preferApproved, long primaryKey, String search, int start,
+			int end, Sort[] sorts)
 		throws PortalException {
 
 		ObjectRelationship objectRelationship =
@@ -177,7 +178,7 @@ public class ObjectEntryMtoMObjectRelatedModelsProviderImpl
 		throws PortalException {
 
 		List<ObjectEntry> relatedModels = getRelatedModels(
-			groupId, objectRelationshipId, null, primaryKey, null,
+			groupId, objectRelationshipId, null, false, primaryKey, null,
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		if (relatedModels.isEmpty()) {
@@ -203,7 +204,7 @@ public class ObjectEntryMtoMObjectRelatedModelsProviderImpl
 
 			for (ObjectEntry objectEntry : relatedModels) {
 				_objectEntryService.moveObjectEntryToTrash(
-					userId, objectEntry, new ServiceContext());
+					objectEntry, new ServiceContext());
 			}
 		}
 	}
@@ -228,15 +229,15 @@ public class ObjectEntryMtoMObjectRelatedModelsProviderImpl
 
 		for (ObjectEntry objectEntry :
 				getRelatedModels(
-					groupId, objectRelationshipId, null, primaryKey, null,
-					QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+					groupId, objectRelationshipId, null, false, primaryKey,
+					null, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
 
 			if (!objectEntry.isInTrash()) {
 				continue;
 			}
 
 			_objectEntryService.restoreObjectEntryFromTrash(
-				userId, objectEntry, new ServiceContext());
+				objectEntry, new ServiceContext());
 		}
 	}
 

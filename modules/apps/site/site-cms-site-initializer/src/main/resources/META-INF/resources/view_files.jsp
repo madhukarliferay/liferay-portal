@@ -11,15 +11,15 @@
 ViewFilesSectionDisplayContext viewFilesSectionDisplayContext = (ViewFilesSectionDisplayContext)request.getAttribute(ViewFilesSectionDisplayContext.class.getName());
 %>
 
-<div class="cms-section custom-empty-state">
+<div>
 	<div>
 		<react:component
-			module="{Toolbar} from site-cms-site-initializer"
-			props="<%= viewFilesSectionDisplayContext.getToolbarProps() %>"
+			module="{Breadcrumb} from site-cms-site-initializer"
+			props="<%= viewFilesSectionDisplayContext.getBreadcrumbProps() %>"
 		/>
 	</div>
 
-	<div>
+	<div class="cms-section custom-empty-state">
 		<frontend-data-set:headless-display
 			additionalProps="<%= viewFilesSectionDisplayContext.getAdditionalProps() %>"
 			apiURL="<%= viewFilesSectionDisplayContext.getAPIURL() %>"
@@ -30,11 +30,10 @@ ViewFilesSectionDisplayContext viewFilesSectionDisplayContext = (ViewFilesSectio
 			formName="fm"
 			id="<%= CMSSiteInitializerFDSNames.FILES_SECTION %>"
 			itemsPerPage="<%= 20 %>"
-			propsTransformer="{FilesFDSPropsTransformer} from site-cms-site-initializer"
+			propsTransformer="{AssetsFilesDropFDSPropsTransformer} from site-cms-site-initializer"
 			selectedItemsKey="embedded.id"
 			selectionType="multiple"
 			showSelectAll="<%= true %>"
-			style="fluid"
 		/>
 	</div>
 </div>

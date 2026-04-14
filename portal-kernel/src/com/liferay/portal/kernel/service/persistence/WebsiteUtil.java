@@ -207,52 +207,6 @@ public class WebsiteUtil {
 	}
 
 	/**
-	 * Returns the last website in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByUuid_Last(
-			String uuid, OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByUuid_Last(
-		String uuid, OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where uuid = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByUuid_PrevAndNext(
-			long websiteId, String uuid,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			websiteId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the websites where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -381,59 +335,6 @@ public class WebsiteUtil {
 	}
 
 	/**
-	 * Returns the last website in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByUuid_C_PrevAndNext(
-			long websiteId, String uuid, long companyId,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			websiteId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the websites where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -556,54 +457,6 @@ public class WebsiteUtil {
 	}
 
 	/**
-	 * Returns the last website in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByCompanyId_Last(
-			long companyId, OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByCompanyId_Last(
-		long companyId, OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByCompanyId_PrevAndNext(
-			long websiteId, long companyId,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			websiteId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the websites where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -717,52 +570,6 @@ public class WebsiteUtil {
 		long userId, OrderByComparator<Website> orderByComparator) {
 
 		return getPersistence().fetchByUserId_First(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByUserId_Last(
-			long userId, OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByUserId_Last(
-		long userId, OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where userId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByUserId_PrevAndNext(
-			long websiteId, long userId,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			websiteId, userId, orderByComparator);
 	}
 
 	/**
@@ -892,59 +699,6 @@ public class WebsiteUtil {
 
 		return getPersistence().fetchByC_C_First(
 			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByC_C_Last(
-			long companyId, long classNameId,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByC_C_Last(
-			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByC_C_Last(
-		long companyId, long classNameId,
-		OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByC_C_PrevAndNext(
-			long websiteId, long companyId, long classNameId,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			websiteId, companyId, classNameId, orderByComparator);
 	}
 
 	/**
@@ -1085,62 +839,6 @@ public class WebsiteUtil {
 
 		return getPersistence().fetchByC_C_C_First(
 			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByC_C_C_Last(
-			long companyId, long classNameId, long classPK,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByC_C_C_Last(
-		long companyId, long classNameId, long classPK,
-		OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByC_C_C_PrevAndNext(
-			long websiteId, long companyId, long classNameId, long classPK,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByC_C_C_PrevAndNext(
-			websiteId, companyId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -1297,66 +995,6 @@ public class WebsiteUtil {
 
 		return getPersistence().fetchByC_C_C_P_First(
 			companyId, classNameId, classPK, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public static Website findByC_C_C_P_Last(
-			long companyId, long classNameId, long classPK, boolean primary,
-			OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByC_C_C_P_Last(
-			companyId, classNameId, classPK, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public static Website fetchByC_C_C_P_Last(
-		long companyId, long classNameId, long classPK, boolean primary,
-		OrderByComparator<Website> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_P_Last(
-			companyId, classNameId, classPK, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public static Website[] findByC_C_C_P_PrevAndNext(
-			long websiteId, long companyId, long classNameId, long classPK,
-			boolean primary, OrderByComparator<Website> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchWebsiteException {
-
-		return getPersistence().findByC_C_C_P_PrevAndNext(
-			websiteId, companyId, classNameId, classPK, primary,
-			orderByComparator);
 	}
 
 	/**
@@ -1618,3 +1256,4 @@ public class WebsiteUtil {
 	private static volatile WebsitePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:484056072

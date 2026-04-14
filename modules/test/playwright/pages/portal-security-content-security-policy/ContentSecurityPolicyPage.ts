@@ -7,23 +7,24 @@ import {Locator, Page, expect} from '@playwright/test';
 
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import {waitForAlert} from '../../utils/waitForAlert';
-import {ApplicationsMenuPage} from '../product-navigation-applications-menu/ApplicationsMenuPage';
+import {GlobalMenuPage} from '../product-navigation-applications-menu/GlobalMenuPage';
 
 export class ContentSecurityPolicyPage {
 	readonly actions: Locator;
-	readonly applicationsMenuPage: ApplicationsMenuPage;
 	readonly contentSecurityPolicy: Locator;
 	readonly duplicateExcludedPathsButton: Locator;
 	readonly enabled: Locator;
+	readonly globalMenuPage: GlobalMenuPage;
 	readonly newExcludedPaths: Locator;
 	readonly page: Page;
+	readonly reportOnly: Locator;
 	readonly resetDefaultValues: Locator;
 	readonly saveButton: Locator;
 	readonly updateButton: Locator;
 
 	constructor(page: Page) {
 		this.actions = page.getByRole('button', {name: 'Actions'});
-		this.applicationsMenuPage = new ApplicationsMenuPage(page);
+		this.globalMenuPage = new GlobalMenuPage(page);
 		this.contentSecurityPolicy = page.getByLabel('Content Security Policy');
 		this.duplicateExcludedPathsButton = page
 			.locator('.ddm-form-field-repeatable-add-button')
@@ -31,6 +32,7 @@ export class ContentSecurityPolicyPage {
 		this.enabled = page.getByLabel('Enabled');
 		this.newExcludedPaths = page.locator('textarea:empty');
 		this.page = page;
+		this.reportOnly = page.getByLabel('Report Only');
 		this.resetDefaultValues = page.getByText('Reset Default Values');
 		this.saveButton = page.getByRole('button', {name: 'Save'});
 		this.updateButton = page.getByRole('button', {name: 'Update'});
@@ -65,7 +67,7 @@ export class ContentSecurityPolicyPage {
 	}
 
 	async goto() {
-		await this.applicationsMenuPage.goToInstanceSettings();
+		await this.globalMenuPage.goToControlPanel('Instance Settings');
 
 		await this.page
 			.getByRole('link', {name: 'Content Security Policy'})
@@ -74,10 +76,19 @@ export class ContentSecurityPolicyPage {
 		await this.enabled.waitFor();
 	}
 
-	async gotoAndConfigurePolicy(policy: string) {
+	async gotoAndConfigurePolicy(
+		policy: string,
+		isReportOnly: boolean = false
+	) {
+		await this.globalMenuPage.goToHome();
+
 		await this.goto();
 
 		await this.setPolicy(policy);
+
+		if (!isReportOnly) {
+			await this.reportOnly.uncheck();
+		}
 
 		await this.enableCSP();
 	}

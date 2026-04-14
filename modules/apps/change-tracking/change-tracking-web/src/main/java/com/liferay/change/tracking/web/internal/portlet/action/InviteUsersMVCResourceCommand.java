@@ -14,11 +14,11 @@ import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.web.internal.security.permission.resource.CTCollectionPermission;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
@@ -36,6 +36,8 @@ import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
@@ -105,44 +107,47 @@ public class InviteUsersMVCResourceCommand
 		HttpServletRequest httpServletRequest = _portal.getHttpServletRequest(
 			resourceRequest);
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		long ctCollectionId = ParamUtil.getLong(
 			resourceRequest, "ctCollectionId");
 
 		CTCollection ctCollection = _ctCollectionLocalService.fetchCTCollection(
 			ctCollectionId);
 
-		if ((ctCollection == null) &&
-			(ctCollectionId != CTConstants.CT_COLLECTION_ID_PRODUCTION)) {
+		try {
+			AuthTokenUtil.checkCSRFToken(
+				httpServletRequest,
+				InviteUsersMVCResourceCommand.class.getName());
 
-			JSONPortletResponseUtil.writeJSON(
-				resourceRequest, resourceResponse,
-				JSONUtil.put(
-					"errorMessage",
-					_language.get(
-						httpServletRequest,
-						"this-publication-no-longer-exists")));
+			if ((ctCollection == null) &&
+				(ctCollectionId != CTConstants.CT_COLLECTION_ID_PRODUCTION)) {
 
-			return;
-		}
+				throw new PrincipalException(
+					"No CTCollection exists with the primary key " +
+						ctCollectionId);
+			}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		if ((ctCollection != null) &&
-			!CTCollectionPermission.contains(
+			CTCollectionPermission.check(
 				themeDisplay.getPermissionChecker(), ctCollection,
-				CTActionKeys.INVITE_USERS)) {
+				CTActionKeys.INVITE_USERS);
+		}
+		catch (Exception exception) {
+			if (exception instanceof PrincipalException) {
+				JSONPortletResponseUtil.writeJSON(
+					resourceRequest, resourceResponse,
+					JSONUtil.put(
+						"errorMessage",
+						_language.get(
+							httpServletRequest,
+							"you-do-not-have-permission-to-perform-this-" +
+								"action")));
 
-			JSONPortletResponseUtil.writeJSON(
-				resourceRequest, resourceResponse,
-				JSONUtil.put(
-					"errorMessage",
-					_language.get(
-						httpServletRequest,
-						"you-do-not-have-permission-to-invite-users-to-this-" +
-							"publication")));
+				return;
+			}
 
-			return;
+			throw exception;
 		}
 
 		Group group = null;
@@ -180,11 +185,12 @@ public class InviteUsersMVCResourceCommand
 			}
 
 			group = _groupLocalService.addGroup(
-				userId, GroupConstants.DEFAULT_PARENT_GROUP_ID, className,
-				classPK, GroupConstants.DEFAULT_LIVE_GROUP_ID, nameMap, null,
-				GroupConstants.TYPE_SITE_PRIVATE, false,
+				StringPool.BLANK, userId,
+				GroupConstants.DEFAULT_PARENT_GROUP_ID, className, classPK,
+				GroupConstants.DEFAULT_LIVE_GROUP_ID, nameMap, null,
+				GroupConstants.TYPE_SITE_PRIVATE, null, false,
 				GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null, false,
-				true, null);
+				false, true, null);
 		}
 
 		long[] publicationsUserRoleUserIds = ParamUtil.getLongValues(
@@ -240,9 +246,7 @@ public class InviteUsersMVCResourceCommand
 				_sendNotificationEvent(
 					ctCollectionId, userIds[i], roleValues[i], themeDisplay);
 
-				if (FeatureFlagManagerUtil.isEnabled("LPD-11212")) {
-					_sendEmail(ctCollectionId, userIds[i], themeDisplay);
-				}
+				_sendEmail(ctCollectionId, userIds[i], themeDisplay);
 			}
 		}
 

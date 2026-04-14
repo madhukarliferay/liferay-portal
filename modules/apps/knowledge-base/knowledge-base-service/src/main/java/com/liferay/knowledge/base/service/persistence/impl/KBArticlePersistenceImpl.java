@@ -337,216 +337,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByResourcePrimKey_Last(
-			long resourcePrimKey,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByResourcePrimKey_Last(
-			resourcePrimKey, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByResourcePrimKey_Last(
-		long resourcePrimKey, OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByResourcePrimKey(resourcePrimKey);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByResourcePrimKey(
-			resourcePrimKey, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByResourcePrimKey_PrevAndNext(
-			long kbArticleId, long resourcePrimKey,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByResourcePrimKey_PrevAndNext(
-				session, kbArticle, resourcePrimKey, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByResourcePrimKey_PrevAndNext(
-				session, kbArticle, resourcePrimKey, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByResourcePrimKey_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_RESOURCEPRIMKEY_RESOURCEPRIMKEY_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the kb articles where resourcePrimKey = &#63; from the database.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -850,227 +640,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByUuid_Last(
-			String uuid, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByUuid_Last(
-		String uuid, OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where uuid = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByUuid_PrevAndNext(
-			long kbArticleId, String uuid,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		uuid = Objects.toString(uuid, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, kbArticle, uuid, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, kbArticle, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByUuid_PrevAndNext(
-		Session session, KBArticle kbArticle, String uuid,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -1621,240 +1190,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByUuid_C_PrevAndNext(
-			long kbArticleId, String uuid, long companyId,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		uuid = Objects.toString(uuid, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, kbArticle, uuid, companyId, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, kbArticle, uuid, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByUuid_C_PrevAndNext(
-		Session session, KBArticle kbArticle, String uuid, long companyId,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the kb articles where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -2199,230 +1534,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_Last(
-			long resourcePrimKey, long groupId,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_Last(
-			resourcePrimKey, groupId, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_Last(
-		long resourcePrimKey, long groupId,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G(resourcePrimKey, groupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G(
-			resourcePrimKey, groupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_GROUPID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -2478,6 +1589,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByR_G(
 				resourcePrimKey, groupId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G(
+					resourcePrimKey, groupId, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -2556,210 +1677,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_GROUPID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2851,6 +1768,14 @@ public class KBArticlePersistenceImpl
 	public int filterCountByR_G(long resourcePrimKey, long groupId) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G(resourcePrimKey, groupId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G(resourcePrimKey, groupId);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -3330,230 +2255,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_L_Last(
-			long resourcePrimKey, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_L_Last(
-			resourcePrimKey, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_L_Last(
-		long resourcePrimKey, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_L(resourcePrimKey, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_L(
-			resourcePrimKey, latest, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_L_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_L_PrevAndNext(
-				session, kbArticle, resourcePrimKey, latest, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_L_PrevAndNext(
-				session, kbArticle, resourcePrimKey, latest, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		boolean latest, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_L_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -4176,230 +2877,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_M_Last(
-			long resourcePrimKey, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_M_Last(
-			resourcePrimKey, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_M_Last(
-		long resourcePrimKey, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_M(resourcePrimKey, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_M(
-			resourcePrimKey, main, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_M_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_M_PrevAndNext(
-				session, kbArticle, resourcePrimKey, main, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_M_PrevAndNext(
-				session, kbArticle, resourcePrimKey, main, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		boolean main, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_M_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles where resourcePrimKey = any &#63; and main = &#63;.
 	 *
 	 * <p>
@@ -5016,229 +3493,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_S_Last(
-			long resourcePrimKey, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_S_Last(
-			resourcePrimKey, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_S_Last(
-		long resourcePrimKey, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_S(resourcePrimKey, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_S(
-			resourcePrimKey, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_S_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_S_PrevAndNext(
-				session, kbArticle, resourcePrimKey, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_S_PrevAndNext(
-				session, kbArticle, resourcePrimKey, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_S_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -5910,244 +4164,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_ERC_Last(
-			long groupId, String externalReferenceCode,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_ERC_Last(
-			groupId, externalReferenceCode, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", externalReferenceCode=");
-		sb.append(externalReferenceCode);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_ERC_Last(
-		long groupId, String externalReferenceCode,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_ERC(groupId, externalReferenceCode);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_ERC(
-			groupId, externalReferenceCode, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_ERC_PrevAndNext(
-			long kbArticleId, long groupId, String externalReferenceCode,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		externalReferenceCode = Objects.toString(externalReferenceCode, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_ERC_PrevAndNext(
-				session, kbArticle, groupId, externalReferenceCode,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_ERC_PrevAndNext(
-				session, kbArticle, groupId, externalReferenceCode,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_ERC_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		String externalReferenceCode,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_ERC_GROUPID_2);
-
-		boolean bindExternalReferenceCode = false;
-
-		if (externalReferenceCode.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_ERC_EXTERNALREFERENCECODE_3);
-		}
-		else {
-			bindExternalReferenceCode = true;
-
-			sb.append(_FINDER_COLUMN_G_ERC_EXTERNALREFERENCECODE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindExternalReferenceCode) {
-			queryPos.add(externalReferenceCode);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6206,6 +4222,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_ERC(
 				groupId, externalReferenceCode, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_ERC(
+					groupId, externalReferenceCode, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		externalReferenceCode = Objects.toString(externalReferenceCode, "");
@@ -6297,223 +4323,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_ERC_PrevAndNext(
-			long kbArticleId, long groupId, String externalReferenceCode,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_ERC_PrevAndNext(
-				kbArticleId, groupId, externalReferenceCode, orderByComparator);
-		}
-
-		externalReferenceCode = Objects.toString(externalReferenceCode, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_ERC_PrevAndNext(
-				session, kbArticle, groupId, externalReferenceCode,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_ERC_PrevAndNext(
-				session, kbArticle, groupId, externalReferenceCode,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_ERC_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		String externalReferenceCode,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_ERC_GROUPID_2);
-
-		boolean bindExternalReferenceCode = false;
-
-		if (externalReferenceCode.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_ERC_EXTERNALREFERENCECODE_3);
-		}
-		else {
-			bindExternalReferenceCode = true;
-
-			sb.append(_FINDER_COLUMN_G_ERC_EXTERNALREFERENCECODE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindExternalReferenceCode) {
-			queryPos.add(externalReferenceCode);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -6618,6 +4427,15 @@ public class KBArticlePersistenceImpl
 	public int filterCountByG_ERC(long groupId, String externalReferenceCode) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_ERC(groupId, externalReferenceCode);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_ERC(
+				groupId, externalReferenceCode);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		externalReferenceCode = Objects.toString(externalReferenceCode, "");
@@ -6925,227 +4743,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_L_Last(
-			long groupId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_L_Last(
-			groupId, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_L_Last(
-		long groupId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_L(groupId, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_L(
-			groupId, latest, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_L_PrevAndNext(
-			long kbArticleId, long groupId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_L_PrevAndNext(
-				session, kbArticle, groupId, latest, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_L_PrevAndNext(
-				session, kbArticle, groupId, latest, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and latest = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7199,6 +4796,16 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_L(groupId, latest, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_L(
+					groupId, latest, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -7277,207 +4884,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_L_PrevAndNext(
-			long kbArticleId, long groupId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_L_PrevAndNext(
-				kbArticleId, groupId, latest, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_L_PrevAndNext(
-				session, kbArticle, groupId, latest, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_L_PrevAndNext(
-				session, kbArticle, groupId, latest, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_L_LATEST_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -7569,6 +4975,14 @@ public class KBArticlePersistenceImpl
 	public int filterCountByG_L(long groupId, boolean latest) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_L(groupId, latest);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_L(groupId, latest);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -7860,226 +5274,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and main = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_M_Last(
-			long groupId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_M_Last(groupId, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and main = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_M_Last(
-		long groupId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_M(groupId, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_M(
-			groupId, main, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_M_PrevAndNext(
-			long kbArticleId, long groupId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_M_PrevAndNext(
-				session, kbArticle, groupId, main, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_M_PrevAndNext(
-				session, kbArticle, groupId, main, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_M_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and main = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8133,6 +5327,16 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_M(groupId, main, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_M(
+					groupId, main, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -8211,207 +5415,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_M_PrevAndNext(
-			long kbArticleId, long groupId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_M_PrevAndNext(
-				kbArticleId, groupId, main, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_M_PrevAndNext(
-				session, kbArticle, groupId, main, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_M_PrevAndNext(
-				session, kbArticle, groupId, main, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_M_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_M_MAIN_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -8503,6 +5506,14 @@ public class KBArticlePersistenceImpl
 	public int filterCountByG_M(long groupId, boolean main) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_M(groupId, main);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_M(groupId, main);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -8794,227 +5805,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_S_Last(
-			long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_S_Last(
-			groupId, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_S_Last(
-		long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_S(groupId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_S(
-			groupId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_S_PrevAndNext(
-			long kbArticleId, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_S_PrevAndNext(
-				session, kbArticle, groupId, status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_S_PrevAndNext(
-				session, kbArticle, groupId, status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -9068,6 +5858,16 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_S(groupId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_S(
+					groupId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -9146,207 +5946,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_S_PrevAndNext(
-			long kbArticleId, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_S_PrevAndNext(
-				kbArticleId, groupId, status, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_S_PrevAndNext(
-				session, kbArticle, groupId, status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_S_PrevAndNext(
-				session, kbArticle, groupId, status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -9438,6 +6037,14 @@ public class KBArticlePersistenceImpl
 	public int filterCountByG_S(long groupId, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_S(groupId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_S(groupId, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -9727,228 +6334,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and latest = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByC_L_Last(
-			long companyId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByC_L_Last(
-			companyId, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and latest = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByC_L_Last(
-		long companyId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByC_L(companyId, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByC_L(
-			companyId, latest, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where companyId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param companyId the company ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByC_L_PrevAndNext(
-			long kbArticleId, long companyId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByC_L_PrevAndNext(
-				session, kbArticle, companyId, latest, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByC_L_PrevAndNext(
-				session, kbArticle, companyId, latest, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByC_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long companyId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_L_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -10277,227 +6662,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and main = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByC_M_Last(
-			long companyId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByC_M_Last(
-			companyId, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and main = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByC_M_Last(
-		long companyId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByC_M(companyId, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByC_M(
-			companyId, main, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where companyId = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param companyId the company ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByC_M_PrevAndNext(
-			long kbArticleId, long companyId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByC_M_PrevAndNext(
-				session, kbArticle, companyId, main, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByC_M_PrevAndNext(
-				session, kbArticle, companyId, main, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByC_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long companyId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_M_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the kb articles where companyId = &#63; and main = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -10821,228 +6985,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByC_S_Last(
-			long companyId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByC_S_Last(
-			companyId, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByC_S_Last(
-		long companyId, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByC_S(companyId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByC_S(
-			companyId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByC_S_PrevAndNext(
-			long kbArticleId, long companyId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByC_S_PrevAndNext(
-				session, kbArticle, companyId, status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByC_S_PrevAndNext(
-				session, kbArticle, companyId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByC_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long companyId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_S_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -11374,230 +7316,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByP_L_Last(
-			long parentResourcePrimKey, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByP_L_Last(
-			parentResourcePrimKey, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByP_L_Last(
-		long parentResourcePrimKey, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByP_L(parentResourcePrimKey, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByP_L(
-			parentResourcePrimKey, latest, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByP_L_PrevAndNext(
-			long kbArticleId, long parentResourcePrimKey, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByP_L_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByP_L_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByP_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long parentResourcePrimKey,
-		boolean latest, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_L_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_P_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -12227,230 +7945,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByP_M_Last(
-			long parentResourcePrimKey, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByP_M_Last(
-			parentResourcePrimKey, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByP_M_Last(
-		long parentResourcePrimKey, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByP_M(parentResourcePrimKey, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByP_M(
-			parentResourcePrimKey, main, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByP_M_PrevAndNext(
-			long kbArticleId, long parentResourcePrimKey, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByP_M_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, main,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByP_M_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, main,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByP_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long parentResourcePrimKey,
-		boolean main, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_M_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_P_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles where parentResourcePrimKey = any &#63; and main = &#63;.
 	 *
 	 * <p>
@@ -13072,230 +8566,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByP_S_Last(
-			long parentResourcePrimKey, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByP_S_Last(
-			parentResourcePrimKey, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByP_S_Last(
-		long parentResourcePrimKey, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByP_S(parentResourcePrimKey, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByP_S(
-			parentResourcePrimKey, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByP_S_PrevAndNext(
-			long kbArticleId, long parentResourcePrimKey, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByP_S_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByP_S_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByP_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long parentResourcePrimKey,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_P_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -13922,240 +9192,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByLtD_S_Last(
-			Date displayDate, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByLtD_S_Last(
-			displayDate, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("displayDate<");
-		sb.append(displayDate);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByLtD_S_Last(
-		Date displayDate, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByLtD_S(displayDate, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByLtD_S(
-			displayDate, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByLtD_S_PrevAndNext(
-			long kbArticleId, Date displayDate, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByLtD_S_PrevAndNext(
-				session, kbArticle, displayDate, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByLtD_S_PrevAndNext(
-				session, kbArticle, displayDate, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByLtD_S_PrevAndNext(
-		Session session, KBArticle kbArticle, Date displayDate, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		boolean bindDisplayDate = false;
-
-		if (displayDate == null) {
-			sb.append(_FINDER_COLUMN_LTD_S_DISPLAYDATE_1);
-		}
-		else {
-			bindDisplayDate = true;
-
-			sb.append(_FINDER_COLUMN_LTD_S_DISPLAYDATE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_LTD_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindDisplayDate) {
-			queryPos.add(new Timestamp(displayDate.getTime()));
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the kb articles where displayDate &lt; &#63; and status = &#63; from the database.
 	 *
 	 * @param displayDate the display date
@@ -14728,241 +9764,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_L_Last(
-			long resourcePrimKey, long groupId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_L_Last(
-			resourcePrimKey, groupId, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_L_Last(
-		long resourcePrimKey, long groupId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G_L(resourcePrimKey, groupId, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G_L(
-			resourcePrimKey, groupId, latest, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_L_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId,
-			boolean latest, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_L_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_L_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_L_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -15026,6 +9827,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_L(
 				resourcePrimKey, groupId, latest, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_L(
+					resourcePrimKey, groupId, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -15112,216 +9923,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_L_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId,
-			boolean latest, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_L_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, latest,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_L_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_L_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_L_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_LATEST_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = any &#63; and groupId = &#63; and latest = &#63;.
 	 *
 	 * @param resourcePrimKeys the resource prim keys
@@ -15385,6 +9986,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_L(
 				resourcePrimKeys, groupId, latest, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_L(
+					resourcePrimKeys, groupId, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (resourcePrimKeys == null) {
@@ -15897,6 +10508,15 @@ public class KBArticlePersistenceImpl
 			return countByR_G_L(resourcePrimKey, groupId, latest);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G_L(
+				resourcePrimKey, groupId, latest);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -15955,6 +10575,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G_L(resourcePrimKeys, groupId, latest);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByR_G_L(resourcePrimKeys, groupId, latest), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (resourcePrimKeys == null) {
@@ -16298,241 +10925,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and main = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_M_Last(
-			long resourcePrimKey, long groupId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_M_Last(
-			resourcePrimKey, groupId, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and main = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_M_Last(
-		long resourcePrimKey, long groupId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G_M(resourcePrimKey, groupId, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G_M(
-			resourcePrimKey, groupId, main, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_M_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_M_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_M_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_M_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and main = &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -16594,6 +10986,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByR_G_M(
 				resourcePrimKey, groupId, main, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_M(
+					resourcePrimKey, groupId, main, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -16680,215 +11082,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_M_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_M_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, main, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_M_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_M_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_M_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_MAIN_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = any &#63; and groupId = &#63; and main = &#63;.
 	 *
 	 * @param resourcePrimKeys the resource prim keys
@@ -16951,6 +11144,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByR_G_M(
 				resourcePrimKeys, groupId, main, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_M(
+					resourcePrimKeys, groupId, main, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (resourcePrimKeys == null) {
@@ -17459,6 +11662,15 @@ public class KBArticlePersistenceImpl
 			return countByR_G_M(resourcePrimKey, groupId, main);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G_M(
+				resourcePrimKey, groupId, main);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -17517,6 +11729,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G_M(resourcePrimKeys, groupId, main);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByR_G_M(resourcePrimKeys, groupId, main), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (resourcePrimKeys == null) {
@@ -17862,241 +12081,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_S_Last(
-			long resourcePrimKey, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_S_Last(
-			resourcePrimKey, groupId, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_S_Last(
-		long resourcePrimKey, long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G_S(resourcePrimKey, groupId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G_S(
-			resourcePrimKey, groupId, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_S_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_S_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_S_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_S_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and status = &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -18159,6 +12143,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_S(
 				resourcePrimKey, groupId, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_S(
+					resourcePrimKey, groupId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -18245,216 +12239,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_S_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_S_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_S_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_S_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_S_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = any &#63; and groupId = &#63; and status = &#63;.
 	 *
 	 * @param resourcePrimKeys the resource prim keys
@@ -18517,6 +12301,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_S(
 				resourcePrimKeys, groupId, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_S(
+					resourcePrimKeys, groupId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (resourcePrimKeys == null) {
@@ -19022,6 +12816,15 @@ public class KBArticlePersistenceImpl
 			return countByR_G_S(resourcePrimKey, groupId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G_S(
+				resourcePrimKey, groupId, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -19080,6 +12883,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G_S(resourcePrimKeys, groupId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByR_G_S(resourcePrimKeys, groupId, status), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (resourcePrimKeys == null) {
@@ -19411,241 +13221,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_NotS_Last(
-			long resourcePrimKey, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_NotS_Last(
-			resourcePrimKey, groupId, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_NotS_Last(
-		long resourcePrimKey, long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G_NotS(resourcePrimKey, groupId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G_NotS(
-			resourcePrimKey, groupId, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and status &ne; &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -19708,6 +13283,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_NotS(
 				resourcePrimKey, groupId, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_NotS(
+					resourcePrimKey, groupId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -19790,216 +13375,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_NotS_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -20104,6 +13479,15 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G_NotS(resourcePrimKey, groupId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G_NotS(
+				resourcePrimKey, groupId, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -20409,241 +13793,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_L_NotS_Last(
-			long resourcePrimKey, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_L_NotS_Last(
-			resourcePrimKey, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_L_NotS_Last(
-		long resourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_L_NotS(resourcePrimKey, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_L_NotS(
-			resourcePrimKey, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_L_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_L_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_L_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_L_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_R_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -21309,240 +14458,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_M_NotS_Last(
-			long resourcePrimKey, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_M_NotS_Last(
-			resourcePrimKey, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_M_NotS_Last(
-		long resourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_M_NotS(resourcePrimKey, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_M_NotS(
-			resourcePrimKey, main, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_M_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_M_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, main, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_M_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, main, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_M_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_R_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles where resourcePrimKey = any &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * <p>
@@ -22181,6 +15096,654 @@ public class KBArticlePersistenceImpl
 	private static final String _FINDER_COLUMN_G_ERC_V_VERSION_2 =
 		"kbArticle.version = ?";
 
+	private FinderPath _finderPathWithPaginationFindByG_ERC_S;
+	private FinderPath _finderPathWithoutPaginationFindByG_ERC_S;
+	private FinderPath _finderPathCountByG_ERC_S;
+
+	/**
+	 * Returns all the kb articles where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @return the matching kb articles
+	 */
+	@Override
+	public List<KBArticle> findByG_ERC_S(
+		long groupId, String externalReferenceCode, int status) {
+
+		return findByG_ERC_S(
+			groupId, externalReferenceCode, status, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the kb articles where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param start the lower bound of the range of kb articles
+	 * @param end the upper bound of the range of kb articles (not inclusive)
+	 * @return the range of matching kb articles
+	 */
+	@Override
+	public List<KBArticle> findByG_ERC_S(
+		long groupId, String externalReferenceCode, int status, int start,
+		int end) {
+
+		return findByG_ERC_S(
+			groupId, externalReferenceCode, status, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the kb articles where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param start the lower bound of the range of kb articles
+	 * @param end the upper bound of the range of kb articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching kb articles
+	 */
+	@Override
+	public List<KBArticle> findByG_ERC_S(
+		long groupId, String externalReferenceCode, int status, int start,
+		int end, OrderByComparator<KBArticle> orderByComparator) {
+
+		return findByG_ERC_S(
+			groupId, externalReferenceCode, status, start, end,
+			orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the kb articles where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param start the lower bound of the range of kb articles
+	 * @param end the upper bound of the range of kb articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching kb articles
+	 */
+	@Override
+	public List<KBArticle> findByG_ERC_S(
+		long groupId, String externalReferenceCode, int status, int start,
+		int end, OrderByComparator<KBArticle> orderByComparator,
+		boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					KBArticle.class)) {
+
+			externalReferenceCode = Objects.toString(externalReferenceCode, "");
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByG_ERC_S;
+					finderArgs = new Object[] {
+						groupId, externalReferenceCode, status
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByG_ERC_S;
+				finderArgs = new Object[] {
+					groupId, externalReferenceCode, status, start, end,
+					orderByComparator
+				};
+			}
+
+			List<KBArticle> list = null;
+
+			if (useFinderCache) {
+				list = (List<KBArticle>)finderCache.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (KBArticle kbArticle : list) {
+						if ((groupId != kbArticle.getGroupId()) ||
+							!externalReferenceCode.equals(
+								kbArticle.getExternalReferenceCode()) ||
+							(status != kbArticle.getStatus())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						5 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(5);
+				}
+
+				sb.append(_SQL_SELECT_KBARTICLE_WHERE);
+
+				sb.append(_FINDER_COLUMN_G_ERC_S_GROUPID_2);
+
+				boolean bindExternalReferenceCode = false;
+
+				if (externalReferenceCode.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_3);
+				}
+				else {
+					bindExternalReferenceCode = true;
+
+					sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_2);
+				}
+
+				sb.append(_FINDER_COLUMN_G_ERC_S_STATUS_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					if (bindExternalReferenceCode) {
+						queryPos.add(externalReferenceCode);
+					}
+
+					queryPos.add(status);
+
+					list = (List<KBArticle>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						finderCache.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first kb article in the ordered set where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching kb article
+	 * @throws NoSuchArticleException if a matching kb article could not be found
+	 */
+	@Override
+	public KBArticle findByG_ERC_S_First(
+			long groupId, String externalReferenceCode, int status,
+			OrderByComparator<KBArticle> orderByComparator)
+		throws NoSuchArticleException {
+
+		KBArticle kbArticle = fetchByG_ERC_S_First(
+			groupId, externalReferenceCode, status, orderByComparator);
+
+		if (kbArticle != null) {
+			return kbArticle;
+		}
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("groupId=");
+		sb.append(groupId);
+
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
+
+		sb.append(", status=");
+		sb.append(status);
+
+		sb.append("}");
+
+		throw new NoSuchArticleException(sb.toString());
+	}
+
+	/**
+	 * Returns the first kb article in the ordered set where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching kb article, or <code>null</code> if a matching kb article could not be found
+	 */
+	@Override
+	public KBArticle fetchByG_ERC_S_First(
+		long groupId, String externalReferenceCode, int status,
+		OrderByComparator<KBArticle> orderByComparator) {
+
+		List<KBArticle> list = findByG_ERC_S(
+			groupId, externalReferenceCode, status, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @return the matching kb articles that the user has permission to view
+	 */
+	@Override
+	public List<KBArticle> filterFindByG_ERC_S(
+		long groupId, String externalReferenceCode, int status) {
+
+		return filterFindByG_ERC_S(
+			groupId, externalReferenceCode, status, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the kb articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param start the lower bound of the range of kb articles
+	 * @param end the upper bound of the range of kb articles (not inclusive)
+	 * @return the range of matching kb articles that the user has permission to view
+	 */
+	@Override
+	public List<KBArticle> filterFindByG_ERC_S(
+		long groupId, String externalReferenceCode, int status, int start,
+		int end) {
+
+		return filterFindByG_ERC_S(
+			groupId, externalReferenceCode, status, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the kb articles that the user has permissions to view where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @param start the lower bound of the range of kb articles
+	 * @param end the upper bound of the range of kb articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching kb articles that the user has permission to view
+	 */
+	@Override
+	public List<KBArticle> filterFindByG_ERC_S(
+		long groupId, String externalReferenceCode, int status, int start,
+		int end, OrderByComparator<KBArticle> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
+			return findByG_ERC_S(
+				groupId, externalReferenceCode, status, start, end,
+				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_ERC_S(
+					groupId, externalReferenceCode, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
+		}
+
+		externalReferenceCode = Objects.toString(externalReferenceCode, "");
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				5 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(6);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_G_ERC_S_GROUPID_2);
+
+		boolean bindExternalReferenceCode = false;
+
+		if (externalReferenceCode.isEmpty()) {
+			sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_3);
+		}
+		else {
+			bindExternalReferenceCode = true;
+
+			sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_2);
+		}
+
+		sb.append(_FINDER_COLUMN_G_ERC_S_STATUS_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), KBArticle.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
+			}
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(groupId);
+
+			if (bindExternalReferenceCode) {
+				queryPos.add(externalReferenceCode);
+			}
+
+			queryPos.add(status);
+
+			return (List<KBArticle>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Removes all the kb articles where groupId = &#63; and externalReferenceCode = &#63; and status = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 */
+	@Override
+	public void removeByG_ERC_S(
+		long groupId, String externalReferenceCode, int status) {
+
+		for (KBArticle kbArticle :
+				findByG_ERC_S(
+					groupId, externalReferenceCode, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, null)) {
+
+			remove(kbArticle);
+		}
+	}
+
+	/**
+	 * Returns the number of kb articles where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @return the number of matching kb articles
+	 */
+	@Override
+	public int countByG_ERC_S(
+		long groupId, String externalReferenceCode, int status) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					KBArticle.class)) {
+
+			externalReferenceCode = Objects.toString(externalReferenceCode, "");
+
+			FinderPath finderPath = _finderPathCountByG_ERC_S;
+
+			Object[] finderArgs = new Object[] {
+				groupId, externalReferenceCode, status
+			};
+
+			Long count = (Long)finderCache.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(4);
+
+				sb.append(_SQL_COUNT_KBARTICLE_WHERE);
+
+				sb.append(_FINDER_COLUMN_G_ERC_S_GROUPID_2);
+
+				boolean bindExternalReferenceCode = false;
+
+				if (externalReferenceCode.isEmpty()) {
+					sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_3);
+				}
+				else {
+					bindExternalReferenceCode = true;
+
+					sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_2);
+				}
+
+				sb.append(_FINDER_COLUMN_G_ERC_S_STATUS_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(groupId);
+
+					if (bindExternalReferenceCode) {
+						queryPos.add(externalReferenceCode);
+					}
+
+					queryPos.add(status);
+
+					count = (Long)query.uniqueResult();
+
+					finderCache.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of kb articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param externalReferenceCode the external reference code
+	 * @param status the status
+	 * @return the number of matching kb articles that the user has permission to view
+	 */
+	@Override
+	public int filterCountByG_ERC_S(
+		long groupId, String externalReferenceCode, int status) {
+
+		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
+			return countByG_ERC_S(groupId, externalReferenceCode, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_ERC_S(
+				groupId, externalReferenceCode, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
+		externalReferenceCode = Objects.toString(externalReferenceCode, "");
+
+		StringBundler sb = new StringBundler(4);
+
+		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
+
+		sb.append(_FINDER_COLUMN_G_ERC_S_GROUPID_2);
+
+		boolean bindExternalReferenceCode = false;
+
+		if (externalReferenceCode.isEmpty()) {
+			sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_3);
+		}
+		else {
+			bindExternalReferenceCode = true;
+
+			sb.append(_FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_2);
+		}
+
+		sb.append(_FINDER_COLUMN_G_ERC_S_STATUS_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), KBArticle.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(groupId);
+
+			if (bindExternalReferenceCode) {
+				queryPos.add(externalReferenceCode);
+			}
+
+			queryPos.add(status);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_G_ERC_S_GROUPID_2 =
+		"kbArticle.groupId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_2 =
+		"kbArticle.externalReferenceCode = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_ERC_S_EXTERNALREFERENCECODE_3 =
+		"(kbArticle.externalReferenceCode IS NULL OR kbArticle.externalReferenceCode = '') AND ";
+
+	private static final String _FINDER_COLUMN_G_ERC_S_STATUS_2 =
+		"kbArticle.status = ?";
+
 	private FinderPath _finderPathWithPaginationFindByG_P_L;
 	private FinderPath _finderPathWithoutPaginationFindByG_P_L;
 	private FinderPath _finderPathCountByG_P_L;
@@ -22450,241 +16013,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_L_Last(
-			long groupId, long parentResourcePrimKey, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_L_Last(
-			groupId, parentResourcePrimKey, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_L_Last(
-		long groupId, long parentResourcePrimKey, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_L(groupId, parentResourcePrimKey, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_L(
-			groupId, parentResourcePrimKey, latest, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_L_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean latest, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_L_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_L_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -22748,6 +16076,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_L(
 				groupId, parentResourcePrimKey, latest, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_L(
+					groupId, parentResourcePrimKey, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -22834,216 +16172,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_L_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean latest, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_L_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, latest,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_L_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_L_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_LATEST_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and latest = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -23107,6 +16235,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_L(
 				groupId, parentResourcePrimKeys, latest, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_L(
+					groupId, parentResourcePrimKeys, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -23624,6 +16762,15 @@ public class KBArticlePersistenceImpl
 			return countByG_P_L(groupId, parentResourcePrimKey, latest);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_L(
+				groupId, parentResourcePrimKey, latest);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -23682,6 +16829,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_L(groupId, parentResourcePrimKeys, latest);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_L(groupId, parentResourcePrimKeys, latest), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -24030,241 +17184,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_M_Last(
-			long groupId, long parentResourcePrimKey, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_M_Last(
-			groupId, parentResourcePrimKey, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_M_Last(
-		long groupId, long parentResourcePrimKey, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_M(groupId, parentResourcePrimKey, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_M(
-			groupId, parentResourcePrimKey, main, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_M_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean main, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_M_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_M_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_M_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -24328,6 +17247,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_M(
 				groupId, parentResourcePrimKey, main, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_M(
+					groupId, parentResourcePrimKey, main, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -24414,216 +17343,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_M_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean main, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_M_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, main,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_M_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_M_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean main,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_M_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_MAIN_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and main = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -24687,6 +17406,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_M(
 				groupId, parentResourcePrimKeys, main, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_M(
+					groupId, parentResourcePrimKeys, main, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -25203,6 +17932,15 @@ public class KBArticlePersistenceImpl
 			return countByG_P_M(groupId, parentResourcePrimKey, main);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_M(
+				groupId, parentResourcePrimKey, main);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -25261,6 +17999,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_M(groupId, parentResourcePrimKeys, main);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_M(groupId, parentResourcePrimKeys, main), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -25609,241 +18354,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_S_Last(
-			long groupId, long parentResourcePrimKey, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_S_Last(
-			groupId, parentResourcePrimKey, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_S_Last(
-		long groupId, long parentResourcePrimKey, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_S(groupId, parentResourcePrimKey, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_S(
-			groupId, parentResourcePrimKey, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_S_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -25907,6 +18417,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_S(
 				groupId, parentResourcePrimKey, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_S(
+					groupId, parentResourcePrimKey, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -25993,216 +18513,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_S_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_S_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -26266,6 +18576,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_S(
 				groupId, parentResourcePrimKeys, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_S(
+					groupId, parentResourcePrimKeys, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -26783,6 +19103,15 @@ public class KBArticlePersistenceImpl
 			return countByG_P_S(groupId, parentResourcePrimKey, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_S(
+				groupId, parentResourcePrimKey, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -26841,6 +19170,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_S(groupId, parentResourcePrimKeys, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_S(groupId, parentResourcePrimKeys, status), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -27194,253 +19530,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_KBFI_UT_Last(
-			long groupId, long kbFolderId, String urlTitle,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_KBFI_UT_Last(
-			groupId, kbFolderId, urlTitle, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", kbFolderId=");
-		sb.append(kbFolderId);
-
-		sb.append(", urlTitle=");
-		sb.append(urlTitle);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_KBFI_UT_Last(
-		long groupId, long kbFolderId, String urlTitle,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_KBFI_UT(groupId, kbFolderId, urlTitle);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_KBFI_UT(
-			groupId, kbFolderId, urlTitle, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_KBFI_UT_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, String urlTitle,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		urlTitle = Objects.toString(urlTitle, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_KBFI_UT_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_KBFI_UT_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_KBFI_UT_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		String urlTitle, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_KBFOLDERID_2);
-
-		boolean bindUrlTitle = false;
-
-		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_URLTITLE_3);
-		}
-		else {
-			bindUrlTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_URLTITLE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		if (bindUrlTitle) {
-			queryPos.add(urlTitle);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -27502,6 +19591,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_KBFI_UT(
 				groupId, kbFolderId, urlTitle, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_UT(
+					groupId, kbFolderId, urlTitle, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -27597,228 +19696,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_KBFI_UT_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, String urlTitle,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_UT_PrevAndNext(
-				kbArticleId, groupId, kbFolderId, urlTitle, orderByComparator);
-		}
-
-		urlTitle = Objects.toString(urlTitle, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_KBFI_UT_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_KBFI_UT_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_KBFI_UT_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		String urlTitle, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_KBFOLDERID_2);
-
-		boolean bindUrlTitle = false;
-
-		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_URLTITLE_3);
-		}
-		else {
-			bindUrlTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_URLTITLE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		if (bindUrlTitle) {
-			queryPos.add(urlTitle);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -27936,6 +19813,15 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_KBFI_UT(groupId, kbFolderId, urlTitle);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_KBFI_UT(
+				groupId, kbFolderId, urlTitle);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -28268,240 +20154,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_KBFI_L_Last(
-			long groupId, long kbFolderId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_KBFI_L_Last(
-			groupId, kbFolderId, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", kbFolderId=");
-		sb.append(kbFolderId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_KBFI_L_Last(
-		long groupId, long kbFolderId, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_KBFI_L(groupId, kbFolderId, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_KBFI_L(
-			groupId, kbFolderId, latest, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_KBFI_L_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_KBFI_L_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_KBFI_L_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_KBFI_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		boolean latest, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_KBFOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and latest = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -28563,6 +20215,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_KBFI_L(
 				groupId, kbFolderId, latest, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_L(
+					groupId, kbFolderId, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -28645,215 +20307,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_KBFI_L_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_L_PrevAndNext(
-				kbArticleId, groupId, kbFolderId, latest, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_KBFI_L_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_KBFI_L_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_KBFI_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		boolean latest, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_KBFOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_LATEST_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -28956,6 +20409,15 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_KBFI_L(groupId, kbFolderId, latest);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_KBFI_L(
+				groupId, kbFolderId, latest);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -29272,240 +20734,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_KBFI_S_Last(
-			long groupId, long kbFolderId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_KBFI_S_Last(
-			groupId, kbFolderId, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", kbFolderId=");
-		sb.append(kbFolderId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_KBFI_S_Last(
-		long groupId, long kbFolderId, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_KBFI_S(groupId, kbFolderId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_KBFI_S(
-			groupId, kbFolderId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_KBFI_S_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_KBFI_S_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_KBFI_S_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_KBFI_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_S_KBFOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -29567,6 +20795,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_KBFI_S(
 				groupId, kbFolderId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_S(
+					groupId, kbFolderId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -29649,215 +20887,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_KBFI_S_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_S_PrevAndNext(
-				kbArticleId, groupId, kbFolderId, status, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_KBFI_S_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_KBFI_S_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_KBFI_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_S_KBFOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -29958,6 +20987,15 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_KBFI_S(groupId, kbFolderId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_KBFI_S(
+				groupId, kbFolderId, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -30278,253 +21316,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_LikeS_L_Last(
-			long groupId, String sections, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_LikeS_L_Last(
-			groupId, sections, latest, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", sectionsLIKE");
-		sb.append(sections);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and latest = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_LikeS_L_Last(
-		long groupId, String sections, boolean latest,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_LikeS_L(groupId, sections, latest);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_LikeS_L(
-			groupId, sections, latest, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_LikeS_L_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_LikeS_L_PrevAndNext(
-				session, kbArticle, groupId, sections, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_LikeS_L_PrevAndNext(
-				session, kbArticle, groupId, sections, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_LikeS_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean latest, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_L_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_L_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_LATEST_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and latest = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -30586,6 +21377,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_L(
 				groupId, sections, latest, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_L(
+					groupId, sections, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		sections = Objects.toString(sections, "");
@@ -30685,228 +21486,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and latest = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_LikeS_L_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean latest,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeS_L_PrevAndNext(
-				kbArticleId, groupId, sections, latest, orderByComparator);
-		}
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_LikeS_L_PrevAndNext(
-				session, kbArticle, groupId, sections, latest,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_LikeS_L_PrevAndNext(
-				session, kbArticle, groupId, sections, latest,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_LikeS_L_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean latest, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_L_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_L_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_LATEST_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(latest);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE any &#63; and latest = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -30968,6 +21547,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_L(
 				groupId, sectionses, latest, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_L(
+					groupId, sectionses, latest, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (sectionses == null) {
@@ -31542,6 +22131,15 @@ public class KBArticlePersistenceImpl
 			return countByG_LikeS_L(groupId, sections, latest);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_LikeS_L(
+				groupId, sections, latest);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		sections = Objects.toString(sections, "");
 
 		StringBundler sb = new StringBundler(4);
@@ -31613,6 +22211,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_LikeS_L(groupId, sectionses, latest);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_LikeS_L(groupId, sectionses, latest), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (sectionses == null) {
@@ -31981,253 +22586,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and main = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_LikeS_M_Last(
-			long groupId, String sections, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_LikeS_M_Last(
-			groupId, sections, main, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", sectionsLIKE");
-		sb.append(sections);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and main = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_LikeS_M_Last(
-		long groupId, String sections, boolean main,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_LikeS_M(groupId, sections, main);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_LikeS_M(
-			groupId, sections, main, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_LikeS_M_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_LikeS_M_PrevAndNext(
-				session, kbArticle, groupId, sections, main, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_LikeS_M_PrevAndNext(
-				session, kbArticle, groupId, sections, main, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_LikeS_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean main, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_M_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_M_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_MAIN_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and main = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -32288,6 +22646,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_M(
 				groupId, sections, main, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_M(
+					groupId, sections, main, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		sections = Objects.toString(sections, "");
@@ -32387,228 +22755,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and main = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_LikeS_M_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean main,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeS_M_PrevAndNext(
-				kbArticleId, groupId, sections, main, orderByComparator);
-		}
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_LikeS_M_PrevAndNext(
-				session, kbArticle, groupId, sections, main, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_LikeS_M_PrevAndNext(
-				session, kbArticle, groupId, sections, main, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_LikeS_M_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean main, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_M_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_M_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_MAIN_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(main);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE any &#63; and main = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -32670,6 +22816,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_M(
 				groupId, sectionses, main, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_M(
+					groupId, sectionses, main, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (sectionses == null) {
@@ -33242,6 +23398,15 @@ public class KBArticlePersistenceImpl
 			return countByG_LikeS_M(groupId, sections, main);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_LikeS_M(
+				groupId, sections, main);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		sections = Objects.toString(sections, "");
 
 		StringBundler sb = new StringBundler(4);
@@ -33313,6 +23478,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_LikeS_M(groupId, sectionses, main);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_LikeS_M(groupId, sectionses, main), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (sectionses == null) {
@@ -33681,253 +23853,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_LikeS_S_Last(
-			long groupId, String sections, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_LikeS_S_Last(
-			groupId, sections, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", sectionsLIKE");
-		sb.append(sections);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_LikeS_S_Last(
-		long groupId, String sections, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_LikeS_S(groupId, sections, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_LikeS_S(
-			groupId, sections, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_LikeS_S_PrevAndNext(
-			long kbArticleId, long groupId, String sections, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_LikeS_S_PrevAndNext(
-				session, kbArticle, groupId, sections, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_LikeS_S_PrevAndNext(
-				session, kbArticle, groupId, sections, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_LikeS_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_S_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_S_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_S_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -33989,6 +23914,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_S(
 				groupId, sections, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_S(
+					groupId, sections, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		sections = Objects.toString(sections, "");
@@ -34088,228 +24023,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_LikeS_S_PrevAndNext(
-			long kbArticleId, long groupId, String sections, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeS_S_PrevAndNext(
-				kbArticleId, groupId, sections, status, orderByComparator);
-		}
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_LikeS_S_PrevAndNext(
-				session, kbArticle, groupId, sections, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_LikeS_S_PrevAndNext(
-				session, kbArticle, groupId, sections, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_LikeS_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_S_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_S_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_S_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE any &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -34371,6 +24084,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_S(
 				groupId, sectionses, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_S(
+					groupId, sectionses, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (sectionses == null) {
@@ -34941,6 +24664,15 @@ public class KBArticlePersistenceImpl
 			return countByG_LikeS_S(groupId, sections, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_LikeS_S(
+				groupId, sections, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		sections = Objects.toString(sections, "");
 
 		StringBundler sb = new StringBundler(4);
@@ -35012,6 +24744,13 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_LikeS_S(groupId, sectionses, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_LikeS_S(groupId, sectionses, status), groupId);
+
+			return kbArticles.size();
 		}
 
 		if (sectionses == null) {
@@ -35365,240 +25104,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_L_NotS_Last(
-			long groupId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_L_NotS_Last(
-			groupId, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_L_NotS_Last(
-		long groupId, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_L_NotS(groupId, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_L_NotS(
-			groupId, latest, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, latest, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, latest, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean latest,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -35659,6 +25164,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_L_NotS(
 				groupId, latest, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_L_NotS(
+					groupId, latest, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -35741,215 +25256,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_L_NotS_PrevAndNext(
-				kbArticleId, groupId, latest, status, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, latest, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, latest, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean latest,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_L_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -36048,6 +25354,15 @@ public class KBArticlePersistenceImpl
 	public int filterCountByG_L_NotS(long groupId, boolean latest, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_L_NotS(groupId, latest, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_L_NotS(
+				groupId, latest, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -36352,240 +25667,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_M_NotS_Last(
-			long groupId, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_M_NotS_Last(
-			groupId, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_M_NotS_Last(
-		long groupId, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_M_NotS(groupId, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_M_NotS(
-			groupId, main, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_M_NotS_PrevAndNext(
-			long kbArticleId, long groupId, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, main, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, main, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean main,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_M_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -36645,6 +25726,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_M_NotS(
 				groupId, main, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_M_NotS(
+					groupId, main, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -36727,215 +25818,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_M_NotS_PrevAndNext(
-			long kbArticleId, long groupId, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_M_NotS_PrevAndNext(
-				kbArticleId, groupId, main, status, orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, main, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, main, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, boolean main,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_M_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_M_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -37034,6 +25916,14 @@ public class KBArticlePersistenceImpl
 	public int filterCountByG_M_NotS(long groupId, boolean main, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_M_NotS(groupId, main, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_M_NotS(groupId, main, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -37336,240 +26226,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByC_L_NotS_Last(
-			long companyId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByC_L_NotS_Last(
-			companyId, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByC_L_NotS_Last(
-		long companyId, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByC_L_NotS(companyId, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByC_L_NotS(
-			companyId, latest, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where companyId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param companyId the company ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByC_L_NotS_PrevAndNext(
-			long kbArticleId, long companyId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByC_L_NotS_PrevAndNext(
-				session, kbArticle, companyId, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByC_L_NotS_PrevAndNext(
-				session, kbArticle, companyId, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByC_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long companyId, boolean latest,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_L_NOTS_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_C_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -37911,240 +26567,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByC_M_NotS_Last(
-			long companyId, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByC_M_NotS_Last(
-			companyId, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where companyId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByC_M_NotS_Last(
-		long companyId, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByC_M_NotS(companyId, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByC_M_NotS(
-			companyId, main, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where companyId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param companyId the company ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByC_M_NotS_PrevAndNext(
-			long kbArticleId, long companyId, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByC_M_NotS_PrevAndNext(
-				session, kbArticle, companyId, main, status, orderByComparator,
-				true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByC_M_NotS_PrevAndNext(
-				session, kbArticle, companyId, main, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByC_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long companyId, boolean main,
-		int status, OrderByComparator<KBArticle> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_M_NOTS_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_C_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -38491,241 +26913,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByP_L_NotS_Last(
-			long parentResourcePrimKey, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByP_L_NotS_Last(
-			parentResourcePrimKey, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByP_L_NotS_Last(
-		long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByP_L_NotS(parentResourcePrimKey, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByP_L_NotS(
-			parentResourcePrimKey, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByP_L_NotS_PrevAndNext(
-			long kbArticleId, long parentResourcePrimKey, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByP_L_NotS_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByP_L_NotS_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByP_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long parentResourcePrimKey,
-		boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_L_NOTS_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_P_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_P_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -39396,241 +27583,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByP_M_NotS_Last(
-			long parentResourcePrimKey, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByP_M_NotS_Last(
-			parentResourcePrimKey, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByP_M_NotS_Last(
-		long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByP_M_NotS(parentResourcePrimKey, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByP_M_NotS(
-			parentResourcePrimKey, main, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByP_M_NotS_PrevAndNext(
-			long kbArticleId, long parentResourcePrimKey, boolean main,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByP_M_NotS_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, main, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByP_M_NotS_PrevAndNext(
-				session, kbArticle, parentResourcePrimKey, main, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByP_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long parentResourcePrimKey,
-		boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_M_NOTS_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_P_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_P_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -40318,252 +28270,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_L_NotS_Last(
-			long resourcePrimKey, long groupId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_L_NotS_Last(
-			resourcePrimKey, groupId, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_L_NotS_Last(
-		long resourcePrimKey, long groupId, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G_L_NotS(resourcePrimKey, groupId, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G_L_NotS(
-			resourcePrimKey, groupId, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_L_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId,
-			boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_L_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_L_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -40630,6 +28336,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_L_NotS(
 				resourcePrimKey, groupId, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_L_NotS(
+					resourcePrimKey, groupId, latest, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -40720,222 +28436,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_L_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId,
-			boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_L_NotS_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, latest, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_L_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_L_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_R_G_L_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = any &#63; and groupId = &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param resourcePrimKeys the resource prim keys
@@ -41002,6 +28502,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_L_NotS(
 				resourcePrimKeys, groupId, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_L_NotS(
+					resourcePrimKeys, groupId, latest, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (resourcePrimKeys == null) {
@@ -41542,6 +29052,15 @@ public class KBArticlePersistenceImpl
 			return countByR_G_L_NotS(resourcePrimKey, groupId, latest, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G_L_NotS(
+				resourcePrimKey, groupId, latest, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -41605,6 +29124,14 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G_L_NotS(resourcePrimKeys, groupId, latest, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByR_G_L_NotS(resourcePrimKeys, groupId, latest, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (resourcePrimKeys == null) {
@@ -41959,251 +29486,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByR_G_M_NotS_Last(
-			long resourcePrimKey, long groupId, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByR_G_M_NotS_Last(
-			resourcePrimKey, groupId, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("resourcePrimKey=");
-		sb.append(resourcePrimKey);
-
-		sb.append(", groupId=");
-		sb.append(groupId);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByR_G_M_NotS_Last(
-		long resourcePrimKey, long groupId, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByR_G_M_NotS(resourcePrimKey, groupId, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByR_G_M_NotS(
-			resourcePrimKey, groupId, main, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where resourcePrimKey = &#63; and groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByR_G_M_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, boolean main,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByR_G_M_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByR_G_M_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByR_G_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -42270,6 +29552,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_M_NotS(
 				resourcePrimKey, groupId, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_M_NotS(
+					resourcePrimKey, groupId, main, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -42360,221 +29652,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where resourcePrimKey = &#63; and groupId = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param resourcePrimKey the resource prim key
-	 * @param groupId the group ID
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByR_G_M_NotS_PrevAndNext(
-			long kbArticleId, long resourcePrimKey, long groupId, boolean main,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByR_G_M_NotS_PrevAndNext(
-				kbArticleId, resourcePrimKey, groupId, main, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByR_G_M_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByR_G_M_NotS_PrevAndNext(
-				session, kbArticle, resourcePrimKey, groupId, main, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByR_G_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long resourcePrimKey,
-		long groupId, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_RESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_R_G_M_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(resourcePrimKey);
-
-		queryPos.add(groupId);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where resourcePrimKey = any &#63; and groupId = &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param resourcePrimKeys the resource prim keys
@@ -42641,6 +29718,16 @@ public class KBArticlePersistenceImpl
 			return findByR_G_M_NotS(
 				resourcePrimKeys, groupId, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByR_G_M_NotS(
+					resourcePrimKeys, groupId, main, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (resourcePrimKeys == null) {
@@ -43181,6 +30268,15 @@ public class KBArticlePersistenceImpl
 			return countByR_G_M_NotS(resourcePrimKey, groupId, main, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByR_G_M_NotS(
+				resourcePrimKey, groupId, main, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -43244,6 +30340,14 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByR_G_M_NotS(resourcePrimKeys, groupId, main, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByR_G_M_NotS(resourcePrimKeys, groupId, main, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (resourcePrimKeys == null) {
@@ -43613,253 +30717,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_L_S_Last(
-			long groupId, long parentResourcePrimKey, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_L_S_Last(
-			groupId, parentResourcePrimKey, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_L_S_Last(
-		long groupId, long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_L_S(
-			groupId, parentResourcePrimKey, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_L_S(
-			groupId, parentResourcePrimKey, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_L_S_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_L_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_L_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_L_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -43926,6 +30783,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_L_S(
 				groupId, parentResourcePrimKey, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_L_S(
+					groupId, parentResourcePrimKey, latest, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -44016,222 +30883,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_L_S_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_L_S_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, latest, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_L_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_L_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_L_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and latest = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -44299,6 +30950,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_L_S(
 				groupId, parentResourcePrimKeys, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_L_S(
+					groupId, parentResourcePrimKeys, latest, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -44845,6 +31506,15 @@ public class KBArticlePersistenceImpl
 				groupId, parentResourcePrimKey, latest, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_L_S(
+				groupId, parentResourcePrimKey, latest, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -44910,6 +31580,14 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_L_S(
 				groupId, parentResourcePrimKeys, latest, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_L_S(groupId, parentResourcePrimKeys, latest, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -45266,253 +31944,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_L_NotS_Last(
-			long groupId, long parentResourcePrimKey, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_L_NotS_Last(
-			groupId, parentResourcePrimKey, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_L_NotS_Last(
-		long groupId, long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_L_NotS(
-			groupId, parentResourcePrimKey, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_L_NotS(
-			groupId, parentResourcePrimKey, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -45579,6 +32010,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_L_NotS(
 				groupId, parentResourcePrimKey, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_L_NotS(
+					groupId, parentResourcePrimKey, latest, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -45669,222 +32110,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_L_NotS_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, latest, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, latest,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_P_L_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -45952,6 +32177,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_L_NotS(
 				groupId, parentResourcePrimKeys, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_L_NotS(
+					groupId, parentResourcePrimKeys, latest, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -46501,6 +32736,15 @@ public class KBArticlePersistenceImpl
 				groupId, parentResourcePrimKey, latest, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_L_NotS(
+				groupId, parentResourcePrimKey, latest, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -46566,6 +32810,15 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_L_NotS(
 				groupId, parentResourcePrimKeys, latest, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_L_NotS(
+					groupId, parentResourcePrimKeys, latest, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -46938,253 +33191,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_M_S_Last(
-			long groupId, long parentResourcePrimKey, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_M_S_Last(
-			groupId, parentResourcePrimKey, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_M_S_Last(
-		long groupId, long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_M_S(
-			groupId, parentResourcePrimKey, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_M_S(
-			groupId, parentResourcePrimKey, main, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_M_S_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_M_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_M_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_M_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -47251,6 +33257,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_M_S(
 				groupId, parentResourcePrimKey, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_M_S(
+					groupId, parentResourcePrimKey, main, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -47341,222 +33357,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_M_S_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_M_S_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, main, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_M_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_M_S_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_M_S_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and main = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -47623,6 +33423,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_M_S(
 				groupId, parentResourcePrimKeys, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_M_S(
+					groupId, parentResourcePrimKeys, main, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -48165,6 +33975,15 @@ public class KBArticlePersistenceImpl
 			return countByG_P_M_S(groupId, parentResourcePrimKey, main, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_M_S(
+				groupId, parentResourcePrimKey, main, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -48229,6 +34048,14 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_M_S(
 				groupId, parentResourcePrimKeys, main, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_M_S(groupId, parentResourcePrimKeys, main, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -48585,253 +34412,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_P_M_NotS_Last(
-			long groupId, long parentResourcePrimKey, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_P_M_NotS_Last(
-			groupId, parentResourcePrimKey, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", parentResourcePrimKey=");
-		sb.append(parentResourcePrimKey);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_P_M_NotS_Last(
-		long groupId, long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_P_M_NotS(
-			groupId, parentResourcePrimKey, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_P_M_NotS(
-			groupId, parentResourcePrimKey, main, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_P_M_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_P_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_P_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_P_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -48898,6 +34478,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_M_NotS(
 				groupId, parentResourcePrimKey, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_M_NotS(
+					groupId, parentResourcePrimKey, main, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -48988,222 +34578,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param parentResourcePrimKey the parent resource prim key
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_P_M_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long parentResourcePrimKey,
-			boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_P_M_NotS_PrevAndNext(
-				kbArticleId, groupId, parentResourcePrimKey, main, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_P_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_P_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, parentResourcePrimKey, main,
-				status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_P_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId,
-		long parentResourcePrimKey, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_PARENTRESOURCEPRIMKEY_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_P_M_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(parentResourcePrimKey);
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and parentResourcePrimKey = any &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -49270,6 +34644,16 @@ public class KBArticlePersistenceImpl
 			return findByG_P_M_NotS(
 				groupId, parentResourcePrimKeys, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_P_M_NotS(
+					groupId, parentResourcePrimKeys, main, status,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -49816,6 +35200,15 @@ public class KBArticlePersistenceImpl
 				groupId, parentResourcePrimKey, main, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_P_M_NotS(
+				groupId, parentResourcePrimKey, main, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
@@ -49880,6 +35273,14 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_P_M_NotS(
 				groupId, parentResourcePrimKeys, main, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_P_M_NotS(groupId, parentResourcePrimKeys, main, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (parentResourcePrimKeys == null) {
@@ -49968,10 +35369,10 @@ public class KBArticlePersistenceImpl
 	private static final String _FINDER_COLUMN_G_P_M_NOTS_STATUS_2 =
 		"kbArticle.status != ?";
 
-	private FinderPath _finderPathWithPaginationFindByG_KBFI_UT_ST;
-	private FinderPath _finderPathWithoutPaginationFindByG_KBFI_UT_ST;
-	private FinderPath _finderPathCountByG_KBFI_UT_ST;
-	private FinderPath _finderPathWithPaginationCountByG_KBFI_UT_ST;
+	private FinderPath _finderPathWithPaginationFindByG_KBFI_UT_S;
+	private FinderPath _finderPathWithoutPaginationFindByG_KBFI_UT_S;
+	private FinderPath _finderPathCountByG_KBFI_UT_S;
+	private FinderPath _finderPathWithPaginationCountByG_KBFI_UT_S;
 
 	/**
 	 * Returns all the kb articles where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status = &#63;.
@@ -49983,10 +35384,10 @@ public class KBArticlePersistenceImpl
 	 * @return the matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status) {
 
-		return findByG_KBFI_UT_ST(
+		return findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, status, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 	}
@@ -50007,11 +35408,11 @@ public class KBArticlePersistenceImpl
 	 * @return the range of matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status, int start,
 		int end) {
 
-		return findByG_KBFI_UT_ST(
+		return findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, status, start, end, null);
 	}
 
@@ -50032,11 +35433,11 @@ public class KBArticlePersistenceImpl
 	 * @return the ordered range of matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status, int start,
 		int end, OrderByComparator<KBArticle> orderByComparator) {
 
-		return findByG_KBFI_UT_ST(
+		return findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, status, start, end,
 			orderByComparator, true);
 	}
@@ -50059,7 +35460,7 @@ public class KBArticlePersistenceImpl
 	 * @return the ordered range of matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status, int start,
 		int end, OrderByComparator<KBArticle> orderByComparator,
 		boolean useFinderCache) {
@@ -50077,14 +35478,14 @@ public class KBArticlePersistenceImpl
 				(orderByComparator == null)) {
 
 				if (useFinderCache) {
-					finderPath = _finderPathWithoutPaginationFindByG_KBFI_UT_ST;
+					finderPath = _finderPathWithoutPaginationFindByG_KBFI_UT_S;
 					finderArgs = new Object[] {
 						groupId, kbFolderId, urlTitle, status
 					};
 				}
 			}
 			else if (useFinderCache) {
-				finderPath = _finderPathWithPaginationFindByG_KBFI_UT_ST;
+				finderPath = _finderPathWithPaginationFindByG_KBFI_UT_S;
 				finderArgs = new Object[] {
 					groupId, kbFolderId, urlTitle, status, start, end,
 					orderByComparator
@@ -50125,22 +35526,22 @@ public class KBArticlePersistenceImpl
 
 				sb.append(_SQL_SELECT_KBARTICLE_WHERE);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 				boolean bindUrlTitle = false;
 
 				if (urlTitle.isEmpty()) {
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 				}
 				else {
 					bindUrlTitle = true;
 
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 				}
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_2);
 
 				if (orderByComparator != null) {
 					appendOrderByComparator(
@@ -50204,12 +35605,12 @@ public class KBArticlePersistenceImpl
 	 * @throws NoSuchArticleException if a matching kb article could not be found
 	 */
 	@Override
-	public KBArticle findByG_KBFI_UT_ST_First(
+	public KBArticle findByG_KBFI_UT_S_First(
 			long groupId, long kbFolderId, String urlTitle, int status,
 			OrderByComparator<KBArticle> orderByComparator)
 		throws NoSuchArticleException {
 
-		KBArticle kbArticle = fetchByG_KBFI_UT_ST_First(
+		KBArticle kbArticle = fetchByG_KBFI_UT_S_First(
 			groupId, kbFolderId, urlTitle, status, orderByComparator);
 
 		if (kbArticle != null) {
@@ -50248,11 +35649,11 @@ public class KBArticlePersistenceImpl
 	 * @return the first matching kb article, or <code>null</code> if a matching kb article could not be found
 	 */
 	@Override
-	public KBArticle fetchByG_KBFI_UT_ST_First(
+	public KBArticle fetchByG_KBFI_UT_S_First(
 		long groupId, long kbFolderId, String urlTitle, int status,
 		OrderByComparator<KBArticle> orderByComparator) {
 
-		List<KBArticle> list = findByG_KBFI_UT_ST(
+		List<KBArticle> list = findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, status, 0, 1, orderByComparator);
 
 		if (!list.isEmpty()) {
@@ -50260,264 +35661,6 @@ public class KBArticlePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_KBFI_UT_ST_Last(
-			long groupId, long kbFolderId, String urlTitle, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_KBFI_UT_ST_Last(
-			groupId, kbFolderId, urlTitle, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", kbFolderId=");
-		sb.append(kbFolderId);
-
-		sb.append(", urlTitle=");
-		sb.append(urlTitle);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_KBFI_UT_ST_Last(
-		long groupId, long kbFolderId, String urlTitle, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_KBFI_UT_ST(groupId, kbFolderId, urlTitle, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_KBFI_UT_ST(
-			groupId, kbFolderId, urlTitle, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_KBFI_UT_ST_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, String urlTitle,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		urlTitle = Objects.toString(urlTitle, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_KBFI_UT_ST_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_KBFI_UT_ST_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_KBFI_UT_ST_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		String urlTitle, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
-
-		boolean bindUrlTitle = false;
-
-		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
-		}
-		else {
-			bindUrlTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		if (bindUrlTitle) {
-			queryPos.add(urlTitle);
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -50530,10 +35673,10 @@ public class KBArticlePersistenceImpl
 	 * @return the matching kb articles that the user has permission to view
 	 */
 	@Override
-	public List<KBArticle> filterFindByG_KBFI_UT_ST(
+	public List<KBArticle> filterFindByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status) {
 
-		return filterFindByG_KBFI_UT_ST(
+		return filterFindByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, status, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 	}
@@ -50554,11 +35697,11 @@ public class KBArticlePersistenceImpl
 	 * @return the range of matching kb articles that the user has permission to view
 	 */
 	@Override
-	public List<KBArticle> filterFindByG_KBFI_UT_ST(
+	public List<KBArticle> filterFindByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status, int start,
 		int end) {
 
-		return filterFindByG_KBFI_UT_ST(
+		return filterFindByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, status, start, end, null);
 	}
 
@@ -50579,14 +35722,24 @@ public class KBArticlePersistenceImpl
 	 * @return the ordered range of matching kb articles that the user has permission to view
 	 */
 	@Override
-	public List<KBArticle> filterFindByG_KBFI_UT_ST(
+	public List<KBArticle> filterFindByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status, int start,
 		int end, OrderByComparator<KBArticle> orderByComparator) {
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_UT_ST(
+			return findByG_KBFI_UT_S(
 				groupId, kbFolderId, urlTitle, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_UT_S(
+					groupId, kbFolderId, urlTitle, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -50608,22 +35761,22 @@ public class KBArticlePersistenceImpl
 			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 		boolean bindUrlTitle = false;
 
 		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 		}
 		else {
 			bindUrlTitle = true;
 
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 		}
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_2);
 
 		if (!getDB().isSupportsInlineDistinct()) {
 			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
@@ -50690,234 +35843,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_KBFI_UT_ST_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, String urlTitle,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_UT_ST_PrevAndNext(
-				kbArticleId, groupId, kbFolderId, urlTitle, status,
-				orderByComparator);
-		}
-
-		urlTitle = Objects.toString(urlTitle, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_KBFI_UT_ST_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_KBFI_UT_ST_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_KBFI_UT_ST_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		String urlTitle, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
-
-		boolean bindUrlTitle = false;
-
-		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
-		}
-		else {
-			bindUrlTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		if (bindUrlTitle) {
-			queryPos.add(urlTitle);
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status = any &#63;.
 	 *
 	 * @param groupId the group ID
@@ -50927,10 +35852,10 @@ public class KBArticlePersistenceImpl
 	 * @return the matching kb articles that the user has permission to view
 	 */
 	@Override
-	public List<KBArticle> filterFindByG_KBFI_UT_ST(
+	public List<KBArticle> filterFindByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses) {
 
-		return filterFindByG_KBFI_UT_ST(
+		return filterFindByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, statuses, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 	}
@@ -50951,11 +35876,11 @@ public class KBArticlePersistenceImpl
 	 * @return the range of matching kb articles that the user has permission to view
 	 */
 	@Override
-	public List<KBArticle> filterFindByG_KBFI_UT_ST(
+	public List<KBArticle> filterFindByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses,
 		int start, int end) {
 
-		return filterFindByG_KBFI_UT_ST(
+		return filterFindByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, statuses, start, end, null);
 	}
 
@@ -50976,14 +35901,24 @@ public class KBArticlePersistenceImpl
 	 * @return the ordered range of matching kb articles that the user has permission to view
 	 */
 	@Override
-	public List<KBArticle> filterFindByG_KBFI_UT_ST(
+	public List<KBArticle> filterFindByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses,
 		int start, int end, OrderByComparator<KBArticle> orderByComparator) {
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_UT_ST(
+			return findByG_KBFI_UT_S(
 				groupId, kbFolderId, urlTitle, statuses, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_UT_S(
+					groupId, kbFolderId, urlTitle, statuses, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -51004,25 +35939,25 @@ public class KBArticlePersistenceImpl
 			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 		boolean bindUrlTitle = false;
 
 		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 		}
 		else {
 			bindUrlTitle = true;
 
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 		}
 
 		if (statuses.length > 0) {
 			sb.append("(");
 
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_7);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_7);
 
 			sb.append(StringUtil.merge(statuses));
 
@@ -51110,10 +36045,10 @@ public class KBArticlePersistenceImpl
 	 * @return the matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses) {
 
-		return findByG_KBFI_UT_ST(
+		return findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, statuses, QueryUtil.ALL_POS,
 			QueryUtil.ALL_POS, null);
 	}
@@ -51134,11 +36069,11 @@ public class KBArticlePersistenceImpl
 	 * @return the range of matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses,
 		int start, int end) {
 
-		return findByG_KBFI_UT_ST(
+		return findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, statuses, start, end, null);
 	}
 
@@ -51159,11 +36094,11 @@ public class KBArticlePersistenceImpl
 	 * @return the ordered range of matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses,
 		int start, int end, OrderByComparator<KBArticle> orderByComparator) {
 
-		return findByG_KBFI_UT_ST(
+		return findByG_KBFI_UT_S(
 			groupId, kbFolderId, urlTitle, statuses, start, end,
 			orderByComparator, true);
 	}
@@ -51186,7 +36121,7 @@ public class KBArticlePersistenceImpl
 	 * @return the ordered range of matching kb articles
 	 */
 	@Override
-	public List<KBArticle> findByG_KBFI_UT_ST(
+	public List<KBArticle> findByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses,
 		int start, int end, OrderByComparator<KBArticle> orderByComparator,
 		boolean useFinderCache) {
@@ -51201,7 +36136,7 @@ public class KBArticlePersistenceImpl
 		}
 
 		if (statuses.length == 1) {
-			return findByG_KBFI_UT_ST(
+			return findByG_KBFI_UT_S(
 				groupId, kbFolderId, urlTitle, statuses[0], start, end,
 				orderByComparator);
 		}
@@ -51233,7 +36168,7 @@ public class KBArticlePersistenceImpl
 
 			if (useFinderCache) {
 				list = (List<KBArticle>)finderCache.getResult(
-					_finderPathWithPaginationFindByG_KBFI_UT_ST, finderArgs,
+					_finderPathWithPaginationFindByG_KBFI_UT_S, finderArgs,
 					this);
 
 				if ((list != null) && !list.isEmpty()) {
@@ -51257,25 +36192,25 @@ public class KBArticlePersistenceImpl
 
 				sb.append(_SQL_SELECT_KBARTICLE_WHERE);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 				boolean bindUrlTitle = false;
 
 				if (urlTitle.isEmpty()) {
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 				}
 				else {
 					bindUrlTitle = true;
 
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 				}
 
 				if (statuses.length > 0) {
 					sb.append("(");
 
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_7);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_7);
 
 					sb.append(StringUtil.merge(statuses));
 
@@ -51322,7 +36257,7 @@ public class KBArticlePersistenceImpl
 
 					if (useFinderCache) {
 						finderCache.putResult(
-							_finderPathWithPaginationFindByG_KBFI_UT_ST,
+							_finderPathWithPaginationFindByG_KBFI_UT_S,
 							finderArgs, list);
 					}
 				}
@@ -51347,11 +36282,11 @@ public class KBArticlePersistenceImpl
 	 * @param status the status
 	 */
 	@Override
-	public void removeByG_KBFI_UT_ST(
+	public void removeByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status) {
 
 		for (KBArticle kbArticle :
-				findByG_KBFI_UT_ST(
+				findByG_KBFI_UT_S(
 					groupId, kbFolderId, urlTitle, status, QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS, null)) {
 
@@ -51369,7 +36304,7 @@ public class KBArticlePersistenceImpl
 	 * @return the number of matching kb articles
 	 */
 	@Override
-	public int countByG_KBFI_UT_ST(
+	public int countByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status) {
 
 		try (SafeCloseable safeCloseable =
@@ -51378,7 +36313,7 @@ public class KBArticlePersistenceImpl
 
 			urlTitle = Objects.toString(urlTitle, "");
 
-			FinderPath finderPath = _finderPathCountByG_KBFI_UT_ST;
+			FinderPath finderPath = _finderPathCountByG_KBFI_UT_S;
 
 			Object[] finderArgs = new Object[] {
 				groupId, kbFolderId, urlTitle, status
@@ -51392,22 +36327,22 @@ public class KBArticlePersistenceImpl
 
 				sb.append(_SQL_COUNT_KBARTICLE_WHERE);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 				boolean bindUrlTitle = false;
 
 				if (urlTitle.isEmpty()) {
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 				}
 				else {
 					bindUrlTitle = true;
 
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 				}
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_2);
 
 				String sql = sb.toString();
 
@@ -51456,7 +36391,7 @@ public class KBArticlePersistenceImpl
 	 * @return the number of matching kb articles
 	 */
 	@Override
-	public int countByG_KBFI_UT_ST(
+	public int countByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses) {
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -51477,32 +36412,32 @@ public class KBArticlePersistenceImpl
 			};
 
 			Long count = (Long)finderCache.getResult(
-				_finderPathWithPaginationCountByG_KBFI_UT_ST, finderArgs, this);
+				_finderPathWithPaginationCountByG_KBFI_UT_S, finderArgs, this);
 
 			if (count == null) {
 				StringBundler sb = new StringBundler();
 
 				sb.append(_SQL_COUNT_KBARTICLE_WHERE);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-				sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+				sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 				boolean bindUrlTitle = false;
 
 				if (urlTitle.isEmpty()) {
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 				}
 				else {
 					bindUrlTitle = true;
 
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 				}
 
 				if (statuses.length > 0) {
 					sb.append("(");
 
-					sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_7);
+					sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_7);
 
 					sb.append(StringUtil.merge(statuses));
 
@@ -51537,8 +36472,8 @@ public class KBArticlePersistenceImpl
 					count = (Long)query.uniqueResult();
 
 					finderCache.putResult(
-						_finderPathWithPaginationCountByG_KBFI_UT_ST,
-						finderArgs, count);
+						_finderPathWithPaginationCountByG_KBFI_UT_S, finderArgs,
+						count);
 				}
 				catch (Exception exception) {
 					throw processException(exception);
@@ -51562,11 +36497,20 @@ public class KBArticlePersistenceImpl
 	 * @return the number of matching kb articles that the user has permission to view
 	 */
 	@Override
-	public int filterCountByG_KBFI_UT_ST(
+	public int filterCountByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int status) {
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return countByG_KBFI_UT_ST(groupId, kbFolderId, urlTitle, status);
+			return countByG_KBFI_UT_S(groupId, kbFolderId, urlTitle, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_KBFI_UT_S(
+				groupId, kbFolderId, urlTitle, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -51575,22 +36519,22 @@ public class KBArticlePersistenceImpl
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 		boolean bindUrlTitle = false;
 
 		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 		}
 		else {
 			bindUrlTitle = true;
 
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 		}
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_2);
 
 		String sql = InlineSQLHelperUtil.replacePermissionCheck(
 			sb.toString(), KBArticle.class.getName(),
@@ -51640,11 +36584,19 @@ public class KBArticlePersistenceImpl
 	 * @return the number of matching kb articles that the user has permission to view
 	 */
 	@Override
-	public int filterCountByG_KBFI_UT_ST(
+	public int filterCountByG_KBFI_UT_S(
 		long groupId, long kbFolderId, String urlTitle, int[] statuses) {
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return countByG_KBFI_UT_ST(groupId, kbFolderId, urlTitle, statuses);
+			return countByG_KBFI_UT_S(groupId, kbFolderId, urlTitle, statuses);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_KBFI_UT_S(groupId, kbFolderId, urlTitle, statuses),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -51660,25 +36612,25 @@ public class KBArticlePersistenceImpl
 
 		sb.append(_FILTER_SQL_COUNT_KBARTICLE_WHERE);
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2);
 
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2);
+		sb.append(_FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2);
 
 		boolean bindUrlTitle = false;
 
 		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3);
 		}
 		else {
 			bindUrlTitle = true;
 
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2);
 		}
 
 		if (statuses.length > 0) {
 			sb.append("(");
 
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_ST_STATUS_7);
+			sb.append(_FINDER_COLUMN_G_KBFI_UT_S_STATUS_7);
 
 			sb.append(StringUtil.merge(statuses));
 
@@ -51726,22 +36678,22 @@ public class KBArticlePersistenceImpl
 		}
 	}
 
-	private static final String _FINDER_COLUMN_G_KBFI_UT_ST_GROUPID_2 =
+	private static final String _FINDER_COLUMN_G_KBFI_UT_S_GROUPID_2 =
 		"kbArticle.groupId = ? AND ";
 
-	private static final String _FINDER_COLUMN_G_KBFI_UT_ST_KBFOLDERID_2 =
+	private static final String _FINDER_COLUMN_G_KBFI_UT_S_KBFOLDERID_2 =
 		"kbArticle.kbFolderId = ? AND ";
 
-	private static final String _FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_2 =
+	private static final String _FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_2 =
 		"kbArticle.urlTitle = ? AND ";
 
-	private static final String _FINDER_COLUMN_G_KBFI_UT_ST_URLTITLE_3 =
+	private static final String _FINDER_COLUMN_G_KBFI_UT_S_URLTITLE_3 =
 		"(kbArticle.urlTitle IS NULL OR kbArticle.urlTitle = '') AND ";
 
-	private static final String _FINDER_COLUMN_G_KBFI_UT_ST_STATUS_2 =
+	private static final String _FINDER_COLUMN_G_KBFI_UT_S_STATUS_2 =
 		"kbArticle.status = ?";
 
-	private static final String _FINDER_COLUMN_G_KBFI_UT_ST_STATUS_7 =
+	private static final String _FINDER_COLUMN_G_KBFI_UT_S_STATUS_7 =
 		"kbArticle.status IN (";
 
 	private FinderPath _finderPathWithPaginationFindByG_KBFI_UT_NotS;
@@ -52025,265 +36977,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_KBFI_UT_NotS_Last(
-			long groupId, long kbFolderId, String urlTitle, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_KBFI_UT_NotS_Last(
-			groupId, kbFolderId, urlTitle, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", kbFolderId=");
-		sb.append(kbFolderId);
-
-		sb.append(", urlTitle=");
-		sb.append(urlTitle);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_KBFI_UT_NotS_Last(
-		long groupId, long kbFolderId, String urlTitle, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_KBFI_UT_NotS(
-			groupId, kbFolderId, urlTitle, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_KBFI_UT_NotS(
-			groupId, kbFolderId, urlTitle, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_KBFI_UT_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, String urlTitle,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		urlTitle = Objects.toString(urlTitle, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_KBFI_UT_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_KBFI_UT_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_KBFI_UT_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		String urlTitle, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_KBFOLDERID_2);
-
-		boolean bindUrlTitle = false;
-
-		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_URLTITLE_3);
-		}
-		else {
-			bindUrlTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_URLTITLE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		if (bindUrlTitle) {
-			queryPos.add(urlTitle);
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -52350,6 +37043,16 @@ public class KBArticlePersistenceImpl
 			return findByG_KBFI_UT_NotS(
 				groupId, kbFolderId, urlTitle, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_UT_NotS(
+					groupId, kbFolderId, urlTitle, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -52449,234 +37152,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and urlTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_KBFI_UT_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, String urlTitle,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_UT_NotS_PrevAndNext(
-				kbArticleId, groupId, kbFolderId, urlTitle, status,
-				orderByComparator);
-		}
-
-		urlTitle = Objects.toString(urlTitle, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_KBFI_UT_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_KBFI_UT_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, urlTitle, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_KBFI_UT_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		String urlTitle, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_KBFOLDERID_2);
-
-		boolean bindUrlTitle = false;
-
-		if (urlTitle.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_URLTITLE_3);
-		}
-		else {
-			bindUrlTitle = true;
-
-			sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_URLTITLE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_UT_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		if (bindUrlTitle) {
-			queryPos.add(urlTitle);
-		}
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -52804,6 +37279,15 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_KBFI_UT_NotS(groupId, kbFolderId, urlTitle, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_KBFI_UT_NotS(
+				groupId, kbFolderId, urlTitle, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		urlTitle = Objects.toString(urlTitle, "");
@@ -53150,251 +37634,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_KBFI_L_NotS_Last(
-			long groupId, long kbFolderId, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_KBFI_L_NotS_Last(
-			groupId, kbFolderId, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", kbFolderId=");
-		sb.append(kbFolderId);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_KBFI_L_NotS_Last(
-		long groupId, long kbFolderId, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_KBFI_L_NotS(groupId, kbFolderId, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_KBFI_L_NotS(
-			groupId, kbFolderId, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and kbFolderId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_KBFI_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_KBFI_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_KBFI_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_KBFI_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_KBFOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -53461,6 +37700,16 @@ public class KBArticlePersistenceImpl
 			return findByG_KBFI_L_NotS(
 				groupId, kbFolderId, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_KBFI_L_NotS(
+					groupId, kbFolderId, latest, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -53547,221 +37796,6 @@ public class KBArticlePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and kbFolderId = &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param kbFolderId the kb folder ID
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_KBFI_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, long kbFolderId, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_KBFI_L_NotS_PrevAndNext(
-				kbArticleId, groupId, kbFolderId, latest, status,
-				orderByComparator);
-		}
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_KBFI_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_KBFI_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, kbFolderId, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_KBFI_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, long kbFolderId,
-		boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_KBFOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_KBFI_L_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(kbFolderId);
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -53876,6 +37910,15 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_KBFI_L_NotS(groupId, kbFolderId, latest, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_KBFI_L_NotS(
+				groupId, kbFolderId, latest, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
 		}
 
 		StringBundler sb = new StringBundler(5);
@@ -54220,264 +38263,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_LikeS_L_NotS_Last(
-			long groupId, String sections, boolean latest, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_LikeS_L_NotS_Last(
-			groupId, sections, latest, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", sectionsLIKE");
-		sb.append(sections);
-
-		sb.append(", latest=");
-		sb.append(latest);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_LikeS_L_NotS_Last(
-		long groupId, String sections, boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_LikeS_L_NotS(groupId, sections, latest, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_LikeS_L_NotS(
-			groupId, sections, latest, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_LikeS_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_LikeS_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_LikeS_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_LikeS_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -54544,6 +38329,16 @@ public class KBArticlePersistenceImpl
 			return findByG_LikeS_L_NotS(
 				groupId, sections, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_L_NotS(
+					groupId, sections, latest, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		sections = Objects.toString(sections, "");
@@ -54647,234 +38442,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and latest = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param latest the latest
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_LikeS_L_NotS_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean latest,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeS_L_NotS_PrevAndNext(
-				kbArticleId, groupId, sections, latest, status,
-				orderByComparator);
-		}
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_LikeS_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, latest, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_LikeS_L_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, latest, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_LikeS_L_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean latest, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_LATEST_2);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_L_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(latest);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE any &#63; and latest = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -54941,6 +38508,16 @@ public class KBArticlePersistenceImpl
 			return findByG_LikeS_L_NotS(
 				groupId, sectionses, latest, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_L_NotS(
+					groupId, sectionses, latest, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (sectionses == null) {
@@ -55551,6 +39128,15 @@ public class KBArticlePersistenceImpl
 			return countByG_LikeS_L_NotS(groupId, sections, latest, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_LikeS_L_NotS(
+				groupId, sections, latest, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		sections = Objects.toString(sections, "");
 
 		StringBundler sb = new StringBundler(5);
@@ -55627,6 +39213,14 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_LikeS_L_NotS(groupId, sectionses, latest, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_LikeS_L_NotS(groupId, sectionses, latest, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (sectionses == null) {
@@ -56019,264 +39613,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article
-	 * @throws NoSuchArticleException if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle findByG_LikeS_M_NotS_Last(
-			long groupId, String sections, boolean main, int status,
-			OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		KBArticle kbArticle = fetchByG_LikeS_M_NotS_Last(
-			groupId, sections, main, status, orderByComparator);
-
-		if (kbArticle != null) {
-			return kbArticle;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", sectionsLIKE");
-		sb.append(sections);
-
-		sb.append(", main=");
-		sb.append(main);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchArticleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb article, or <code>null</code> if a matching kb article could not be found
-	 */
-	@Override
-	public KBArticle fetchByG_LikeS_M_NotS_Last(
-		long groupId, String sections, boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator) {
-
-		int count = countByG_LikeS_M_NotS(groupId, sections, main, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<KBArticle> list = findByG_LikeS_M_NotS(
-			groupId, sections, main, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set where groupId = &#63; and sections LIKE &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] findByG_LikeS_M_NotS_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean main,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = getByG_LikeS_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, main, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = getByG_LikeS_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, main, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle getByG_LikeS_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_KBARTICLE_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(KBArticleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -56342,6 +39678,16 @@ public class KBArticlePersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeS_M_NotS(
 				groupId, sections, main, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_M_NotS(
+					groupId, sections, main, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		sections = Objects.toString(sections, "");
@@ -56445,234 +39791,6 @@ public class KBArticlePersistenceImpl
 	}
 
 	/**
-	 * Returns the kb articles before and after the current kb article in the ordered set of kb articles that the user has permission to view where groupId = &#63; and sections LIKE &#63; and main = &#63; and status &ne; &#63;.
-	 *
-	 * @param kbArticleId the primary key of the current kb article
-	 * @param groupId the group ID
-	 * @param sections the sections
-	 * @param main the main
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb article
-	 * @throws NoSuchArticleException if a kb article with the primary key could not be found
-	 */
-	@Override
-	public KBArticle[] filterFindByG_LikeS_M_NotS_PrevAndNext(
-			long kbArticleId, long groupId, String sections, boolean main,
-			int status, OrderByComparator<KBArticle> orderByComparator)
-		throws NoSuchArticleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeS_M_NotS_PrevAndNext(
-				kbArticleId, groupId, sections, main, status,
-				orderByComparator);
-		}
-
-		sections = Objects.toString(sections, "");
-
-		KBArticle kbArticle = findByPrimaryKey(kbArticleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			KBArticle[] array = new KBArticleImpl[3];
-
-			array[0] = filterGetByG_LikeS_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, main, status,
-				orderByComparator, true);
-
-			array[1] = kbArticle;
-
-			array[2] = filterGetByG_LikeS_M_NotS_PrevAndNext(
-				session, kbArticle, groupId, sections, main, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected KBArticle filterGetByG_LikeS_M_NotS_PrevAndNext(
-		Session session, KBArticle kbArticle, long groupId, String sections,
-		boolean main, int status,
-		OrderByComparator<KBArticle> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_GROUPID_2);
-
-		boolean bindSections = false;
-
-		if (sections.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_SECTIONS_3);
-		}
-		else {
-			bindSections = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_SECTIONS_2);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_MAIN_2);
-
-		sb.append(_FINDER_COLUMN_G_LIKES_M_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_KBARTICLE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(KBArticleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), KBArticle.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, KBArticleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, KBArticleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindSections) {
-			queryPos.add(sections);
-		}
-
-		queryPos.add(main);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(kbArticle)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<KBArticle> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the kb articles that the user has permission to view where groupId = &#63; and sections LIKE any &#63; and main = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -56739,6 +39857,16 @@ public class KBArticlePersistenceImpl
 			return findByG_LikeS_M_NotS(
 				groupId, sectionses, main, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeS_M_NotS(
+					groupId, sectionses, main, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (sectionses == null) {
@@ -57349,6 +40477,15 @@ public class KBArticlePersistenceImpl
 			return countByG_LikeS_M_NotS(groupId, sections, main, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = findByG_LikeS_M_NotS(
+				groupId, sections, main, status);
+
+			kbArticles = InlineSQLHelperUtil.filter(kbArticles, groupId);
+
+			return kbArticles.size();
+		}
+
 		sections = Objects.toString(sections, "");
 
 		StringBundler sb = new StringBundler(5);
@@ -57425,6 +40562,14 @@ public class KBArticlePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_LikeS_M_NotS(groupId, sectionses, main, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<KBArticle> kbArticles = InlineSQLHelperUtil.filter(
+				findByG_LikeS_M_NotS(groupId, sectionses, main, status),
+				groupId);
+
+			return kbArticles.size();
 		}
 
 		if (sectionses == null) {
@@ -59053,6 +42198,31 @@ public class KBArticlePersistenceImpl
 			},
 			new String[] {"groupId", "externalReferenceCode", "version"}, true);
 
+		_finderPathWithPaginationFindByG_ERC_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_ERC_S",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {"groupId", "externalReferenceCode", "status"}, true);
+
+		_finderPathWithoutPaginationFindByG_ERC_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_ERC_S",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Integer.class.getName()
+			},
+			new String[] {"groupId", "externalReferenceCode", "status"}, true);
+
+		_finderPathCountByG_ERC_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_ERC_S",
+			new String[] {
+				Long.class.getName(), String.class.getName(),
+				Integer.class.getName()
+			},
+			new String[] {"groupId", "externalReferenceCode", "status"}, false);
+
 		_finderPathWithPaginationFindByG_P_L = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_L",
 			new String[] {
@@ -59548,8 +42718,8 @@ public class KBArticlePersistenceImpl
 			new String[] {"groupId", "parentResourcePrimKey", "main", "status"},
 			false);
 
-		_finderPathWithPaginationFindByG_KBFI_UT_ST = new FinderPath(
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_KBFI_UT_ST",
+		_finderPathWithPaginationFindByG_KBFI_UT_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_KBFI_UT_S",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName(), Integer.class.getName(),
@@ -59558,16 +42728,16 @@ public class KBArticlePersistenceImpl
 			},
 			new String[] {"groupId", "kbFolderId", "urlTitle", "status"}, true);
 
-		_finderPathWithoutPaginationFindByG_KBFI_UT_ST = new FinderPath(
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_KBFI_UT_ST",
+		_finderPathWithoutPaginationFindByG_KBFI_UT_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_KBFI_UT_S",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName(), Integer.class.getName()
 			},
 			new String[] {"groupId", "kbFolderId", "urlTitle", "status"}, true);
 
-		_finderPathCountByG_KBFI_UT_ST = new FinderPath(
-			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_KBFI_UT_ST",
+		_finderPathCountByG_KBFI_UT_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_KBFI_UT_S",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName(), Integer.class.getName()
@@ -59575,8 +42745,8 @@ public class KBArticlePersistenceImpl
 			new String[] {"groupId", "kbFolderId", "urlTitle", "status"},
 			false);
 
-		_finderPathWithPaginationCountByG_KBFI_UT_ST = new FinderPath(
-			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_KBFI_UT_ST",
+		_finderPathWithPaginationCountByG_KBFI_UT_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_KBFI_UT_S",
 			new String[] {
 				Long.class.getName(), Long.class.getName(),
 				String.class.getName(), Integer.class.getName()
@@ -59765,3 +42935,4 @@ public class KBArticlePersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1666378593

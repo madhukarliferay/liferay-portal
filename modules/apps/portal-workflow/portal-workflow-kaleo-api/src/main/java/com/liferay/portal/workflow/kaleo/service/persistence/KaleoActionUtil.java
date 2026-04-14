@@ -214,56 +214,6 @@ public class KaleoActionUtil {
 	}
 
 	/**
-	 * Returns the last kaleo action in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action
-	 * @throws NoSuchActionException if a matching kaleo action could not be found
-	 */
-	public static KaleoAction findByCompanyId_Last(
-			long companyId, OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action, or <code>null</code> if a matching kaleo action could not be found
-	 */
-	public static KaleoAction fetchByCompanyId_Last(
-		long companyId, OrderByComparator<KaleoAction> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo actions before and after the current kaleo action in the ordered set where companyId = &#63;.
-	 *
-	 * @param kaleoActionId the primary key of the current kaleo action
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo action
-	 * @throws NoSuchActionException if a kaleo action with the primary key could not be found
-	 */
-	public static KaleoAction[] findByCompanyId_PrevAndNext(
-			long kaleoActionId, long companyId,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			kaleoActionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kaleo actions where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -390,58 +340,6 @@ public class KaleoActionUtil {
 
 		return getPersistence().fetchByKaleoDefinitionVersionId_First(
 			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action
-	 * @throws NoSuchActionException if a matching kaleo action could not be found
-	 */
-	public static KaleoAction findByKaleoDefinitionVersionId_Last(
-			long kaleoDefinitionVersionId,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByKaleoDefinitionVersionId_Last(
-			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action, or <code>null</code> if a matching kaleo action could not be found
-	 */
-	public static KaleoAction fetchByKaleoDefinitionVersionId_Last(
-		long kaleoDefinitionVersionId,
-		OrderByComparator<KaleoAction> orderByComparator) {
-
-		return getPersistence().fetchByKaleoDefinitionVersionId_Last(
-			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo actions before and after the current kaleo action in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoActionId the primary key of the current kaleo action
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo action
-	 * @throws NoSuchActionException if a kaleo action with the primary key could not be found
-	 */
-	public static KaleoAction[] findByKaleoDefinitionVersionId_PrevAndNext(
-			long kaleoActionId, long kaleoDefinitionVersionId,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByKaleoDefinitionVersionId_PrevAndNext(
-			kaleoActionId, kaleoDefinitionVersionId, orderByComparator);
 	}
 
 	/**
@@ -582,61 +480,6 @@ public class KaleoActionUtil {
 
 		return getPersistence().fetchByKCN_KCPK_First(
 			kaleoClassName, kaleoClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where kaleoClassName = &#63; and kaleoClassPK = &#63;.
-	 *
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action
-	 * @throws NoSuchActionException if a matching kaleo action could not be found
-	 */
-	public static KaleoAction findByKCN_KCPK_Last(
-			String kaleoClassName, long kaleoClassPK,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByKCN_KCPK_Last(
-			kaleoClassName, kaleoClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where kaleoClassName = &#63; and kaleoClassPK = &#63;.
-	 *
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action, or <code>null</code> if a matching kaleo action could not be found
-	 */
-	public static KaleoAction fetchByKCN_KCPK_Last(
-		String kaleoClassName, long kaleoClassPK,
-		OrderByComparator<KaleoAction> orderByComparator) {
-
-		return getPersistence().fetchByKCN_KCPK_Last(
-			kaleoClassName, kaleoClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo actions before and after the current kaleo action in the ordered set where kaleoClassName = &#63; and kaleoClassPK = &#63;.
-	 *
-	 * @param kaleoActionId the primary key of the current kaleo action
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo action
-	 * @throws NoSuchActionException if a kaleo action with the primary key could not be found
-	 */
-	public static KaleoAction[] findByKCN_KCPK_PrevAndNext(
-			long kaleoActionId, String kaleoClassName, long kaleoClassPK,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByKCN_KCPK_PrevAndNext(
-			kaleoActionId, kaleoClassName, kaleoClassPK, orderByComparator);
 	}
 
 	/**
@@ -786,65 +629,6 @@ public class KaleoActionUtil {
 
 		return getPersistence().fetchByC_KCN_KCPK_First(
 			companyId, kaleoClassName, kaleoClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where companyId = &#63; and kaleoClassName = &#63; and kaleoClassPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action
-	 * @throws NoSuchActionException if a matching kaleo action could not be found
-	 */
-	public static KaleoAction findByC_KCN_KCPK_Last(
-			long companyId, String kaleoClassName, long kaleoClassPK,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByC_KCN_KCPK_Last(
-			companyId, kaleoClassName, kaleoClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where companyId = &#63; and kaleoClassName = &#63; and kaleoClassPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action, or <code>null</code> if a matching kaleo action could not be found
-	 */
-	public static KaleoAction fetchByC_KCN_KCPK_Last(
-		long companyId, String kaleoClassName, long kaleoClassPK,
-		OrderByComparator<KaleoAction> orderByComparator) {
-
-		return getPersistence().fetchByC_KCN_KCPK_Last(
-			companyId, kaleoClassName, kaleoClassPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo actions before and after the current kaleo action in the ordered set where companyId = &#63; and kaleoClassName = &#63; and kaleoClassPK = &#63;.
-	 *
-	 * @param kaleoActionId the primary key of the current kaleo action
-	 * @param companyId the company ID
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo action
-	 * @throws NoSuchActionException if a kaleo action with the primary key could not be found
-	 */
-	public static KaleoAction[] findByC_KCN_KCPK_PrevAndNext(
-			long kaleoActionId, long companyId, String kaleoClassName,
-			long kaleoClassPK, OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByC_KCN_KCPK_PrevAndNext(
-			kaleoActionId, companyId, kaleoClassName, kaleoClassPK,
-			orderByComparator);
 	}
 
 	/**
@@ -998,66 +782,6 @@ public class KaleoActionUtil {
 
 		return getPersistence().fetchByKCN_KCPK_ET_First(
 			kaleoClassName, kaleoClassPK, executionType, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where kaleoClassName = &#63; and kaleoClassPK = &#63; and executionType = &#63;.
-	 *
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param executionType the execution type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action
-	 * @throws NoSuchActionException if a matching kaleo action could not be found
-	 */
-	public static KaleoAction findByKCN_KCPK_ET_Last(
-			String kaleoClassName, long kaleoClassPK, String executionType,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByKCN_KCPK_ET_Last(
-			kaleoClassName, kaleoClassPK, executionType, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where kaleoClassName = &#63; and kaleoClassPK = &#63; and executionType = &#63;.
-	 *
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param executionType the execution type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action, or <code>null</code> if a matching kaleo action could not be found
-	 */
-	public static KaleoAction fetchByKCN_KCPK_ET_Last(
-		String kaleoClassName, long kaleoClassPK, String executionType,
-		OrderByComparator<KaleoAction> orderByComparator) {
-
-		return getPersistence().fetchByKCN_KCPK_ET_Last(
-			kaleoClassName, kaleoClassPK, executionType, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo actions before and after the current kaleo action in the ordered set where kaleoClassName = &#63; and kaleoClassPK = &#63; and executionType = &#63;.
-	 *
-	 * @param kaleoActionId the primary key of the current kaleo action
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param executionType the execution type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo action
-	 * @throws NoSuchActionException if a kaleo action with the primary key could not be found
-	 */
-	public static KaleoAction[] findByKCN_KCPK_ET_PrevAndNext(
-			long kaleoActionId, String kaleoClassName, long kaleoClassPK,
-			String executionType,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByKCN_KCPK_ET_PrevAndNext(
-			kaleoActionId, kaleoClassName, kaleoClassPK, executionType,
-			orderByComparator);
 	}
 
 	/**
@@ -1224,73 +948,6 @@ public class KaleoActionUtil {
 		return getPersistence().fetchByC_KCN_KCPK_ET_First(
 			companyId, kaleoClassName, kaleoClassPK, executionType,
 			orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where companyId = &#63; and kaleoClassName = &#63; and kaleoClassPK = &#63; and executionType = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param executionType the execution type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action
-	 * @throws NoSuchActionException if a matching kaleo action could not be found
-	 */
-	public static KaleoAction findByC_KCN_KCPK_ET_Last(
-			long companyId, String kaleoClassName, long kaleoClassPK,
-			String executionType,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByC_KCN_KCPK_ET_Last(
-			companyId, kaleoClassName, kaleoClassPK, executionType,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo action in the ordered set where companyId = &#63; and kaleoClassName = &#63; and kaleoClassPK = &#63; and executionType = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param executionType the execution type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo action, or <code>null</code> if a matching kaleo action could not be found
-	 */
-	public static KaleoAction fetchByC_KCN_KCPK_ET_Last(
-		long companyId, String kaleoClassName, long kaleoClassPK,
-		String executionType,
-		OrderByComparator<KaleoAction> orderByComparator) {
-
-		return getPersistence().fetchByC_KCN_KCPK_ET_Last(
-			companyId, kaleoClassName, kaleoClassPK, executionType,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo actions before and after the current kaleo action in the ordered set where companyId = &#63; and kaleoClassName = &#63; and kaleoClassPK = &#63; and executionType = &#63;.
-	 *
-	 * @param kaleoActionId the primary key of the current kaleo action
-	 * @param companyId the company ID
-	 * @param kaleoClassName the kaleo class name
-	 * @param kaleoClassPK the kaleo class pk
-	 * @param executionType the execution type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo action
-	 * @throws NoSuchActionException if a kaleo action with the primary key could not be found
-	 */
-	public static KaleoAction[] findByC_KCN_KCPK_ET_PrevAndNext(
-			long kaleoActionId, long companyId, String kaleoClassName,
-			long kaleoClassPK, String executionType,
-			OrderByComparator<KaleoAction> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchActionException {
-
-		return getPersistence().findByC_KCN_KCPK_ET_PrevAndNext(
-			kaleoActionId, companyId, kaleoClassName, kaleoClassPK,
-			executionType, orderByComparator);
 	}
 
 	/**
@@ -1486,3 +1143,4 @@ public class KaleoActionUtil {
 	private static volatile KaleoActionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1402912815

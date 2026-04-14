@@ -88,6 +88,186 @@ public class SamlIdpSsoSessionPersistenceImpl
 	private FinderPath _finderPathWithPaginationFindAll;
 	private FinderPath _finderPathWithoutPaginationFindAll;
 	private FinderPath _finderPathCountAll;
+	private FinderPath _finderPathFetchByUserId;
+
+	/**
+	 * Returns the saml idp sso session where userId = &#63; or throws a <code>NoSuchIdpSsoSessionException</code> if it could not be found.
+	 *
+	 * @param userId the user ID
+	 * @return the matching saml idp sso session
+	 * @throws NoSuchIdpSsoSessionException if a matching saml idp sso session could not be found
+	 */
+	@Override
+	public SamlIdpSsoSession findByUserId(long userId)
+		throws NoSuchIdpSsoSessionException {
+
+		SamlIdpSsoSession samlIdpSsoSession = fetchByUserId(userId);
+
+		if (samlIdpSsoSession == null) {
+			StringBundler sb = new StringBundler(4);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("userId=");
+			sb.append(userId);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchIdpSsoSessionException(sb.toString());
+		}
+
+		return samlIdpSsoSession;
+	}
+
+	/**
+	 * Returns the saml idp sso session where userId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @return the matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
+	 */
+	@Override
+	public SamlIdpSsoSession fetchByUserId(long userId) {
+		return fetchByUserId(userId, true);
+	}
+
+	/**
+	 * Returns the saml idp sso session where userId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
+	 */
+	@Override
+	public SamlIdpSsoSession fetchByUserId(
+		long userId, boolean useFinderCache) {
+
+		Object[] finderArgs = null;
+
+		if (useFinderCache) {
+			finderArgs = new Object[] {userId};
+		}
+
+		Object result = null;
+
+		if (useFinderCache) {
+			result = finderCache.getResult(
+				_finderPathFetchByUserId, finderArgs, this);
+		}
+
+		if (result instanceof SamlIdpSsoSession) {
+			SamlIdpSsoSession samlIdpSsoSession = (SamlIdpSsoSession)result;
+
+			if (userId != samlIdpSsoSession.getUserId()) {
+				result = null;
+			}
+		}
+
+		if (result == null) {
+			StringBundler sb = new StringBundler(3);
+
+			sb.append(_SQL_SELECT_SAMLIDPSSOSESSION_WHERE);
+
+			sb.append(_FINDER_COLUMN_USERID_USERID_2);
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				queryPos.add(userId);
+
+				List<SamlIdpSsoSession> list = query.list();
+
+				if (list.isEmpty()) {
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathFetchByUserId, finderArgs, list);
+					}
+				}
+				else {
+					if (list.size() > 1) {
+						Collections.sort(list, Collections.reverseOrder());
+
+						if (_log.isWarnEnabled()) {
+							if (!useFinderCache) {
+								finderArgs = new Object[] {userId};
+							}
+
+							_log.warn(
+								"SamlIdpSsoSessionPersistenceImpl.fetchByUserId(long, boolean) with parameters (" +
+									StringUtil.merge(finderArgs) +
+										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
+						}
+					}
+
+					SamlIdpSsoSession samlIdpSsoSession = list.get(0);
+
+					result = samlIdpSsoSession;
+
+					cacheResult(samlIdpSsoSession);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
+		else {
+			return (SamlIdpSsoSession)result;
+		}
+	}
+
+	/**
+	 * Removes the saml idp sso session where userId = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @return the saml idp sso session that was removed
+	 */
+	@Override
+	public SamlIdpSsoSession removeByUserId(long userId)
+		throws NoSuchIdpSsoSessionException {
+
+		SamlIdpSsoSession samlIdpSsoSession = findByUserId(userId);
+
+		return remove(samlIdpSsoSession);
+	}
+
+	/**
+	 * Returns the number of saml idp sso sessions where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @return the number of matching saml idp sso sessions
+	 */
+	@Override
+	public int countByUserId(long userId) {
+		SamlIdpSsoSession samlIdpSsoSession = fetchByUserId(userId);
+
+		if (samlIdpSsoSession == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_USERID_USERID_2 =
+		"samlIdpSsoSession.userId = ?";
+
 	private FinderPath _finderPathWithPaginationFindByLtCreateDate;
 	private FinderPath _finderPathWithPaginationCountByLtCreateDate;
 
@@ -311,233 +491,6 @@ public class SamlIdpSsoSessionPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last saml idp sso session in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml idp sso session
-	 * @throws NoSuchIdpSsoSessionException if a matching saml idp sso session could not be found
-	 */
-	@Override
-	public SamlIdpSsoSession findByLtCreateDate_Last(
-			Date createDate,
-			OrderByComparator<SamlIdpSsoSession> orderByComparator)
-		throws NoSuchIdpSsoSessionException {
-
-		SamlIdpSsoSession samlIdpSsoSession = fetchByLtCreateDate_Last(
-			createDate, orderByComparator);
-
-		if (samlIdpSsoSession != null) {
-			return samlIdpSsoSession;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("createDate<");
-		sb.append(createDate);
-
-		sb.append("}");
-
-		throw new NoSuchIdpSsoSessionException(sb.toString());
-	}
-
-	/**
-	 * Returns the last saml idp sso session in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
-	 */
-	@Override
-	public SamlIdpSsoSession fetchByLtCreateDate_Last(
-		Date createDate,
-		OrderByComparator<SamlIdpSsoSession> orderByComparator) {
-
-		int count = countByLtCreateDate(createDate);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<SamlIdpSsoSession> list = findByLtCreateDate(
-			createDate, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the saml idp sso sessions before and after the current saml idp sso session in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param samlIdpSsoSessionId the primary key of the current saml idp sso session
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next saml idp sso session
-	 * @throws NoSuchIdpSsoSessionException if a saml idp sso session with the primary key could not be found
-	 */
-	@Override
-	public SamlIdpSsoSession[] findByLtCreateDate_PrevAndNext(
-			long samlIdpSsoSessionId, Date createDate,
-			OrderByComparator<SamlIdpSsoSession> orderByComparator)
-		throws NoSuchIdpSsoSessionException {
-
-		SamlIdpSsoSession samlIdpSsoSession = findByPrimaryKey(
-			samlIdpSsoSessionId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			SamlIdpSsoSession[] array = new SamlIdpSsoSessionImpl[3];
-
-			array[0] = getByLtCreateDate_PrevAndNext(
-				session, samlIdpSsoSession, createDate, orderByComparator,
-				true);
-
-			array[1] = samlIdpSsoSession;
-
-			array[2] = getByLtCreateDate_PrevAndNext(
-				session, samlIdpSsoSession, createDate, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected SamlIdpSsoSession getByLtCreateDate_PrevAndNext(
-		Session session, SamlIdpSsoSession samlIdpSsoSession, Date createDate,
-		OrderByComparator<SamlIdpSsoSession> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_SAMLIDPSSOSESSION_WHERE);
-
-		boolean bindCreateDate = false;
-
-		if (createDate == null) {
-			sb.append(_FINDER_COLUMN_LTCREATEDATE_CREATEDATE_1);
-		}
-		else {
-			bindCreateDate = true;
-
-			sb.append(_FINDER_COLUMN_LTCREATEDATE_CREATEDATE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(SamlIdpSsoSessionModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindCreateDate) {
-			queryPos.add(new Timestamp(createDate.getTime()));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						samlIdpSsoSession)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<SamlIdpSsoSession> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -855,6 +808,10 @@ public class SamlIdpSsoSessionPersistenceImpl
 			samlIdpSsoSession);
 
 		finderCache.putResult(
+			_finderPathFetchByUserId,
+			new Object[] {samlIdpSsoSession.getUserId()}, samlIdpSsoSession);
+
+		finderCache.putResult(
 			_finderPathFetchBySamlIdpSsoSessionKey,
 			new Object[] {samlIdpSsoSession.getSamlIdpSsoSessionKey()},
 			samlIdpSsoSession);
@@ -934,7 +891,12 @@ public class SamlIdpSsoSessionPersistenceImpl
 	protected void cacheUniqueFindersCache(
 		SamlIdpSsoSessionModelImpl samlIdpSsoSessionModelImpl) {
 
-		Object[] args = new Object[] {
+		Object[] args = new Object[] {samlIdpSsoSessionModelImpl.getUserId()};
+
+		finderCache.putResult(
+			_finderPathFetchByUserId, args, samlIdpSsoSessionModelImpl);
+
+		args = new Object[] {
 			samlIdpSsoSessionModelImpl.getSamlIdpSsoSessionKey()
 		};
 
@@ -1405,6 +1367,10 @@ public class SamlIdpSsoSessionPersistenceImpl
 			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll",
 			new String[0], new String[0], false);
 
+		_finderPathFetchByUserId = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByUserId",
+			new String[] {Long.class.getName()}, new String[] {"userId"}, true);
+
 		_finderPathWithPaginationFindByLtCreateDate = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByLtCreateDate",
 			new String[] {
@@ -1502,3 +1468,4 @@ public class SamlIdpSsoSessionPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1445435457

@@ -1,137 +1,361 @@
 import * as API from 'shared/api';
-import BaseListPage from 'contacts/components/BaseListPage';
-import ClayLink from '@clayui/link';
+import * as breadcrumbs from 'shared/util/breadcrumbs';
+import BasePage from 'shared/components/base-page';
+import Card from 'shared/components/Card';
+import Link from '@clayui/link';
+import Loading from 'shared/components/Loading';
+import NoResultsDisplay from 'shared/components/NoResultsDisplay';
 import React from 'react';
+import TotalAccounts from 'contacts/components/account/TotalAccounts';
 import URLConstants from 'shared/util/url-constants';
-import {
-	ACCOUNT_TYPE,
-	ACTIVITIES_COUNT,
-	createOrderIOMap,
-	getDefaultSortOrder,
-	INDIVIDUAL_COUNT,
-	NAME
-} from 'shared/util/pagination';
-import {accountsListColumns} from 'shared/util/table-columns';
-import {FetchSegmentsParams} from 'segment/pages/List';
+import {columns, pagination} from 'shared/util/frontend-data-set';
+import {CUSTOM_DATE_FORMAT, formatUTCDate} from 'shared/util/date';
+import {isNil} from 'lodash/fp';
+import {LifecycleStages} from './utils/constants';
 import {Routes, toRoute} from 'shared/util/router';
 import {Sizes} from 'shared/util/constants';
+import {toThousands} from 'shared/util/numbers';
+import {useChannelContext} from 'shared/context/channel';
 import {useCurrentUser} from 'shared/hooks/useCurrentUser';
-import {useQueryPagination} from 'shared/hooks/useQueryPagination';
-import {User} from 'shared/util/records';
+import {useFrontendDataSet} from 'shared/hooks/useFrontendDataSet';
+import {useRequest} from 'shared/hooks/useRequest';
 
-const getAccountsDataSource = ({
-	channelId,
-	delta,
-	groupId,
-	orderIOMap,
-	page,
-	query
-}: FetchSegmentsParams) =>
-	API.accounts.search({
-		channelId,
-		delta,
-		groupId,
-		orderIOMap,
-		page,
-		query
-	});
+const lifecycleStagesLabelMap = {
+	[LifecycleStages.AT_RISK]: {
+		displayType: 'danger',
+		label: Liferay.Language.get('at-risk')
+	},
+	[LifecycleStages.AWARE]: {
+		displayType: 'secondary',
+		label: Liferay.Language.get('aware')
+	},
+	[LifecycleStages.ENGAGED]: {
+		displayType: 'warning',
+		label: Liferay.Language.get('engaged')
+	},
+	[LifecycleStages.ESTABLISHED]: {
+		displayType: 'success',
+		label: Liferay.Language.get('established')
+	},
+	[LifecycleStages.ONBOARDING]: {
+		displayType: 'secondary',
+		label: Liferay.Language.get('onboarding')
+	},
+	[LifecycleStages.PIPELINE]: {
+		displayType: 'info',
+		label: Liferay.Language.get('pipeline')
+	}
+};
+
+const lifecycleStageFilter = {
+	items: Object.entries(lifecycleStagesLabelMap).map(([stage]) => ({
+		label: lifecycleStagesLabelMap[stage as LifecycleStages].label,
+		value: stage
+	}))
+};
 
 interface IListProps {
 	channelId: string;
-	currentUser: User;
 	groupId: string;
 }
 
-const List: React.FC<IListProps> = ({channelId, groupId, ...otherProps}) => {
+const List: React.FC<IListProps> = ({channelId, groupId}) => {
 	const currentUser = useCurrentUser();
-	const authorized = currentUser.isAdmin();
+	const {selectedChannel} = useChannelContext();
 
-	const columns = [
-		accountsListColumns.getName({channelId, groupId}),
-		accountsListColumns.type,
-		accountsListColumns.individualCount,
-		accountsListColumns.activitiesCount
-	];
-
-	const {delta, orderIOMap, page, query} = useQueryPagination({
-		initialOrderIOMap: createOrderIOMap(NAME, getDefaultSortOrder(NAME))
+	const {data: dataSourceData, loading: dataSourceLoading} = useRequest({
+		dataSourceFn: API.dataSource.search,
+		variables: {
+			delta: 1,
+			groupId
+		}
 	});
 
-	return (
-		<BaseListPage
-			{...otherProps}
-			columns={columns}
-			currentUser={currentUser}
-			dataSourceFn={getAccountsDataSource}
-			delta={delta}
-			emptyStateTitle={Liferay.Language.get(
-				'no-accounts-synced-from-data-sources'
-			)}
-			entityLabel={Liferay.Language.get('accounts')}
-			noResultsConfig={{
-				description: (
-					<>
-						{Liferay.Language.get(
-							'connect-a-data-source-to-get-started'
-						)}
+	const authorized = currentUser.isAdmin();
 
-						<ClayLink
-							className='d-block mb-3'
-							href={URLConstants.DataSourceConnection}
-							key='DOCUMENTATION'
-							target='_blank'
-						>
-							{Liferay.Language.get(
-								'access-our-documentation-to-learn-more'
-							)}
-						</ClayLink>
+	const dataSourceConnected =
+		!isNil(dataSourceData?.total) && dataSourceData?.total > 0;
 
-						{authorized && (
-							<ClayLink
+	const NoDataSourcesConnected = () => (
+		<NoResultsDisplay
+			description={
+				<>
+					{Liferay.Language.get(
+						'connect-a-data-source-to-start-syncing-accounts'
+					)}
+
+					{authorized && (
+						<>
+							<p>
+								<Link
+									className='d-block mb-3'
+									href={URLConstants.DataSourceConnection}
+									key='DOCUMENTATION'
+									target='_blank'
+								>
+									{Liferay.Language.get(
+										'access-our-documentation-to-learn-more'
+									)}
+								</Link>
+							</p>
+							<Link
 								button
 								className='button-root'
 								displayType='primary'
-								href={toRoute(Routes.SETTINGS_ADD_DATA_SOURCE, {
-									groupId
-								})}
+								href={toRoute(
+									Routes.SETTINGS_DATA_SOURCE_LIST,
+									{
+										groupId
+									}
+								)}
 							>
 								{Liferay.Language.get('connect-data-source')}
-							</ClayLink>
+							</Link>
+						</>
+					)}
+				</>
+			}
+			displayCard
+			icon={{
+				border: false,
+				size: Sizes.XXXLarge,
+				symbol: 'ac_satellite'
+			}}
+			spacer
+			title={Liferay.Language.get('no-data-sources-connected')}
+		/>
+	);
+
+	const FrontendDataSet = useFrontendDataSet();
+
+	if (dataSourceLoading) {
+		return <Loading />;
+	}
+
+	return (
+		<BasePage documentTitle={Liferay.Language.get('accounts')}>
+			<BasePage.Header
+				breadcrumbs={[
+					breadcrumbs.getHome({
+						channelId,
+						groupId,
+						label: selectedChannel && selectedChannel.name
+					})
+				]}
+				groupId={groupId}
+			>
+				<BasePage.Row>
+					<BasePage.Header.TitleSection
+						title={Liferay.Language.get('accounts')}
+					/>
+				</BasePage.Row>
+			</BasePage.Header>
+			<BasePage.Body>
+				{dataSourceConnected ? (
+					<>
+						<TotalAccounts groupId={groupId} />
+
+						{FrontendDataSet && (
+							<Card>
+								<FrontendDataSet
+									apiURL={`/o/contacts/${groupId}/account/search`}
+									configInURLBehavior='off'
+									customDataRenderers={{
+										accountLifecycleStageRenderer: ({
+											value
+										}) =>
+											value &&
+											columns.cmsLabelRenderer({
+												displayType:
+													lifecycleStagesLabelMap[
+														value
+													].displayType,
+												label:
+													lifecycleStagesLabelMap[
+														value
+													].label
+											}),
+										accountNameRenderer: ({
+											itemData,
+											value
+										}) => {
+											const itemTitle =
+												value || itemData.id;
+
+											return (
+												<Link
+													className='font-weight-semi-bold text-dark'
+													href={toRoute(
+														Routes.CONTACTS_ACCOUNT,
+														{
+															groupId,
+															id: itemData.id
+														}
+													)}
+												>
+													{itemTitle}
+												</Link>
+											);
+										},
+										annualRevenueRenderer: ({value}) => (
+											<div>{toThousands(value)}</div>
+										),
+										dateRenderer: ({value}) => (
+											<div>
+												{value &&
+													formatUTCDate(
+														value,
+														CUSTOM_DATE_FORMAT
+													)}
+											</div>
+										)
+									}}
+									emptyState={{
+										description: Liferay.Language.get(
+											'no-accounts-were-synced-from-the-connected-data-sources'
+										),
+										image: '/states/satellite.svg',
+										title: Liferay.Language.get(
+											'no-accounts-found'
+										)
+									}}
+									filters={[
+										{
+											id: 'lifecycleStatus',
+											items: lifecycleStageFilter.items,
+											label: Liferay.Language.get(
+												'status'
+											),
+											name: 'status',
+											type: 'selection'
+										},
+										{
+											apiURL: `/o/contacts/${groupId}/account/industries`,
+											entityFieldType: 'string',
+											id: 'industry',
+											itemKey: 'name',
+											itemLabel: 'name',
+											label: Liferay.Language.get(
+												'industry'
+											),
+											multiple: true,
+											type: 'selection'
+										},
+										{
+											apiURL: `/o/contacts/${groupId}/account/countries`,
+											entityFieldType: 'string',
+											id: 'country',
+											itemKey: 'name',
+											itemLabel: 'name',
+											label: Liferay.Language.get(
+												'country'
+											),
+											multiple: true,
+											type: 'selection'
+										}
+									]}
+									id='accounts-list-dataset'
+									loading={dataSourceLoading}
+									pagination={pagination}
+									showPagination
+									snapshotsEnabled
+									sort={[
+										{
+											active: true,
+											direction: 'asc',
+											key: 'accountName',
+											label: Liferay.Language.get(
+												'account'
+											)
+										}
+									]}
+									views={[
+										{
+											contentRenderer: 'table',
+											default: false,
+											label: 'table',
+											name: 'table',
+											schema: {
+												fields: [
+													{
+														contentRenderer:
+															'accountNameRenderer',
+														fieldName:
+															'accountName',
+														label: Liferay.Language.get(
+															'account'
+														),
+														sortable: true,
+														truncate: true
+													},
+													{
+														fieldName: 'industry',
+														label: Liferay.Language.get(
+															'industry'
+														),
+														sortable: true
+													},
+													{
+														contentRenderer:
+															'accountLifecycleStageRenderer',
+														fieldName:
+															'lifecycleStage',
+														label: Liferay.Language.get(
+															'lifecycle-stage'
+														),
+														sortable: true
+													},
+													{
+														contentRenderer:
+															'annualRevenueRenderer',
+														fieldName:
+															'annualRevenue',
+														label: Liferay.Language.get(
+															'annual-revenue'
+														),
+														sortable: true
+													},
+													{
+														fieldName: 'country',
+														label: Liferay.Language.get(
+															'country'
+														),
+														sortable: true
+													},
+													{
+														contentRenderer:
+															'dateRenderer',
+														fieldName: 'lastActive',
+														label: Liferay.Language.get(
+															'last-active'
+														),
+														sortable: true
+													},
+													{
+														contentRenderer:
+															'dateRenderer',
+														fieldName:
+															'lastEnriched',
+														label: Liferay.Language.get(
+															'last-enriched'
+														),
+														sortable: true,
+														visible: false
+													}
+												]
+											},
+											thumbnail: 'table'
+										}
+									]}
+								/>
+							</Card>
 						)}
 					</>
-				),
-				icon: {
-					border: false,
-					size: Sizes.XXXLarge,
-					symbol: 'ac_satellite'
-				},
-				title: Liferay.Language.get(
-					'no-accounts-synced-from-data-sources'
-				)
-			}}
-			orderByOptions={[
-				{
-					label: Liferay.Language.get('account-name'),
-					value: NAME
-				},
-				{
-					label: Liferay.Language.get('account-type'),
-					value: ACCOUNT_TYPE
-				},
-				{
-					label: Liferay.Language.get('individuals'),
-					value: INDIVIDUAL_COUNT
-				},
-				{
-					label: Liferay.Language.get('total-activities'),
-					value: ACTIVITIES_COUNT
-				}
-			]}
-			orderIOMap={orderIOMap}
-			page={page}
-			query={query}
-			rowIdentifier='id'
-		/>
+				) : (
+					<NoDataSourcesConnected />
+				)}
+			</BasePage.Body>
+		</BasePage>
 	);
 };
 

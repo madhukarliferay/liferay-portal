@@ -122,47 +122,6 @@ public interface CPConfigurationEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public CPConfigurationEntry[] findByUuid_PrevAndNext(
-			long CPConfigurationEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
 	 * Removes all the cp configuration entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -322,50 +281,6 @@ public interface CPConfigurationEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public CPConfigurationEntry[] findByUuid_C_PrevAndNext(
-			long CPConfigurationEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
 	 * Removes all the cp configuration entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -470,47 +385,6 @@ public interface CPConfigurationEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp configuration entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public CPConfigurationEntry[] findByCompanyId_PrevAndNext(
-			long CPConfigurationEntryId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
 	 * Removes all the cp configuration entries where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -612,47 +486,6 @@ public interface CPConfigurationEntryPersistence
 		long CPConfigurationListId,
 		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry findByCPConfigurationListId_Last(
-			long CPConfigurationListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry fetchByCPConfigurationListId_Last(
-		long CPConfigurationListId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public CPConfigurationEntry[] findByCPConfigurationListId_PrevAndNext(
-			long CPConfigurationEntryId, long CPConfigurationListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
 
 	/**
 	 * Removes all the cp configuration entries where CPConfigurationListId = &#63; from the database.
@@ -762,50 +595,6 @@ public interface CPConfigurationEntryPersistence
 		long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry findByC_C_Last(
-			long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public CPConfigurationEntry fetchByC_C_Last(
-		long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<CPConfigurationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public CPConfigurationEntry[] findByC_C_PrevAndNext(
-			long CPConfigurationEntryId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPConfigurationEntry> orderByComparator)
-		throws NoSuchCPConfigurationEntryException;
 
 	/**
 	 * Removes all the cp configuration entries where classNameId = &#63; and classPK = &#63; from the database.
@@ -1060,3 +849,4 @@ public interface CPConfigurationEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:167998575

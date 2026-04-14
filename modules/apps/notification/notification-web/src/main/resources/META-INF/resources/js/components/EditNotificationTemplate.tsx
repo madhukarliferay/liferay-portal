@@ -76,7 +76,7 @@ export function validate(values: NotificationTemplate) {
 			errors.fromName = constantsUtils.REQUIRED_MSG;
 		}
 
-		if (recipient.toType !== 'subscribers') {
+		if (recipient.toType !== 'subscribers' && recipient.toType !== 'term') {
 			if (
 				!Array.isArray(recipient.to) &&
 				!(recipient.to as LocalizedValue<string>)[defaultLanguageId]
@@ -87,6 +87,10 @@ export function validate(values: NotificationTemplate) {
 			if (Array.isArray(recipient.to) && !recipient.to.length) {
 				errors.to = constantsUtils.REQUIRED_MSG;
 			}
+		}
+
+		if (recipient.toType === 'term' && !recipient.to) {
+			errors.to = constantsUtils.REQUIRED_MSG;
 		}
 	}
 
@@ -111,9 +115,10 @@ export default function EditNotificationTemplate({
 		ObjectDefinition[]
 	>([]);
 
-	const [selectedLocale, setSelectedLocale] = useState<Locale>(
-		Liferay.ThemeDisplay.getDefaultLanguageId
-	);
+	const [selectedLocale, setSelectedLocale] =
+		useState<Liferay.Language.Locale>(
+			Liferay.ThemeDisplay.getDefaultLanguageId
+		);
 
 	const [templateTitle, setTemplateTitle] = useState<string>('');
 
@@ -173,9 +178,7 @@ export default function EditNotificationTemplate({
 	) {
 		recipientInitialValue = [
 			{
-				bcc: '',
 				bccType: 'email',
-				cc: '',
 				ccType: 'email',
 				from: '',
 				fromName: {
@@ -247,9 +250,13 @@ export default function EditNotificationTemplate({
 					newRecipients = [
 						{
 							...recipients[0],
-							bcc: recipients[0].bcc ?? '',
+							...(recipients[0].bcc && {
+								bcc: recipients[0].bcc,
+							}),
 							bccType: recipients[0].bccType ?? 'email',
-							cc: recipients[0].cc ?? '',
+							...(recipients[0].cc && {
+								cc: recipients[0].cc,
+							}),
 							ccType: recipients[0].ccType ?? 'email',
 							toType: recipients[0].toType ?? 'email',
 						},

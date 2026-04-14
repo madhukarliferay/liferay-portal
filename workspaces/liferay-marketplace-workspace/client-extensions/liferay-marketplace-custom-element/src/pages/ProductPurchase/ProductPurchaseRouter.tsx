@@ -6,6 +6,7 @@
 import {HashRouter, Route, Routes} from 'react-router-dom';
 
 import {useMarketplaceContext} from '../../context/MarketplaceContext';
+import {MarketplaceDeliveryProduct} from '../../entity/MarketplaceDeliveryProduct';
 import {MarketplaceCategories} from '../../enums/Categories';
 import {
 	ProductSpecificationKey,
@@ -28,47 +29,151 @@ import ContactSalesPage from './pages/App/InsuficientResources/ContactSales';
 import ContactSalesForm from './pages/App/InsuficientResources/ContactSalesForm';
 import License from './pages/App/License';
 import PaymentMethod from './pages/App/PaymentMethod';
+import OrderSummary from './pages/App/PaymentMethod/OrderSummary/OrderSummary';
+import AIHubForm from './pages/LiferayProduct/AIHubForm/AIHubForm';
+import ActivationKeyForm from './pages/LiferayProduct/ActivationKeyForm';
+import LDPInformation from './pages/LiferayProduct/LDPInformation';
+import LDPOrderSummary from './pages/LiferayProduct/LDPOrderSummary';
+import LDPProvisioning from './pages/LiferayProduct/LDPProvisioningForm';
+import ProjectSelection from './pages/LiferayProduct/Project';
 import NextSteps from './pages/NextSteps';
 import SolutionProvisioningForm from './pages/Solution';
 
 export const productTypeRoutes = {
 	[ProductTypeVocabulary.APP]: {
 		metadata: {
-			isNavigationStepVisible: (product: DeliveryProduct) =>
-				getProductPriceModel(product).isPaidApp,
+			tinyStepsDisplay: true,
 			useCart: true,
 		},
-		routes: [
-			{
-				element: AppAccountSelection,
-				index: true,
-				title: i18n.translate('account'),
-			},
-			{
-				element: License,
-				path: 'license',
-				title: i18n.translate('licenses'),
-			},
-			{
-				element: PaymentMethod,
-				path: 'payment-method',
-				title: i18n.translate('payment'),
-			},
-		],
+		routes: (product: DeliveryProduct) => {
+			const {isPaidApp} = getProductPriceModel(product);
+
+			return [
+				{
+					element: AppAccountSelection,
+					index: true,
+					title: i18n.translate('account'),
+				},
+				{
+					element: License,
+					isPaidOnly: true,
+					path: 'license',
+					title: i18n.translate('licenses'),
+				},
+				{
+					element: PaymentMethod,
+					isPaidOnly: true,
+					path: 'payment-method',
+					title: i18n.translate('payment'),
+				},
+				{
+					element: OrderSummary,
+					path: 'summary',
+					title: i18n.translate('summary'),
+				},
+			].filter((route) => {
+				if (isPaidApp) {
+					return true;
+				}
+
+				return !route.isPaidOnly;
+			});
+		},
+	},
+	[ProductTypeVocabulary.LIFERAY_PRODUCT]: {
+		metadata: {
+			showSteps: true,
+			skipSingleAccountSelection: true,
+			tinyStepsDisplay: true,
+			useCart: true,
+		},
+		routes: (product: DeliveryProduct) => {
+			const marketplaceDeliveryProduct = new MarketplaceDeliveryProduct(
+				product
+			);
+
+			const solutionType =
+				marketplaceDeliveryProduct.specificationValues.SOLUTION_TYPE;
+
+			if (solutionType === SolutionTypes.AI_HUB) {
+				return [
+					{
+						element: ProductPurchaseAccountSelection,
+						index: true,
+						title: i18n.translate('account'),
+					},
+					{
+						element: AIHubForm,
+						path: 'ai-hub-form',
+						title: i18n.translate('ai-hub'),
+					},
+				];
+			}
+
+			if (
+				[SolutionTypes.CMP, SolutionTypes.DXP].includes(
+					solutionType as SolutionTypes
+				)
+			) {
+				return [
+					{
+						element: ProductPurchaseAccountSelection,
+						index: true,
+						title: i18n.translate('account'),
+					},
+					{
+						element: ActivationKeyForm,
+						path: 'activation-key-form',
+						title: i18n.translate('activation-key'),
+					},
+				];
+			}
+
+			if (solutionType === SolutionTypes.LIFERAY_DATA_PLATFORM) {
+				return [
+					{
+						element: ProductPurchaseAccountSelection,
+						index: true,
+						title: i18n.translate('account'),
+					},
+					{
+						element: ProjectSelection,
+						path: 'project',
+						title: i18n.translate('project'),
+					},
+					{
+						element: LDPProvisioning,
+						path: 'provisioning',
+						title: i18n.translate('provisioning'),
+					},
+					{
+						element: LDPInformation,
+						path: 'information',
+						title: i18n.translate('information'),
+					},
+					{
+						element: LDPOrderSummary,
+						path: 'summary',
+						title: i18n.translate('summary'),
+					},
+				];
+			}
+
+			return [];
+		},
 	},
 	[ProductTypeVocabulary.SOLUTION]: {
 		metadata: {
+			showAccountSelected: false,
+			showSteps: false,
 			skipSingleAccountSelection: true,
+			tinyStepsDisplay: false,
 		},
 		routes: [
 			{
-				element: ProductPurchaseAccountSelection,
-				index: true,
-				title: i18n.translate('account-selection'),
-			},
-			{
 				element: SolutionProvisioningForm,
-				path: 'form',
+				index: true,
+				path: '',
 				title: i18n.translate('form'),
 			},
 		],
@@ -110,9 +215,17 @@ const ProductPurchaseRouter = () => {
 	const solutionTypeSpecificationValue =
 		solutionTypeSpecification?.value as SolutionTypes;
 
-	const productTypeRoute = productTypeRoutes[productTypeCategory];
+	const productTypeRoute =
+		productTypeRoutes[
+			productTypeCategory as keyof typeof productTypeRoutes
+		];
 
-	const {routes = []} = productTypeRoute || {};
+	const {routes: _routes = []} = productTypeRoute || {};
+
+	const routes =
+		typeof _routes === 'function'
+			? _routes(product as DeliveryProduct)
+			: _routes;
 
 	return (
 		<HashRouter>
@@ -121,7 +234,9 @@ const ProductPurchaseRouter = () => {
 					element={
 						<ProductPurchaseOutlet
 							product={product as DeliveryProduct}
-							productTypeRoute={productTypeRoute as any}
+							productTypeRoute={
+								{...productTypeRoute, routes} as any
+							}
 							solutionTypeSpecificationValue={
 								solutionTypeSpecificationValue
 							}

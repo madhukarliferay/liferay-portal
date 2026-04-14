@@ -85,10 +85,13 @@ public class OpenAPIResourceImpl {
 
 	private final Set<Class<?>> _resourceClasses = new HashSet<Class<?>>() {
 		{
-			add(BulkActionResourceImpl.class);
+			add(AssetPermissionActionResourceImpl.class);
+
+			add(AssetUsageResourceImpl.class);
 
 			add(OpenAPIResourceImpl.class);
 		}
 	};
 
 }
+// LIFERAY-REST-BUILDER-HASH:1840671133

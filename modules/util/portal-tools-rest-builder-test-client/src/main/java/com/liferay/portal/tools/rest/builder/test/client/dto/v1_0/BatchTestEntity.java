@@ -25,6 +25,59 @@ public class BatchTestEntity implements Cloneable, Serializable {
 		return BatchTestEntitySerDes.toDTO(json);
 	}
 
+	public Boolean getAcceptAllLanguages() {
+		return acceptAllLanguages;
+	}
+
+	public void setAcceptAllLanguages(Boolean acceptAllLanguages) {
+		this.acceptAllLanguages = acceptAllLanguages;
+	}
+
+	public void setAcceptAllLanguages(
+		UnsafeSupplier<Boolean, Exception> acceptAllLanguagesUnsafeSupplier) {
+
+		try {
+			acceptAllLanguages = acceptAllLanguagesUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean acceptAllLanguages;
+
+	public
+		com.liferay.portal.tools.rest.builder.test.client.custom.field.
+			CustomField[] getCustomFields() {
+
+		return customFields;
+	}
+
+	public void setCustomFields(
+		com.liferay.portal.tools.rest.builder.test.client.custom.field.
+			CustomField[] customFields) {
+
+		this.customFields = customFields;
+	}
+
+	public void setCustomFields(
+		UnsafeSupplier
+			<com.liferay.portal.tools.rest.builder.test.client.custom.field.
+				CustomField[],
+			 Exception> customFieldsUnsafeSupplier) {
+
+		try {
+			customFields = customFieldsUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected
+		com.liferay.portal.tools.rest.builder.test.client.custom.field.
+			CustomField[] customFields;
+
 	public String getExternalReferenceCode() {
 		return externalReferenceCode;
 	}
@@ -162,3 +215,4 @@ public class BatchTestEntity implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-631608325

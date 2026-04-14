@@ -8,6 +8,7 @@ package com.liferay.info.request.struts.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.info.exception.InfoFormValidationException;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.InfoItemServiceRegistry;
@@ -49,7 +50,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.EventsProcessorUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.InfoFormException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
@@ -60,6 +60,7 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
@@ -83,6 +84,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProgressTracker;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextExtractor;
@@ -98,7 +100,6 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upload.test.util.UploadTestUtil;
 import com.liferay.portal.util.PortalImpl;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 
@@ -160,7 +161,6 @@ public class EditInfoItemStrutsActionTest {
 		_layout = _addLayout();
 	}
 
-	@FeatureFlag("LPD-21926")
 	@Test
 	@TestInfo("LPD-50584")
 	public void testAddAndUpdateInfoItemFriendlyURL() throws Exception {
@@ -175,7 +175,7 @@ public class EditInfoItemStrutsActionTest {
 		_layout = _addLayout();
 
 		ObjectEntry objectEntry = _testAddInfoItem(
-			RandomTestUtil.randomString(), null, null, null, null, null, null,
+			null, null, null, null, null, null, null,
 			StringUtil.toLowerCase(
 				StringUtil.removeSubstring(
 					RandomTestUtil.randomString(
@@ -215,6 +215,105 @@ public class EditInfoItemStrutsActionTest {
 		Assert.assertEquals(
 			friendlyURL,
 			objectEntry.getURLTitle(_objectDefinition.getDefaultLocale()));
+	}
+
+	@FeatureFlag("LPD-17564")
+	@Test
+	public void testAddAndUpdateInfoItemWithEnableObjectEntrySchedule()
+		throws Exception {
+
+		_objectDefinition.setEnableObjectEntrySchedule(true);
+
+		_objectDefinition =
+			_objectDefinitionLocalService.updateObjectDefinition(
+				_objectDefinition);
+
+		_objectDefinitionLocalService.deployObjectDefinition(_objectDefinition);
+
+		InfoFormValidationException.InvalidExpirationDate
+			invalidExpirationDate =
+				(InfoFormValidationException.InvalidExpirationDate)_execute(
+					HashMapBuilder.<String, List<String>>put(
+						"ObjectEntry_expirationDate",
+						Collections.singletonList("2020-03-01T11:11")
+					).build());
+
+		Assert.assertEquals(
+			"Expiration date must be a future date.",
+			invalidExpirationDate.getLocalizedMessage(LocaleUtil.US));
+
+		String externalReferenceCode = RandomTestUtil.randomString();
+
+		_execute(
+			HashMapBuilder.<String, List<String>>put(
+				"ObjectEntry_displayDate",
+				Collections.singletonList("2020-03-01T11:11")
+			).put(
+				"ObjectEntry_expirationDate",
+				Collections.singletonList("2999-03-01T11:11")
+			).put(
+				"ObjectEntry_externalReferenceCode",
+				Collections.singletonList(externalReferenceCode)
+			).put(
+				"ObjectEntry_reviewDate",
+				Collections.singletonList("2021-03-01T11:11")
+			).build());
+
+		ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
+			externalReferenceCode, 0,
+			_objectDefinition.getObjectDefinitionId());
+
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "2020-03-01T11:11", LocaleUtil.US),
+			objectEntry.getDisplayDate());
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "2999-03-01T11:11", LocaleUtil.US),
+			objectEntry.getExpirationDate());
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "2021-03-01T11:11", LocaleUtil.US),
+			objectEntry.getReviewDate());
+
+		externalReferenceCode = RandomTestUtil.randomString();
+
+		_execute(
+			HashMapBuilder.put(
+				"classPK",
+				Collections.singletonList(
+					String.valueOf(objectEntry.getObjectEntryId()))
+			).put(
+				"ObjectEntry_displayDate",
+				Collections.singletonList("2022-03-01T11:11")
+			).put(
+				"ObjectEntry_expirationDate",
+				Collections.singletonList("3000-03-01T11:11")
+			).put(
+				"ObjectEntry_externalReferenceCode",
+				Collections.singletonList(externalReferenceCode)
+			).put(
+				"ObjectEntry_reviewDate",
+				Collections.singletonList("2023-03-01T11:11")
+			).build());
+
+		objectEntry = _objectEntryLocalService.fetchObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "2022-03-01T11:11", LocaleUtil.US),
+			objectEntry.getDisplayDate());
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "3000-03-01T11:11", LocaleUtil.US),
+			objectEntry.getExpirationDate());
+		Assert.assertEquals(
+			externalReferenceCode, objectEntry.getExternalReferenceCode());
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "2023-03-01T11:11", LocaleUtil.US),
+			objectEntry.getReviewDate());
 	}
 
 	@Test
@@ -349,7 +448,7 @@ public class EditInfoItemStrutsActionTest {
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
-				_portal.getClassNameId(_objectDefinition.getClassName()), 0,
+				_portal.getClassNameId(_objectDefinition.getClassName()), null,
 				true, WorkflowConstants.STATUS_APPROVED);
 
 		InfoItemFormProvider<?> infoItemFormProvider =
@@ -610,7 +709,8 @@ public class EditInfoItemStrutsActionTest {
 		ObjectEntry objectEntry = objectEntries.get(0);
 
 		regularParameters.put(
-			"checkboxNames", Collections.singletonList("myBoolean"));
+			"checkboxNames",
+			Collections.singletonList("ObjectField_myBoolean"));
 		regularParameters.put(
 			"classNameId", Collections.singletonList(_classNameId));
 		regularParameters.put(
@@ -783,7 +883,7 @@ public class EditInfoItemStrutsActionTest {
 			UnicodePropertiesBuilder.put(
 				LayoutTypeSettingsConstants.KEY_PUBLISHED, "true"
 			).buildString(),
-			false, false, Collections.emptyMap(), 0,
+			false, false, Collections.emptyMap(), null,
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), _user.getUserId()));
 
@@ -836,7 +936,7 @@ public class EditInfoItemStrutsActionTest {
 				null, TestPropsValues.getUserId(),
 				Collections.singletonMap(
 					LocaleUtil.US, RandomTestUtil.randomString()),
-				false, _listTypeEntries);
+				false, _listTypeEntries, new ServiceContext());
 
 		List<ObjectField> objectFields = Arrays.asList(
 			new AttachmentObjectFieldBuilder(
@@ -846,9 +946,16 @@ public class EditInfoItemStrutsActionTest {
 				"myAttachment"
 			).objectFieldSettings(
 				Arrays.asList(
-					_createObjectFieldSetting("acceptedFileExtensions", "txt"),
-					_createObjectFieldSetting("fileSource", "userComputer"),
-					_createObjectFieldSetting("maximumFileSize", "100"))
+					_createObjectFieldSetting(
+						ObjectFieldSettingConstants.
+							NAME_ACCEPTED_FILE_EXTENSIONS,
+						"txt"),
+					_createObjectFieldSetting(
+						ObjectFieldSettingConstants.NAME_FILE_SOURCE,
+						ObjectFieldSettingConstants.
+							VALUE_USER_COMPUTER_TO_DOCS_AND_MEDIA),
+					_createObjectFieldSetting(
+						ObjectFieldSettingConstants.NAME_MAX_FILE_SIZE, "100"))
 			).build(),
 			new DateTimeObjectFieldBuilder(
 			).labelMap(
@@ -908,18 +1015,17 @@ public class EditInfoItemStrutsActionTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				_user.getUserId(), 0, null, false,
-				enableFriendlyURLCustomization, true,
-				FeatureFlagManagerUtil.isEnabled(
-					TestPropsValues.getCompanyId(), "LPD-21926"),
-				true, false, false, false, null,
+				null, _user.getUserId(), 0, null, true, false, true,
+				enableFriendlyURLCustomization, true, true, false, false, false,
+				null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null,
 				"control_panel.sites",
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				true, ObjectDefinitionConstants.SCOPE_COMPANY,
 				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
-				Collections.emptyList(), objectFields);
+				Collections.emptyList(), objectFields, Collections.emptyList(),
+				new ServiceContext());
 
 		ObjectField objectField = ObjectFieldUtil.addCustomObjectField(
 			new TextObjectFieldBuilder(
@@ -1035,6 +1141,64 @@ public class EditInfoItemStrutsActionTest {
 		return objectFieldSetting;
 	}
 
+	private Object _execute(Map<String, List<String>> regularParameters)
+		throws Exception {
+
+		MockMultipartHttpServletRequest mockMultipartHttpServletRequest =
+			new MockMultipartHttpServletRequest();
+
+		mockMultipartHttpServletRequest.addHeader(
+			HttpHeaders.REFERER, "http://localhost:8080/error");
+		mockMultipartHttpServletRequest.setContentType(
+			"multipart/form-data;boundary=" + System.currentTimeMillis());
+
+		UploadPortletRequest uploadPortletRequest =
+			UploadTestUtil.createUploadPortletRequest(
+				UploadTestUtil.createUploadServletRequest(
+					mockMultipartHttpServletRequest, null,
+					HashMapBuilder.<String, List<String>>put(
+						"classNameId", Collections.singletonList(_classNameId)
+					).put(
+						"formItemId", Collections.singletonList(_formItemId)
+					).put(
+						"groupId",
+						Collections.singletonList(
+							String.valueOf(_group.getGroupId()))
+					).put(
+						"myBoolean",
+						Collections.singletonList(Boolean.TRUE.toString())
+					).put(
+						"p_l_id",
+						Collections.singletonList(
+							String.valueOf(_layout.getPlid()))
+					).put(
+						"p_l_mode", Collections.singletonList(Constants.VIEW)
+					).put(
+						"plid",
+						Collections.singletonList(
+							String.valueOf(_layout.getPlid()))
+					).put(
+						"segmentsExperienceId",
+						Collections.singletonList(
+							String.valueOf(_defaultSegmentsExperienceId))
+					).putAll(
+						regularParameters
+					).build()),
+				null, RandomTestUtil.randomString());
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		_processEvents(mockHttpServletResponse, uploadPortletRequest, _user);
+
+		_editInfoItemStrutsAction.execute(
+			uploadPortletRequest,
+			new PipingServletResponse(
+				mockHttpServletResponse, new UnsyncStringWriter()));
+
+		return SessionErrors.get(uploadPortletRequest, _formItemId);
+	}
+
 	private MockMultipartHttpServletRequest _getMultipartHttpServletRequest(
 		byte[] bytes, String fileNameParameter) {
 
@@ -1080,11 +1244,12 @@ public class EditInfoItemStrutsActionTest {
 			byte[] bytes = attachmentValue.getBytes(StandardCharsets.UTF_8);
 
 			fileParameters = HashMapBuilder.put(
-				"myAttachment", new FileItem[] {_createFileItem(bytes)}
+				"ObjectField_myAttachment",
+				new FileItem[] {_createFileItem(bytes)}
 			).build();
 
 			mockMultipartHttpServletRequest = _getMultipartHttpServletRequest(
-				bytes, "myAttachment");
+				bytes, "ObjectField_myAttachment");
 		}
 
 		mockMultipartHttpServletRequest.addHeader(
@@ -1126,15 +1291,25 @@ public class EditInfoItemStrutsActionTest {
 						return null;
 					}
 				).put(
-					"expirationDate", Collections.singletonList(expirationDate)
-				).put(
 					"formItemId", Collections.singletonList(_formItemId)
 				).put(
 					"groupId",
 					Collections.singletonList(
 						String.valueOf(_group.getGroupId()))
 				).put(
-					"myBoolean",
+					"ObjectEntry_expirationDate",
+					Collections.singletonList(expirationDate)
+				).put(
+					"ObjectEntry_objectEntryFriendlyURL",
+					() -> {
+						if (friendlyURL == null) {
+							return null;
+						}
+
+						return Collections.singletonList(friendlyURL);
+					}
+				).put(
+					"ObjectField_myBoolean",
 					() -> {
 						if (booleanValueInput == null) {
 							return null;
@@ -1143,7 +1318,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(booleanValueInput);
 					}
 				).put(
-					"myDate",
+					"ObjectField_myDate",
 					() -> {
 						if (dateValueInput != null) {
 							return Collections.singletonList(dateValueInput);
@@ -1152,7 +1327,7 @@ public class EditInfoItemStrutsActionTest {
 						return null;
 					}
 				).put(
-					"myDateTime",
+					"ObjectField_myDateTime",
 					() -> {
 						if (dateTimeValueInput == null) {
 							return null;
@@ -1161,7 +1336,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(dateTimeValueInput);
 					}
 				).put(
-					"myDecimal",
+					"ObjectField_myDecimal",
 					() -> {
 						if (doubleValueInput == null) {
 							return null;
@@ -1170,7 +1345,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(doubleValueInput);
 					}
 				).put(
-					"myInteger",
+					"ObjectField_myInteger",
 					() -> {
 						if (integerValueInput == null) {
 							return null;
@@ -1179,7 +1354,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(integerValueInput);
 					}
 				).put(
-					"myLongInteger",
+					"ObjectField_myLongInteger",
 					() -> {
 						if (longValueInput == null) {
 							return null;
@@ -1188,7 +1363,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(longValueInput);
 					}
 				).put(
-					"myMultiselectPicklist",
+					"ObjectField_myMultiselectPicklist",
 					() -> {
 						if (multiselectPicklistValueInput == null) {
 							return null;
@@ -1197,7 +1372,7 @@ public class EditInfoItemStrutsActionTest {
 						return multiselectPicklistValueInput;
 					}
 				).put(
-					"myPicklist",
+					"ObjectField_myPicklist",
 					() -> {
 						if (picklistValueInput == null) {
 							return null;
@@ -1206,7 +1381,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(picklistValueInput);
 					}
 				).put(
-					"myPrecisionDecimal",
+					"ObjectField_myPrecisionDecimal",
 					() -> {
 						if (bigDecimalValueInput == null) {
 							return null;
@@ -1215,7 +1390,7 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(bigDecimalValueInput);
 					}
 				).put(
-					"myRichText",
+					"ObjectField_myRichText",
 					() -> {
 						if (richTextValueInput == null) {
 							return null;
@@ -1224,18 +1399,9 @@ public class EditInfoItemStrutsActionTest {
 						return Collections.singletonList(richTextValueInput);
 					}
 				).put(
-					"myText", Collections.singletonList(stringValue)
+					"ObjectField_myText", Collections.singletonList(stringValue)
 				).put(
-					"objectEntryFriendlyURL",
-					() -> {
-						if (friendlyURL == null) {
-							return null;
-						}
-
-						return Collections.singletonList(friendlyURL);
-					}
-				).put(
-					"objectEntryFriendlyURL_" +
+					"ObjectEntry_objectEntryFriendlyURL_" +
 						_objectDefinition.getDefaultLanguageId(),
 					() -> {
 						if (friendlyURL == null) {
@@ -1244,6 +1410,9 @@ public class EditInfoItemStrutsActionTest {
 
 						return Collections.singletonList(friendlyURL);
 					}
+				).put(
+					"ObjectEntry_reviewDate",
+					Collections.singletonList(reviewDate)
 				).put(
 					"p_l_id",
 					Collections.singletonList(String.valueOf(_layout.getPlid()))
@@ -1261,8 +1430,6 @@ public class EditInfoItemStrutsActionTest {
 
 						return null;
 					}
-				).put(
-					"reviewDate", Collections.singletonList(reviewDate)
 				).put(
 					"segmentsExperienceId",
 					Collections.singletonList(

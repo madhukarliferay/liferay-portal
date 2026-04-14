@@ -334,229 +334,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByUuid_Last(
-			String uuid, OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByUuid_Last(
-			uuid, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByUuid_PrevAndNext(
-			long entryId, String uuid,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		uuid = Objects.toString(uuid, "");
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, bookmarksEntry, uuid, orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, bookmarksEntry, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByUuid_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, String uuid,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the bookmarks entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1104,244 +881,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByUuid_C_PrevAndNext(
-			long entryId, String uuid, long companyId,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		uuid = Objects.toString(uuid, "");
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, bookmarksEntry, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, bookmarksEntry, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByUuid_C_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, String uuid,
-		long companyId, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the bookmarks entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1666,216 +1205,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByCompanyId_Last(
-			long companyId, OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByCompanyId_Last(
-		long companyId, OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByCompanyId_PrevAndNext(
-			long entryId, long companyId,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, bookmarksEntry, companyId, orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, bookmarksEntry, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByCompanyId_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long companyId,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the bookmarks entries where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -2193,231 +1522,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_F_Last(
-			long groupId, long folderId,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_F_Last(
-			groupId, folderId, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", folderId=");
-		sb.append(folderId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_F_Last(
-		long groupId, long folderId,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_F(groupId, folderId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_F(
-			groupId, folderId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_F_PrevAndNext(
-			long entryId, long groupId, long folderId,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_F_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_F_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_F_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long folderId, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_F_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_FOLDERID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(folderId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and folderId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2471,6 +1575,16 @@ public class BookmarksEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_F(groupId, folderId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_F(
+					groupId, folderId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -2557,213 +1671,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_F_PrevAndNext(
-			long entryId, long groupId, long folderId,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_F_PrevAndNext(
-				entryId, groupId, folderId, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_F_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_F_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_F_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long folderId, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_F_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_FOLDERID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(folderId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and folderId = any &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2819,6 +1726,16 @@ public class BookmarksEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_F(groupId, folderIds, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_F(
+					groupId, folderIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		if (folderIds == null) {
@@ -3286,6 +2203,16 @@ public class BookmarksEntryPersistenceImpl
 			return countByG_F(groupId, folderId);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_F(
+				groupId, folderId);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_BOOKMARKSENTRY_WHERE);
@@ -3337,6 +2264,13 @@ public class BookmarksEntryPersistenceImpl
 	public int filterCountByG_F(long groupId, long[] folderIds) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_F(groupId, folderIds);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = InlineSQLHelperUtil.filter(
+				findByG_F(groupId, folderIds), groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		if (folderIds == null) {
@@ -3649,231 +2583,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_S_Last(
-			long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_S_Last(
-			groupId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_S_Last(
-		long groupId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_S(groupId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_S(
-			groupId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_S_PrevAndNext(
-			long entryId, long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_S_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_S_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		int status, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3927,6 +2636,16 @@ public class BookmarksEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_S(groupId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_S(
+					groupId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -4009,213 +2728,6 @@ public class BookmarksEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_S_PrevAndNext(
-			long entryId, long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_S_PrevAndNext(
-				entryId, groupId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_S_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_S_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		int status, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4307,6 +2819,15 @@ public class BookmarksEntryPersistenceImpl
 	public int filterCountByG_S(long groupId, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_S(groupId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_S(groupId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -4588,231 +3109,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_NotS_Last(
-			long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_NotS_Last(
-			groupId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_NotS_Last(
-		long groupId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_NotS(groupId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_NotS(
-			groupId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_NotS_PrevAndNext(
-			long entryId, long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		int status, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -4866,6 +3162,16 @@ public class BookmarksEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_NotS(groupId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_NotS(
+					groupId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -4948,213 +3254,6 @@ public class BookmarksEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_NotS_PrevAndNext(
-			long entryId, long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_NotS_PrevAndNext(
-				entryId, groupId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		int status, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -5246,6 +3345,16 @@ public class BookmarksEntryPersistenceImpl
 	public int filterCountByG_NotS(long groupId, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_NotS(groupId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_NotS(
+				groupId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5524,231 +3633,6 @@ public class BookmarksEntryPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByC_NotS_Last(
-			long companyId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByC_NotS_Last(
-			companyId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByC_NotS_Last(
-		long companyId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByC_NotS(companyId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByC_NotS(
-			companyId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByC_NotS_PrevAndNext(
-			long entryId, long companyId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByC_NotS_PrevAndNext(
-				session, bookmarksEntry, companyId, status, orderByComparator,
-				true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByC_NotS_PrevAndNext(
-				session, bookmarksEntry, companyId, status, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByC_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long companyId,
-		int status, OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_NOTS_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -6095,241 +3979,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_U_S_Last(
-			long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_U_S_Last(
-			groupId, userId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", userId=");
-		sb.append(userId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_U_S_Last(
-		long groupId, long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_U_S(groupId, userId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_U_S(
-			groupId, userId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_U_S_PrevAndNext(
-			long entryId, long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_U_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_U_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_U_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_U_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_S_USERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(userId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6390,6 +4039,16 @@ public class BookmarksEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_U_S(
 				groupId, userId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_U_S(
+					groupId, userId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -6476,218 +4135,6 @@ public class BookmarksEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_U_S_PrevAndNext(
-			long entryId, long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_U_S_PrevAndNext(
-				entryId, groupId, userId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_U_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_U_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_U_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_U_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_S_USERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(userId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -6786,6 +4233,16 @@ public class BookmarksEntryPersistenceImpl
 	public int filterCountByG_U_S(long groupId, long userId, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_U_S(groupId, userId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_U_S(
+				groupId, userId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -7091,241 +4548,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_U_NotS_Last(
-			long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_U_NotS_Last(
-			groupId, userId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", userId=");
-		sb.append(userId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_U_NotS_Last(
-		long groupId, long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_U_NotS(groupId, userId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_U_NotS(
-			groupId, userId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_U_NotS_PrevAndNext(
-			long entryId, long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_U_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_U_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_U_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_U_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_NOTS_USERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(userId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7386,6 +4608,16 @@ public class BookmarksEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_U_NotS(
 				groupId, userId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_U_NotS(
+					groupId, userId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -7472,218 +4704,6 @@ public class BookmarksEntryPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_U_NotS_PrevAndNext(
-			long entryId, long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_U_NotS_PrevAndNext(
-				entryId, groupId, userId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_U_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_U_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_U_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_U_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_NOTS_USERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(userId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -7782,6 +4802,16 @@ public class BookmarksEntryPersistenceImpl
 	public int filterCountByG_U_NotS(long groupId, long userId, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_U_NotS(groupId, userId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_U_NotS(
+				groupId, userId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -8099,241 +5129,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_F_S_Last(
-			long groupId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_F_S_Last(
-			groupId, folderId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", folderId=");
-		sb.append(folderId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_F_S_Last(
-		long groupId, long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_F_S(groupId, folderId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_F_S(
-			groupId, folderId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_F_S_PrevAndNext(
-			long entryId, long groupId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_F_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_F_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_S_FOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(folderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and folderId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8394,6 +5189,16 @@ public class BookmarksEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_F_S(
 				groupId, folderId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_F_S(
+					groupId, folderId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -8484,218 +5289,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_F_S_PrevAndNext(
-			long entryId, long groupId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_F_S_PrevAndNext(
-				entryId, groupId, folderId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_F_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_F_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_S_FOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(folderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and folderId = any &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8756,6 +5349,16 @@ public class BookmarksEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_F_S(
 				groupId, folderIds, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_F_S(
+					groupId, folderIds, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (folderIds == null) {
@@ -9258,6 +5861,16 @@ public class BookmarksEntryPersistenceImpl
 			return countByG_F_S(groupId, folderId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_F_S(
+				groupId, folderId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_BOOKMARKSENTRY_WHERE);
@@ -9314,6 +5927,13 @@ public class BookmarksEntryPersistenceImpl
 	public int filterCountByG_F_S(long groupId, long[] folderIds, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_F_S(groupId, folderIds, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = InlineSQLHelperUtil.filter(
+				findByG_F_S(groupId, folderIds, status), groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		if (folderIds == null) {
@@ -9642,241 +6262,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_F_NotS_Last(
-			long groupId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_F_NotS_Last(
-			groupId, folderId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", folderId=");
-		sb.append(folderId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_F_NotS_Last(
-		long groupId, long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_F_NotS(groupId, folderId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_F_NotS(
-			groupId, folderId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and folderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_F_NotS_PrevAndNext(
-			long entryId, long groupId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_F_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_F_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_F_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_F_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_NOTS_FOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(folderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and folderId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -9938,6 +6323,16 @@ public class BookmarksEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_F_NotS(
 				groupId, folderId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_F_NotS(
+					groupId, folderId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -10028,218 +6423,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and folderId = &#63; and status &ne; &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_F_NotS_PrevAndNext(
-			long entryId, long groupId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_F_NotS_PrevAndNext(
-				entryId, groupId, folderId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_F_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_F_NotS_PrevAndNext(
-				session, bookmarksEntry, groupId, folderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_F_NotS_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_F_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_NOTS_FOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_F_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(folderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and folderId = any &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -10301,6 +6484,16 @@ public class BookmarksEntryPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_F_NotS(
 				groupId, folderIds, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_F_NotS(
+					groupId, folderIds, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (folderIds == null) {
@@ -10803,6 +6996,16 @@ public class BookmarksEntryPersistenceImpl
 			return countByG_F_NotS(groupId, folderId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_F_NotS(
+				groupId, folderId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_BOOKMARKSENTRY_WHERE);
@@ -10861,6 +7064,13 @@ public class BookmarksEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_F_NotS(groupId, folderIds, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = InlineSQLHelperUtil.filter(
+				findByG_F_NotS(groupId, folderIds, status), groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		if (folderIds == null) {
@@ -11221,252 +7431,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_U_F_S_Last(
-			long groupId, long userId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = fetchByG_U_F_S_Last(
-			groupId, userId, folderId, status, orderByComparator);
-
-		if (bookmarksEntry != null) {
-			return bookmarksEntry;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", userId=");
-		sb.append(userId);
-
-		sb.append(", folderId=");
-		sb.append(folderId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_U_F_S_Last(
-		long groupId, long userId, long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		int count = countByG_U_F_S(groupId, userId, folderId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<BookmarksEntry> list = findByG_U_F_S(
-			groupId, userId, folderId, status, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] findByG_U_F_S_PrevAndNext(
-			long entryId, long groupId, long userId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = getByG_U_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, folderId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = getByG_U_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, folderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry getByG_U_F_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long userId, long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_USERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_FOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(BookmarksEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(userId);
-
-		queryPos.add(folderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and folderId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -11533,6 +7497,16 @@ public class BookmarksEntryPersistenceImpl
 			return findByG_U_F_S(
 				groupId, userId, folderId, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_U_F_S(
+					groupId, userId, folderId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -11627,223 +7601,6 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the bookmarks entries before and after the current bookmarks entry in the ordered set of bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param entryId the primary key of the current bookmarks entry
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next bookmarks entry
-	 * @throws NoSuchEntryException if a bookmarks entry with the primary key could not be found
-	 */
-	@Override
-	public BookmarksEntry[] filterFindByG_U_F_S_PrevAndNext(
-			long entryId, long groupId, long userId, long folderId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_U_F_S_PrevAndNext(
-				entryId, groupId, userId, folderId, status, orderByComparator);
-		}
-
-		BookmarksEntry bookmarksEntry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BookmarksEntry[] array = new BookmarksEntryImpl[3];
-
-			array[0] = filterGetByG_U_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, folderId, status,
-				orderByComparator, true);
-
-			array[1] = bookmarksEntry;
-
-			array[2] = filterGetByG_U_F_S_PrevAndNext(
-				session, bookmarksEntry, groupId, userId, folderId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected BookmarksEntry filterGetByG_U_F_S_PrevAndNext(
-		Session session, BookmarksEntry bookmarksEntry, long groupId,
-		long userId, long folderId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				8 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(7);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_BOOKMARKSENTRY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_USERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_FOLDERID_2);
-
-		sb.append(_FINDER_COLUMN_G_U_F_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_BOOKMARKSENTRY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(BookmarksEntryModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), BookmarksEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, BookmarksEntryImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, BookmarksEntryImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(userId);
-
-		queryPos.add(folderId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						bookmarksEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<BookmarksEntry> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and folderId = any &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -11910,6 +7667,16 @@ public class BookmarksEntryPersistenceImpl
 			return findByG_U_F_S(
 				groupId, userId, folderIds, status, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_U_F_S(
+					groupId, userId, folderIds, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (folderIds == null) {
@@ -12451,6 +8218,16 @@ public class BookmarksEntryPersistenceImpl
 			return countByG_U_F_S(groupId, userId, folderId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = findByG_U_F_S(
+				groupId, userId, folderId, status);
+
+			bookmarksEntries = InlineSQLHelperUtil.filter(
+				bookmarksEntries, groupId);
+
+			return bookmarksEntries.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_BOOKMARKSENTRY_WHERE);
@@ -12514,6 +8291,13 @@ public class BookmarksEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_U_F_S(groupId, userId, folderIds, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<BookmarksEntry> bookmarksEntries = InlineSQLHelperUtil.filter(
+				findByG_U_F_S(groupId, userId, folderIds, status), groupId);
+
+			return bookmarksEntries.size();
 		}
 
 		if (folderIds == null) {
@@ -13819,3 +9603,4 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:981870917

@@ -13,6 +13,10 @@ import com.liferay.asset.list.service.AssetListEntryService;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
 import com.liferay.asset.publisher.web.internal.constants.AssetPublisherSelectionStyleConstants;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -20,10 +24,13 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.MultiSessionMessages;
@@ -40,7 +47,6 @@ import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
 import jakarta.portlet.PortletPreferences;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
@@ -83,6 +89,18 @@ public class AddAssetListMVCActionCommand extends BaseMVCActionCommand {
 				portletPreferences.setValue(
 					"assetListEntryExternalReferenceCode",
 					assetListEntry.getExternalReferenceCode());
+
+				if (assetListEntry.getGroupId() !=
+						themeDisplay.getScopeGroupId()) {
+
+					Group group = _groupLocalService.getGroup(
+						assetListEntry.getGroupId());
+
+					portletPreferences.setValue(
+						"assetListEntryGroupExternalReferenceCode",
+						group.getExternalReferenceCode());
+				}
+
 				portletPreferences.setValue(
 					"selectionStyle",
 					AssetPublisherSelectionStyleConstants.TYPE_ASSET_LIST);
@@ -121,6 +139,8 @@ public class AddAssetListMVCActionCommand extends BaseMVCActionCommand {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			actionRequest);
 
+		long scopeGroupId = _getScopeGroupId(themeDisplay);
+
 		if (Objects.equals(
 				selectionStyle,
 				AssetPublisherSelectionStyleConstants.TYPE_DYNAMIC)) {
@@ -145,23 +165,26 @@ public class AddAssetListMVCActionCommand extends BaseMVCActionCommand {
 					continue;
 				}
 
-				List<Long> groupIds = new ArrayList<>();
+				List<Long> groupIds = TransformUtil.transformToList(
+					value.split(StringPool.COMMA),
+					part -> {
+						if (part.equals("Group_default")) {
+							return serviceContext.getScopeGroupId();
+						}
 
-				String[] parts = value.split(StringPool.COMMA);
+						if (!part.startsWith("Group_")) {
+							return null;
+						}
 
-				for (String part : parts) {
-					if (part.equals("Group_default")) {
-						groupIds.add(serviceContext.getScopeGroupId());
-					}
-					else if (part.startsWith("Group_")) {
 						long groupId = GetterUtil.getLong(
 							StringUtil.removeSubstring(part, "Group_"), -1);
 
 						if (groupId != -1) {
-							groupIds.add(groupId);
+							return groupId;
 						}
-					}
-				}
+
+						return null;
+					});
 
 				if (groupIds.isEmpty()) {
 					continue;
@@ -173,9 +196,15 @@ public class AddAssetListMVCActionCommand extends BaseMVCActionCommand {
 				unicodeProperties.put(name, value);
 			}
 
+			if (Validator.isNull(
+					unicodeProperties.getProperty("anyAssetType"))) {
+
+				unicodeProperties.put("anyAssetType", "true");
+			}
+
 			return _assetListEntryService.addDynamicAssetListEntry(
-				null, themeDisplay.getScopeGroupId(), title,
-				unicodeProperties.toString(), serviceContext);
+				null, scopeGroupId, title, unicodeProperties.toString(),
+				serviceContext);
 		}
 
 		if (!Objects.equals(
@@ -186,17 +215,34 @@ public class AddAssetListMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		return _assetListEntryService.addManualAssetListEntry(
-			null, themeDisplay.getScopeGroupId(), title,
+			null, scopeGroupId, title,
 			ListUtil.toLongArray(
 				_assetPublisherHelper.getAssetEntries(
 					actionRequest, portletPreferences,
 					themeDisplay.getPermissionChecker(),
 					_assetPublisherHelper.getGroupIds(
-						portletPreferences, themeDisplay.getScopeGroupId(),
+						portletPreferences, scopeGroupId,
 						themeDisplay.getLayout()),
 					true, true),
 				AssetEntry::getEntryId),
 			serviceContext);
+	}
+
+	private long _getScopeGroupId(ThemeDisplay themeDisplay) {
+		Layout layout = themeDisplay.getLayout();
+
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.
+				fetchLayoutPageTemplateEntryByPlid(layout.getPlid());
+
+		if ((layoutPageTemplateEntry != null) &&
+			(layoutPageTemplateEntry.getType() ==
+				LayoutPageTemplateEntryTypeConstants.WIDGET_PAGE)) {
+
+			return layoutPageTemplateEntry.getGroupId();
+		}
+
+		return themeDisplay.getScopeGroupId();
 	}
 
 	private void _handlePortalException(
@@ -239,6 +285,13 @@ public class AddAssetListMVCActionCommand extends BaseMVCActionCommand {
 	private AssetPublisherHelper _assetPublisherHelper;
 
 	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private Language _language;
+
+	@Reference
+	private LayoutPageTemplateEntryLocalService
+		_layoutPageTemplateEntryLocalService;
 
 }

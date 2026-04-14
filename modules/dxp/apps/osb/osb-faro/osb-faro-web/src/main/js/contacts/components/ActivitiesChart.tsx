@@ -38,6 +38,7 @@ interface IChartProps<T> extends React.HTMLAttributes<HTMLElement> {
 	height?: number;
 	history: Array<T>;
 	interval?: Interval;
+	LDPEnabled?: boolean;
 	onAfterInit?: () => void;
 	onPointSelect: (index: number) => void;
 	rangeSelectors?: RangeSelectors;
@@ -63,6 +64,7 @@ const ActivitiesChart: React.FC<
 	height = 340,
 	history,
 	interval,
+	LDPEnabled = false,
 	onPointSelect,
 	rangeSelectors,
 	selectedPoint
@@ -201,6 +203,16 @@ const ActivitiesChart: React.FC<
 				<YAxis
 					allowDecimals={false}
 					axisLine={{stroke: AXIS.borderStroke}}
+					label={
+						LDPEnabled
+							? {
+									dy: -20,
+									position: 'top',
+									style: {fill: AXIS.textColor},
+									value: Liferay.Language.get('events')
+							  }
+							: null
+					}
 					name={Liferay.Language.get('events')}
 					stroke={AXIS.gridStroke}
 					tick={getAxisTickText('y')}

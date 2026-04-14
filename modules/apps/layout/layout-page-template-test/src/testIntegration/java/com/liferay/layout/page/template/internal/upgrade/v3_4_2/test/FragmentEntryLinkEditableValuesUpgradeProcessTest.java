@@ -31,6 +31,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -99,9 +100,9 @@ public class FragmentEntryLinkEditableValuesUpgradeProcessTest
 	@Override
 	protected CTModel<?> addCTModel() throws Exception {
 		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
-			null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-			_fragmentEntry.getFragmentEntryId(), _segmentsExperienceId,
-			_layout.getPlid(), _fragmentEntry.getCss(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+			_fragmentEntry.getExternalReferenceCode(), null,
+			_segmentsExperienceId, _layout.getPlid(), _fragmentEntry.getCss(),
 			_fragmentEntry.getHtml(), _fragmentEntry.getJs(),
 			_fragmentEntry.getConfiguration(),
 			JSONUtil.put(
@@ -146,7 +147,8 @@ public class FragmentEntryLinkEditableValuesUpgradeProcessTest
 				JSONUtil.put(
 					RandomTestUtil.randomString(),
 					RandomTestUtil.randomString())
-			).toString());
+			).toString(),
+			true);
 	}
 
 	private void _assertEditableValues(
@@ -193,8 +195,10 @@ public class FragmentEntryLinkEditableValuesUpgradeProcessTest
 					jsonObject
 				).toString(),
 				_fragmentEntry.getCss(), _fragmentEntry.getConfiguration(),
-				_fragmentEntry.getFragmentEntryId(), _fragmentEntry.getHtml(),
-				_fragmentEntry.getJs(), _draftLayout,
+				_fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					_fragmentEntry.getGroupId(), _draftLayout.getGroupId()),
+				_fragmentEntry.getHtml(), _fragmentEntry.getJs(), _draftLayout,
 				_fragmentEntry.getFragmentEntryKey(), _segmentsExperienceId,
 				_fragmentEntry.getType());
 
@@ -203,7 +207,7 @@ public class FragmentEntryLinkEditableValuesUpgradeProcessTest
 		FragmentEntryLink fragmentEntryLink =
 			_fragmentEntryLinkLocalService.getFragmentEntryLink(
 				_layout.getGroupId(),
-				draftFragmentEntryLink.getFragmentEntryLinkId(),
+				draftFragmentEntryLink.getExternalReferenceCode(),
 				_layout.getPlid());
 
 		Assert.assertNotNull(fragmentEntryLink);

@@ -208,52 +208,6 @@ public class KBCommentUtil {
 	}
 
 	/**
-	 * Returns the last kb comment in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByUuid_Last(
-			String uuid, OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByUuid_Last(
-		String uuid, OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where uuid = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByUuid_PrevAndNext(
-			long kbCommentId, String uuid,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			kbCommentId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb comments where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -446,59 +400,6 @@ public class KBCommentUtil {
 	}
 
 	/**
-	 * Returns the last kb comment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByUuid_C_PrevAndNext(
-			long kbCommentId, String uuid, long companyId,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			kbCommentId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb comments where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -618,52 +519,6 @@ public class KBCommentUtil {
 
 		return getPersistence().fetchByGroupId_First(
 			groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByGroupId_Last(
-			long groupId, OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByGroupId_Last(
-		long groupId, OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where groupId = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByGroupId_PrevAndNext(
-			long kbCommentId, long groupId,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			kbCommentId, groupId, orderByComparator);
 	}
 
 	/**
@@ -794,59 +649,6 @@ public class KBCommentUtil {
 
 		return getPersistence().fetchByG_C_First(
 			groupId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByG_C_Last(
-			long groupId, long classNameId,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByG_C_Last(
-			groupId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByG_C_Last(
-		long groupId, long classNameId,
-		OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByG_C_Last(
-			groupId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByG_C_PrevAndNext(
-			long kbCommentId, long groupId, long classNameId,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByG_C_PrevAndNext(
-			kbCommentId, groupId, classNameId, orderByComparator);
 	}
 
 	/**
@@ -981,59 +783,6 @@ public class KBCommentUtil {
 	}
 
 	/**
-	 * Returns the last kb comment in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByG_S_Last(
-			long groupId, int status,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByG_S_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByG_S_Last(
-		long groupId, int status,
-		OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByG_S_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByG_S_PrevAndNext(
-			long kbCommentId, long groupId, int status,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByG_S_PrevAndNext(
-			kbCommentId, groupId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb comments where groupId = &#63; and status = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1163,59 +912,6 @@ public class KBCommentUtil {
 
 		return getPersistence().fetchByC_C_First(
 			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByC_C_Last(
-			long classNameId, long classPK,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByC_C_Last(
-		long classNameId, long classPK,
-		OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByC_C_PrevAndNext(
-			long kbCommentId, long classNameId, long classPK,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			kbCommentId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -1357,62 +1053,6 @@ public class KBCommentUtil {
 
 		return getPersistence().fetchByU_C_C_First(
 			userId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByU_C_C_Last(
-			long userId, long classNameId, long classPK,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByU_C_C_Last(
-			userId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByU_C_C_Last(
-		long userId, long classNameId, long classPK,
-		OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByU_C_C_Last(
-			userId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByU_C_C_PrevAndNext(
-			long kbCommentId, long userId, long classNameId, long classPK,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByU_C_C_PrevAndNext(
-			kbCommentId, userId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -1560,62 +1200,6 @@ public class KBCommentUtil {
 
 		return getPersistence().fetchByC_C_S_First(
 			classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment
-	 * @throws NoSuchCommentException if a matching kb comment could not be found
-	 */
-	public static KBComment findByC_C_S_Last(
-			long classNameId, long classPK, int status,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByC_C_S_Last(
-			classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb comment in the ordered set where classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb comment, or <code>null</code> if a matching kb comment could not be found
-	 */
-	public static KBComment fetchByC_C_S_Last(
-		long classNameId, long classPK, int status,
-		OrderByComparator<KBComment> orderByComparator) {
-
-		return getPersistence().fetchByC_C_S_Last(
-			classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb comments before and after the current kb comment in the ordered set where classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param kbCommentId the primary key of the current kb comment
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb comment
-	 * @throws NoSuchCommentException if a kb comment with the primary key could not be found
-	 */
-	public static KBComment[] findByC_C_S_PrevAndNext(
-			long kbCommentId, long classNameId, long classPK, int status,
-			OrderByComparator<KBComment> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchCommentException {
-
-		return getPersistence().findByC_C_S_PrevAndNext(
-			kbCommentId, classNameId, classPK, status, orderByComparator);
 	}
 
 	/**
@@ -1903,3 +1487,4 @@ public class KBCommentUtil {
 	private static volatile KBCommentPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-637744942

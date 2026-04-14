@@ -210,52 +210,6 @@ public class SocialRequestUtil {
 	}
 
 	/**
-	 * Returns the last social request in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByUuid_Last(
-			String uuid, OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByUuid_Last(
-		String uuid, OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where uuid = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByUuid_PrevAndNext(
-			long requestId, String uuid,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			requestId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the social requests where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -450,59 +404,6 @@ public class SocialRequestUtil {
 	}
 
 	/**
-	 * Returns the last social request in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByUuid_C_PrevAndNext(
-			long requestId, String uuid, long companyId,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			requestId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the social requests where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -626,54 +527,6 @@ public class SocialRequestUtil {
 	}
 
 	/**
-	 * Returns the last social request in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByCompanyId_Last(
-			long companyId, OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByCompanyId_Last(
-		long companyId, OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where companyId = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByCompanyId_PrevAndNext(
-			long requestId, long companyId,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			requestId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the social requests where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -790,52 +643,6 @@ public class SocialRequestUtil {
 		long userId, OrderByComparator<SocialRequest> orderByComparator) {
 
 		return getPersistence().fetchByUserId_First(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByUserId_Last(
-			long userId, OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByUserId_Last(
-		long userId, OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where userId = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByUserId_PrevAndNext(
-			long requestId, long userId,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			requestId, userId, orderByComparator);
 	}
 
 	/**
@@ -965,56 +772,6 @@ public class SocialRequestUtil {
 	}
 
 	/**
-	 * Returns the last social request in the ordered set where receiverUserId = &#63;.
-	 *
-	 * @param receiverUserId the receiver user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByReceiverUserId_Last(
-			long receiverUserId,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByReceiverUserId_Last(
-			receiverUserId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where receiverUserId = &#63;.
-	 *
-	 * @param receiverUserId the receiver user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByReceiverUserId_Last(
-		long receiverUserId,
-		OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByReceiverUserId_Last(
-			receiverUserId, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where receiverUserId = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param receiverUserId the receiver user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByReceiverUserId_PrevAndNext(
-			long requestId, long receiverUserId,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByReceiverUserId_PrevAndNext(
-			requestId, receiverUserId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the social requests where receiverUserId = &#63; from the database.
 	 *
 	 * @param receiverUserId the receiver user ID
@@ -1141,59 +898,6 @@ public class SocialRequestUtil {
 
 		return getPersistence().fetchByU_S_First(
 			userId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where userId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByU_S_Last(
-			long userId, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByU_S_Last(
-			userId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where userId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByU_S_Last(
-		long userId, int status,
-		OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByU_S_Last(
-			userId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where userId = &#63; and status = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByU_S_PrevAndNext(
-			long requestId, long userId, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByU_S_PrevAndNext(
-			requestId, userId, status, orderByComparator);
 	}
 
 	/**
@@ -1331,59 +1035,6 @@ public class SocialRequestUtil {
 	}
 
 	/**
-	 * Returns the last social request in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByC_C_Last(
-			long classNameId, long classPK,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByC_C_Last(
-		long classNameId, long classPK,
-		OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByC_C_PrevAndNext(
-			long requestId, long classNameId, long classPK,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			requestId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
 	 * Removes all the social requests where classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -1515,59 +1166,6 @@ public class SocialRequestUtil {
 
 		return getPersistence().fetchByR_S_First(
 			receiverUserId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where receiverUserId = &#63; and status = &#63;.
-	 *
-	 * @param receiverUserId the receiver user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByR_S_Last(
-			long receiverUserId, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByR_S_Last(
-			receiverUserId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where receiverUserId = &#63; and status = &#63;.
-	 *
-	 * @param receiverUserId the receiver user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByR_S_Last(
-		long receiverUserId, int status,
-		OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByR_S_Last(
-			receiverUserId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where receiverUserId = &#63; and status = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param receiverUserId the receiver user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByR_S_PrevAndNext(
-			long requestId, long receiverUserId, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByR_S_PrevAndNext(
-			requestId, receiverUserId, status, orderByComparator);
 	}
 
 	/**
@@ -1822,70 +1420,6 @@ public class SocialRequestUtil {
 	}
 
 	/**
-	 * Returns the last social request in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByU_C_C_T_S_Last(
-			long userId, long classNameId, long classPK, int type, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByU_C_C_T_S_Last(
-			userId, classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByU_C_C_T_S_Last(
-		long userId, long classNameId, long classPK, int type, int status,
-		OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByU_C_C_T_S_Last(
-			userId, classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByU_C_C_T_S_PrevAndNext(
-			long requestId, long userId, long classNameId, long classPK,
-			int type, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByU_C_C_T_S_PrevAndNext(
-			requestId, userId, classNameId, classPK, type, status,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the social requests where userId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -2055,72 +1589,6 @@ public class SocialRequestUtil {
 
 		return getPersistence().fetchByC_C_T_R_S_First(
 			classNameId, classPK, type, receiverUserId, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and receiverUserId = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param receiverUserId the receiver user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request
-	 * @throws NoSuchRequestException if a matching social request could not be found
-	 */
-	public static SocialRequest findByC_C_T_R_S_Last(
-			long classNameId, long classPK, int type, long receiverUserId,
-			int status, OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByC_C_T_R_S_Last(
-			classNameId, classPK, type, receiverUserId, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last social request in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and receiverUserId = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param receiverUserId the receiver user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching social request, or <code>null</code> if a matching social request could not be found
-	 */
-	public static SocialRequest fetchByC_C_T_R_S_Last(
-		long classNameId, long classPK, int type, long receiverUserId,
-		int status, OrderByComparator<SocialRequest> orderByComparator) {
-
-		return getPersistence().fetchByC_C_T_R_S_Last(
-			classNameId, classPK, type, receiverUserId, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the social requests before and after the current social request in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and receiverUserId = &#63; and status = &#63;.
-	 *
-	 * @param requestId the primary key of the current social request
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param receiverUserId the receiver user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next social request
-	 * @throws NoSuchRequestException if a social request with the primary key could not be found
-	 */
-	public static SocialRequest[] findByC_C_T_R_S_PrevAndNext(
-			long requestId, long classNameId, long classPK, int type,
-			long receiverUserId, int status,
-			OrderByComparator<SocialRequest> orderByComparator)
-		throws com.liferay.social.kernel.exception.NoSuchRequestException {
-
-		return getPersistence().findByC_C_T_R_S_PrevAndNext(
-			requestId, classNameId, classPK, type, receiverUserId, status,
 			orderByComparator);
 	}
 
@@ -2318,3 +1786,4 @@ public class SocialRequestUtil {
 	private static volatile SocialRequestPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-41422997

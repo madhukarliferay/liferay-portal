@@ -382,6 +382,12 @@ components:
                         The type of the content.
                     readOnly: true
                     type: string
+                externalReferenceCode:
+                    description:
+                        The user's external reference code.
+                    example: AB-34098-789-N
+                    readOnly: true
+                    type: string
                 familyName:
                     description:
                         The user's surname (last name).
@@ -455,6 +461,9 @@ components:
                     $ref: "#/components/schemas/Link"
                     readOnly: true
                 name:
+                    type: string
+                previewURL:
+                    readOnly: true
                     type: string
                 thumbnailURL:
                     readOnly: true
@@ -1148,6 +1157,10 @@ components:
                         The shared asset title.
                     readOnly: true
                     type: string
+                visible:
+                    description:
+                        If the shared asset is visible or not.
+                    type: boolean
             type: object
         Site:
             # @review
@@ -1270,6 +1283,10 @@ components:
                         Optional field with the embedded taxonomy category, can be embedded with nestedFields
                     readOnly: true
                     type: object
+                parentTaxonomyCategoryExternalReferenceCode:
+                    type: string
+                parentVocabularyExternalReferenceCode:
+                    type: string
                 taxonomyCategoryId:
                     description:
                         The category's ID.
@@ -1467,6 +1484,10 @@ components:
                 lastLoginDate:
                     description:
                         The last time the user logged in.
+                    format: date-time
+                    readOnly: true
+                    type: string
+                loginDate:
                     format: date-time
                     readOnly: true
                     type: string
@@ -1748,7 +1769,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.admin.user.client', and version '4.0.78'."
+        'com.liferay.headless.admin.user.client', and version '4.0.84'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html

@@ -92,6 +92,7 @@ public class CustomAssetDisplayPageFriendlyURLResolverTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"text", "textValue2"
 			).build(),
@@ -132,6 +133,7 @@ public class CustomAssetDisplayPageFriendlyURLResolverTest {
 			_friendlyURLResolver,
 			_layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(
+					_objectDefinition.getCompanyId(),
 					_objectDefinition.getClassName()),
 			RandomTestUtil.randomLong(), friendlyURL, params);
 	}

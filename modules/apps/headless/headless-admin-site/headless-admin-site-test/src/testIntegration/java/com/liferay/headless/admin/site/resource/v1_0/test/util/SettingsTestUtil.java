@@ -14,12 +14,15 @@ import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalServiceUtil;
 import com.liferay.document.library.test.util.DLTestUtil;
 import com.liferay.headless.admin.site.client.dto.v1_0.ClientExtension;
+import com.liferay.headless.admin.site.client.dto.v1_0.ContentPageSpecification;
 import com.liferay.headless.admin.site.client.dto.v1_0.FavIcon;
 import com.liferay.headless.admin.site.client.dto.v1_0.FavIconClientExtension;
 import com.liferay.headless.admin.site.client.dto.v1_0.FavIconItemExternalReference;
 import com.liferay.headless.admin.site.client.dto.v1_0.ItemExternalReference;
-import com.liferay.headless.admin.site.client.dto.v1_0.Scope;
+import com.liferay.headless.admin.site.client.dto.v1_0.PageSpecification;
 import com.liferay.headless.admin.site.client.dto.v1_0.Settings;
+import com.liferay.headless.admin.site.client.dto.v1_0.WidgetPageSpecification;
+import com.liferay.headless.admin.site.client.scope.Scope;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
@@ -38,6 +41,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
@@ -84,7 +88,10 @@ public class SettingsTestUtil {
 		FavIcon favIcon = settings.getFavIcon();
 
 		if (favIcon == null) {
-			Assert.assertEquals(0, layout.getFaviconFileEntryId());
+			Assert.assertTrue(
+				Validator.isNull(layout.getFaviconFileEntryERC()));
+			Assert.assertTrue(
+				Validator.isNull(layout.getFaviconFileEntryScopeERC()));
 		}
 		else if (favIcon instanceof FavIconClientExtension) {
 			favIconClientExtension = (FavIconClientExtension)favIcon;
@@ -97,13 +104,18 @@ public class SettingsTestUtil {
 			Assert.fail("Unexpected class: " + favIcon.getClass());
 		}
 
-		if (layout.getFaviconFileEntryId() == 0) {
+		if (Validator.isNull(layout.getFaviconFileEntryERC())) {
 			Assert.assertNull(favIconItemExternalReference);
 		}
 		else {
 			DLFileEntry dlFileEntry =
-				DLFileEntryLocalServiceUtil.fetchDLFileEntry(
-					layout.getFaviconFileEntryId());
+				DLFileEntryLocalServiceUtil.
+					getDLFileEntryByExternalReferenceCode(
+						layout.getFaviconFileEntryERC(),
+						ScopeUtil.getItemGroupId(
+							layout.getCompanyId(),
+							layout.getFaviconFileEntryScopeERC(),
+							layout.getGroupId()));
 
 			Assert.assertEquals(
 				dlFileEntry.getExternalReferenceCode(),
@@ -117,7 +129,7 @@ public class SettingsTestUtil {
 			}
 			else {
 				Group group =
-					GroupLocalServiceUtil.fetchGroupByExternalReferenceCode(
+					GroupLocalServiceUtil.getGroupByExternalReferenceCode(
 						scope.getExternalReferenceCode(),
 						layout.getCompanyId());
 
@@ -144,33 +156,40 @@ public class SettingsTestUtil {
 		ItemExternalReference masterPageItemExternalReference =
 			settings.getMasterPageItemExternalReference();
 
-		if (layout.getMasterLayoutPlid() == 0) {
+		if (Validator.isNull(layout.getMasterLayoutPageTemplateEntryERC())) {
 			Assert.assertNull(masterPageItemExternalReference);
 		}
 		else {
+			long masterGroupId = layout.getGroupId();
+
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					fetchLayoutPageTemplateEntryByPlid(
-						layout.getMasterLayoutPlid());
+					fetchLayoutPageTemplateEntryByPlid(layout.getPlid());
+
+			if (layoutPageTemplateEntry != null) {
+				masterGroupId = layoutPageTemplateEntry.getGroupId();
+			}
+
+			LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
+				LayoutPageTemplateEntryLocalServiceUtil.
+					fetchLayoutPageTemplateEntryByExternalReferenceCode(
+						layout.getMasterLayoutPageTemplateEntryERC(),
+						masterGroupId);
 
 			Assert.assertEquals(
-				layoutPageTemplateEntry.getExternalReferenceCode(),
+				masterLayoutPageTemplateEntry.getExternalReferenceCode(),
 				masterPageItemExternalReference.getExternalReferenceCode());
 		}
 
 		ItemExternalReference styleBookItemExternalReference =
 			settings.getStyleBookItemExternalReference();
 
-		if (layout.getStyleBookEntryId() == 0) {
+		if (Validator.isNull(layout.getStyleBookEntryERC())) {
 			Assert.assertNull(styleBookItemExternalReference);
 		}
 		else {
-			StyleBookEntry styleBookEntry =
-				StyleBookEntryLocalServiceUtil.getStyleBookEntry(
-					layout.getStyleBookEntryId());
-
 			Assert.assertEquals(
-				styleBookEntry.getExternalReferenceCode(),
+				layout.getStyleBookEntryERC(),
 				styleBookItemExternalReference.getExternalReferenceCode());
 		}
 
@@ -237,6 +256,10 @@ public class SettingsTestUtil {
 			Objects.deepEquals(
 				expectedSettings.getGlobalJSClientExtensions(),
 				actualSettings.getGlobalJSClientExtensions()));
+		Assert.assertTrue(
+			Objects.deepEquals(
+				expectedSettings.getIconImageURL(),
+				actualSettings.getIconImageURL()));
 		Assert.assertEquals(
 			expectedSettings.getJavascript(), actualSettings.getJavascript());
 		Assert.assertTrue(
@@ -277,23 +300,34 @@ public class SettingsTestUtil {
 	}
 
 	public static ItemExternalReference getMasterPageItemExternalReference(
-			ServiceContext serviceContext)
+			boolean optionalMasterPageReference, ServiceContext serviceContext)
 		throws Exception {
 
-		LayoutPageTemplateEntry layoutPageTemplateEntry =
-			LayoutPageTemplateEntryTestUtil.getMasterLayoutPageTemplateEntry(
-				serviceContext, WorkflowConstants.STATUS_APPROVED);
+		String itemExternalReferenceCode;
+
+		if (optionalMasterPageReference) {
+			itemExternalReferenceCode = RandomTestUtil.randomString();
+		}
+		else {
+			LayoutPageTemplateEntry layoutPageTemplateEntry =
+				LayoutPageTemplateEntryTestUtil.
+					getMasterLayoutPageTemplateEntry(
+						serviceContext, WorkflowConstants.STATUS_APPROVED);
+
+			itemExternalReferenceCode =
+				layoutPageTemplateEntry.getExternalReferenceCode();
+		}
 
 		return new ItemExternalReference() {
 			{
-				setExternalReferenceCode(
-					layoutPageTemplateEntry::getExternalReferenceCode);
+				setExternalReferenceCode(itemExternalReferenceCode);
 			}
 		};
 	}
 
 	public static Settings getSettings(
-		FavIcon.FavIconType favIconType, ServiceContext serviceContext) {
+		FavIcon.FavIconType favIconType, boolean optionalMasterPageReference,
+		ServiceContext serviceContext) {
 
 		return new Settings() {
 			{
@@ -305,19 +339,19 @@ public class SettingsTestUtil {
 						_getClientExtension(
 							ClientExtensionEntryConstants.TYPE_GLOBAL_CSS),
 						_getClientExtension(
-							ClientExtensionEntryConstants.TYPE_GLOBAL_CSS)
+							true, ClientExtensionEntryConstants.TYPE_GLOBAL_CSS)
 					});
 				setGlobalJSClientExtensions(
 					() -> new ClientExtension[] {
 						_getClientExtension(
 							ClientExtensionEntryConstants.TYPE_GLOBAL_JS),
 						_getClientExtension(
-							ClientExtensionEntryConstants.TYPE_GLOBAL_JS)
+							true, ClientExtensionEntryConstants.TYPE_GLOBAL_JS)
 					});
 				setJavascript(RandomTestUtil::randomString);
 				setMasterPageItemExternalReference(
 					() -> SettingsTestUtil.getMasterPageItemExternalReference(
-						serviceContext));
+						optionalMasterPageReference, serviceContext));
 				setStyleBookItemExternalReference(
 					() -> SettingsTestUtil.getStyleBookItemExternalReference(
 						serviceContext));
@@ -338,6 +372,34 @@ public class SettingsTestUtil {
 						ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP));
 			}
 		};
+	}
+
+	public static Settings getSettings(
+		FavIcon.FavIconType favIconType, ServiceContext serviceContext) {
+
+		return getSettings(favIconType, false, serviceContext);
+	}
+
+	public static Settings getSettings(PageSpecification pageSpecification) {
+		if (pageSpecification == null) {
+			return null;
+		}
+
+		if (pageSpecification instanceof ContentPageSpecification) {
+			ContentPageSpecification contentPageSpecification =
+				(ContentPageSpecification)pageSpecification;
+
+			return contentPageSpecification.getSettings();
+		}
+
+		if (pageSpecification instanceof WidgetPageSpecification) {
+			WidgetPageSpecification widgetPageSpecification =
+				(WidgetPageSpecification)pageSpecification;
+
+			return widgetPageSpecification.getSettings();
+		}
+
+		return null;
 	}
 
 	public static ItemExternalReference getStyleBookItemExternalReference(
@@ -572,7 +634,8 @@ public class SettingsTestUtil {
 		}
 	}
 
-	private static ClientExtension _getClientExtension(String type)
+	private static ClientExtension _getClientExtension(
+			boolean optionalReference, String type)
 		throws Exception {
 
 		ClientExtension clientExtension = new ClientExtension() {
@@ -585,17 +648,25 @@ public class SettingsTestUtil {
 			}
 		};
 
-		ClientExtensionEntryLocalServiceUtil.addClientExtensionEntry(
-			clientExtension.getExternalReferenceCode(),
-			TestPropsValues.getUserId(), StringPool.BLANK,
-			Collections.singletonMap(
-				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-			StringPool.BLANK, StringPool.BLANK, type,
-			UnicodePropertiesBuilder.create(
-				clientExtension.getClientExtensionConfig(), true
-			).buildString());
+		if (!optionalReference) {
+			ClientExtensionEntryLocalServiceUtil.addClientExtensionEntry(
+				clientExtension.getExternalReferenceCode(),
+				TestPropsValues.getUserId(), StringPool.BLANK,
+				Collections.singletonMap(
+					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+				StringPool.BLANK, StringPool.BLANK, type,
+				UnicodePropertiesBuilder.create(
+					clientExtension.getClientExtensionConfig(), true
+				).buildString());
+		}
 
 		return clientExtension;
+	}
+
+	private static ClientExtension _getClientExtension(String type)
+		throws Exception {
+
+		return _getClientExtension(false, type);
 	}
 
 	private static FavIcon _getFavIcon(FavIcon.FavIconType favIconType)

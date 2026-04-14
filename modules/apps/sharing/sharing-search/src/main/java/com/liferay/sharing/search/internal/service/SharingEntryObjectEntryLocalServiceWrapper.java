@@ -36,13 +36,14 @@ public class SharingEntryObjectEntryLocalServiceWrapper
 
 	@Override
 	public ObjectEntry updateObjectEntry(
-			long userId, long objectEntryId, Map<String, Serializable> values,
-			ServiceContext serviceContext)
+			long userId, long objectEntryId, long objectEntryFolderId,
+			Map<String, Serializable> values, ServiceContext serviceContext)
 		throws PortalException {
 
 		return _reindexSharingEntries(
 			super.updateObjectEntry(
-				userId, objectEntryId, values, serviceContext));
+				userId, objectEntryId, objectEntryFolderId, values,
+				serviceContext));
 	}
 
 	@Override
@@ -58,8 +59,8 @@ public class SharingEntryObjectEntryLocalServiceWrapper
 			return objectEntry;
 		}
 
-		Indexer<Object> indexer = _indexerRegistry.getIndexer(
-			className.getValue());
+		Indexer<SharingEntry> indexer = _indexerRegistry.getIndexer(
+			SharingEntry.class.getName());
 
 		if (indexer == null) {
 			return objectEntry;

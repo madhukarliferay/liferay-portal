@@ -159,9 +159,15 @@ export default function ObjectRelationship({
 		objectRelationships?: ObjectMap<number>;
 	}>();
 
+	const onChangeRef = useRef(onChange);
+
 	const parameterObjectFieldId = parameterObjectFieldName
 		? objectRelationships?.[parameterObjectFieldName]
 		: null;
+
+	useEffect(() => {
+		onChangeRef.current = onChange;
+	}, [onChange]);
 
 	/**
 	 * Provides selected value for dependant relationships
@@ -185,9 +191,7 @@ export default function ObjectRelationship({
 			if (!parameterObjectFieldName || parameterObjectFieldId) {
 				newURL = parameterObjectFieldId
 					? apiURL.replace(/{\w+}/, String(parameterObjectFieldId))
-					: `${apiURL}?pageSize=-1${
-							searchTerm ? `&search=${searchTerm}` : ''
-						}`;
+					: `${apiURL}${searchTerm ? `?search=${searchTerm}` : ''}`;
 			}
 
 			if (!newURL || newURL === url) {
@@ -225,7 +229,7 @@ export default function ObjectRelationship({
 						state.selected = selected;
 					}
 					else {
-						onChange({target: {value: null}});
+						onChangeRef.current({target: {value: null}});
 					}
 				}
 				setState(({active, searchTerm}) => ({
@@ -249,7 +253,6 @@ export default function ObjectRelationship({
 	}, [
 		apiURL,
 		objectEntryId,
-		onChange,
 		parameterObjectFieldId,
 		parameterObjectFieldName,
 		searchTerm,
@@ -290,6 +293,14 @@ export default function ObjectRelationship({
 				objectFieldBusinessType
 			)) ??
 		searchTerm;
+
+	const isSelected = (value: unknown): value is SelectedItem => {
+		if (!value || typeof value !== 'object') {
+			return false;
+		}
+
+		return 'id' in value;
+	};
 
 	return (
 		<FieldBase
@@ -347,7 +358,7 @@ export default function ObjectRelationship({
 							return null;
 						};
 
-						onChange({
+						onChangeRef.current({
 							target: {
 								value: getValue(),
 							},
@@ -385,7 +396,7 @@ export default function ObjectRelationship({
 									objectFieldBusinessType
 								}
 								onSelect={(selected) => {
-									onChange({
+									onChangeRef.current({
 										target: {
 											value: String(selected[valueKey]),
 										},
@@ -405,7 +416,15 @@ export default function ObjectRelationship({
 				{loading && <ClayAutocomplete.LoadingIndicator />}
 			</ClayAutocomplete>
 
-			<input name={name} type="hidden" value={selected?.id} />
+			<input
+				name={name}
+				type="hidden"
+				value={
+					isSelected(selected)
+						? selected?.[valueKey] ?? selected.id
+						: undefined
+				}
+			/>
 		</FieldBase>
 	);
 }
@@ -450,3 +469,8 @@ interface State {
 	selected?: Item;
 	url: string | null;
 }
+
+type SelectedItem = {
+	id: string | number;
+	[key: string]: string | number | undefined;
+};

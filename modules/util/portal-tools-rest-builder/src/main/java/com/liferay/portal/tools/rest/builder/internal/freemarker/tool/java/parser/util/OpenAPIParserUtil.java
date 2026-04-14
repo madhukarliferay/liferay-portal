@@ -13,7 +13,6 @@ import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaM
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodSignature;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.util.ConfigUtil;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.util.OpenAPIUtil;
-import com.liferay.portal.tools.rest.builder.internal.util.FileUtil;
 import com.liferay.portal.tools.rest.builder.internal.yaml.YAMLUtil;
 import com.liferay.portal.tools.rest.builder.internal.yaml.config.ConfigYAML;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Components;
@@ -40,12 +39,15 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -62,7 +64,7 @@ public class OpenAPIParserUtil {
 			return schema.getPropertySchemas();
 		}
 
-		Map<String, Schema> propertySchemas = new HashMap<>();
+		Map<String, Schema> propertySchemas = new LinkedHashMap<>();
 
 		for (Schema allOfSchema : allOfSchemas) {
 			if (allOfSchema.getReference() != null) {
@@ -164,11 +166,11 @@ public class OpenAPIParserUtil {
 	}
 
 	public static List<String> getExternalReferences(OpenAPIYAML openAPIYAML) {
-		Set<String> externalReferences = new HashSet<>();
+		Set<String> externalReferences = new LinkedHashSet<>();
 
 		Map<String, PathItem> pathItems = openAPIYAML.getPathItems();
 
-		Map<String, Schema> schemas = new HashMap<>();
+		Map<String, Schema> schemas = new LinkedHashMap<>();
 
 		Components components = openAPIYAML.getComponents();
 
@@ -224,8 +226,9 @@ public class OpenAPIParserUtil {
 			ConfigYAML configYAML, OpenAPIYAML openAPIYAML)
 		throws Exception {
 
-		Map<String, Schema> externalReferencesMap = new HashMap<>();
+		Map<String, Schema> externalReferencesMap = new TreeMap<>();
 
+		String baseDir = configYAML.getBaseDir();
 		String externalReference = null;
 		Set<String> visitedPaths = new HashSet<>();
 
@@ -233,27 +236,24 @@ public class OpenAPIParserUtil {
 			getExternalReferences(openAPIYAML));
 
 		while ((externalReference = queue.poll()) != null) {
-			String path = externalReference.substring(
-				0, externalReference.indexOf("#"));
+			File externalFile = _resolveExternalFile(
+				baseDir, externalReference);
 
-			if (visitedPaths.contains(path)) {
+			if (!visitedPaths.add(externalFile.getPath())) {
 				continue;
 			}
 
-			visitedPaths.add(path);
-
-			openAPIYAML = YAMLUtil.loadOpenAPIYAML(
-				FileUtil.read(new File(path)));
+			openAPIYAML = YAMLUtil.loadOpenAPIYAML(externalFile);
 
 			externalReferencesMap.putAll(
 				OpenAPIUtil.getAllSchemas(configYAML, openAPIYAML));
 
+			String parentPath = externalFile.getParent() + "/";
+
 			for (String curExternalReference :
 					getExternalReferences(openAPIYAML)) {
 
-				queue.add(
-					path.substring(0, path.lastIndexOf("/") + 1) +
-						curExternalReference);
+				queue.add(parentPath + curExternalReference);
 			}
 		}
 
@@ -314,31 +314,30 @@ public class OpenAPIParserUtil {
 	public static Map<String, String> getJavaDataTypeMap(
 		ConfigYAML configYAML, OpenAPIYAML openAPIYAML) {
 
-		Map<String, String> javaDataTypeMap = new HashMap<>();
+		Map<String, String> javaDataTypeMap = new TreeMap<>();
 
+		String baseDir = configYAML.getBaseDir();
 		Set<String> visitedPaths = new HashSet<>();
 
 		try {
 			for (String externalReference :
 					getExternalReferences(openAPIYAML)) {
 
-				String path = externalReference.substring(
-					0, externalReference.indexOf("#"));
+				File externalFile = _resolveExternalFile(
+					baseDir, externalReference);
 
-				if (visitedPaths.contains(path)) {
+				if (!visitedPaths.add(externalFile.getPath())) {
 					continue;
 				}
 
-				visitedPaths.add(path);
-
-				String configPath = StringUtil.replace(
-					path, "rest-openapi.yaml", "rest-config.yaml");
+				File configFile = new File(
+					externalFile.getParent(), "rest-config.yaml");
 
 				ConfigYAML externalConfigYAML = YAMLUtil.loadConfigYAML(
-					FileUtil.read(new File(configPath)));
+					externalFile.getParent(), configFile);
 
 				OpenAPIYAML externalOpenAPIYAML = YAMLUtil.loadOpenAPIYAML(
-					FileUtil.read(new File(path)));
+					externalFile);
 
 				if ((externalConfigYAML == null) ||
 					(externalOpenAPIYAML == null)) {
@@ -732,6 +731,22 @@ public class OpenAPIParserUtil {
 		return null;
 	}
 
+	private static File _resolveExternalFile(
+			String baseDir, String externalReference)
+		throws IOException {
+
+		String path = externalReference.substring(
+			0, externalReference.indexOf("#"));
+
+		File externalFile = new File(path);
+
+		if (!externalFile.isAbsolute()) {
+			externalFile = new File(baseDir, path);
+		}
+
+		return externalFile.getCanonicalFile();
+	}
+
 	private static final Map<Map.Entry<String, String>, String>
 		_openAPIDataTypeMap = new HashMap<Map.Entry<String, String>, String>() {
 			{
@@ -759,6 +774,13 @@ public class OpenAPIParserUtil {
 				put(
 					new AbstractMap.SimpleImmutableEntry<>("permission", null),
 					"com.liferay.portal.vulcan.permission.Permission");
+				put(
+					new AbstractMap.SimpleImmutableEntry<>("scope", null),
+					"com.liferay.portal.vulcan.scope.Scope");
+				put(
+					new AbstractMap.SimpleImmutableEntry<>(
+						"sseEventSink", null),
+					"jakarta.ws.rs.sse.SseEventSink");
 				put(
 					new AbstractMap.SimpleImmutableEntry<>("string", null),
 					String.class.getName());

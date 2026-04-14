@@ -49,6 +49,10 @@ public interface ObjectField extends ObjectFieldModel, PersistedModel {
 
 	public boolean compareBusinessType(String businessType);
 
+	public String getAttachmentDownloadActionKey();
+
+	public String[] getDBColumnNames();
+
 	public String getI18nObjectFieldName();
 
 	public ObjectDefinition getObjectDefinition()
@@ -75,3 +79,4 @@ public interface ObjectField extends ObjectFieldModel, PersistedModel {
 		java.util.List<ObjectFieldSetting> objectFieldSettings);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1845831083

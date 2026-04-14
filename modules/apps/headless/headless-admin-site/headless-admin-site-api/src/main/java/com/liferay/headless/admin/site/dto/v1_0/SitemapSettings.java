@@ -288,9 +288,7 @@ public class SitemapSettings implements Serializable {
 			sb.append("\"changeFrequency\": ");
 
 			sb.append("\"");
-
 			sb.append(changeFrequency);
-
 			sb.append("\"");
 		}
 
@@ -470,3 +468,4 @@ public class SitemapSettings implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-662493522

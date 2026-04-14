@@ -54,9 +54,7 @@ public class ObjectViewFilterColumnSerDes {
 			sb.append("\"filterType\": ");
 
 			sb.append("\"");
-
 			sb.append(objectViewFilterColumn.getFilterType());
-
 			sb.append("\"");
 		}
 
@@ -328,3 +326,4 @@ public class ObjectViewFilterColumnSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1513918322

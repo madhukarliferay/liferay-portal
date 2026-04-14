@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import {sub} from 'frontend-js-web';
 import React from 'react';
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 import MarketplaceModal from '../../../src/main/resources/META-INF/resources/js/components/marketplace/MarketplaceModal';
 import MarketplaceViews from '../../../src/main/resources/META-INF/resources/js/components/marketplace/MarketplaceViews';
@@ -68,17 +68,30 @@ jest.mock(
 	'../../../src/main/resources/META-INF/resources/js/components/marketplace/MarketplaceViews',
 	() => ({
 		__esModule: true,
-		default: jest.fn(({fragmentPortletNamespace, fragmentsImportURL}) => (
-			<div data-testid="mock-marketplace-views">
-				{fragmentPortletNamespace}
+		default: jest.fn(
+			({
+				addFragmentCollectionURL,
+				fragmentCollections,
+				fragmentPortletNamespace,
+				fragmentsImportURL,
+			}) => (
+				<div data-testid="mock-marketplace-views">
+					{addFragmentCollectionURL}
 
-				{fragmentsImportURL}
-			</div>
-		)),
+					{JSON.stringify(fragmentCollections)}
+
+					{fragmentPortletNamespace}
+
+					{fragmentsImportURL}
+				</div>
+			)
+		),
 	})
 );
 
 const mockProps = {
+	addFragmentCollectionURL: '/o/test/add_fragment_collection',
+	fragmentCollections: [{fragmentCollectionId: 1, name: 'Set Name'}],
 	fragmentPortletNamespace: 'testNamespace',
 	fragmentsImportURL: '/testImportURL',
 	hideBackButton: true,
@@ -125,6 +138,8 @@ describe('MarketplaceModal', () => {
 		).toBeInTheDocument();
 		expect(MarketplaceViews).toHaveBeenCalledWith(
 			expect.objectContaining({
+				addFragmentCollectionURL: mockProps.addFragmentCollectionURL,
+				fragmentCollections: mockProps.fragmentCollections,
 				fragmentPortletNamespace: mockProps.fragmentPortletNamespace,
 				fragmentsImportURL: mockProps.fragmentsImportURL,
 				hideBackButton: mockProps.hideBackButton,

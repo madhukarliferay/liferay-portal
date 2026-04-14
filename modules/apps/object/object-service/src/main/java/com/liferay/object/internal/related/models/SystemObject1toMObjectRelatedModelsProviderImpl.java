@@ -9,6 +9,7 @@ import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.RequiredObjectRelationshipException;
 import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
+import com.liferay.object.internal.security.permission.util.ObjectEntryPermissionUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
@@ -34,6 +35,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelper;
 import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -42,6 +44,7 @@ import com.liferay.portal.service.PersistedModelLocalServiceRegistryUtil;
 import java.io.Serializable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -53,7 +56,7 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 		implements ObjectRelatedModelsProvider<T> {
 
 	public SystemObject1toMObjectRelatedModelsProviderImpl(
-		ObjectDefinition objectDefinition,
+		InlineSQLHelper inlineSQLHelper, ObjectDefinition objectDefinition,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ObjectEntryLocalService objectEntryLocalService,
 		ObjectFieldLocalService objectFieldLocalService,
@@ -62,6 +65,7 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 		SystemObjectDefinitionManagerRegistry
 			systemObjectDefinitionManagerRegistry) {
 
+		_inlineSQLHelper = inlineSQLHelper;
 		_objectDefinition = objectDefinition;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
 		_objectEntryLocalService = objectEntryLocalService;
@@ -87,21 +91,20 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 				objectRelationshipId);
 
 		List<T> relatedModels = getRelatedModels(
-			groupId, objectRelationshipId, null, primaryKey, null,
+			groupId, objectRelationshipId, null, false, primaryKey, null,
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		if (relatedModels.isEmpty()) {
 			return;
 		}
 
+		SystemObjectDefinitionManager systemObjectDefinitionManager =
+			_systemObjectDefinitionManagerRegistry.
+				getSystemObjectDefinitionManager(_objectDefinition.getName());
+
 		if (Objects.equals(
 				deletionType,
 				ObjectRelationshipConstants.DELETION_TYPE_CASCADE)) {
-
-			SystemObjectDefinitionManager systemObjectDefinitionManager =
-				_systemObjectDefinitionManagerRegistry.
-					getSystemObjectDefinitionManager(
-						_objectDefinition.getName());
 
 			for (BaseModel<T> baseModel : relatedModels) {
 				systemObjectDefinitionManager.deleteBaseModel(baseModel);
@@ -115,9 +118,16 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 				objectRelationship.getObjectFieldId2());
 
 			for (BaseModel<T> baseModel : relatedModels) {
+				Map<String, Object> modelAttributes =
+					baseModel.getModelAttributes();
+
+				Column<?, Long> primaryKeyColumn =
+					systemObjectDefinitionManager.getPrimaryKeyColumn();
+
 				_objectEntryLocalService.insertIntoOrUpdateExtensionTable(
 					userId, objectRelationship.getObjectDefinitionId2(),
-					GetterUtil.getLong(baseModel.getPrimaryKeyObj()),
+					GetterUtil.getLong(
+						modelAttributes.get(primaryKeyColumn.getName())),
 					HashMapBuilder.<String, Serializable>put(
 						objectField.getName(), 0
 					).build());
@@ -252,7 +262,8 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 	@Override
 	public List<T> getRelatedModels(
 			long groupId, long objectRelationshipId, Predicate predicate,
-			long primaryKey, String search, int start, int end, Sort[] sorts)
+			boolean preferApproved, long primaryKey, String search, int start,
+			int end, Sort[] sorts)
 		throws PortalException {
 
 		PersistedModelLocalService persistedModelLocalService =
@@ -260,18 +271,17 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 				getPersistedModelLocalService(
 					_systemObjectDefinitionManager.getModelClassName());
 
-		DSLQuery dslQuery = _getGroupByStep(
-			_getDynamicObjectDefinitionTable(),
-			DSLQueryFactoryUtil.selectDistinct(_table), groupId,
-			objectRelationshipId, primaryKey, search
-		).orderBy(
-			_systemObjectDefinitionManager.getPrimaryKeyColumn(
-			).ascending()
-		).limit(
-			start, end
-		);
-
-		return persistedModelLocalService.dslQuery(dslQuery);
+		return persistedModelLocalService.dslQuery(
+			_getGroupByStep(
+				_getDynamicObjectDefinitionTable(),
+				DSLQueryFactoryUtil.selectDistinct(_table), groupId,
+				objectRelationshipId, primaryKey, search
+			).orderBy(
+				_systemObjectDefinitionManager.getPrimaryKeyColumn(
+				).ascending()
+			).limit(
+				start, end
+			));
 	}
 
 	@Override
@@ -478,6 +488,9 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 					return companyIdColumn.eq(objectField.getCompanyId());
 				}
 			).and(
+				ObjectEntryPermissionUtil.getPermissionWherePredicate(
+					dynamicObjectDefinitionTable, groupId, _inlineSQLHelper)
+			).and(
 				() -> {
 					ObjectField titleObjectField =
 						_objectFieldLocalService.getObjectField(
@@ -572,6 +585,7 @@ public class SystemObject1toMObjectRelatedModelsProviderImpl
 		);
 	}
 
+	private final InlineSQLHelper _inlineSQLHelper;
 	private final Table _localizationTable;
 	private final ObjectDefinition _objectDefinition;
 	private final ObjectDefinitionLocalService _objectDefinitionLocalService;

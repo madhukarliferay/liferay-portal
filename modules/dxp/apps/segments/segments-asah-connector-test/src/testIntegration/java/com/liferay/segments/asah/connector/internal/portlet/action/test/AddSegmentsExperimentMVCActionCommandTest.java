@@ -384,7 +384,7 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 			segmentsEntryName, RandomTestUtil.randomString());
 
 		return SegmentsTestUtil.addSegmentsExperience(
-			segmentsEntry.getSegmentsEntryId(), _layout.getPlid(),
+			segmentsEntry.getExternalReferenceCode(), null, _layout.getPlid(),
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 	}
 

@@ -32,6 +32,9 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.notifications.UserNotificationHandler;
+import com.liferay.portal.kernel.notifications.UserNotificationManagerUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.portlet.url.builder.ResourceURLBuilder;
@@ -238,6 +241,11 @@ public class ObjectDefinitionsActionsDisplayContext
 
 			if ((StringUtil.equals(
 					objectActionTrigger.getKey(),
+					ObjectActionTriggerConstants.KEY_ON_AFTER_LOGIN) &&
+				 !StringUtil.equals(
+					 objectDefinition.getClassName(), User.class.getName())) ||
+				(StringUtil.equals(
+					objectActionTrigger.getKey(),
 					ObjectActionTriggerConstants.KEY_ON_AFTER_ROOT_UPDATE) &&
 				 !objectDefinition.isRootNode()) ||
 				(StringUtil.equals(
@@ -307,6 +315,28 @@ public class ObjectDefinitionsActionsDisplayContext
 		).setResourceID(
 			"/object_definitions/validate_expression"
 		).buildString();
+	}
+
+	public boolean hasUserNotificationHandler(String className) {
+		Map<String, Map<String, UserNotificationHandler>>
+			userNotificationHandlers =
+				UserNotificationManagerUtil.getUserNotificationHandlers();
+
+		Map<String, UserNotificationHandler> userNotificationHandlersMap =
+			userNotificationHandlers.get(StringPool.BLANK);
+
+		if (userNotificationHandlersMap == null) {
+			return false;
+		}
+
+		UserNotificationHandler userNotificationHandler =
+			userNotificationHandlersMap.get(className);
+
+		if (userNotificationHandler == null) {
+			return false;
+		}
+
+		return true;
 	}
 
 	public boolean isAllowScriptContentToBeExecutedOrIncluded() {

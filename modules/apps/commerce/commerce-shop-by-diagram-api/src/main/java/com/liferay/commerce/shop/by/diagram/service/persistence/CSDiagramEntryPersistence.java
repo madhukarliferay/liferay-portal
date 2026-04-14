@@ -122,47 +122,6 @@ public interface CSDiagramEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	public CSDiagramEntry findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-				orderByComparator)
-		throws NoSuchCSDiagramEntryException;
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	public CSDiagramEntry fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	public CSDiagramEntry[] findByCPDefinitionId_PrevAndNext(
-			long CSDiagramEntryId, long CPDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-				orderByComparator)
-		throws NoSuchCSDiagramEntryException;
-
-	/**
 	 * Removes all the cs diagram entries where CPDefinitionId = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -263,47 +222,6 @@ public interface CSDiagramEntryPersistence
 		long CPInstanceId,
 		com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	public CSDiagramEntry findByCPInstanceId_Last(
-			long CPInstanceId,
-			com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-				orderByComparator)
-		throws NoSuchCSDiagramEntryException;
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	public CSDiagramEntry fetchByCPInstanceId_Last(
-		long CPInstanceId,
-		com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	public CSDiagramEntry[] findByCPInstanceId_PrevAndNext(
-			long CSDiagramEntryId, long CPInstanceId,
-			com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-				orderByComparator)
-		throws NoSuchCSDiagramEntryException;
 
 	/**
 	 * Removes all the cs diagram entries where CPInstanceId = &#63; from the database.
@@ -408,47 +326,6 @@ public interface CSDiagramEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	public CSDiagramEntry findByCProductId_Last(
-			long CProductId,
-			com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-				orderByComparator)
-		throws NoSuchCSDiagramEntryException;
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	public CSDiagramEntry fetchByCProductId_Last(
-		long CProductId,
-		com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	public CSDiagramEntry[] findByCProductId_PrevAndNext(
-			long CSDiagramEntryId, long CProductId,
-			com.liferay.portal.kernel.util.OrderByComparator<CSDiagramEntry>
-				orderByComparator)
-		throws NoSuchCSDiagramEntryException;
-
-	/**
 	 * Removes all the cs diagram entries where CProductId = &#63; from the database.
 	 *
 	 * @param CProductId the c product ID
@@ -512,6 +389,59 @@ public interface CSDiagramEntryPersistence
 	 * @return the number of matching cs diagram entries
 	 */
 	public int countByCPDI_S(long CPDefinitionId, String sequence);
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or throws a <code>NoSuchCSDiagramEntryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching cs diagram entry
+	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
+	 */
+	public CSDiagramEntry findByERC_C(
+			String externalReferenceCode, long companyId)
+		throws NoSuchCSDiagramEntryException;
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
+	 */
+	public CSDiagramEntry fetchByERC_C(
+		String externalReferenceCode, long companyId);
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
+	 */
+	public CSDiagramEntry fetchByERC_C(
+		String externalReferenceCode, long companyId, boolean useFinderCache);
+
+	/**
+	 * Removes the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the cs diagram entry that was removed
+	 */
+	public CSDiagramEntry removeByERC_C(
+			String externalReferenceCode, long companyId)
+		throws NoSuchCSDiagramEntryException;
+
+	/**
+	 * Returns the number of cs diagram entries where externalReferenceCode = &#63; and companyId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the number of matching cs diagram entries
+	 */
+	public int countByERC_C(String externalReferenceCode, long companyId);
 
 	/**
 	 * Caches the cs diagram entry in the entity cache if it is enabled.
@@ -634,3 +564,4 @@ public interface CSDiagramEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1351457189

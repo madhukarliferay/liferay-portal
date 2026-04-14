@@ -226,6 +226,8 @@ export type TAction =
 
 export type TState = {
 	baseResourceURL: string;
+	ckEditor5Config?: object;
+	decimalSeparator: string;
 	deletedObjectDefinition: DeletedObjectDefinition | null;
 	editObjectDefinitionURL: string;
 	elements: Elements<ObjectDefinitionNodeData | ObjectRelationshipEdgeData[]>;
@@ -233,6 +235,7 @@ export type TState = {
 	forbiddenChars: string[];
 	forbiddenLastChars: string[];
 	forbiddenNames: string[];
+	hasDepotEntry?: boolean;
 	isLoadingObjectFolder: boolean;
 	isRootDescendantNode: boolean;
 	learnResourceContext: ILearnResourceContext;

@@ -5,9 +5,8 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
-import {customFieldsPagesTest} from '../../../fixtures/customFieldsPagesTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {serverAdministrationPageTest} from '../../../fixtures/serverAdministrationPageTest';
 import {userGroupsPageTest} from '../../../fixtures/userGroupsPageTest';
@@ -15,29 +14,17 @@ import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganiza
 import {ApiHelpers} from '../../../helpers/ApiHelpers';
 import {liferayConfig} from '../../../liferay.config';
 import {VirtualInstancesPage} from '../../../pages/portal-instances-web/VirtualInstancesPage';
-import {ApplicationsMenuPage} from '../../../pages/product-navigation-applications-menu/ApplicationsMenuPage';
 import {SCIMConfigurationPage} from '../../../pages/scim-configuraiton-web/SCIMConfigurationPage';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import performLogin, {performLogout} from '../../../utils/performLogin';
 import {newScimUser} from './utils/newScimUserUtil';
 
-export const featureFlagDisabledtest = mergeTests(
-	featureFlagsTest({
-		'LPD-56434': {enabled: false},
-	}),
-
-	loginTest(),
-	customFieldsPagesTest,
-	usersAndOrganizationsPagesTest
-);
-
 export const test = mergeTests(
-	featureFlagsTest({
-		'LPD-56434': {enabled: true},
-	}),
-
 	loginTest(),
-	applicationsMenuPageTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
+	globalMenuPagesTest,
 	serverAdministrationPageTest,
 	userGroupsPageTest,
 	usersAndOrganizationsPagesTest
@@ -48,158 +35,6 @@ const DEFAULT_VIRTUAL_INSTANCE_NAME = 'www.able.com';
 const RESET_SCIM_HELP_TEXT =
 	'All SCIM Client related data and generated OAuth 2 tokens will be ' +
 	'removed. This is necessary to configure a new SCIM Client.';
-
-featureFlagDisabledtest(
-	'LPD-60870 Verify LPD-56434 is behind feature flag',
-	async ({
-		editUserPage,
-		page,
-		usersAndOrganizationsPage,
-		viewAttributesPage,
-	}) => {
-
-		// If the SCIM custom fields exist, remove them so we can test properly
-
-		await viewAttributesPage.goto('User');
-
-		await viewAttributesPage.addCustomFieldButton.waitFor();
-
-		const customFieldAttributes = [
-			'scimDisplayName',
-			'scimEntitlements',
-			'scimNickName',
-			'scimPhotos',
-			'scimPreferredLanguage',
-			'scimUserType',
-			'scimX509Certificates',
-		];
-
-		for (const customFieldAttribute of customFieldAttributes) {
-			if (
-				await viewAttributesPage.page
-					.getByRole('row')
-					.filter({hasText: customFieldAttribute})
-					.isVisible()
-			) {
-				await viewAttributesPage.deleteCustomField(
-					customFieldAttribute,
-					'User'
-				);
-			}
-		}
-
-		const scimConfigurationPage = new SCIMConfigurationPage(page);
-
-		await scimConfigurationPage.goTo();
-
-		await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
-
-		await scimConfigurationPage.generateToken();
-
-		const accessToken =
-			await scimConfigurationPage.accessTokenField.inputValue();
-
-		const randomNumber = getRandomInt();
-
-		const newUser = await newScimUser(randomNumber);
-
-		const apiHelper = new ApiHelpers(page);
-
-		await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
-
-		const response = await (
-			await apiHelper.scim.getUsersWithOAuth(accessToken)
-		).text();
-
-		expect(response).toContain('"totalResults":1');
-
-		await usersAndOrganizationsPage.goto(false);
-
-		await usersAndOrganizationsPage.goToUser(newUser.userName);
-
-		await editUserPage.emailAddressInput.waitFor();
-
-		await expect(editUserPage.emailAddressInput).toHaveValue(
-			`able${randomNumber}@liferay.com`
-		);
-
-		await expect(editUserPage.firstNameInput).toHaveValue(
-			newUser.name.givenName
-		);
-
-		await expect(editUserPage.lastNameInput).toHaveValue(
-			newUser.name.familyName
-		);
-
-		await expect(editUserPage.middleNameInput).toHaveValue(
-			newUser.name.middleName
-		);
-
-		await expect(editUserPage.prefixInput).toHaveValue('');
-
-		await expect(editUserPage.suffixInput).toHaveValue('');
-
-		for (const customFieldAttribute of customFieldAttributes) {
-			await expect(
-				await editUserPage.customField(customFieldAttribute)
-			).not.toBeVisible();
-		}
-
-		await editUserPage.rolesLink.click();
-
-		await editUserPage.page
-			.getByText('Regular Roles', {exact: true})
-			.waitFor();
-
-		await expect(
-			editUserPage.page.getByText(
-				'This user is not assigned any regular roles.'
-			)
-		).toBeVisible();
-
-		await editUserPage.contactLink.click();
-
-		await expect(
-			editUserPage.page.getByText(
-				'This user does not have any addresses.'
-			)
-		).toBeVisible();
-
-		await editUserPage.contactInformationLink.click();
-
-		await expect(
-			editUserPage.page.getByText(
-				'This user does not have any additional email addresses.'
-			)
-		).toBeVisible();
-
-		await expect(await editUserPage.jabberInput).toBeEmpty();
-
-		await expect(await editUserPage.skypeInput).toBeEmpty();
-
-		await expect(
-			editUserPage.page.getByText(
-				'This user does not have any phone numbers.'
-			)
-		).toBeVisible();
-
-		await expect(
-			editUserPage.page.getByText('This user does not have any websites.')
-		).toBeVisible();
-
-		await editUserPage.preferencesLink.click();
-
-		await editUserPage.displaySettingsLink.click();
-
-		await editUserPage.timeZoneInput.waitFor();
-
-		await expect(await editUserPage.timeZoneInput).toHaveValue('UTC');
-
-		await scimConfigurationPage.goTo();
-
-		await scimConfigurationPage.resetClientData();
-	}
-);
 
 test('smoke: test SCIM configuration options', async ({page}) => {
 	const scimConfigurationPage = new SCIMConfigurationPage(page);
@@ -262,6 +97,7 @@ test('LPD-23255 AC3 TC3: Verify that clicking the “Reset SCIM Client provision
 });
 
 test('LPD-23255 AC3 TC4: Verify that clicking the “Reset SCIM Client provisioning data“ button revokes the generated OAuth2 token and deletes the OAuth2 Application.', async ({
+	globalMenuPage,
 	page,
 }) => {
 	const scimConfigurationPage = new SCIMConfigurationPage(page);
@@ -281,16 +117,14 @@ test('LPD-23255 AC3 TC4: Verify that clicking the “Reset SCIM Client provision
 		await apiHelper.scim.getUsersWithOAuth(accessToken);
 	expect(authorizedResponse.status()).toBe(200);
 
-	const applicationsMenuPage = new ApplicationsMenuPage(page);
-
-	await applicationsMenuPage.goToOauth2Administration();
+	await globalMenuPage.goToControlPanel('OAuth 2 Administration');
 	await page.waitForTimeout(1000);
 
 	const scimOAuthClientRow = await page.getByRole('cell', {
 		exact: true,
 		name: 'Test SCIM Client',
 	});
-	expect(await scimOAuthClientRow).toBeVisible();
+	await expect(scimOAuthClientRow).toBeVisible();
 
 	await scimConfigurationPage.goTo();
 
@@ -300,10 +134,10 @@ test('LPD-23255 AC3 TC4: Verify that clicking the “Reset SCIM Client provision
 		await apiHelper.scim.getUsersWithOAuth(accessToken);
 	expect(unauthorizedResponse.status()).toBe(401);
 
-	await applicationsMenuPage.goToOauth2Administration();
+	await globalMenuPage.goToControlPanel('OAuth 2 Administration');
 	await page.waitForTimeout(1000);
 
-	expect(await scimOAuthClientRow).not.toBeVisible();
+	await expect(scimOAuthClientRow).not.toBeVisible();
 });
 
 test('LPD-23255 AC3 TC5: Verify that clicking the “Reset SCIM Client provisioning data“ button unbinds users', async ({
@@ -326,6 +160,8 @@ test('LPD-23255 AC3 TC5: Verify that clicking the “Reset SCIM Client provision
 	expect(response).toContain('"totalResults":1');
 
 	await scimConfigurationPage.resetClientData();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
 
 	const emptyResponse = await (await apiHelper.scim.getUsers()).text();
 
@@ -356,6 +192,8 @@ test('LPD-23255 AC3 TC6: Verify that clicking the “Reset SCIM Client provision
 	expect(response).toContain('"totalResults":1');
 
 	await scimConfigurationPage.resetClientData();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
 
 	const emptyResponse = await (await apiHelper.scim.getGroups()).text();
 
@@ -502,7 +340,7 @@ test('LPS-190119 (TC-2 & TC-5). Admin User can Generate and Revoke SCIM Access T
 });
 
 test('LPD-34644: Check if the token expiration warning message appears in the SCIM configuration UI.', async ({
-	applicationsMenuPage,
+	globalMenuPage,
 	page,
 	serverAdministrationPage,
 }) => {
@@ -516,7 +354,7 @@ test('LPD-34644: Check if the token expiration warning message appears in the SC
 
 	// Execute script to change the expiration date of the SCIM client access token to 10 days from current day
 
-	await applicationsMenuPage.goToServerAdministration();
+	await globalMenuPage.goToControlPanel('Server Administration');
 
 	const script = `
 		import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -549,7 +387,6 @@ test('LPD-34644: Check if the token expiration warning message appears in the SC
 });
 
 test('LPD-37452 verify expando field is not visible for user added to SCIM', async ({
-	editUserPage,
 	page,
 	usersAndOrganizationsPage,
 }) => {
@@ -571,9 +408,7 @@ test('LPD-37452 verify expando field is not visible for user added to SCIM', asy
 		await usersAndOrganizationsPage.usersTableRowLink(newUser.userName)
 	).click();
 
-	await expect(
-		await editUserPage.customField('scimClientId')
-	).not.toBeVisible();
+	await expect(await page.getByLabel('Scimclientid')).not.toBeVisible();
 
 	await scimConfigurationPage.goTo();
 	await scimConfigurationPage.resetClientData();
@@ -607,7 +442,7 @@ test('LPD-37452 verify expando field is not visible for group added to SCIM', as
 
 	await userGroupsPage.editUserGroupMenuItem.click();
 
-	await expect(await page.getByLabel('Scimclientid')).not.toBeVisible();
+	await expect(page.getByLabel('Scimclientid')).not.toBeVisible();
 
 	await scimConfigurationPage.goTo();
 	await scimConfigurationPage.resetClientData();

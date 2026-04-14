@@ -15,11 +15,11 @@ import com.liferay.fragment.renderer.FragmentRendererController;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Locale;
 
@@ -39,15 +39,18 @@ public class FragmentEntryLinkCTDisplayRender
 	}
 
 	@Override
-	public String getTitle(Locale locale, FragmentEntryLink fragmentEntryLink)
-		throws PortalException {
-
+	public String getTitle(Locale locale, FragmentEntryLink fragmentEntryLink) {
 		Layout layout = _layoutLocalService.fetchLayout(
 			fragmentEntryLink.getPlid());
+
+		if ((layout == null) || _layoutCTDisplayRenderer.isHideable(layout)) {
+			return null;
+		}
+
 		String name = _fragmentEntryLinkHelper.getFragmentEntryName(
 			fragmentEntryLink, locale);
 
-		if ((layout == null) || name.equals(StringPool.BLANK)) {
+		if (name.equals(StringPool.BLANK)) {
 			return null;
 		}
 
@@ -71,10 +74,12 @@ public class FragmentEntryLinkCTDisplayRender
 			}
 		}
 
-		if (fragmentEntryLink.getOriginalFragmentEntryLinkId() == 0) {
-			return false;
-		}
+		return Validator.isNull(
+			fragmentEntryLink.getOriginalFragmentEntryLinkERC());
+	}
 
+	@Override
+	public boolean isShowPreviewDiff() {
 		return true;
 	}
 
@@ -104,8 +109,7 @@ public class FragmentEntryLinkCTDisplayRender
 
 		displayBuilder.display(
 			"name",
-			_fragmentEntryLinkHelper.getFragmentEntryName(
-				fragmentEntryLink, displayBuilder.getLocale())
+			() -> getTitle(displayBuilder.getLocale(), fragmentEntryLink)
 		).display(
 			"create-date", fragmentEntryLink.getCreateDate()
 		).display(

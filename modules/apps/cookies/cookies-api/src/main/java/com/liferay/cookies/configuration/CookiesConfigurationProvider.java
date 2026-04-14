@@ -38,6 +38,24 @@ public interface CookiesConfigurationProvider {
 			getCookiesPreferenceHandlingConfiguration(ThemeDisplay themeDisplay)
 		throws Exception;
 
+	public int getCookiesPreferenceHandlingConsentRenewalPeriod(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
+	public String getCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
+	public long getCookiesPreferenceHandlingCustomFloatingIconImageId(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
+	public int getCookiesPreferenceHandlingDissentRenewalPeriod(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
+	public String getCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
+	public String getCookiesPreferenceHandlingFloatingIcon(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
 	public String getGroupConfigurationURL(
 			HttpServletRequest httpServletRequest)
 		throws PortalException;
@@ -56,13 +74,21 @@ public interface CookiesConfigurationProvider {
 	public boolean isCookiesPreferenceHandlingExplicitConsentMode(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK);
 
+	public boolean isCookiesPreferenceHandlingFloatingIconEnabled(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
+	public boolean isCookiesPreferenceHandlingStoreConsent(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
 	public void resetCookiesPreferenceHandlingConfiguration(
 			ExtendedObjectClassDefinition.Scope scope, long scopePK)
 		throws ConfigurationException;
 
 	public void updateCookiesPreferenceHandlingConfiguration(
-			boolean enabled, boolean explicitConsentMode,
-			ExtendedObjectClassDefinition.Scope scope, long scopePK)
+			int consentRenewalPeriod, boolean enabled,
+			boolean explicitConsentMode,
+			ExtendedObjectClassDefinition.Scope scope, long scopePK,
+			boolean storeConsent)
 		throws Exception;
 
 }

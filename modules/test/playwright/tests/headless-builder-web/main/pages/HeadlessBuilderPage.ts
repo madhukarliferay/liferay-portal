@@ -5,11 +5,11 @@
 
 import {Locator, Page} from '@playwright/test';
 
-import {ApplicationsMenuPage} from '../../../../pages/product-navigation-applications-menu/ApplicationsMenuPage';
+import {GlobalMenuPage} from '../../../../pages/product-navigation-applications-menu/GlobalMenuPage';
 
 export class HeadlessBuilderPage {
 	readonly addNewApplicationButton: Locator;
-	readonly applicationsMenuPage: ApplicationsMenuPage;
+	readonly globalMenuPage: GlobalMenuPage;
 	readonly createApplicationButton: Locator;
 	readonly newApplicationTitleBox: Locator;
 	readonly page: Page;
@@ -18,7 +18,7 @@ export class HeadlessBuilderPage {
 		this.addNewApplicationButton = page.getByLabel(
 			'Add New API Application'
 		);
-		this.applicationsMenuPage = new ApplicationsMenuPage(page);
+		this.globalMenuPage = new GlobalMenuPage(page);
 		this.createApplicationButton = page.getByRole('button', {
 			name: 'Create',
 		});
@@ -33,6 +33,12 @@ export class HeadlessBuilderPage {
 			.click();
 	}
 
+	async openApplicationAndEdit(title: string) {
+		await this.goto();
+		await this.openApplicationActions(title);
+		await this.page.getByRole('menuitem', {name: 'Edit'}).click();
+	}
+
 	async deleteApplication(title: string) {
 		await this.openApplicationActions(title);
 		await this.page.getByRole('menuitem', {name: 'Delete'}).click();
@@ -44,7 +50,7 @@ export class HeadlessBuilderPage {
 	}
 
 	async goto() {
-		await this.applicationsMenuPage.goToAPIBuilder();
+		await this.globalMenuPage.goToControlPanel('API Builder');
 	}
 
 	async goToEditApplication(name: string) {

@@ -58,6 +58,12 @@ type TOrderRule = {
 	typeSettings?: string;
 };
 
+type TOrderRuleOrderType = {
+	orderRuleId: number;
+	orderRuleOrderTypeId?: number;
+	orderTypeId: number;
+};
+
 type TOrderType = {
 	active?: boolean;
 	id?: number;
@@ -189,22 +195,13 @@ export class HeadlessCommerceAdminOrderApiHelper {
 			...(orderNote || {}),
 		};
 
-		const postOrder = await this.apiHelpers.post(
+		return await this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/orders/${orderId}/orderNotes`,
 			{
 				data: orderNote,
 				failOnStatusCode: true,
 			}
 		);
-
-		if (this.apiHelpers instanceof DataApiHelpers) {
-			this.apiHelpers.data.push({
-				id: postOrder.id,
-				type: 'order',
-			});
-		}
-
-		return postOrder;
 	}
 
 	async postOrderRule(orderRule: TOrderRule) {
@@ -253,6 +250,26 @@ export class HeadlessCommerceAdminOrderApiHelper {
 		}
 
 		return orderType;
+	}
+
+	async postOrderRuleIdOrderRuleOrderType(
+		orderRuleOrderType: TOrderRuleOrderType
+	) {
+		orderRuleOrderType = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/order-rules/${orderRuleOrderType.orderRuleId}/order-rule-order-types`,
+			{
+				data: orderRuleOrderType,
+			}
+		);
+
+		if (this.apiHelpers instanceof DataApiHelpers) {
+			this.apiHelpers.data.push({
+				id: orderRuleOrderType.orderRuleOrderTypeId,
+				type: 'orderRuleOrderType',
+			});
+		}
+
+		return orderRuleOrderType;
 	}
 
 	async postTerm(terms: TTerm) {

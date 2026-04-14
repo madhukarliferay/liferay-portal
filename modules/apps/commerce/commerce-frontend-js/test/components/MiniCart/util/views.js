@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {cleanup, render} from '@testing-library/react';
 import React from 'react';
 
@@ -119,7 +119,7 @@ describe.skip('MiniCart tests_utilities -> Views', () => {
 
 				const customViews = {
 					[OPENER]: {
-						contentRendererModuleUrl: `@module/${CustomView.name}`,
+						contentRendererModuleURL: `@module/${CustomView.name}`,
 					},
 				};
 
@@ -141,7 +141,7 @@ describe.skip('MiniCart tests_utilities -> Views', () => {
 						);
 						expect(
 							resolvedViews[viewType].component.moduleURL
-						).toEqual(customViews[OPENER].contentRendererModuleUrl);
+						).toEqual(customViews[OPENER].contentRendererModuleURL);
 					}
 					else {
 						expect(resolvedViews[viewType].component.name).toEqual(
@@ -167,7 +167,7 @@ describe.skip('MiniCart tests_utilities -> Views', () => {
 
 				const customViews = {
 					[OPENER]: {
-						contentRendererModuleUrl: `@failing-module/${CustomView.name}`,
+						contentRendererModuleURL: `@failing-module/${CustomView.name}`,
 					},
 				};
 

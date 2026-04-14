@@ -46,15 +46,13 @@ export class ContentPageTranslationPage {
 	}
 
 	async goto({
-		doAsUserId,
 		pageName,
 		siteUrl,
 	}: {
-		doAsUserId?: string;
 		pageName: string;
 		siteUrl?: Site['friendlyUrlPath'];
 	}) {
-		await this.pagesAdminPage.goto(siteUrl, doAsUserId);
+		await this.pagesAdminPage.goto(siteUrl);
 
 		await this.pagesAdminPage.clickOnAction('Translate', pageName);
 
@@ -274,6 +272,8 @@ export class ContentPageTranslationPage {
 					.locator('.management-bar .dropdown-toggle')
 					.nth(1),
 			});
+
+			await this.page.locator('.col-md-6').getByText(to).waitFor();
 		}
 	}
 

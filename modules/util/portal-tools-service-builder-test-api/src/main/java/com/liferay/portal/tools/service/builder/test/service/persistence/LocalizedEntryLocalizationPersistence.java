@@ -121,47 +121,6 @@ public interface LocalizedEntryLocalizationPersistence
 			<LocalizedEntryLocalization> orderByComparator);
 
 	/**
-	 * Returns the last localized entry localization in the ordered set where localizedEntryId = &#63;.
-	 *
-	 * @param localizedEntryId the localized entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching localized entry localization
-	 * @throws NoSuchLocalizedEntryLocalizationException if a matching localized entry localization could not be found
-	 */
-	public LocalizedEntryLocalization findByLocalizedEntryId_Last(
-			long localizedEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<LocalizedEntryLocalization> orderByComparator)
-		throws NoSuchLocalizedEntryLocalizationException;
-
-	/**
-	 * Returns the last localized entry localization in the ordered set where localizedEntryId = &#63;.
-	 *
-	 * @param localizedEntryId the localized entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching localized entry localization, or <code>null</code> if a matching localized entry localization could not be found
-	 */
-	public LocalizedEntryLocalization fetchByLocalizedEntryId_Last(
-		long localizedEntryId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<LocalizedEntryLocalization> orderByComparator);
-
-	/**
-	 * Returns the localized entry localizations before and after the current localized entry localization in the ordered set where localizedEntryId = &#63;.
-	 *
-	 * @param localizedEntryLocalizationId the primary key of the current localized entry localization
-	 * @param localizedEntryId the localized entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next localized entry localization
-	 * @throws NoSuchLocalizedEntryLocalizationException if a localized entry localization with the primary key could not be found
-	 */
-	public LocalizedEntryLocalization[] findByLocalizedEntryId_PrevAndNext(
-			long localizedEntryLocalizationId, long localizedEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<LocalizedEntryLocalization> orderByComparator)
-		throws NoSuchLocalizedEntryLocalizationException;
-
-	/**
 	 * Removes all the localized entry localizations where localizedEntryId = &#63; from the database.
 	 *
 	 * @param localizedEntryId the localized entry ID
@@ -357,3 +316,4 @@ public interface LocalizedEntryLocalizationPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1311057248

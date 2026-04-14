@@ -6,7 +6,6 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../../fixtures/apiHelpersTest';
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
@@ -23,12 +22,12 @@ import {classicCommerceSetUp} from '../../utils/commerce';
 
 export const test = mergeTests(
 	apiHelpersTest,
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
 		'LPD-10562': {enabled: true},
 		'LPD-20379': {enabled: true},
+		'LPD-36105': {enabled: true},
 	}),
 	loginTest(),
 	pageEditorPagesTest,
@@ -55,16 +54,15 @@ test(
 		await page.getByLabel('Commerce Classic Master').click();
 		await page.getByLabel('Publish', {exact: true}).click();
 
-		const commerceHeaderTagFragments = page.locator(
-			'#commerce-components-group'
-		);
-
-		await expect(commerceHeaderTagFragments).toBeVisible();
 		await expect(
-			commerceHeaderTagFragments.locator('.account-selector-root')
-		).toHaveClass(/mr-2/);
+			page.locator(
+				'.lfr-layout-structure-item-commerce-account-selector-fragments-account-selector-fragment'
+			)
+		).toBeVisible();
 		await expect(
-			commerceHeaderTagFragments.locator('.cart-root')
+			page.locator(
+				'.lfr-layout-structure-item-commerce-cart-fragments-mini-cart'
+			)
 		).toBeVisible();
 		await expect(page.locator('header .portlet-search-bar')).toBeVisible();
 	}

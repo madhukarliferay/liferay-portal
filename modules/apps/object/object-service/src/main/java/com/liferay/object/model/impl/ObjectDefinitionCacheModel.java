@@ -109,12 +109,12 @@ public class ObjectDefinitionCacheModel
 		sb.append(enableCategorization);
 		sb.append(", enableComments=");
 		sb.append(enableComments);
+		sb.append(", enableFormContainer=");
+		sb.append(enableFormContainer);
 		sb.append(", enableFriendlyURLCustomization=");
 		sb.append(enableFriendlyURLCustomization);
 		sb.append(", enableIndexSearch=");
 		sb.append(enableIndexSearch);
-		sb.append(", enableLocalization=");
-		sb.append(enableLocalization);
 		sb.append(", enableObjectEntryDraft=");
 		sb.append(enableObjectEntryDraft);
 		sb.append(", enableObjectEntryHistory=");
@@ -231,10 +231,10 @@ public class ObjectDefinitionCacheModel
 
 		objectDefinitionImpl.setEnableCategorization(enableCategorization);
 		objectDefinitionImpl.setEnableComments(enableComments);
+		objectDefinitionImpl.setEnableFormContainer(enableFormContainer);
 		objectDefinitionImpl.setEnableFriendlyURLCustomization(
 			enableFriendlyURLCustomization);
 		objectDefinitionImpl.setEnableIndexSearch(enableIndexSearch);
-		objectDefinitionImpl.setEnableLocalization(enableLocalization);
 		objectDefinitionImpl.setEnableObjectEntryDraft(enableObjectEntryDraft);
 		objectDefinitionImpl.setEnableObjectEntryHistory(
 			enableObjectEntryHistory);
@@ -362,11 +362,11 @@ public class ObjectDefinitionCacheModel
 
 		enableComments = objectInput.readBoolean();
 
+		enableFormContainer = objectInput.readBoolean();
+
 		enableFriendlyURLCustomization = objectInput.readBoolean();
 
 		enableIndexSearch = objectInput.readBoolean();
-
-		enableLocalization = objectInput.readBoolean();
 
 		enableObjectEntryDraft = objectInput.readBoolean();
 
@@ -463,11 +463,11 @@ public class ObjectDefinitionCacheModel
 
 		objectOutput.writeBoolean(enableComments);
 
+		objectOutput.writeBoolean(enableFormContainer);
+
 		objectOutput.writeBoolean(enableFriendlyURLCustomization);
 
 		objectOutput.writeBoolean(enableIndexSearch);
-
-		objectOutput.writeBoolean(enableLocalization);
 
 		objectOutput.writeBoolean(enableObjectEntryDraft);
 
@@ -579,9 +579,9 @@ public class ObjectDefinitionCacheModel
 	public String dbTableName;
 	public boolean enableCategorization;
 	public boolean enableComments;
+	public boolean enableFormContainer;
 	public boolean enableFriendlyURLCustomization;
 	public boolean enableIndexSearch;
-	public boolean enableLocalization;
 	public boolean enableObjectEntryDraft;
 	public boolean enableObjectEntryHistory;
 	public boolean enableObjectEntrySchedule;
@@ -604,3 +604,4 @@ public class ObjectDefinitionCacheModel
 	public int status;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2015390850

@@ -378,9 +378,7 @@ public class FormConfig implements Serializable {
 			sb.append("\"formType\": ");
 
 			sb.append("\"");
-
 			sb.append(formType);
-
 			sb.append("\"");
 		}
 
@@ -547,3 +545,4 @@ public class FormConfig implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1379238798

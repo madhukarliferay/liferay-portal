@@ -210,52 +210,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByUuid_Last(
-			String uuid, OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByUuid_PrevAndNext(
-			long styleBookEntryId, String uuid,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			styleBookEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -387,59 +341,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and head = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByUuid_Head_Last(
-			String uuid, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_Head_Last(
-			uuid, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and head = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByUuid_Head_Last(
-		String uuid, boolean head,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Head_Last(
-			uuid, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where uuid = &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param uuid the uuid
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByUuid_Head_PrevAndNext(
-			long styleBookEntryId, String uuid, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_Head_PrevAndNext(
-			styleBookEntryId, uuid, head, orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where uuid = &#63; and head = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -568,59 +469,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByUUID_G_First(
 			uuid, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and groupId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByUUID_G_Last(
-			String uuid, long groupId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUUID_G_Last(
-			uuid, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and groupId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByUUID_G_Last(
-		String uuid, long groupId,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByUUID_G_Last(
-			uuid, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where uuid = &#63; and groupId = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param uuid the uuid
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByUUID_G_PrevAndNext(
-			long styleBookEntryId, String uuid, long groupId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUUID_G_PrevAndNext(
-			styleBookEntryId, uuid, groupId, orderByComparator);
 	}
 
 	/**
@@ -832,59 +680,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByUuid_C_PrevAndNext(
-			long styleBookEntryId, String uuid, long companyId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			styleBookEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1026,62 +821,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and companyId = &#63; and head = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByUuid_C_Head_Last(
-			String uuid, long companyId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Head_Last(
-			uuid, companyId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where uuid = &#63; and companyId = &#63; and head = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByUuid_C_Head_Last(
-		String uuid, long companyId, boolean head,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Head_Last(
-			uuid, companyId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where uuid = &#63; and companyId = &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByUuid_C_Head_PrevAndNext(
-			long styleBookEntryId, String uuid, long companyId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Head_PrevAndNext(
-			styleBookEntryId, uuid, companyId, head, orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where uuid = &#63; and companyId = &#63; and head = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1207,52 +946,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByGroupId_First(
 			groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByGroupId_Last(
-			long groupId, OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByGroupId_Last(
-		long groupId, OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByGroupId_PrevAndNext(
-			long styleBookEntryId, long groupId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			styleBookEntryId, groupId, orderByComparator);
 	}
 
 	/**
@@ -1384,59 +1077,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByGroupId_Head_First(
 			groupId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByGroupId_Head_Last(
-			long groupId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByGroupId_Head_Last(
-			groupId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByGroupId_Head_Last(
-		long groupId, boolean head,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Head_Last(
-			groupId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByGroupId_Head_PrevAndNext(
-			long styleBookEntryId, long groupId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByGroupId_Head_PrevAndNext(
-			styleBookEntryId, groupId, head, orderByComparator);
 	}
 
 	/**
@@ -1572,60 +1212,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByG_D_First(
 			groupId, defaultStyleBookEntry, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_D_Last(
-			long groupId, boolean defaultStyleBookEntry,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_Last(
-			groupId, defaultStyleBookEntry, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_D_Last(
-		long groupId, boolean defaultStyleBookEntry,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_D_Last(
-			groupId, defaultStyleBookEntry, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_D_PrevAndNext(
-			long styleBookEntryId, long groupId, boolean defaultStyleBookEntry,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_PrevAndNext(
-			styleBookEntryId, groupId, defaultStyleBookEntry,
-			orderByComparator);
 	}
 
 	/**
@@ -1775,63 +1361,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_D_Head_Last(
-			long groupId, boolean defaultStyleBookEntry, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_Head_Last(
-			groupId, defaultStyleBookEntry, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_D_Head_Last(
-		long groupId, boolean defaultStyleBookEntry, boolean head,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_D_Head_Last(
-			groupId, defaultStyleBookEntry, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_D_Head_PrevAndNext(
-			long styleBookEntryId, long groupId, boolean defaultStyleBookEntry,
-			boolean head, OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_Head_PrevAndNext(
-			styleBookEntryId, groupId, defaultStyleBookEntry, head,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where groupId = &#63; and defaultStyleBookEntry = &#63; and head = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1857,6 +1386,280 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().countByG_D_Head(
 			groupId, defaultStyleBookEntry, head);
+	}
+
+	/**
+	 * Returns all the style book entries where groupId = &#63; and name = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @return the matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N(long groupId, String name) {
+		return getPersistence().findByG_N(groupId, name);
+	}
+
+	/**
+	 * Returns a range of all the style book entries where groupId = &#63; and name = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>StyleBookEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param start the lower bound of the range of style book entries
+	 * @param end the upper bound of the range of style book entries (not inclusive)
+	 * @return the range of matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N(
+		long groupId, String name, int start, int end) {
+
+		return getPersistence().findByG_N(groupId, name, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the style book entries where groupId = &#63; and name = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>StyleBookEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param start the lower bound of the range of style book entries
+	 * @param end the upper bound of the range of style book entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N(
+		long groupId, String name, int start, int end,
+		OrderByComparator<StyleBookEntry> orderByComparator) {
+
+		return getPersistence().findByG_N(
+			groupId, name, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the style book entries where groupId = &#63; and name = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>StyleBookEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param start the lower bound of the range of style book entries
+	 * @param end the upper bound of the range of style book entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N(
+		long groupId, String name, int start, int end,
+		OrderByComparator<StyleBookEntry> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_N(
+			groupId, name, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first style book entry in the ordered set where groupId = &#63; and name = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching style book entry
+	 * @throws NoSuchEntryException if a matching style book entry could not be found
+	 */
+	public static StyleBookEntry findByG_N_First(
+			long groupId, String name,
+			OrderByComparator<StyleBookEntry> orderByComparator)
+		throws com.liferay.style.book.exception.NoSuchEntryException {
+
+		return getPersistence().findByG_N_First(
+			groupId, name, orderByComparator);
+	}
+
+	/**
+	 * Returns the first style book entry in the ordered set where groupId = &#63; and name = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching style book entry, or <code>null</code> if a matching style book entry could not be found
+	 */
+	public static StyleBookEntry fetchByG_N_First(
+		long groupId, String name,
+		OrderByComparator<StyleBookEntry> orderByComparator) {
+
+		return getPersistence().fetchByG_N_First(
+			groupId, name, orderByComparator);
+	}
+
+	/**
+	 * Removes all the style book entries where groupId = &#63; and name = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 */
+	public static void removeByG_N(long groupId, String name) {
+		getPersistence().removeByG_N(groupId, name);
+	}
+
+	/**
+	 * Returns the number of style book entries where groupId = &#63; and name = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @return the number of matching style book entries
+	 */
+	public static int countByG_N(long groupId, String name) {
+		return getPersistence().countByG_N(groupId, name);
+	}
+
+	/**
+	 * Returns all the style book entries where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @return the matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N_Head(
+		long groupId, String name, boolean head) {
+
+		return getPersistence().findByG_N_Head(groupId, name, head);
+	}
+
+	/**
+	 * Returns a range of all the style book entries where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>StyleBookEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @param start the lower bound of the range of style book entries
+	 * @param end the upper bound of the range of style book entries (not inclusive)
+	 * @return the range of matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N_Head(
+		long groupId, String name, boolean head, int start, int end) {
+
+		return getPersistence().findByG_N_Head(groupId, name, head, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the style book entries where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>StyleBookEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @param start the lower bound of the range of style book entries
+	 * @param end the upper bound of the range of style book entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N_Head(
+		long groupId, String name, boolean head, int start, int end,
+		OrderByComparator<StyleBookEntry> orderByComparator) {
+
+		return getPersistence().findByG_N_Head(
+			groupId, name, head, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the style book entries where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>StyleBookEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @param start the lower bound of the range of style book entries
+	 * @param end the upper bound of the range of style book entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching style book entries
+	 */
+	public static List<StyleBookEntry> findByG_N_Head(
+		long groupId, String name, boolean head, int start, int end,
+		OrderByComparator<StyleBookEntry> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByG_N_Head(
+			groupId, name, head, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first style book entry in the ordered set where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching style book entry
+	 * @throws NoSuchEntryException if a matching style book entry could not be found
+	 */
+	public static StyleBookEntry findByG_N_Head_First(
+			long groupId, String name, boolean head,
+			OrderByComparator<StyleBookEntry> orderByComparator)
+		throws com.liferay.style.book.exception.NoSuchEntryException {
+
+		return getPersistence().findByG_N_Head_First(
+			groupId, name, head, orderByComparator);
+	}
+
+	/**
+	 * Returns the first style book entry in the ordered set where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching style book entry, or <code>null</code> if a matching style book entry could not be found
+	 */
+	public static StyleBookEntry fetchByG_N_Head_First(
+		long groupId, String name, boolean head,
+		OrderByComparator<StyleBookEntry> orderByComparator) {
+
+		return getPersistence().fetchByG_N_Head_First(
+			groupId, name, head, orderByComparator);
+	}
+
+	/**
+	 * Removes all the style book entries where groupId = &#63; and name = &#63; and head = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 */
+	public static void removeByG_N_Head(
+		long groupId, String name, boolean head) {
+
+		getPersistence().removeByG_N_Head(groupId, name, head);
+	}
+
+	/**
+	 * Returns the number of style book entries where groupId = &#63; and name = &#63; and head = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param name the name
+	 * @param head the head
+	 * @return the number of matching style book entries
+	 */
+	public static int countByG_N_Head(long groupId, String name, boolean head) {
+		return getPersistence().countByG_N_Head(groupId, name, head);
 	}
 
 	/**
@@ -1969,59 +1772,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByG_LikeN_First(
 			groupId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_LikeN_Last(
-			long groupId, String name,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_LikeN_Last(
-			groupId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_LikeN_Last(
-		long groupId, String name,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_LikeN_Last(
-			groupId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_LikeN_PrevAndNext(
-			long styleBookEntryId, long groupId, String name,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_LikeN_PrevAndNext(
-			styleBookEntryId, groupId, name, orderByComparator);
 	}
 
 	/**
@@ -2165,62 +1915,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and name LIKE &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_LikeN_Head_Last(
-			long groupId, String name, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_LikeN_Head_Last(
-			groupId, name, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and name LIKE &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_LikeN_Head_Last(
-		long groupId, String name, boolean head,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_LikeN_Head_Last(
-			groupId, name, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and name LIKE &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_LikeN_Head_PrevAndNext(
-			long styleBookEntryId, long groupId, String name, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_LikeN_Head_PrevAndNext(
-			styleBookEntryId, groupId, name, head, orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where groupId = &#63; and name LIKE &#63; and head = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -2359,59 +2053,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByG_SBEK_First(
 			groupId, styleBookEntryKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and styleBookEntryKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param styleBookEntryKey the style book entry key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_SBEK_Last(
-			long groupId, String styleBookEntryKey,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_SBEK_Last(
-			groupId, styleBookEntryKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and styleBookEntryKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param styleBookEntryKey the style book entry key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_SBEK_Last(
-		long groupId, String styleBookEntryKey,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_SBEK_Last(
-			groupId, styleBookEntryKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and styleBookEntryKey = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param styleBookEntryKey the style book entry key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_SBEK_PrevAndNext(
-			long styleBookEntryId, long groupId, String styleBookEntryKey,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_SBEK_PrevAndNext(
-			styleBookEntryId, groupId, styleBookEntryKey, orderByComparator);
 	}
 
 	/**
@@ -2626,59 +2267,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and themeId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param themeId the theme ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_T_Last(
-			long groupId, String themeId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_T_Last(
-			groupId, themeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and themeId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param themeId the theme ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_T_Last(
-		long groupId, String themeId,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_T_Last(
-			groupId, themeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and themeId = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param themeId the theme ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_T_PrevAndNext(
-			long styleBookEntryId, long groupId, String themeId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_T_PrevAndNext(
-			styleBookEntryId, groupId, themeId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where groupId = &#63; and themeId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -2817,62 +2405,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByG_T_Head_First(
 			groupId, themeId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and themeId = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param themeId the theme ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_T_Head_Last(
-			long groupId, String themeId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_T_Head_Last(
-			groupId, themeId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and themeId = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param themeId the theme ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_T_Head_Last(
-		long groupId, String themeId, boolean head,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_T_Head_Last(
-			groupId, themeId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and themeId = &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param themeId the theme ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_T_Head_PrevAndNext(
-			long styleBookEntryId, long groupId, String themeId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_T_Head_PrevAndNext(
-			styleBookEntryId, groupId, themeId, head, orderByComparator);
 	}
 
 	/**
@@ -3023,63 +2555,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByG_D_T_First(
 			groupId, defaultStyleBookEntry, themeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param themeId the theme ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_D_T_Last(
-			long groupId, boolean defaultStyleBookEntry, String themeId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_T_Last(
-			groupId, defaultStyleBookEntry, themeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param themeId the theme ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_D_T_Last(
-		long groupId, boolean defaultStyleBookEntry, String themeId,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_D_T_Last(
-			groupId, defaultStyleBookEntry, themeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param themeId the theme ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_D_T_PrevAndNext(
-			long styleBookEntryId, long groupId, boolean defaultStyleBookEntry,
-			String themeId, OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_T_PrevAndNext(
-			styleBookEntryId, groupId, defaultStyleBookEntry, themeId,
-			orderByComparator);
 	}
 
 	/**
@@ -3243,67 +2718,6 @@ public class StyleBookEntryUtil {
 	}
 
 	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param themeId the theme ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByG_D_T_Head_Last(
-			long groupId, boolean defaultStyleBookEntry, String themeId,
-			boolean head, OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_T_Head_Last(
-			groupId, defaultStyleBookEntry, themeId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63; and head = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param themeId the theme ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByG_D_T_Head_Last(
-		long groupId, boolean defaultStyleBookEntry, String themeId,
-		boolean head, OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_D_T_Head_Last(
-			groupId, defaultStyleBookEntry, themeId, head, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63; and head = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param groupId the group ID
-	 * @param defaultStyleBookEntry the default style book entry
-	 * @param themeId the theme ID
-	 * @param head the head
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByG_D_T_Head_PrevAndNext(
-			long styleBookEntryId, long groupId, boolean defaultStyleBookEntry,
-			String themeId, boolean head,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_D_T_Head_PrevAndNext(
-			styleBookEntryId, groupId, defaultStyleBookEntry, themeId, head,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the style book entries where groupId = &#63; and defaultStyleBookEntry = &#63; and themeId = &#63; and head = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -3448,60 +2862,6 @@ public class StyleBookEntryUtil {
 
 		return getPersistence().fetchByERC_G_First(
 			externalReferenceCode, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where externalReferenceCode = &#63; and groupId = &#63;.
-	 *
-	 * @param externalReferenceCode the external reference code
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry
-	 * @throws NoSuchEntryException if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry findByERC_G_Last(
-			String externalReferenceCode, long groupId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByERC_G_Last(
-			externalReferenceCode, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last style book entry in the ordered set where externalReferenceCode = &#63; and groupId = &#63;.
-	 *
-	 * @param externalReferenceCode the external reference code
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching style book entry, or <code>null</code> if a matching style book entry could not be found
-	 */
-	public static StyleBookEntry fetchByERC_G_Last(
-		String externalReferenceCode, long groupId,
-		OrderByComparator<StyleBookEntry> orderByComparator) {
-
-		return getPersistence().fetchByERC_G_Last(
-			externalReferenceCode, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the style book entries before and after the current style book entry in the ordered set where externalReferenceCode = &#63; and groupId = &#63;.
-	 *
-	 * @param styleBookEntryId the primary key of the current style book entry
-	 * @param externalReferenceCode the external reference code
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next style book entry
-	 * @throws NoSuchEntryException if a style book entry with the primary key could not be found
-	 */
-	public static StyleBookEntry[] findByERC_G_PrevAndNext(
-			long styleBookEntryId, String externalReferenceCode, long groupId,
-			OrderByComparator<StyleBookEntry> orderByComparator)
-		throws com.liferay.style.book.exception.NoSuchEntryException {
-
-		return getPersistence().findByERC_G_PrevAndNext(
-			styleBookEntryId, externalReferenceCode, groupId,
-			orderByComparator);
 	}
 
 	/**
@@ -3824,3 +3184,4 @@ public class StyleBookEntryUtil {
 	private static volatile StyleBookEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1673265292

@@ -1,3 +1,4 @@
+import * as API from 'shared/api';
 import * as breadcrumbs from 'shared/util/breadcrumbs';
 import BasePage from 'shared/components/base-page';
 import BundleRouter from 'route-middleware/BundleRouter';
@@ -6,12 +7,14 @@ import getCN from 'classnames';
 import Loading from 'shared/components/Loading';
 import React, {lazy, Suspense, useContext} from 'react';
 import RouteNotFound from 'shared/components/RouteNotFound';
+import {buildHeaderSubtitle} from './utils/utils';
 import {ChannelContext} from 'shared/context/channel';
 import {compose, withIndividual} from 'shared/hoc';
 import {CSVType} from 'shared/components/download-report/utils';
 import {getMatchedRoute, Routes} from 'shared/util/router';
 import {Switch, withRouter} from 'react-router-dom';
 import {useDataSource} from 'shared/hooks/useDataSource';
+import {useRequest} from 'shared/hooks/useRequest';
 
 const AssociatedSegments = lazy(
 	() =>
@@ -75,6 +78,14 @@ export const IndividualProfileRoutes = ({
 
 	const entityName = individual.name || Liferay.Language.get('unknown');
 
+	const {data: dataSourceData} = useRequest({
+		dataSourceFn: API.dataSource.search,
+		variables: {
+			delta: 1,
+			groupId
+		}
+	});
+
 	return (
 		<BasePage
 			className={
@@ -98,7 +109,10 @@ export const IndividualProfileRoutes = ({
 				]}
 				groupId={groupId}
 			>
-				<BasePage.Header.TitleSection title={entityName} />
+				<BasePage.Header.TitleSection
+					subtitle={buildHeaderSubtitle(individual.toJS())}
+					title={entityName}
+				/>
 
 				<BasePage.Header.NavBar
 					items={NAV_ITEMS}
@@ -106,18 +120,19 @@ export const IndividualProfileRoutes = ({
 				/>
 			</BasePage.Header>
 
-			{getMatchedRoute(NAV_ITEMS) === Routes.CONTACTS_INDIVIDUAL && (
-				<BasePage.SubHeader>
-					<div className='d-flex justify-content-end w-100'>
-						<DownloadCSVReport
-							disabled={dataSourceStates.empty}
-							individualId={individual.id}
-							type={CSVType.Event}
-							typeLang={Liferay.Language.get('events')}
-						/>
-					</div>
-				</BasePage.SubHeader>
-			)}
+			{getMatchedRoute(NAV_ITEMS) === Routes.CONTACTS_INDIVIDUAL &&
+				dataSourceData?.total > 0 && (
+					<BasePage.SubHeader>
+						<div className='d-flex justify-content-end w-100'>
+							<DownloadCSVReport
+								disabled={dataSourceStates.empty}
+								individualId={individual.id}
+								type={CSVType.Event}
+								typeLang={Liferay.Language.get('events')}
+							/>
+						</div>
+					</BasePage.SubHeader>
+				)}
 
 			<BasePage.Body>
 				<Suspense fallback={<Loading />}>

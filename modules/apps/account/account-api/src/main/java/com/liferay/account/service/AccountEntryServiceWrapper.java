@@ -150,7 +150,7 @@ public class AccountEntryServiceWrapper
 	@Override
 	public com.liferay.account.model.AccountEntry getOrAddEmptyAccountEntry(
 			String externalReferenceCode, String name, String type)
-		throws Exception {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _accountEntryService.getOrAddEmptyAccountEntry(
 			externalReferenceCode, name, type);
@@ -257,3 +257,4 @@ public class AccountEntryServiceWrapper
 	private AccountEntryService _accountEntryService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1898062959

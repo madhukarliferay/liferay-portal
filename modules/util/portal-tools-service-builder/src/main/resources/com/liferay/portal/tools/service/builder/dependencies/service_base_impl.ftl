@@ -17,6 +17,7 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import ${beanLocatorUtil};
+import ${serviceBuilder.getCompatJavaClassName("UnsyncByteArrayInputStream")};
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
@@ -38,7 +39,6 @@ import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
@@ -507,17 +507,39 @@ import org.osgi.service.component.annotations.Reference;
 			</#if>
 		</#if>
 
-		<#if entity.hasExternalReferenceCode() && !entity.versionEntity??>
+		<#if entity.hasExternalReferenceCode()>
 			<#if serviceBuilder.isVersionGTE_7_4_0()>
-				@Override
-				public ${entity.name} fetch${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id) <#if (serviceBaseExceptions?size gt 0)>throws ${stringUtil.merge(serviceBaseExceptions)} </#if>{
-					return ${entity.variableName}Persistence.fetchByERC_${entity.externalReferenceCode?cap_first[0..0]}(externalReferenceCode, ${entity.externalReferenceCode}Id);
-				}
+				<#if entity.versionEntity??>
+					@Override
+					public ${entity.name} fetch${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id) <#if (serviceBaseExceptions?size gt 0)>throws ${stringUtil.merge(serviceBaseExceptions)} </#if>{
+						return ${entity.variableName}Persistence.fetchByERC_${entity.externalReferenceCode?cap_first[0..0]}_Head(externalReferenceCode, ${entity.externalReferenceCode}Id, true);
+					}
 
-				@Override
-				public ${entity.name} get${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id) throws PortalException {
-					return ${entity.variableName}Persistence.findByERC_${entity.externalReferenceCode?cap_first[0..0]}(externalReferenceCode, ${entity.externalReferenceCode}Id);
-				}
+					@Override
+					public ${entity.name} fetch${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id, boolean head) <#if (serviceBaseExceptions?size gt 0)>throws ${stringUtil.merge(serviceBaseExceptions)} </#if>{
+						return ${entity.variableName}Persistence.fetchByERC_${entity.externalReferenceCode?cap_first[0..0]}_Head(externalReferenceCode, ${entity.externalReferenceCode}Id, head);
+					}
+
+					@Override
+					public ${entity.name} get${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id) throws PortalException {
+						return ${entity.variableName}Persistence.findByERC_${entity.externalReferenceCode?cap_first[0..0]}_Head(externalReferenceCode, ${entity.externalReferenceCode}Id, true);
+					}
+
+					@Override
+					public ${entity.name} get${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id, boolean head) throws PortalException {
+						return ${entity.variableName}Persistence.findByERC_${entity.externalReferenceCode?cap_first[0..0]}_Head(externalReferenceCode, ${entity.externalReferenceCode}Id, head);
+					}
+				<#else>
+					@Override
+					public ${entity.name} fetch${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id) <#if (serviceBaseExceptions?size gt 0)>throws ${stringUtil.merge(serviceBaseExceptions)} </#if>{
+						return ${entity.variableName}Persistence.fetchByERC_${entity.externalReferenceCode?cap_first[0..0]}(externalReferenceCode, ${entity.externalReferenceCode}Id);
+					}
+
+					@Override
+					public ${entity.name} get${entity.name}ByExternalReferenceCode(String externalReferenceCode, long ${entity.externalReferenceCode}Id) throws PortalException {
+						return ${entity.variableName}Persistence.findByERC_${entity.externalReferenceCode?cap_first[0..0]}(externalReferenceCode, ${entity.externalReferenceCode}Id);
+					}
+				</#if>
 			<#else>
 				@Deprecated
 				@Override

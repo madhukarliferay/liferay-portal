@@ -208,52 +208,6 @@ public class KBTemplateUtil {
 	}
 
 	/**
-	 * Returns the last kb template in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb template
-	 * @throws NoSuchTemplateException if a matching kb template could not be found
-	 */
-	public static KBTemplate findByUuid_Last(
-			String uuid, OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb template in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb template, or <code>null</code> if a matching kb template could not be found
-	 */
-	public static KBTemplate fetchByUuid_Last(
-		String uuid, OrderByComparator<KBTemplate> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb templates before and after the current kb template in the ordered set where uuid = &#63;.
-	 *
-	 * @param kbTemplateId the primary key of the current kb template
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb template
-	 * @throws NoSuchTemplateException if a kb template with the primary key could not be found
-	 */
-	public static KBTemplate[] findByUuid_PrevAndNext(
-			long kbTemplateId, String uuid,
-			OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			kbTemplateId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb templates where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -446,59 +400,6 @@ public class KBTemplateUtil {
 	}
 
 	/**
-	 * Returns the last kb template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb template
-	 * @throws NoSuchTemplateException if a matching kb template could not be found
-	 */
-	public static KBTemplate findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb template, or <code>null</code> if a matching kb template could not be found
-	 */
-	public static KBTemplate fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<KBTemplate> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb templates before and after the current kb template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param kbTemplateId the primary key of the current kb template
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb template
-	 * @throws NoSuchTemplateException if a kb template with the primary key could not be found
-	 */
-	public static KBTemplate[] findByUuid_C_PrevAndNext(
-			long kbTemplateId, String uuid, long companyId,
-			OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			kbTemplateId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kb templates where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -621,52 +522,6 @@ public class KBTemplateUtil {
 	}
 
 	/**
-	 * Returns the last kb template in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb template
-	 * @throws NoSuchTemplateException if a matching kb template could not be found
-	 */
-	public static KBTemplate findByGroupId_Last(
-			long groupId, OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kb template in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kb template, or <code>null</code> if a matching kb template could not be found
-	 */
-	public static KBTemplate fetchByGroupId_Last(
-		long groupId, OrderByComparator<KBTemplate> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb templates before and after the current kb template in the ordered set where groupId = &#63;.
-	 *
-	 * @param kbTemplateId the primary key of the current kb template
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb template
-	 * @throws NoSuchTemplateException if a kb template with the primary key could not be found
-	 */
-	public static KBTemplate[] findByGroupId_PrevAndNext(
-			long kbTemplateId, long groupId,
-			OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			kbTemplateId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the kb templates that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -713,24 +568,6 @@ public class KBTemplateUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the kb templates before and after the current kb template in the ordered set of kb templates that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param kbTemplateId the primary key of the current kb template
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kb template
-	 * @throws NoSuchTemplateException if a kb template with the primary key could not be found
-	 */
-	public static KBTemplate[] filterFindByGroupId_PrevAndNext(
-			long kbTemplateId, long groupId,
-			OrderByComparator<KBTemplate> orderByComparator)
-		throws com.liferay.knowledge.base.exception.NoSuchTemplateException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			kbTemplateId, groupId, orderByComparator);
 	}
 
 	/**
@@ -920,3 +757,4 @@ public class KBTemplateUtil {
 	private static volatile KBTemplatePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:537185471

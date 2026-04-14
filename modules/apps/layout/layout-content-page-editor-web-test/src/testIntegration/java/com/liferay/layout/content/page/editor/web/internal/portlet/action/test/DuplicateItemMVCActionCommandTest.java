@@ -50,7 +50,9 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
@@ -267,7 +269,8 @@ public class DuplicateItemMVCActionCommandTest {
 							LocaleUtil.toLanguageId(
 								_portal.getSiteDefaultLocale(_group)),
 							RandomTestUtil.randomString()))
-				).toString());
+				).toString(),
+				true);
 
 		LayoutPageTemplateStructure layoutPageTemplateStructure =
 			_layoutPageTemplateStructureLocalService.
@@ -396,8 +399,10 @@ public class DuplicateItemMVCActionCommandTest {
 			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 				editableValues, fragmentEntry.getCss(),
 				fragmentEntry.getConfiguration(),
-				fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-				fragmentEntry.getJs(), _draftLayout,
+				fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					fragmentEntry.getGroupId(), _draftLayout.getGroupId()),
+				fragmentEntry.getHtml(), fragmentEntry.getJs(), _draftLayout,
 				fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(),
 				parentItemId, 0, _segmentsExperienceId);
 
@@ -435,15 +440,28 @@ public class DuplicateItemMVCActionCommandTest {
 		FragmentEntryLink fragmentEntryLink) {
 
 		Assert.assertEquals(
-			fragmentEntryLink.getFragmentEntryId(),
-			duplicatedFragmentEntryLink.getFragmentEntryId());
+			fragmentEntryLink.getFragmentEntryERC(),
+			duplicatedFragmentEntryLink.getFragmentEntryERC());
+
+		Long groupId1 = ScopeUtil.getItemGroupId(
+			fragmentEntryLink.getCompanyId(),
+			fragmentEntryLink.getFragmentEntryScopeERC(),
+			fragmentEntryLink.getGroupId());
+		Long groupId2 = ScopeUtil.getItemGroupId(
+			duplicatedFragmentEntryLink.getCompanyId(),
+			duplicatedFragmentEntryLink.getFragmentEntryScopeERC(),
+			duplicatedFragmentEntryLink.getGroupId());
+
+		Assert.assertEquals(groupId1, groupId2);
+
 		Assert.assertEquals(
 			fragmentEntryLink.getHtml(), duplicatedFragmentEntryLink.getHtml());
 		Assert.assertNotEquals(
 			fragmentEntryLink.getNamespace(),
 			duplicatedFragmentEntryLink.getNamespace());
-		Assert.assertEquals(
-			0, duplicatedFragmentEntryLink.getOriginalFragmentEntryLinkId());
+		Assert.assertTrue(
+			Validator.isNull(
+				duplicatedFragmentEntryLink.getOriginalFragmentEntryLinkERC()));
 	}
 
 	private FragmentDropZoneLayoutStructureItem

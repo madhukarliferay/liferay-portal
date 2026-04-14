@@ -19,7 +19,7 @@ import com.liferay.portal.search.opensearch2.internal.OpenSearchIndexWriter;
 import com.liferay.portal.search.opensearch2.internal.OpenSearchTestRule;
 import com.liferay.portal.search.opensearch2.internal.connection.TestOpenSearchConnectionManager;
 import com.liferay.portal.search.opensearch2.internal.indexing.LiferayOpenSearchIndexingFixtureFactory;
-import com.liferay.portal.search.opensearch2.internal.search.engine.adapter.document.BulkDocumentRequestExecutorImpl;
+import com.liferay.portal.search.opensearch2.internal.search.engine.adapter.document.BulkDocumentRequestExecutor;
 import com.liferay.portal.search.test.rule.logging.ExpectedLogMethodTestRule;
 import com.liferay.portal.search.test.util.indexing.BaseIndexingTestCase;
 import com.liferay.portal.search.test.util.indexing.DocumentCreationHelpers;
@@ -88,7 +88,7 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	}
 
 	@ExpectedLog(
-		expectedClass = BulkDocumentRequestExecutorImpl.class,
+		expectedClass = BulkDocumentRequestExecutor.class,
 		expectedLevel = ExpectedLog.Level.WARNING,
 		expectedLog = "failed to parse field [expirationDate] of type [date]"
 	)
@@ -204,7 +204,7 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	}
 
 	@ExpectedLog(
-		expectedClass = BulkDocumentRequestExecutorImpl.class,
+		expectedClass = BulkDocumentRequestExecutor.class,
 		expectedLevel = ExpectedLog.Level.WARNING, expectedLog = "no such index"
 	)
 	@Test
@@ -294,7 +294,7 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	}
 
 	@ExpectedLog(
-		expectedClass = BulkDocumentRequestExecutorImpl.class,
+		expectedClass = BulkDocumentRequestExecutor.class,
 		expectedLevel = ExpectedLog.Level.WARNING,
 		expectedLog = "document missing"
 	)
@@ -329,8 +329,8 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	public void testUpdateDocument() {
 		Document document = new DocumentImpl();
 
-		document.addKeyword(Field.UID, "1");
 		document.addKeyword(Field.EXPIRATION_DATE, "text");
+		document.addKeyword(Field.UID, "1");
 
 		IndexWriter indexWriter = getIndexWriter();
 
@@ -345,7 +345,7 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	}
 
 	@ExpectedLog(
-		expectedClass = BulkDocumentRequestExecutorImpl.class,
+		expectedClass = BulkDocumentRequestExecutor.class,
 		expectedLevel = ExpectedLog.Level.WARNING,
 		expectedLog = "failed to parse field [expirationDate] of type [date]"
 	)
@@ -353,8 +353,8 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	public void testUpdateDocumentBulkExecutor() {
 		Document document = new DocumentImpl();
 
-		document.addKeyword(Field.UID, "1");
 		document.addKeyword(Field.EXPIRATION_DATE, "text");
+		document.addKeyword(Field.UID, "1");
 
 		IndexWriter indexWriter = getIndexWriter();
 
@@ -379,8 +379,8 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 
 		Document document = new DocumentImpl();
 
-		document.addKeyword(Field.UID, "1");
 		document.addKeyword(Field.EXPIRATION_DATE, "text");
+		document.addKeyword(Field.UID, "1");
 
 		documents.add(document);
 
@@ -397,7 +397,7 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 	}
 
 	@ExpectedLog(
-		expectedClass = BulkDocumentRequestExecutorImpl.class,
+		expectedClass = BulkDocumentRequestExecutor.class,
 		expectedLevel = ExpectedLog.Level.WARNING,
 		expectedLog = "failed to parse field [expirationDate] of type [date]"
 	)
@@ -407,8 +407,8 @@ public class OpenSearchIndexWriterLogExceptionsOnlyTest
 
 		Document document = new DocumentImpl();
 
-		document.addKeyword(Field.UID, "1");
 		document.addKeyword(Field.EXPIRATION_DATE, "text");
+		document.addKeyword(Field.UID, "1");
 
 		documents.add(document);
 

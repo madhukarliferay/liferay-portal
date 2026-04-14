@@ -8,9 +8,9 @@ import {createReadStream} from 'fs';
 import path from 'path';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {instanceSettingsPagesTest} from '../../../fixtures/instanceSettingsPagesTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
@@ -18,20 +18,27 @@ import {pageViewModePagesTest} from '../../../fixtures/pageViewModePagesTest';
 import {pagesAdminPagesTest} from '../../../fixtures/pagesAdminPagesTest';
 import {portletConfigurationPermissionsPageTest} from '../../../fixtures/portletConfigurationPermissionsPagesTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
+import {systemSettingsPageTest} from '../../../fixtures/systemSettingsPageTest';
 import {uiElementsPageTest} from '../../../fixtures/uiElementsTest';
 import {webContentDisplayPageTest} from '../../../fixtures/webContentDisplayPageTest';
 import getRandomString from '../../../utils/getRandomString';
 import {PORTLET_URLS} from '../../../utils/portletUrls';
+import {reloadUntilVisible} from '../../../utils/reloadUntilVisible';
 import {enableLocalStaging} from '../../../utils/staging';
 import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
+import {exportImportPagesTest} from '../../export-import-web/main/fixtures/exportImportPagesTest';
 import {stagingPageTest} from '../../export-import-web/main/fixtures/stagingPageTest';
 import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest';
 import {portletPublishToLivePageTest} from './fixtures/portletPublishToLivePageTest';
 import {stagingConfigurationPageTest} from './fixtures/stagingConfigurationPageTest';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
 	dataApiHelpersTest,
+	exportImportPagesTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
+	globalMenuPagesTest,
 	loginTest(),
 	instanceSettingsPagesTest,
 	pageViewModePagesTest,
@@ -42,7 +49,8 @@ export const test = mergeTests(
 	stagingConfigurationPageTest,
 	webContentDisplayPageTest,
 	uiElementsPageTest,
-	journalPagesTest
+	journalPagesTest,
+	systemSettingsPageTest
 );
 
 export const testFlagsEnabled = mergeTests(
@@ -61,14 +69,130 @@ export const testFlagsEnabled = mergeTests(
 	webContentDisplayPageTest
 );
 
-test('check if local staging can be enabled', async ({
+test(
+	'Verify there is advanced staging configuration checkbox with description in Instance Setting,the configuration checkbox can be enabled',
+	{tag: ['@LPS-189238']},
+	async ({
+		apiHelpers,
+		exportImportStagingInstanceSettingsPage,
+		page,
+		portletPublishToLivePage,
+	}) => {
+		const site = await apiHelpers.headlessSite.createSite({
+			name: getRandomString(),
+		});
+
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
+
+		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			options: {type: 'content'},
+			title: getRandomString(),
+		});
+
+		await exportImportStagingInstanceSettingsPage.goto();
+		await exportImportStagingInstanceSettingsPage.checkConfigurationOption({
+			checked: true,
+			label: 'Show Advanced Staging Configuration by Default',
+		});
+
+		try {
+			await exportImportStagingInstanceSettingsPage.instanceSettingsPage.saveAndWaitForAlert();
+
+			await enableLocalStaging(apiHelpers, page, site);
+
+			const stagingSite =
+				await apiHelpers.headlessAdminUser.getSiteByFriendlyUrlPath(
+					`${site.friendlyUrlPath}-staging`
+				);
+
+			await page.goto(
+				`/web${stagingSite.friendlyUrlPath}${layout.friendlyURL}`
+			);
+			await reloadUntilVisible({
+				myLocator: portletPublishToLivePage.publishToLiveButton,
+				page,
+			});
+			await portletPublishToLivePage.publishToLiveButton.click();
+
+			await expect(
+				portletPublishToLivePage.publishToLiveIframe.getByRole('link', {
+					name: 'Switch to Simple Publish Process',
+				})
+			).toBeVisible();
+		}
+		finally {
+			await exportImportStagingInstanceSettingsPage.goto();
+			await exportImportStagingInstanceSettingsPage.resetDefaultValues();
+		}
+	}
+);
+
+test(
+	'Verify there is advanced staging configuration checkbox with description in System Setting,the configuration checkbox can be enabled',
+	{tag: ['@LPS-189238']},
+	async ({
+		apiHelpers,
+		exportImportStagingSystemSettingsPage,
+		page,
+		portletPublishToLivePage,
+	}) => {
+		const site = await apiHelpers.headlessSite.createSite({
+			name: getRandomString(),
+		});
+
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
+
+		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			options: {type: 'content'},
+			title: getRandomString(),
+		});
+
+		await exportImportStagingSystemSettingsPage.goto();
+		await exportImportStagingSystemSettingsPage.checkConfigurationOption({
+			checked: true,
+			label: 'Show Advanced Staging Configuration by Default',
+		});
+
+		try {
+			await enableLocalStaging(apiHelpers, page, site);
+
+			const stagingSite =
+				await apiHelpers.headlessAdminUser.getSiteByFriendlyUrlPath(
+					`${site.friendlyUrlPath}-staging`
+				);
+
+			await page.goto(
+				`/web${stagingSite.friendlyUrlPath}${layout.friendlyURL}`
+			);
+			await reloadUntilVisible({
+				myLocator: portletPublishToLivePage.publishToLiveButton,
+				page,
+			});
+			await portletPublishToLivePage.publishToLiveButton.click();
+
+			await expect(
+				portletPublishToLivePage.publishToLiveIframe.getByRole('link', {
+					name: 'Switch to Simple Publish Process',
+				})
+			).toBeVisible();
+		}
+		finally {
+			await exportImportStagingSystemSettingsPage.goto();
+			await exportImportStagingSystemSettingsPage.resetDefaultValues();
+		}
+	}
+);
+
+test('Check if local staging can be enabled', async ({
 	apiHelpers,
-	applicationsMenuPage,
+	globalMenuPage,
 	stagingConfigurationPage,
 }) => {
 	const siteName: string = getRandomString();
 
-	await applicationsMenuPage.goToSites();
+	await globalMenuPage.goToControlPanel('Sites');
 
 	const site = await apiHelpers.headlessSite.createSite({
 		name: siteName,
@@ -82,11 +206,11 @@ test('check if local staging can be enabled', async ({
 });
 
 test(
-	'validate friendlyURL with special characters',
+	'Validate friendlyURL with special characters',
 	{tag: ['@LPS-89116']},
 	async ({
 		apiHelpers,
-		applicationsMenuPage,
+		globalMenuPage,
 		journalPage,
 		page,
 		pagesAdminPage,
@@ -97,9 +221,9 @@ test(
 			name: getRandomString(),
 		});
 
-		apiHelpers.data.push({id: site.id, type: 'site'});
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
-		await applicationsMenuPage.goToSite(site.name);
+		await globalMenuPage.goToSite(site.name);
 		await productMenuPage.goToPages();
 
 		await pagesAdminPage.createNewPage({
@@ -120,13 +244,10 @@ test(
 		await journalPage.goto(site.friendlyUrlPath);
 
 		await expect(
-			page.getByRole('link', {
-				exact: true,
-				name: webContentName,
-			})
+			page.getByText(webContentName, {exact: true})
 		).toBeVisible();
 
-		await page.getByRole('link', {name: webContentName}).click();
+		await page.getByText(webContentName).click();
 
 		await expect(
 			page.getByLabel('Friendly URL', {exact: true})
@@ -149,11 +270,11 @@ test(
 );
 
 test(
-	'verify that the admin could configure staging to ignore previews and thumbnails during the local staging publish process',
+	'Verify that the admin could configure staging to ignore previews and thumbnails during the local staging publish process',
 	{tag: ['@LPS-189191', '@LPS-190360']},
 	async ({
 		apiHelpers,
-		instanceSettingsPage,
+		exportImportStagingInstanceSettingsPage,
 		page,
 		portletPublishToLivePage,
 	}) => {
@@ -161,7 +282,7 @@ test(
 			name: getRandomString(),
 		});
 
-		apiHelpers.data.push({id: site.id, type: 'site'});
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
 			groupId: site.id,
@@ -169,14 +290,11 @@ test(
 			title: getRandomString(),
 		});
 
-		await instanceSettingsPage.goToInstanceSetting(
-			'Infrastructure',
-			'Export/Import, Staging'
-		);
-
-		await instanceSettingsPage.checkRadioSetting(
-			'Include Thumbnails And Previews During Staging'
-		);
+		await exportImportStagingInstanceSettingsPage.goto();
+		await exportImportStagingInstanceSettingsPage.checkConfigurationOption({
+			checked: true,
+			label: 'Include Thumbnails And Previews During Staging',
+		});
 
 		await enableLocalStaging(apiHelpers, page, site);
 
@@ -199,6 +317,11 @@ test(
 		await page.goto(
 			`/web${stagingSite.friendlyUrlPath}${layout.friendlyURL}`
 		);
+
+		await reloadUntilVisible({
+			myLocator: portletPublishToLivePage.publishToLiveButton,
+			page,
+		});
 
 		await portletPublishToLivePage.goToPortletAdvancedStagings();
 
@@ -232,7 +355,7 @@ test(
 );
 
 test(
-	'verify if information about staging system settings are present',
+	'Verify if information about staging system settings are present',
 	{tag: ['@LPS-123156']},
 	async ({instanceSettingsPage}) => {
 		await instanceSettingsPage.goToInstanceSetting(
@@ -241,7 +364,7 @@ test(
 			true,
 			'Virtual Instance Scope'
 		);
-		await instanceSettingsPage.checkSetting({
+		await instanceSettingsPage.assertOptionVisible({
 			description:
 				'Specify characters that are not allowed in web content folder names.',
 			label: 'Single Asset Publish Process Includes Version History',
@@ -253,12 +376,12 @@ test(
 			true,
 			'Virtual Instance Scope'
 		);
-		await instanceSettingsPage.checkSetting({
+		await instanceSettingsPage.assertOptionVisible({
 			description:
 				'Uncheck to avoid deleting the temporary LAR during a failed staging publish process. In remote staging contexts, this only applies for the staging environment.',
 			label: 'Delete temporary LAR during a failed staging publish process.',
 		});
-		await instanceSettingsPage.checkSetting({
+		await instanceSettingsPage.assertOptionVisible({
 			description:
 				'Uncheck to avoid deleting the temporary LAR during a successful staging publish process. In remote staging contexts, this only applies for the staging environment.',
 			label: 'Delete temporary LAR during a successful staging publish process.',
@@ -267,7 +390,7 @@ test(
 );
 
 testFlagsEnabled(
-	'check if local staging with page-scoped Web Content can be enabled',
+	'Check if local staging with page-scoped Web Content can be enabled',
 	{tag: ['@LPS-83147']},
 	async ({apiHelpers, page, webContentDisplayPage, widgetPagePage}) => {
 		const siteName = getRandomString();
@@ -278,7 +401,7 @@ testFlagsEnabled(
 			name: siteName,
 		});
 
-		apiHelpers.data.push({id: site.id, type: 'site'});
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
 			groupId: site.id,
@@ -333,8 +456,6 @@ testFlagsEnabled(
 		await enableLocalStaging(apiHelpers, page, site);
 
 		await webContentDisplayPage.gotoWebContentAdmin(layout.plid);
-		await page
-			.getByRole('link', {name: webContentName})
-			.waitFor({state: 'visible'});
+		await page.getByText(webContentName).waitFor({state: 'visible'});
 	}
 );

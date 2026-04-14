@@ -10,23 +10,28 @@ import {SpaceMembersWithList} from './SpaceMembersWithList';
 
 export default function SpaceMembersModal({
 	assetLibraryCreatorUserId,
-	assetLibraryId,
+	externalReferenceCode,
+	filter,
 	hasAssignMembersPermission,
 }: {
 	assetLibraryCreatorUserId: string;
-	assetLibraryId: string;
+	externalReferenceCode: string;
+	filter?: string;
 	hasAssignMembersPermission: boolean;
 }) {
 	return (
 		<div>
-			<ClayModal.Header>
+			<ClayModal.Header
+				closeButtonAriaLabel={Liferay.Language.get('close')}
+			>
 				{Liferay.Language.get('all-members')}
 			</ClayModal.Header>
 
 			<ClayModal.Body>
 				<SpaceMembersWithList
 					assetLibraryCreatorUserId={assetLibraryCreatorUserId}
-					assetLibraryId={assetLibraryId}
+					externalReferenceCode={externalReferenceCode}
+					filter={filter}
 					hasAssignMembersPermission={hasAssignMembersPermission}
 				/>
 			</ClayModal.Body>

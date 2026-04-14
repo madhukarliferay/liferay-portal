@@ -5,6 +5,8 @@
 
 package com.liferay.portal.servlet.filters.strip;
 
+import com.liferay.petra.io.OutputStreamWriter;
+import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.PortalCache;
@@ -12,8 +14,6 @@ import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.cache.key.CacheKeyGenerator;
 import com.liferay.portal.kernel.cache.key.CacheKeyGeneratorUtil;
-import com.liferay.portal.kernel.io.OutputStreamWriter;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
@@ -24,11 +24,11 @@ import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.KMPSearch;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.minifier.MinifierUtil;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;

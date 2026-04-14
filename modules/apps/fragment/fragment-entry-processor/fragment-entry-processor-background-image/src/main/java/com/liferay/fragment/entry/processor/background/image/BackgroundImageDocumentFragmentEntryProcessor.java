@@ -20,14 +20,17 @@ import com.liferay.info.type.WebImage;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,17 +53,27 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 
 	@Override
 	public void processFragmentEntryLinkHTML(
-			FragmentEntryLink fragmentEntryLink, Document document,
+			Document document, FragmentEntryLink fragmentEntryLink,
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
 		throws PortalException {
 
-		JSONObject jsonObject = fragmentEntryLink.getEditableValuesJSONObject();
+		processFragmentEntryLinkHTML(
+			document, fragmentEntryLink.getEditableValuesJSONObject(),
+			fragmentEntryLink, fragmentEntryProcessorContext);
+	}
 
-		JSONObject editableValuesJSONObject = jsonObject.getJSONObject(
+	@Override
+	public void processFragmentEntryLinkHTML(
+			Document document, JSONObject editableValuesJSONObject,
+			FragmentEntryLink fragmentEntryLink,
+			FragmentEntryProcessorContext fragmentEntryProcessorContext)
+		throws PortalException {
+
+		JSONObject jsonObject = editableValuesJSONObject.getJSONObject(
 			FragmentEntryProcessorConstants.
 				KEY_BACKGROUND_IMAGE_FRAGMENT_ENTRY_PROCESSOR);
 
-		if (editableValuesJSONObject == null) {
+		if (jsonObject == null) {
 			return;
 		}
 
@@ -73,12 +86,11 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 
 			String id = element.attr("data-lfr-background-image-id");
 
-			if (!editableValuesJSONObject.has(id)) {
+			if (!jsonObject.has(id)) {
 				continue;
 			}
 
-			JSONObject editableValueJSONObject =
-				editableValuesJSONObject.getJSONObject(id);
+			JSONObject editableValueJSONObject = jsonObject.getJSONObject(id);
 
 			String value = StringPool.BLANK;
 
@@ -108,8 +120,8 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 					if (fileEntryId == 0) {
 						fileEntryId =
 							_fragmentEntryProcessorHelper.getFileEntryId(
-								valueJSONObject.getString("className"),
-								valueJSONObject.getLong("classPK"));
+								_getGroupId(fragmentEntryProcessorContext),
+								valueJSONObject);
 					}
 
 					value = _getImagePreviewURL(
@@ -124,9 +136,9 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 
 				if (fileEntryId == 0) {
 					fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-						editableValueJSONObject.getLong("classNameId"),
-						editableValueJSONObject.getLong("classPK"),
 						editableValueJSONObject.getString("fieldId"),
+						_getGroupId(fragmentEntryProcessorContext),
+						editableValueJSONObject,
 						fragmentEntryProcessorContext.getLocale());
 				}
 
@@ -164,10 +176,7 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 				element.removeAttr("data-lfr-background-image-id");
 			}
 
-			if (FeatureFlagManagerUtil.isEnabled(
-					fragmentEntryLink.getCompanyId(), "LPD-39437") &&
-				fragmentEntryProcessorContext.isViewMode()) {
-
+			if (fragmentEntryProcessorContext.isViewMode()) {
 				AnalyticsAttributesUtil.addAnalyticsAttributes(
 					editableValueJSONObject, element,
 					fragmentEntryProcessorContext,
@@ -175,6 +184,31 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 					_infoItemServiceRegistry);
 			}
 		}
+	}
+
+	private long _getGroupId(
+		FragmentEntryProcessorContext fragmentEntryProcessorContext) {
+
+		if (fragmentEntryProcessorContext.getScopeGroupId() > 0) {
+			return fragmentEntryProcessorContext.getScopeGroupId();
+		}
+
+		HttpServletRequest httpServletRequest =
+			fragmentEntryProcessorContext.getHttpServletRequest();
+
+		if (httpServletRequest == null) {
+			return 0;
+		}
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		if (themeDisplay == null) {
+			return 0;
+		}
+
+		return themeDisplay.getScopeGroupId();
 	}
 
 	private String _getImagePreviewURL(String defaultValue, long fileEntryId) {

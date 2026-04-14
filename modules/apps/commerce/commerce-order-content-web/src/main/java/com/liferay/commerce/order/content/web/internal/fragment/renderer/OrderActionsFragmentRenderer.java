@@ -7,9 +7,11 @@ package com.liferay.commerce.order.content.web.internal.fragment.renderer;
 
 import com.liferay.commerce.configuration.CommerceOrderCheckoutConfiguration;
 import com.liferay.commerce.constants.CommerceConstants;
+import com.liferay.commerce.constants.CommerceOrderActionKeys;
 import com.liferay.commerce.constants.CommerceOrderConstants;
 import com.liferay.commerce.constants.CommercePortletKeys;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.model.CommerceOrderItemModel;
 import com.liferay.commerce.model.CommerceReturn;
 import com.liferay.commerce.order.CommerceOrderHttpHelper;
 import com.liferay.commerce.order.importer.type.CommerceOrderImporterType;
@@ -54,6 +56,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
@@ -190,6 +193,11 @@ public class OrderActionsFragmentRenderer implements FragmentRenderer {
 				"liferay-commerce:order-actions:namespace",
 				StringUtil.randomId() + StringPool.UNDERLINE);
 			httpServletRequest.setAttribute(
+				"liferay-commerce:order-actions:notesPermission",
+				_hasModelPermission(
+					commerceOrder,
+					CommerceOrderActionKeys.MANAGE_COMMERCE_ORDER_NOTES));
+			httpServletRequest.setAttribute(
 				"liferay-commerce:order-actions:open", commerceOrder.isOpen());
 			httpServletRequest.setAttribute(
 				"liferay-commerce:order-actions:orderSummaryURL",
@@ -211,6 +219,11 @@ public class OrderActionsFragmentRenderer implements FragmentRenderer {
 					"commerceOrderUuid", commerceOrder.getUuid()
 				).buildString());
 			httpServletRequest.setAttribute(
+				"liferay-commerce:order-actions:priceOnApplication",
+				ListUtil.exists(
+					commerceOrder.getCommerceOrderItems(),
+					CommerceOrderItemModel::isPriceOnApplication));
+			httpServletRequest.setAttribute(
 				"liferay-commerce:order-actions:quickCheckoutEnabled",
 				_isQuickCheckoutEnabled(commerceChannel));
 			httpServletRequest.setAttribute(
@@ -218,6 +231,12 @@ public class OrderActionsFragmentRenderer implements FragmentRenderer {
 				CommerceOrderInfoItemUtil.getCommerceOrderFriendlyURL(
 					_friendlyURLSeparatorProviderSnapshot.get(),
 					httpServletRequest));
+			httpServletRequest.setAttribute(
+				"liferay-commerce:order-actions:restrictedNotesPermission",
+				_hasModelPermission(
+					commerceOrder,
+					CommerceOrderActionKeys.
+						MANAGE_COMMERCE_ORDER_RESTRICTED_NOTES));
 
 			if (FeatureFlagManagerUtil.isEnabled(
 					_portal.getCompanyId(httpServletRequest), "LPD-10562") &&
@@ -513,33 +532,19 @@ public class OrderActionsFragmentRenderer implements FragmentRenderer {
 	}
 
 	private void _printPortletMessageInfo(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws IOException {
 
-		try {
-			PrintWriter printWriter = httpServletResponse.getWriter();
+		PrintWriter printWriter = httpServletResponse.getWriter();
 
-			StringBundler sb = new StringBundler(3);
-
-			sb.append("<div class=\"portlet-msg-info\">");
-
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)httpServletRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
-
-			sb.append(
-				themeDisplay.translate(
-					"the-order-actions-component-will-be-shown-here"));
-
-			sb.append("</div>");
-
-			printWriter.write(sb.toString());
-		}
-		catch (IOException ioException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(ioException);
-			}
-		}
+		printWriter.write(
+			StringBundler.concat(
+				"<div class=\"portlet-msg-info\">",
+				_language.get(
+					httpServletRequest,
+					"the-order-actions-component-will-be-shown-here"),
+				"</div>"));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

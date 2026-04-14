@@ -204,9 +204,7 @@ public class ProductConfigurationSerDes {
 			sb.append("\"entityType\": ");
 
 			sb.append("\"");
-
 			sb.append(productConfiguration.getEntityType());
-
 			sb.append("\"");
 		}
 
@@ -926,3 +924,4 @@ public class ProductConfigurationSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1083597889

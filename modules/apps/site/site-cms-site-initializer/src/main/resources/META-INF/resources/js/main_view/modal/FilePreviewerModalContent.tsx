@@ -3,31 +3,16 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import ClayEmptyState from '@clayui/empty-state';
 import ClayIcon from '@clayui/icon';
 import ClayLink from '@clayui/link';
 import ClayModal from '@clayui/modal';
-import classNames from 'classnames';
-
-// @ts-ignore
-
-import {ImagePreviewer} from 'document-library-preview-image';
 import React from 'react';
 
-type File = {
-	externalReferenceCode: string;
-	id: number;
-	link: {
-		href: string;
-		label: string;
-	};
-	name: string;
-	previewURL: string;
-	thumbnailURL: string;
-};
+import FilePreview from '../../common/components/FilePreview';
+import {IAssetFile} from '../../common/types/AssetType';
 
 interface FilePreviewerModalContentProps {
-	file: File;
+	file: IAssetFile;
 	headerName?: string;
 }
 
@@ -35,13 +20,13 @@ export default function FilePreviewerModalContent({
 	file,
 	headerName,
 }: FilePreviewerModalContentProps) {
-	const {link, name, thumbnailURL} = file;
-	const params = new URLSearchParams(thumbnailURL);
-	const hasImagePreview = params.has('imageThumbnail');
+	const {link, name} = file;
 
 	return (
 		<>
-			<ClayModal.Header>
+			<ClayModal.Header
+				closeButtonAriaLabel={Liferay.Language.get('close')}
+			>
 				<div className="autofit-row autofit-row-center">
 					<div className="autofit-col autofit-col-expand">
 						<div className="text-truncate">
@@ -66,22 +51,8 @@ export default function FilePreviewerModalContent({
 				</div>
 			</ClayModal.Header>
 
-			<ClayModal.Body
-				className={classNames({
-					'bg-light': !hasImagePreview,
-				})}
-			>
-				{hasImagePreview ? (
-					<ImagePreviewer alt={name} imageURL={link.href} />
-				) : (
-					<ClayEmptyState
-						description={Liferay.Language.get(
-							'hmm-looks-like-this-item-does-not-have-a-preview-we-can-show-you'
-						)}
-						imgSrc={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/cms_empty_state_preview.svg`}
-						title={Liferay.Language.get('no-preview-available')}
-					/>
-				)}
+			<ClayModal.Body>
+				<FilePreview file={file} />
 			</ClayModal.Body>
 		</>
 	);

@@ -15,6 +15,7 @@ import {AdvancedTab} from './Tabs/Advanced/AdvancedTab';
 import {BasicInfoTab} from './Tabs/BasicInfo/BasicInfoTab';
 
 import './EditObjectFieldContent.scss';
+import {DEFAULT_VALUE_SUPPORTED_BUSINESS_TYPES} from '../../utils/constants';
 
 interface EditObjectFieldContentProps
 	extends Omit<
@@ -25,11 +26,14 @@ interface EditObjectFieldContentProps
 		| 'objectDefinitionExternalReferenceCode'
 		| 'objectFieldId'
 	> {
+	ckEditor5Config?: object;
 	containerWrapper: ElementType;
+	decimalSeparator: string;
 	errors: ObjectFieldErrors;
 	handleChange: React.ChangeEventHandler<HTMLInputElement>;
+	hasDepotEntry?: boolean;
 	modelBuilder?: boolean;
-	objectDefinitionExternalReferenceCode: string;
+	objectDefinition?: ObjectDefinition | ObjectDefinitionNodeData;
 	objectFieldId: number;
 	onSubmit?: (editedObjectField?: Partial<ObjectField>) => void;
 	setValues: (values: Partial<ObjectField>) => void;
@@ -40,16 +44,19 @@ const TABS = [Liferay.Language.get('basic-info')];
 
 export function EditObjectFieldContent({
 	baseResourceURL,
+	ckEditor5Config,
 	containerWrapper,
 	creationLanguageId,
+	decimalSeparator,
 	errors,
 	filterOperators,
 	handleChange,
+	hasDepotEntry,
 	isDefaultStorageType,
 	isRootDescendantNode,
 	learnResources,
 	modelBuilder = false,
-	objectDefinitionExternalReferenceCode,
+	objectDefinition,
 	objectFieldId,
 	onSubmit,
 	readOnly,
@@ -61,8 +68,8 @@ export function EditObjectFieldContent({
 
 	const [dbObjectFieldRequired, setDbObjectFieldRequired] =
 		useState<boolean>();
-	const [objectDefinition, setObjectDefinition] =
-		useState<ObjectDefinition>();
+	const [defaultValueSidebarElements, setDefaultValueSidebarElements] =
+		useState<SidebarCategory[]>([]);
 	const [objectFieldBusinessTypes, setObjectFieldBusinessTypes] = useState<
 		ObjectFieldBusinessType[]
 	>([]);
@@ -73,11 +80,14 @@ export function EditObjectFieldContent({
 	const [sidebarElements, setSidebarElements] = useState<SidebarCategory[]>(
 		[]
 	);
+	const hasDefaultValue =
+		(values.businessType &&
+			DEFAULT_VALUE_SUPPORTED_BUSINESS_TYPES.includes(
+				values.businessType
+			)) ||
+		values.businessType === 'Picklist';
 
-	if (
-		(isDefaultStorageType || values.businessType === 'Picklist') &&
-		TABS.length < 2
-	) {
+	if ((isDefaultStorageType || hasDefaultValue) && TABS.length < 2) {
 		TABS.push(Liferay.Language.get('advanced'));
 	}
 
@@ -87,15 +97,6 @@ export function EditObjectFieldContent({
 
 			setDbObjectFieldRequired(objectFieldResponse.required);
 			setValues(objectFieldResponse);
-
-			if (objectDefinitionExternalReferenceCode) {
-				const objectDefinitionResponse =
-					await API.getObjectDefinitionByExternalReferenceCode(
-						objectDefinitionExternalReferenceCode
-					);
-
-				setObjectDefinition(objectDefinitionResponse);
-			}
 		};
 
 		makeFetch();
@@ -118,6 +119,7 @@ export function EditObjectFieldContent({
 
 				const objectFieldInfoJSON =
 					(await objectFieldInfoResponse.json()) as {
+						defaultValueSidebarElements: SidebarCategory[];
 						objectFieldBusinessTypes: ObjectFieldBusinessType[];
 						objectRelationshipId: number;
 						readOnlySidebarElements: SidebarCategory[];
@@ -130,6 +132,9 @@ export function EditObjectFieldContent({
 					);
 				}
 
+				setDefaultValueSidebarElements(
+					objectFieldInfoJSON.defaultValueSidebarElements
+				);
 				setObjectFieldBusinessTypes(
 					objectFieldInfoJSON.objectFieldBusinessTypes
 				);
@@ -147,7 +152,7 @@ export function EditObjectFieldContent({
 
 	return (
 		<>
-			{isDefaultStorageType || values.businessType === 'Picklist' ? (
+			{isDefaultStorageType || hasDefaultValue ? (
 				<>
 					<ClayTabs className="side-panel-iframe__tabs">
 						{TABS.map((label, index) => (
@@ -175,6 +180,7 @@ export function EditObjectFieldContent({
 								errors={errors}
 								filterOperators={filterOperators}
 								handleChange={handleChange}
+								hasDepotEntry={hasDepotEntry}
 								learnResources={learnResources}
 								modelBuilder={modelBuilder}
 								objectDefinition={objectDefinition}
@@ -201,8 +207,13 @@ export function EditObjectFieldContent({
 							})}
 						>
 							<AdvancedTab
+								ckEditor5Config={ckEditor5Config}
 								containerWrapper={containerWrapper}
 								creationLanguageId={creationLanguageId}
+								decimalSeparator={decimalSeparator}
+								defaultValueSidebarElements={
+									defaultValueSidebarElements
+								}
 								errors={errors}
 								isDefaultStorageType={isDefaultStorageType}
 								isRootDescendantNode={isRootDescendantNode}
@@ -213,7 +224,6 @@ export function EditObjectFieldContent({
 									readOnlySidebarElements
 								}
 								setValues={setValues}
-								sidebarElements={sidebarElements}
 								values={values}
 							/>
 						</ClayTabs.TabPane>
@@ -227,6 +237,7 @@ export function EditObjectFieldContent({
 					errors={errors}
 					filterOperators={filterOperators}
 					handleChange={handleChange}
+					hasDepotEntry={hasDepotEntry}
 					learnResources={learnResources}
 					modelBuilder={modelBuilder}
 					objectDefinition={objectDefinition}

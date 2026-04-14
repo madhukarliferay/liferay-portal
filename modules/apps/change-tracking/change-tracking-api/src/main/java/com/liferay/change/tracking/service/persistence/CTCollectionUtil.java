@@ -210,52 +210,6 @@ public class CTCollectionUtil {
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	public static CTCollection findByUuid_Last(
-			String uuid, OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	public static CTCollection fetchByUuid_Last(
-		String uuid, OrderByComparator<CTCollection> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where uuid = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] findByUuid_PrevAndNext(
-			long ctCollectionId, String uuid,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			ctCollectionId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -302,24 +256,6 @@ public class CTCollectionUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] filterFindByUuid_PrevAndNext(
-			long ctCollectionId, String uuid,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			ctCollectionId, uuid, orderByComparator);
 	}
 
 	/**
@@ -462,59 +398,6 @@ public class CTCollectionUtil {
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	public static CTCollection findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	public static CTCollection fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] findByUuid_C_PrevAndNext(
-			long ctCollectionId, String uuid, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			ctCollectionId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -566,25 +449,6 @@ public class CTCollectionUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] filterFindByUuid_C_PrevAndNext(
-			long ctCollectionId, String uuid, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			ctCollectionId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -722,54 +586,6 @@ public class CTCollectionUtil {
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	public static CTCollection findByCompanyId_Last(
-			long companyId, OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	public static CTCollection fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CTCollection> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] findByCompanyId_PrevAndNext(
-			long ctCollectionId, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			ctCollectionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -816,24 +632,6 @@ public class CTCollectionUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] filterFindByCompanyId_PrevAndNext(
-			long ctCollectionId, long companyId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			ctCollectionId, companyId, orderByComparator);
 	}
 
 	/**
@@ -976,59 +774,6 @@ public class CTCollectionUtil {
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	public static CTCollection findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	public static CTCollection fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		return getPersistence().fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] findByC_U_PrevAndNext(
-			long ctCollectionId, long companyId, long userId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByC_U_PrevAndNext(
-			ctCollectionId, companyId, userId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1080,25 +825,6 @@ public class CTCollectionUtil {
 
 		return getPersistence().filterFindByC_U(
 			companyId, userId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] filterFindByC_U_PrevAndNext(
-			long ctCollectionId, long companyId, long userId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().filterFindByC_U_PrevAndNext(
-			ctCollectionId, companyId, userId, orderByComparator);
 	}
 
 	/**
@@ -1248,59 +974,6 @@ public class CTCollectionUtil {
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	public static CTCollection findByC_SVI_Last(
-			long companyId, long schemaVersionId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByC_SVI_Last(
-			companyId, schemaVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	public static CTCollection fetchByC_SVI_Last(
-		long companyId, long schemaVersionId,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		return getPersistence().fetchByC_SVI_Last(
-			companyId, schemaVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] findByC_SVI_PrevAndNext(
-			long ctCollectionId, long companyId, long schemaVersionId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByC_SVI_PrevAndNext(
-			ctCollectionId, companyId, schemaVersionId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and schemaVersionId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1353,25 +1026,6 @@ public class CTCollectionUtil {
 
 		return getPersistence().filterFindByC_SVI(
 			companyId, schemaVersionId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63; and schemaVersionId = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param schemaVersionId the schema version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] filterFindByC_SVI_PrevAndNext(
-			long ctCollectionId, long companyId, long schemaVersionId,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().filterFindByC_SVI_PrevAndNext(
-			ctCollectionId, companyId, schemaVersionId, orderByComparator);
 	}
 
 	/**
@@ -1517,59 +1171,6 @@ public class CTCollectionUtil {
 	}
 
 	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection
-	 * @throws NoSuchCollectionException if a matching ct collection could not be found
-	 */
-	public static CTCollection findByC_S_Last(
-			long companyId, int status,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByC_S_Last(
-			companyId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct collection in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct collection, or <code>null</code> if a matching ct collection could not be found
-	 */
-	public static CTCollection fetchByC_S_Last(
-		long companyId, int status,
-		OrderByComparator<CTCollection> orderByComparator) {
-
-		return getPersistence().fetchByC_S_Last(
-			companyId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] findByC_S_PrevAndNext(
-			long ctCollectionId, long companyId, int status,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().findByC_S_PrevAndNext(
-			ctCollectionId, companyId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ct collections that the user has permission to view where companyId = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1621,25 +1222,6 @@ public class CTCollectionUtil {
 
 		return getPersistence().filterFindByC_S(
 			companyId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct collections before and after the current ct collection in the ordered set of ct collections that the user has permission to view where companyId = &#63; and status = &#63;.
-	 *
-	 * @param ctCollectionId the primary key of the current ct collection
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct collection
-	 * @throws NoSuchCollectionException if a ct collection with the primary key could not be found
-	 */
-	public static CTCollection[] filterFindByC_S_PrevAndNext(
-			long ctCollectionId, long companyId, int status,
-			OrderByComparator<CTCollection> orderByComparator)
-		throws com.liferay.change.tracking.exception.NoSuchCollectionException {
-
-		return getPersistence().filterFindByC_S_PrevAndNext(
-			ctCollectionId, companyId, status, orderByComparator);
 	}
 
 	/**
@@ -2059,3 +1641,4 @@ public class CTCollectionUtil {
 	private static volatile CTCollectionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1695897437

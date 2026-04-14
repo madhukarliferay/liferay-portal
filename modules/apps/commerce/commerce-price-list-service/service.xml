@@ -104,15 +104,15 @@
 
 		<!-- Other fields -->
 
-		<column name="commerceCurrencyCode" type="String" />
 		<column name="parentCommercePriceListId" type="long" />
 		<column name="catalogBasePriceList" type="boolean" />
-		<column name="netPrice" type="boolean" />
-		<column name="type" type="String" />
-		<column name="name" type="String" />
-		<column name="priority" type="double" />
+		<column name="commerceCurrencyCode" type="String" />
 		<column name="displayDate" type="Date" />
 		<column name="expirationDate" type="Date" />
+		<column name="name" type="String" />
+		<column name="netPrice" type="boolean" />
+		<column name="priority" type="double" />
+		<column name="type" type="String" />
 		<column name="lastPublishDate" type="Date" />
 		<column name="status" type="int" />
 		<column name="statusByUserId" type="long" />
@@ -132,14 +132,14 @@
 		<finder name="CompanyId" return-type="Collection">
 			<finder-column name="companyId" />
 		</finder>
-		<finder name="ParentCommercePriceListId" return-type="CommercePriceList">
+		<finder name="ParentCommercePriceListId" return-type="Collection">
 			<finder-column name="parentCommercePriceListId" />
 		</finder>
 		<finder name="G_C" return-type="Collection">
 			<finder-column arrayable-operator="OR" name="groupId" />
 			<finder-column name="companyId" />
 		</finder>
-		<finder name="G_CBPL" return-type="CommercePriceList">
+		<finder name="G_CBPL" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="catalogBasePriceList" />
 		</finder>
@@ -161,7 +161,7 @@
 			<finder-column name="companyId" />
 			<finder-column comparator="!=" name="status" />
 		</finder>
-		<finder name="G_C_T" return-type="CommercePriceList">
+		<finder name="G_CBPL_T" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="catalogBasePriceList" />
 			<finder-column name="type" />

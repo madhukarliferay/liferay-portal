@@ -219,56 +219,6 @@ public class CalendarNotificationTemplateUtil {
 	}
 
 	/**
-	 * Returns the last calendar notification template in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar notification template
-	 * @throws NoSuchNotificationTemplateException if a matching calendar notification template could not be found
-	 */
-	public static CalendarNotificationTemplate findByUuid_Last(
-			String uuid,
-			OrderByComparator<CalendarNotificationTemplate> orderByComparator)
-		throws com.liferay.calendar.exception.
-			NoSuchNotificationTemplateException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last calendar notification template in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar notification template, or <code>null</code> if a matching calendar notification template could not be found
-	 */
-	public static CalendarNotificationTemplate fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<CalendarNotificationTemplate> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the calendar notification templates before and after the current calendar notification template in the ordered set where uuid = &#63;.
-	 *
-	 * @param calendarNotificationTemplateId the primary key of the current calendar notification template
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar notification template
-	 * @throws NoSuchNotificationTemplateException if a calendar notification template with the primary key could not be found
-	 */
-	public static CalendarNotificationTemplate[] findByUuid_PrevAndNext(
-			long calendarNotificationTemplateId, String uuid,
-			OrderByComparator<CalendarNotificationTemplate> orderByComparator)
-		throws com.liferay.calendar.exception.
-			NoSuchNotificationTemplateException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			calendarNotificationTemplateId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the calendar notification templates where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -470,61 +420,6 @@ public class CalendarNotificationTemplateUtil {
 	}
 
 	/**
-	 * Returns the last calendar notification template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar notification template
-	 * @throws NoSuchNotificationTemplateException if a matching calendar notification template could not be found
-	 */
-	public static CalendarNotificationTemplate findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CalendarNotificationTemplate> orderByComparator)
-		throws com.liferay.calendar.exception.
-			NoSuchNotificationTemplateException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last calendar notification template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar notification template, or <code>null</code> if a matching calendar notification template could not be found
-	 */
-	public static CalendarNotificationTemplate fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CalendarNotificationTemplate> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the calendar notification templates before and after the current calendar notification template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param calendarNotificationTemplateId the primary key of the current calendar notification template
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar notification template
-	 * @throws NoSuchNotificationTemplateException if a calendar notification template with the primary key could not be found
-	 */
-	public static CalendarNotificationTemplate[] findByUuid_C_PrevAndNext(
-			long calendarNotificationTemplateId, String uuid, long companyId,
-			OrderByComparator<CalendarNotificationTemplate> orderByComparator)
-		throws com.liferay.calendar.exception.
-			NoSuchNotificationTemplateException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			calendarNotificationTemplateId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the calendar notification templates where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -650,58 +545,6 @@ public class CalendarNotificationTemplateUtil {
 
 		return getPersistence().fetchByCalendarId_First(
 			calendarId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last calendar notification template in the ordered set where calendarId = &#63;.
-	 *
-	 * @param calendarId the calendar ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar notification template
-	 * @throws NoSuchNotificationTemplateException if a matching calendar notification template could not be found
-	 */
-	public static CalendarNotificationTemplate findByCalendarId_Last(
-			long calendarId,
-			OrderByComparator<CalendarNotificationTemplate> orderByComparator)
-		throws com.liferay.calendar.exception.
-			NoSuchNotificationTemplateException {
-
-		return getPersistence().findByCalendarId_Last(
-			calendarId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last calendar notification template in the ordered set where calendarId = &#63;.
-	 *
-	 * @param calendarId the calendar ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching calendar notification template, or <code>null</code> if a matching calendar notification template could not be found
-	 */
-	public static CalendarNotificationTemplate fetchByCalendarId_Last(
-		long calendarId,
-		OrderByComparator<CalendarNotificationTemplate> orderByComparator) {
-
-		return getPersistence().fetchByCalendarId_Last(
-			calendarId, orderByComparator);
-	}
-
-	/**
-	 * Returns the calendar notification templates before and after the current calendar notification template in the ordered set where calendarId = &#63;.
-	 *
-	 * @param calendarNotificationTemplateId the primary key of the current calendar notification template
-	 * @param calendarId the calendar ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next calendar notification template
-	 * @throws NoSuchNotificationTemplateException if a calendar notification template with the primary key could not be found
-	 */
-	public static CalendarNotificationTemplate[] findByCalendarId_PrevAndNext(
-			long calendarNotificationTemplateId, long calendarId,
-			OrderByComparator<CalendarNotificationTemplate> orderByComparator)
-		throws com.liferay.calendar.exception.
-			NoSuchNotificationTemplateException {
-
-		return getPersistence().findByCalendarId_PrevAndNext(
-			calendarNotificationTemplateId, calendarId, orderByComparator);
 	}
 
 	/**
@@ -991,3 +834,4 @@ public class CalendarNotificationTemplateUtil {
 		_persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1308555402

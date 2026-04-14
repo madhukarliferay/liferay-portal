@@ -11,20 +11,22 @@ import com.liferay.object.exception.ObjectFieldSettingNameException;
 import com.liferay.object.exception.ObjectFieldSettingValueException;
 import com.liferay.object.field.render.ObjectFieldRenderingContext;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.extension.PropertyDefinition;
+
+import java.io.Serializable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +68,15 @@ public interface ObjectFieldBusinessType {
 		return getValue(null, objectField, userId, values);
 	}
 
+	public default Serializable getDTOValue(
+			DTOConverterContext dtoConverterContext,
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
+			ObjectField objectField, Serializable serializable)
+		throws Exception {
+
+		return serializable;
+	}
+
 	public String getLabel(Locale locale);
 
 	public default Map<String, Object> getLocalizedValues(
@@ -95,7 +106,6 @@ public interface ObjectFieldBusinessType {
 
 		return HashMapBuilder.<String, Object>put(
 			"editOnlyInDefaultLanguage",
-			FeatureFlagManagerUtil.isEnabled("LPD-32050") &&
 			!GetterUtil.getBoolean(objectField.getReadOnly()) &&
 			!objectField.isLocalized()
 		).put(
@@ -161,14 +171,22 @@ public interface ObjectFieldBusinessType {
 		return StringPool.BLANK;
 	}
 
-	public default boolean isLocalizationSupported(ObjectField objectField) {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-32050") ||
-			objectField.isMetadata()) {
+	public default boolean isAllowedObjectFieldSettingValue(
+		String objectFieldSettingName, String objectFieldSettingValue) {
 
-			return false;
+		if (objectFieldSettingName.equals(
+				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE) &&
+			objectFieldSettingValue.equals(
+				ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE)) {
+
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	public default boolean isLocalizationSupported(ObjectField objectField) {
+		return !objectField.isMetadata();
 	}
 
 	public default boolean isVisible(ObjectDefinition objectDefinition) {
@@ -241,12 +259,9 @@ public interface ObjectFieldBusinessType {
 			return;
 		}
 
-		if (!(StringUtil.equals(
-				defaultValueType,
-				ObjectFieldSettingConstants.VALUE_EXPRESSION_BUILDER) ||
-			  StringUtil.equals(
-				  defaultValueType,
-				  ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE))) {
+		if (!isAllowedObjectFieldSettingValue(
+				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE,
+				defaultValueType)) {
 
 			throw new ObjectFieldSettingValueException.InvalidValue(
 				objectField.getName(),

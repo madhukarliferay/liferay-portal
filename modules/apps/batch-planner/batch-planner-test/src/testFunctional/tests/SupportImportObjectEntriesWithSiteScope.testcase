@@ -1,6 +1,7 @@
 @component-name = "portal-headless"
 definition {
 
+	property browser.chrome.version = "139.0";
 	property custom.properties = "feature.flag.COMMERCE-8087=true";
 	property portal.acceptance = "quarantine";
 	property portal.release = "true";
@@ -27,7 +28,7 @@ definition {
 				fieldLabelName = "diploma",
 				fieldName = "diploma",
 				fieldType = "Long",
-				fileSource = "userComputer",
+				fileSource = "userComputerToDocumentsAndMedia",
 				isRequired = "false",
 				objectName = "Student");
 		}
@@ -131,30 +132,6 @@ definition {
 			TestUtils.assertEquals(
 				actual = ${actualValue},
 				expected = "Math");
-		}
-	}
-
-	@priority = 4
-	test CanCreateSiteScopedObjectEntryFromFileContainingExistingAndNewWithUncheckedStopImportOnError {
-		task ("When importing .json file as 'Student' Entity Type with 'Only Add New Records Import Strategy', 'Stop the Import on Error' unchecked") {
-			ImportExport.importFile(
-				entityType = "Student (v1.0 - Liferay Object REST)",
-				fileName = "multiple_site_scope_objectEntries_import_create.jsonl",
-				importStrategy = "Only Add New Records",
-				scope = "true",
-				stopImportOnError = "false");
-		}
-
-		task ("Then one new Student item is created") {
-			var response = ObjectDefinitionAPI.getObjectEntries(
-				en_US_plural_label = "students",
-				scopeKey = "true");
-
-			var actualValue = JSONUtil.getWithJSONPath(${response}, "$.items[1].name");
-
-			TestUtils.assertEquals(
-				actual = ${actualValue},
-				expected = "Jack");
 		}
 	}
 

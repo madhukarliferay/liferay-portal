@@ -211,54 +211,6 @@ public class CSDiagramSettingUtil {
 	}
 
 	/**
-	 * Returns the last cs diagram setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram setting
-	 * @throws NoSuchCSDiagramSettingException if a matching cs diagram setting could not be found
-	 */
-	public static CSDiagramSetting findByUuid_Last(
-			String uuid, OrderByComparator<CSDiagramSetting> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramSettingException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram setting, or <code>null</code> if a matching cs diagram setting could not be found
-	 */
-	public static CSDiagramSetting fetchByUuid_Last(
-		String uuid, OrderByComparator<CSDiagramSetting> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cs diagram settings before and after the current cs diagram setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param CSDiagramSettingId the primary key of the current cs diagram setting
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram setting
-	 * @throws NoSuchCSDiagramSettingException if a cs diagram setting with the primary key could not be found
-	 */
-	public static CSDiagramSetting[] findByUuid_PrevAndNext(
-			long CSDiagramSettingId, String uuid,
-			OrderByComparator<CSDiagramSetting> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramSettingException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CSDiagramSettingId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cs diagram settings where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -388,61 +340,6 @@ public class CSDiagramSettingUtil {
 
 		return getPersistence().fetchByUuid_C_First(
 			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram setting
-	 * @throws NoSuchCSDiagramSettingException if a matching cs diagram setting could not be found
-	 */
-	public static CSDiagramSetting findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CSDiagramSetting> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramSettingException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram setting, or <code>null</code> if a matching cs diagram setting could not be found
-	 */
-	public static CSDiagramSetting fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CSDiagramSetting> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cs diagram settings before and after the current cs diagram setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CSDiagramSettingId the primary key of the current cs diagram setting
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram setting
-	 * @throws NoSuchCSDiagramSettingException if a cs diagram setting with the primary key could not be found
-	 */
-	public static CSDiagramSetting[] findByUuid_C_PrevAndNext(
-			long CSDiagramSettingId, String uuid, long companyId,
-			OrderByComparator<CSDiagramSetting> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramSettingException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CSDiagramSettingId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -691,3 +588,4 @@ public class CSDiagramSettingUtil {
 	private static volatile CSDiagramSettingPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1102245747

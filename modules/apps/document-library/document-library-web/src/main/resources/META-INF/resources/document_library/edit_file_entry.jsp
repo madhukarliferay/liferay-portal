@@ -219,6 +219,7 @@ renderResponse.setTitle(headerTitle);
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= DuplicateFileEntryException.class %>" message="please-enter-a-unique-document-name" />
+			<liferay-ui:error exception="<%= DuplicateFileEntryExternalReferenceCodeException.class %>" message="please-enter-a-unique-external-reference-code" />
 			<liferay-ui:error exception="<%= DuplicateFolderNameException.class %>" message="please-enter-a-unique-document-name" />
 
 			<liferay-ui:error exception="<%= LiferayFileItemException.class %>">
@@ -249,9 +250,18 @@ renderResponse.setTitle(headerTitle);
 
 				<%
 				FileSizeException fileSizeException = (FileSizeException)errorException;
+
+				String maxSize = LanguageUtil.formatStorageSize(fileSizeException.getMaxSize(), locale);
 				%>
 
-				<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(fileSizeException.getMaxSize(), locale) %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
+				<c:choose>
+					<c:when test="<%= fileSizeException.getMimeType() == null %>">
+						<liferay-ui:message arguments="<%= maxSize %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
+					</c:when>
+					<c:otherwise>
+						<liferay-ui:message arguments="<%= new Object[] {maxSize, fileSizeException.getMimeType()} %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x-for-type-x" translateArguments="<%= false %>" />
+					</c:otherwise>
+				</c:choose>
 			</liferay-ui:error>
 
 			<liferay-ui:error exception="<%= UploadRequestSizeException.class %>">
@@ -340,6 +350,16 @@ renderResponse.setTitle(headerTitle);
 
 					<c:if test="<%= (folder == null) || folder.isSupportsMetadata() %>">
 						<aui:input name="description" />
+
+						<aui:field-wrapper cssClass="form-group" label="external-reference-code" name="externalReferenceCode">
+							<div class="small text-secondary"><liferay-ui:message key="unique-key-for-referencing-the-document-definition" /></div>
+
+							<div class="input-group">
+								<div class="input-group-item">
+									<aui:input disabled="<%= dlEditFileEntryDisplayContext.isERCFieldEnabled() %>" label="" name="externalReferenceCode" type="text" value="<%= dlEditFileEntryDisplayContext.getExternalReferenceCode() %>" />
+								</div>
+							</div>
+						</aui:field-wrapper>
 
 						<c:if test="<%= (folder == null) || (folder.getModel() instanceof DLFolder) %>">
 
@@ -661,7 +681,7 @@ renderResponse.setTitle(headerTitle);
 		) {
 			Liferay.Util.openConfirmModal({
 				message:
-					'<liferay-ui:message key="changing-the-document-type-will-cause-data-loss" />',
+					'<liferay-ui:message key="changing-the-document-type-will-clear-the-currently-selected-file-and-metadata" />',
 				onConfirm: (isConfirmed) => {
 					if (isConfirmed) {
 						updateFileEntryType();

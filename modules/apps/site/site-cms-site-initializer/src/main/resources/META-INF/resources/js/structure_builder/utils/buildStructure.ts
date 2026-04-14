@@ -10,17 +10,18 @@ import {
 	ObjectDefinitions,
 	ObjectField,
 	ObjectRelationship,
-} from '../types/ObjectDefinition';
+} from '../../common/types/ObjectDefinition';
 import {
 	ReferencedStructure,
+	RelatedContent,
 	RepeatableGroup,
 	Structure,
 } from '../types/Structure';
 import {Uuid} from '../types/Uuid';
-import {Field, FieldType, MultiselectField, SingleSelectField} from './field';
+import {Field, FieldType, SelectFromListField} from './field';
 import getUuid from './getUuid';
 import isCustomObjectField from './isCustomObjectField';
-import sortChildren from './sortChildren';
+import sortChildren from './state/sortChildren';
 
 export default function buildStructure({
 	mainObjectDefinition,
@@ -40,12 +41,15 @@ export default function buildStructure({
 			parent: uuid,
 		}),
 		erc: mainObjectDefinition.externalReferenceCode,
+		id: mainObjectDefinition.id,
 		label: mainObjectDefinition.label,
 		name: mainObjectDefinition.name ?? '',
 		spaces: getSpaces(mainObjectDefinition),
 		status: isPublished ? 'published' : 'draft',
+		system: mainObjectDefinition.system ?? false,
 		type: mainObjectDefinition.objectFolderExternalReferenceCode as Structure['type'],
-		uuid: getUuid(),
+		uuid,
+		workflows: getWorkflows(mainObjectDefinition),
 	};
 }
 
@@ -70,7 +74,12 @@ export function buildChildren({
 	}
 
 	for (const objectField of objectFields) {
-		if (!isCustomObjectField(objectField)) {
+		if (
+			!isCustomObjectField(
+				objectField,
+				objectDefinition.externalReferenceCode
+			)
+		) {
 			continue;
 		}
 
@@ -80,7 +89,22 @@ export function buildChildren({
 	}
 
 	for (const objectRelationship of objectRelationships) {
-		if (isRepeatableGroup(objectRelationship, objectDefinitions)) {
+		if (isRelatedContent(objectRelationship)) {
+			const relatedContent: RelatedContent = {
+				erc: objectRelationship.externalReferenceCode,
+				label: objectRelationship.label,
+				multiselection: true,
+				name: objectRelationship.name,
+				parent,
+				relatedStructureERC:
+					objectRelationship.objectDefinitionExternalReferenceCode2,
+				type: 'related-content',
+				uuid: getUuid(),
+			};
+
+			children.set(relatedContent.uuid, relatedContent);
+		}
+		else if (isRepeatableGroup(objectRelationship, objectDefinitions)) {
 			const repeatableGroup = buildRepeatableGroup({
 				ancestors: [
 					...ancestors,
@@ -89,12 +113,13 @@ export function buildChildren({
 				erc: objectRelationship.objectDefinitionExternalReferenceCode2,
 				objectDefinitions,
 				parent,
+				relationshipERC: objectRelationship.externalReferenceCode,
 				relationshipName: objectRelationship.name,
 			});
 
 			children.set(repeatableGroup.uuid, repeatableGroup);
 		}
-		else {
+		else if (objectRelationship.deletionType === 'cascade') {
 			const referencedStructure = buildReferencedStructure({
 				ancestors: [
 					...ancestors,
@@ -103,11 +128,34 @@ export function buildChildren({
 				erc: objectRelationship.objectDefinitionExternalReferenceCode2,
 				objectDefinitions,
 				parent,
+				relationshipERC: objectRelationship.externalReferenceCode,
 				relationshipName: objectRelationship.name,
 			});
 
 			children.set(referencedStructure.uuid, referencedStructure);
 		}
+	}
+
+	const relatedContentObjectRelationships =
+		getRelatedContentObjectRelationships(
+			objectDefinition,
+			objectDefinitions
+		);
+
+	for (const relatedContentObjectRelationship of relatedContentObjectRelationships) {
+		const relatedContent: RelatedContent = {
+			erc: relatedContentObjectRelationship.externalReferenceCode,
+			label: relatedContentObjectRelationship.label,
+			multiselection: false,
+			name: relatedContentObjectRelationship.name,
+			parent,
+			relatedStructureERC:
+				relatedContentObjectRelationship.objectDefinitionExternalReferenceCode1,
+			type: 'related-content',
+			uuid: getUuid(),
+		};
+
+		children.set(relatedContent.uuid, relatedContent);
 	}
 
 	return sortChildren(children);
@@ -140,6 +188,7 @@ export function buildField({
 		indexableConfig,
 		label: objectField.label,
 		localized: objectField.localized,
+		locked: objectField.system,
 		name: objectField.name,
 		parent,
 		required: objectField.required,
@@ -149,11 +198,19 @@ export function buildField({
 	};
 
 	if (
-		(field.type === 'single-select' || field.type === 'multiselect') &&
+		field.type === 'select-from-list' &&
 		!isNullOrUndefined(objectField.listTypeDefinitionId)
 	) {
-		(field as SingleSelectField | MultiselectField).picklistId =
+		(field as SelectFromListField).picklistId =
 			objectField.listTypeDefinitionId;
+	}
+
+	if (objectField.businessType === 'MultiselectPicklist') {
+		(field as SelectFromListField).multiselection = true;
+	}
+
+	if (objectField.businessType === 'Picklist') {
+		(field as SelectFromListField).multiselection = false;
 	}
 
 	return field;
@@ -164,12 +221,14 @@ export function buildReferencedStructure({
 	erc,
 	objectDefinitions,
 	parent,
+	relationshipERC,
 	relationshipName,
 }: {
 	ancestors: Array<ObjectDefinition['externalReferenceCode']>;
 	erc: ReferencedStructure['erc'];
 	objectDefinitions: ObjectDefinitions;
 	parent: Uuid;
+	relationshipERC: string;
 	relationshipName: ObjectRelationship['name'];
 }): ReferencedStructure {
 	const uuid = getUuid();
@@ -178,10 +237,7 @@ export function buildReferencedStructure({
 
 	const url = new URL(window.location.href);
 
-	url.searchParams.set(
-		'objectDefinitionExternalReferenceCode',
-		objectDefinition.externalReferenceCode
-	);
+	url.searchParams.set('objectDefinitionId', String(objectDefinition.id));
 	url.searchParams.set(
 		'objectFolderExternalReferenceCode',
 		String(objectDefinition.objectFolderExternalReferenceCode)
@@ -199,10 +255,12 @@ export function buildReferencedStructure({
 		label: objectDefinition.label,
 		name: objectDefinition.name!,
 		parent,
+		relationshipERC,
 		relationshipName,
 		spaces: getSpaces(objectDefinition),
 		type: 'referenced-structure',
 		uuid,
+		workflows: getWorkflows(objectDefinition),
 	};
 }
 
@@ -211,12 +269,14 @@ export function buildRepeatableGroup({
 	erc,
 	objectDefinitions,
 	parent,
+	relationshipERC,
 	relationshipName,
 }: {
 	ancestors: Array<ObjectDefinition['externalReferenceCode']>;
 	erc: RepeatableGroup['erc'];
 	objectDefinitions: ObjectDefinitions;
 	parent: Uuid;
+	relationshipERC: string;
 	relationshipName: ObjectRelationship['name'];
 }): RepeatableGroup {
 	const uuid = getUuid();
@@ -234,6 +294,7 @@ export function buildRepeatableGroup({
 		label: objectDefinition.label,
 		name: objectDefinition.name!,
 		parent,
+		relationshipERC,
 		relationshipName,
 		type: 'repeatable-group',
 		uuid,
@@ -254,12 +315,16 @@ function getFieldSettings(objectField: ObjectField): Field['settings'] {
 			objectFieldSettings.acceptedFileExtensions;
 		settings.fileSource = objectFieldSettings.fileSource;
 		settings.maximumFileSize = objectFieldSettings.maximumFileSize;
+		settings.storageDepotGroup = objectFieldSettings.storageDepotGroup;
 
-		if (objectFieldSettings.fileSource === 'userComputer') {
-			settings.showFilesInDocumentsAndMedia =
-				objectFieldSettings.showFilesInDocumentsAndMedia;
+		if (
+			objectFieldSettings.fileSource === 'userComputerToCMSBasicDocument'
+		) {
+			settings.showFilesInLibrary =
+				objectFieldSettings.showFilesInLibrary;
 			settings.storageDLFolderPath =
 				objectFieldSettings.storageDLFolderPath;
+			settings.storageDepotGroup = objectFieldSettings.storageDepotGroup;
 		}
 	}
 	else if (objectField.businessType === 'DateTime') {
@@ -287,28 +352,26 @@ function getFieldSettings(objectField: ObjectField): Field['settings'] {
 }
 
 function getFieldType(objectField: ObjectField): FieldType {
-	if (objectField.businessType === 'Picklist') {
-		return 'single-select';
-	}
-	else if (objectField.businessType === 'MultiselectPicklist') {
-		return 'multiselect';
+	if (
+		objectField.businessType === 'Picklist' ||
+		objectField.businessType === 'MultiselectPicklist'
+	) {
+		return 'select-from-list';
 	}
 
-	const DB_TYPE_TO_FIELD_TYPE: Record<string, FieldType> = {
-		BigDecimal: 'decimal',
+	const BUSINESS_TYPE_TO_FIELD_TYPE: Record<string, FieldType> = {
+		Attachment: 'upload',
 		Boolean: 'boolean',
-		Clob: 'long-text',
 		Date: 'date',
 		DateTime: 'datetime',
-		Double: 'decimal',
+		Decimal: 'decimal',
 		Integer: 'integer',
-		Long: 'upload',
+		LongText: 'long-text',
 		RichText: 'rich-text',
-		String: 'text',
-		Upload: 'upload',
+		Text: 'text',
 	} as const;
 
-	return DB_TYPE_TO_FIELD_TYPE[objectField.DBType];
+	return BUSINESS_TYPE_TO_FIELD_TYPE[objectField.businessType];
 }
 
 export function getSpaces(objectDefinition: ObjectDefinition) {
@@ -330,6 +393,21 @@ export function getSpaces(objectDefinition: ObjectDefinition) {
 	return spaces;
 }
 
+export function getWorkflows(objectDefinition: ObjectDefinition) {
+	const workflows: Structure['workflows'] = {};
+
+	const definitionLinks = objectDefinition.workflowDefinitionLinks || [];
+
+	for (const {
+		groupExternalReferenceCode,
+		workflowDefinitionName,
+	} of definitionLinks) {
+		workflows[groupExternalReferenceCode] = workflowDefinitionName;
+	}
+
+	return workflows;
+}
+
 function isRepeatableGroup(
 	objectRelationship: ObjectRelationship,
 	objectDefinitions: ObjectDefinitions
@@ -343,4 +421,45 @@ function isRepeatableGroup(
 		objectDefinition.objectFolderExternalReferenceCode ===
 		'L_CMS_STRUCTURE_REPEATABLE_GROUPS'
 	);
+}
+
+function isRelatedContent(objectRelationship: ObjectRelationship) {
+	if (
+		objectRelationship.type === 'manyToMany' &&
+		!objectRelationship.reverse
+	) {
+		return true;
+	}
+
+	return false;
+}
+
+function getRelatedContentObjectRelationships(
+	mainObjectDefinition: ObjectDefinition,
+	objectDefinitions: ObjectDefinitions
+) {
+	const relationships: ObjectRelationship[] = [];
+
+	for (const objectDefinition of Object.values(objectDefinitions)) {
+		if (
+			mainObjectDefinition.externalReferenceCode ===
+			objectDefinition.externalReferenceCode
+		) {
+			continue;
+		}
+
+		for (const objectRelationship of objectDefinition.objectRelationships ||
+			[]) {
+			if (
+				objectRelationship.objectDefinitionExternalReferenceCode2 ===
+					mainObjectDefinition.externalReferenceCode &&
+				objectRelationship.type === 'oneToMany' &&
+				objectRelationship.deletionType === 'disassociate'
+			) {
+				relationships.push(objectRelationship);
+			}
+		}
+	}
+
+	return relationships;
 }

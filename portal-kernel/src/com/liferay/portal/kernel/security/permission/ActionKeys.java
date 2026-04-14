@@ -28,6 +28,8 @@ public class ActionKeys {
 
 	public static final String ADD_COMMUNITY = "ADD_COMMUNITY";
 
+	public static final String ADD_COUNTRY = "ADD_COUNTRY";
+
 	public static final String ADD_COUPON = "ADD_COUPON";
 
 	public static final String ADD_DEFINITION = "ADD_DEFINITION";
@@ -184,8 +186,6 @@ public class ActionKeys {
 	public static final String MANAGE_ARCHIVED_SETUPS =
 		"MANAGE_ARCHIVED_SETUPS";
 
-	public static final String MANAGE_COUNTRIES = "MANAGE_COUNTRIES";
-
 	public static final String MANAGE_COUPONS = "MANAGE_COUPONS";
 
 	public static final String MANAGE_LAYOUTS = "MANAGE_LAYOUTS";
@@ -198,6 +198,9 @@ public class ActionKeys {
 
 	public static final String MANAGE_SUBORGANIZATIONS =
 		"MANAGE_SUBORGANIZATIONS";
+
+	public static final String MANAGE_SUBORGANIZATIONS_USERS =
+		"MANAGE_SUBORGANIZATIONS_USERS";
 
 	public static final String MANAGE_TAG = "MANAGE_TAG";
 

@@ -285,6 +285,13 @@ public class DepotEntryLocalServiceWrapper
 		return _depotEntryLocalService.getDepotEntries(start, end);
 	}
 
+	@Override
+	public java.util.List<DepotEntry> getDepotEntries(
+		long companyId, int type) {
+
+		return _depotEntryLocalService.getDepotEntries(companyId, type);
+	}
+
 	/**
 	 * Returns all the depot entries matching the UUID and company.
 	 *
@@ -330,6 +337,11 @@ public class DepotEntryLocalServiceWrapper
 		return _depotEntryLocalService.getDepotEntriesCount();
 	}
 
+	@Override
+	public int getDepotEntriesCount(long companyId, int type) {
+		return _depotEntryLocalService.getDepotEntriesCount(companyId, type);
+	}
+
 	/**
 	 * Returns the depot entry with the primary key.
 	 *
@@ -358,6 +370,29 @@ public class DepotEntryLocalServiceWrapper
 
 		return _depotEntryLocalService.getDepotEntryByUuidAndGroupId(
 			uuid, groupId);
+	}
+
+	@Override
+	public java.util.List<Long> getDepotEntryGroupIds(
+		long companyId, int type) {
+
+		return _depotEntryLocalService.getDepotEntryGroupIds(companyId, type);
+	}
+
+	@Override
+	public java.util.List<Long> getDepotEntryGroupIds(
+		long companyId, long userId, int type) {
+
+		return _depotEntryLocalService.getDepotEntryGroupIds(
+			companyId, userId, type);
+	}
+
+	@Override
+	public java.util.List<Long> getDepotEntryGroupIds(
+		long companyId, long userId, int type, boolean dynamicInheritanceOnly) {
+
+		return _depotEntryLocalService.getDepotEntryGroupIds(
+			companyId, userId, type, dynamicInheritanceOnly);
 	}
 
 	/**
@@ -511,3 +546,4 @@ public class DepotEntryLocalServiceWrapper
 	private DepotEntryLocalService _depotEntryLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2008945564

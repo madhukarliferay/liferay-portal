@@ -326,227 +326,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByUuid_Last(
-			String uuid, OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByUuid_Last(
-		String uuid, OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where uuid = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] findByUuid_PrevAndNext(
-			long accountGroupId, String uuid,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		uuid = Objects.toString(uuid, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, accountGroup, uuid, orderByComparator, true);
-
-			array[1] = accountGroup;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, accountGroup, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup getByUuid_PrevAndNext(
-		Session session, AccountGroup accountGroup, String uuid,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ACCOUNTGROUP_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AccountGroupModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -597,6 +376,15 @@ public class AccountGroupPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -692,217 +480,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] filterFindByUuid_PrevAndNext(
-			long accountGroupId, String uuid,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByUuid_PrevAndNext(
-				accountGroupId, uuid, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = filterGetByUuid_PrevAndNext(
-				session, accountGroup, uuid, orderByComparator, true);
-
-			array[1] = accountGroup;
-
-			array[2] = filterGetByUuid_PrevAndNext(
-				session, accountGroup, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup filterGetByUuid_PrevAndNext(
-		Session session, AccountGroup accountGroup, String uuid,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ACCOUNTGROUP_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AccountGroup.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AccountGroupImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AccountGroupImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the account groups where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -988,6 +565,14 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByUuid(String uuid) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByUuid(uuid);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1303,242 +888,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] findByUuid_C_PrevAndNext(
-			long accountGroupId, String uuid, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		uuid = Objects.toString(uuid, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, accountGroup, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = accountGroup;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, accountGroup, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup getByUuid_C_PrevAndNext(
-		Session session, AccountGroup accountGroup, String uuid, long companyId,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ACCOUNTGROUP_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AccountGroupModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -1592,6 +941,15 @@ public class AccountGroupPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1691,224 +1049,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] filterFindByUuid_C_PrevAndNext(
-			long accountGroupId, String uuid, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByUuid_C_PrevAndNext(
-				accountGroupId, uuid, companyId, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = filterGetByUuid_C_PrevAndNext(
-				session, accountGroup, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = accountGroup;
-
-			array[2] = filterGetByUuid_C_PrevAndNext(
-				session, accountGroup, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup filterGetByUuid_C_PrevAndNext(
-		Session session, AccountGroup accountGroup, String uuid, long companyId,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ACCOUNTGROUP_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AccountGroup.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AccountGroupImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AccountGroupImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the account groups where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -2003,6 +1143,14 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByUuid_C(String uuid, long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByUuid_C(uuid, companyId);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -2298,67 +1446,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByAccountGroupId_Last(
-			long accountGroupId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByAccountGroupId_Last(
-			accountGroupId, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("accountGroupId=");
-		sb.append(accountGroupId);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByAccountGroupId_Last(
-		long accountGroupId,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByAccountGroupId(accountGroupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByAccountGroupId(
-			accountGroupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where accountGroupId = &#63;.
 	 *
 	 * @param accountGroupId the account group ID
@@ -2410,6 +1497,15 @@ public class AccountGroupPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByAccountGroupId(
 				accountGroupId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByAccountGroupId(
+					accountGroupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2545,6 +1641,15 @@ public class AccountGroupPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByAccountGroupId(
 				accountGroupIds, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByAccountGroupId(
+					accountGroupIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		if (accountGroupIds == null) {
@@ -2961,6 +2066,15 @@ public class AccountGroupPersistenceImpl
 			return countByAccountGroupId(accountGroupId);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByAccountGroupId(
+				accountGroupId);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
+		}
+
 		StringBundler sb = new StringBundler(2);
 
 		sb.append(_FILTER_SQL_COUNT_ACCOUNTGROUP_WHERE);
@@ -3007,6 +2121,13 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByAccountGroupId(long[] accountGroupIds) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByAccountGroupId(accountGroupIds);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = InlineSQLHelperUtil.filter(
+				findByAccountGroupId(accountGroupIds));
+
+			return accountGroups.size();
 		}
 
 		if (accountGroupIds == null) {
@@ -3288,215 +2409,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByCompanyId_Last(
-			long companyId, OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByCompanyId_Last(
-		long companyId, OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] findByCompanyId_PrevAndNext(
-			long accountGroupId, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, accountGroup, companyId, orderByComparator, true);
-
-			array[1] = accountGroup;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, accountGroup, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup getByCompanyId_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ACCOUNTGROUP_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AccountGroupModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3547,6 +2459,15 @@ public class AccountGroupPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -3629,204 +2550,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] filterFindByCompanyId_PrevAndNext(
-			long accountGroupId, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				accountGroupId, companyId, orderByComparator);
-		}
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, accountGroup, companyId, orderByComparator, true);
-
-			array[1] = accountGroup;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, accountGroup, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup filterGetByCompanyId_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ACCOUNTGROUP_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AccountGroup.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AccountGroupImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AccountGroupImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the account groups where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -3900,6 +2623,14 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByCompanyId(companyId);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -4185,231 +2916,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByC_D_Last(
-			long companyId, boolean defaultAccountGroup,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByC_D_Last(
-			companyId, defaultAccountGroup, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", defaultAccountGroup=");
-		sb.append(defaultAccountGroup);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByC_D_Last(
-		long companyId, boolean defaultAccountGroup,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByC_D(companyId, defaultAccountGroup);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByC_D(
-			companyId, defaultAccountGroup, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] findByC_D_PrevAndNext(
-			long accountGroupId, long companyId, boolean defaultAccountGroup,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = getByC_D_PrevAndNext(
-				session, accountGroup, companyId, defaultAccountGroup,
-				orderByComparator, true);
-
-			array[1] = accountGroup;
-
-			array[2] = getByC_D_PrevAndNext(
-				session, accountGroup, companyId, defaultAccountGroup,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup getByC_D_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId,
-		boolean defaultAccountGroup,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ACCOUNTGROUP_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_D_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_D_DEFAULTACCOUNTGROUP_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AccountGroupModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(defaultAccountGroup);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63; and defaultAccountGroup = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -4468,6 +2974,15 @@ public class AccountGroupPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_D(
 				companyId, defaultAccountGroup, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_D(
+					companyId, defaultAccountGroup, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -4554,213 +3069,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] filterFindByC_D_PrevAndNext(
-			long accountGroupId, long companyId, boolean defaultAccountGroup,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_D_PrevAndNext(
-				accountGroupId, companyId, defaultAccountGroup,
-				orderByComparator);
-		}
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = filterGetByC_D_PrevAndNext(
-				session, accountGroup, companyId, defaultAccountGroup,
-				orderByComparator, true);
-
-			array[1] = accountGroup;
-
-			array[2] = filterGetByC_D_PrevAndNext(
-				session, accountGroup, companyId, defaultAccountGroup,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup filterGetByC_D_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId,
-		boolean defaultAccountGroup,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ACCOUNTGROUP_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_D_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_D_DEFAULTACCOUNTGROUP_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AccountGroup.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AccountGroupImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AccountGroupImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(defaultAccountGroup);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the account groups where companyId = &#63; and defaultAccountGroup = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -4842,6 +3150,15 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByC_D(long companyId, boolean defaultAccountGroup) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_D(companyId, defaultAccountGroup);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByC_D(
+				companyId, defaultAccountGroup);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5133,242 +3450,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByC_LikeN_Last(
-			long companyId, String name,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByC_LikeN_Last(
-			companyId, name, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", nameLIKE");
-		sb.append(name);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByC_LikeN_Last(
-		long companyId, String name,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByC_LikeN(companyId, name);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByC_LikeN(
-			companyId, name, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] findByC_LikeN_PrevAndNext(
-			long accountGroupId, long companyId, String name,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		name = Objects.toString(name, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = getByC_LikeN_PrevAndNext(
-				session, accountGroup, companyId, name, orderByComparator,
-				true);
-
-			array[1] = accountGroup;
-
-			array[2] = getByC_LikeN_PrevAndNext(
-				session, accountGroup, companyId, name, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup getByC_LikeN_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId, String name,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ACCOUNTGROUP_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_LIKEN_COMPANYID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AccountGroupModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63; and name LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -5423,6 +3504,15 @@ public class AccountGroupPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_LikeN(
 				companyId, name, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_LikeN(
+					companyId, name, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		name = Objects.toString(name, "");
@@ -5522,224 +3612,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] filterFindByC_LikeN_PrevAndNext(
-			long accountGroupId, long companyId, String name,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_LikeN_PrevAndNext(
-				accountGroupId, companyId, name, orderByComparator);
-		}
-
-		name = Objects.toString(name, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = filterGetByC_LikeN_PrevAndNext(
-				session, accountGroup, companyId, name, orderByComparator,
-				true);
-
-			array[1] = accountGroup;
-
-			array[2] = filterGetByC_LikeN_PrevAndNext(
-				session, accountGroup, companyId, name, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup filterGetByC_LikeN_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId, String name,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ACCOUNTGROUP_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_LIKEN_COMPANYID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_C_LIKEN_NAME_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AccountGroup.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AccountGroupImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AccountGroupImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the account groups where companyId = &#63; and name LIKE &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -5834,6 +3706,14 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByC_LikeN(long companyId, String name) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_LikeN(companyId, name);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByC_LikeN(companyId, name);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
 		}
 
 		name = Objects.toString(name, "");
@@ -6149,242 +4029,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup findByC_T_Last(
-			long companyId, String type,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		AccountGroup accountGroup = fetchByC_T_Last(
-			companyId, type, orderByComparator);
-
-		if (accountGroup != null) {
-			return accountGroup;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchGroupException(sb.toString());
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	@Override
-	public AccountGroup fetchByC_T_Last(
-		long companyId, String type,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		int count = countByC_T(companyId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AccountGroup> list = findByC_T(
-			companyId, type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] findByC_T_PrevAndNext(
-			long accountGroupId, long companyId, String type,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		type = Objects.toString(type, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = getByC_T_PrevAndNext(
-				session, accountGroup, companyId, type, orderByComparator,
-				true);
-
-			array[1] = accountGroup;
-
-			array[2] = getByC_T_PrevAndNext(
-				session, accountGroup, companyId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup getByC_T_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId, String type,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ACCOUNTGROUP_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_T_COMPANYID_2);
-
-		boolean bindType = false;
-
-		if (type.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_T_TYPE_3);
-		}
-		else {
-			bindType = true;
-
-			sb.append(_FINDER_COLUMN_C_T_TYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AccountGroupModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (bindType) {
-			queryPos.add(type);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63; and type = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -6438,6 +4082,15 @@ public class AccountGroupPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_T(companyId, type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_T(
+					companyId, type, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		type = Objects.toString(type, "");
@@ -6537,224 +4190,6 @@ public class AccountGroupPersistenceImpl
 	}
 
 	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63; and type = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	@Override
-	public AccountGroup[] filterFindByC_T_PrevAndNext(
-			long accountGroupId, long companyId, String type,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws NoSuchGroupException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_T_PrevAndNext(
-				accountGroupId, companyId, type, orderByComparator);
-		}
-
-		type = Objects.toString(type, "");
-
-		AccountGroup accountGroup = findByPrimaryKey(accountGroupId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AccountGroup[] array = new AccountGroupImpl[3];
-
-			array[0] = filterGetByC_T_PrevAndNext(
-				session, accountGroup, companyId, type, orderByComparator,
-				true);
-
-			array[1] = accountGroup;
-
-			array[2] = filterGetByC_T_PrevAndNext(
-				session, accountGroup, companyId, type, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AccountGroup filterGetByC_T_PrevAndNext(
-		Session session, AccountGroup accountGroup, long companyId, String type,
-		OrderByComparator<AccountGroup> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ACCOUNTGROUP_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_T_COMPANYID_2);
-
-		boolean bindType = false;
-
-		if (type.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_T_TYPE_3_SQL);
-		}
-		else {
-			bindType = true;
-
-			sb.append(_FINDER_COLUMN_C_T_TYPE_2_SQL);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ACCOUNTGROUP_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AccountGroupModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AccountGroup.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AccountGroupImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AccountGroupImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (bindType) {
-			queryPos.add(type);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(accountGroup)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AccountGroup> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the account groups where companyId = &#63; and type = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -6849,6 +4284,14 @@ public class AccountGroupPersistenceImpl
 	public int filterCountByC_T(long companyId, String type) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_T(companyId, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AccountGroup> accountGroups = findByC_T(companyId, type);
+
+			accountGroups = InlineSQLHelperUtil.filter(accountGroups);
+
+			return accountGroups.size();
 		}
 
 		type = Objects.toString(type, "");
@@ -8003,3 +5446,4 @@ public class AccountGroupPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:643375519

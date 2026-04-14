@@ -32,8 +32,6 @@ const test = mergeTests(
 	featureFlagsTest({
 		'LPD-11235': {enabled: true},
 		'LPD-17564': {enabled: true},
-		'LPD-21926': {enabled: true},
-		'LPD-32050': {enabled: true},
 		'LPD-60546': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
@@ -383,7 +381,10 @@ test.describe('File Upload Fragment', () => {
 			);
 
 			await expect(
-				fileUploadInput.getByRole('button', {name: 'Upload'})
+				fileUploadInput.getByRole('button', {
+					exact: true,
+					name: 'Upload',
+				})
 			).toBeVisible();
 		}
 	);
@@ -536,111 +537,22 @@ test.describe('File Upload Fragment', () => {
 
 			const fileUploadInput = page.locator('.file-upload');
 
-			await fileUploadInput
-				.getByText('Select File', {exact: true})
-				.click();
-
-			// Assert jpg files are not present
-
 			const dialogIFrame = page.frameLocator('iframe');
 
-			await expect(
-				dialogIFrame.getByText(
+			await clickAndExpectToBeVisible({
+				target: dialogIFrame.getByText(
 					'Drag & Drop Your Files or Browse to Upload'
-				)
-			).toBeVisible();
+				),
+				trigger: fileUploadInput.getByText('Select File', {
+					exact: true,
+				}),
+			});
+
+			// Assert jpg files are not present
 
 			await expect(
 				dialogIFrame.getByText('balinese.jpg')
 			).not.toBeVisible();
-		}
-	);
-
-	test(
-		'View error messages from File Upload field',
-		{
-			tag: '@LPS-151402',
-		},
-		async ({apiHelpers, page, pageManagementSite}) => {
-
-			// Create a page with a form fragment with a file upload fragment
-
-			const objectDefinitionAPIClient =
-				await apiHelpers.buildRestClient(ObjectDefinitionAPI);
-
-			const {className: objectDefinitionClassName} = (
-				await objectDefinitionAPIClient.getObjectDefinitionByExternalReferenceCode(
-					getObjectERC('All Fields')
-				)
-			).body;
-
-			const fileUploadId = getRandomString();
-
-			const fileUploadDefinition = getFragmentDefinition({
-				fragmentConfig: {
-					inputFieldId: 'ObjectField_fileUpload',
-				},
-				id: fileUploadId,
-				key: 'INPUTS-file-upload',
-			});
-
-			const submitFragmentDefinition = getFragmentDefinition({
-				id: getRandomString(),
-				key: 'INPUTS-submit-button',
-			});
-
-			const formDefinition = getFormContainerDefinition({
-				id: getRandomString(),
-				objectDefinitionClassName,
-				pageElements: [fileUploadDefinition, submitFragmentDefinition],
-			});
-
-			const layout = await apiHelpers.headlessDelivery.createSitePage({
-				pageDefinition: getPageDefinition([formDefinition]),
-				siteId: pageManagementSite.id,
-				title: getRandomString(),
-			});
-
-			// Go to view mode
-
-			await page.goto(
-				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
-			);
-
-			// Select file from computer
-
-			const fileChooserPromise = page.waitForEvent('filechooser');
-
-			const fileUploadInput = page.locator('.file-upload');
-
-			await fileUploadInput
-				.getByText('Select File', {exact: true})
-				.click();
-
-			const fileChooser = await fileChooserPromise;
-
-			await fileChooser.setFiles(
-				path.join(
-					__dirname,
-					'../main/dependencies/high_resolution_image.jpg'
-				)
-			);
-
-			await expect(
-				fileUploadInput.getByText('high_resolution_image')
-			).toBeVisible();
-
-			// Submit form
-
-			await page.getByRole('button', {name: 'Submit'}).click();
-
-			// Assert error message
-
-			await expect(
-				page.getByText(
-					'File size is larger than the allowed maximum upload size (2 MB).'
-				)
-			).toBeVisible();
 		}
 	);
 });
@@ -690,10 +602,10 @@ test.describe('Drag and Drop Upload Fragment', () => {
 							} as any,
 							{
 								name: 'fileSource',
-								value: 'userComputer',
+								value: 'userComputerToDocumentsAndMedia',
 							} as any,
 							{
-								name: 'showFilesInDocumentsAndMedia',
+								name: 'showFilesInLibrary',
 								value: false,
 							} as any,
 						],
@@ -797,6 +709,8 @@ test.describe('Drag and Drop Upload Fragment', () => {
 
 		await pageEditorPage.publishPage();
 
+		// Go to view mode
+
 		await page.goto(
 			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 		);
@@ -865,18 +779,6 @@ test.describe('Drag and Drop Upload Fragment', () => {
 			)
 		).toBeVisible();
 
-		await chooseFileFromDocumentLibrary({
-			fileName: 'cats.jpg',
-			page,
-			trigger: secondFileUploadFragment.getByTitle('Change File', {
-				exact: true,
-			}),
-		});
-
-		await expect(
-			page.getByLabel('Change the file, the current file is cats.jpg')
-		).toBeVisible();
-
 		// Choose other language to check the default values
 
 		await clickAndExpectToBeVisible({
@@ -927,10 +829,7 @@ test.describe('Drag and Drop Upload Fragment', () => {
 			([locale, value]: [string, any]) => [locale, value.name]
 		);
 
-		expect(filesFromLibrary).toStrictEqual([
-			['en_US', 'balinese.jpg'],
-			['es_ES', 'cats.jpg'],
-		]);
+		expect(filesFromLibrary).toStrictEqual([['en_US', 'balinese.jpg']]);
 	});
 
 	test('Check the functionality of the Drag and Drop Upload Fragment when the attachments are not localizable', async ({
@@ -977,10 +876,10 @@ test.describe('Drag and Drop Upload Fragment', () => {
 							} as any,
 							{
 								name: 'fileSource',
-								value: 'userComputer',
+								value: 'userComputerToDocumentsAndMedia',
 							} as any,
 							{
-								name: 'showFilesInDocumentsAndMedia',
+								name: 'showFilesInLibrary',
 								value: false,
 							} as any,
 						],
@@ -1081,6 +980,8 @@ test.describe('Drag and Drop Upload Fragment', () => {
 		await pageEditorPage.mapFormFragment(formId, 'Attachment', 'all');
 
 		await pageEditorPage.publishPage();
+
+		// Go to view mode
 
 		await page.goto(
 			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`

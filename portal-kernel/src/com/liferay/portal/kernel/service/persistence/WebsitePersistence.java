@@ -117,47 +117,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 			orderByComparator);
 
 	/**
-	 * Returns the last website in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where uuid = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByUuid_PrevAndNext(
-			long websiteId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
 	 * Removes all the websites where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -266,50 +225,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 			orderByComparator);
 
 	/**
-	 * Returns the last website in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByUuid_C_PrevAndNext(
-			long websiteId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
 	 * Removes all the websites where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -414,47 +329,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 			orderByComparator);
 
 	/**
-	 * Returns the last website in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByCompanyId_PrevAndNext(
-			long websiteId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
 	 * Removes all the websites where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -555,47 +429,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 		long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<Website>
 			orderByComparator);
-
-	/**
-	 * Returns the last website in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where userId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByUserId_PrevAndNext(
-			long websiteId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
 
 	/**
 	 * Removes all the websites where userId = &#63; from the database.
@@ -704,50 +537,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 		long companyId, long classNameId,
 		com.liferay.portal.kernel.util.OrderByComparator<Website>
 			orderByComparator);
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByC_C_Last(
-			long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByC_C_Last(
-		long companyId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByC_C_PrevAndNext(
-			long websiteId, long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
 
 	/**
 	 * Removes all the websites where companyId = &#63; and classNameId = &#63; from the database.
@@ -865,53 +654,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 		long companyId, long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<Website>
 			orderByComparator);
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByC_C_C_Last(
-			long companyId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByC_C_C_Last(
-		long companyId, long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByC_C_C_PrevAndNext(
-			long websiteId, long companyId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
 
 	/**
 	 * Removes all the websites where companyId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
@@ -1040,57 +782,6 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 		long companyId, long classNameId, long classPK, boolean primary,
 		com.liferay.portal.kernel.util.OrderByComparator<Website>
 			orderByComparator);
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website
-	 * @throws NoSuchWebsiteException if a matching website could not be found
-	 */
-	public Website findByC_C_C_P_Last(
-			long companyId, long classNameId, long classPK, boolean primary,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
-
-	/**
-	 * Returns the last website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching website, or <code>null</code> if a matching website could not be found
-	 */
-	public Website fetchByC_C_C_P_Last(
-		long companyId, long classNameId, long classPK, boolean primary,
-		com.liferay.portal.kernel.util.OrderByComparator<Website>
-			orderByComparator);
-
-	/**
-	 * Returns the websites before and after the current website in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63;.
-	 *
-	 * @param websiteId the primary key of the current website
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next website
-	 * @throws NoSuchWebsiteException if a website with the primary key could not be found
-	 */
-	public Website[] findByC_C_C_P_PrevAndNext(
-			long websiteId, long companyId, long classNameId, long classPK,
-			boolean primary,
-			com.liferay.portal.kernel.util.OrderByComparator<Website>
-				orderByComparator)
-		throws NoSuchWebsiteException;
 
 	/**
 	 * Removes all the websites where companyId = &#63; and classNameId = &#63; and classPK = &#63; and primary = &#63; from the database.
@@ -1285,3 +976,4 @@ public interface WebsitePersistence extends BasePersistence<Website> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1713170677

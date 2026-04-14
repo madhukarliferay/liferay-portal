@@ -34,13 +34,11 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
 
 import java.lang.reflect.InvocationHandler;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -298,214 +296,6 @@ public class EntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching entry
-	 * @throws NoSuchEntryException if a matching entry could not be found
-	 */
-	@Override
-	public Entry findByUserId_Last(
-			long userId, OrderByComparator<Entry> orderByComparator)
-		throws NoSuchEntryException {
-
-		Entry entry = fetchByUserId_Last(userId, orderByComparator);
-
-		if (entry != null) {
-			return entry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("userId=");
-		sb.append(userId);
-
-		sb.append("}");
-
-		throw new NoSuchEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching entry, or <code>null</code> if a matching entry could not be found
-	 */
-	@Override
-	public Entry fetchByUserId_Last(
-		long userId, OrderByComparator<Entry> orderByComparator) {
-
-		int count = countByUserId(userId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Entry> list = findByUserId(
-			userId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the entries before and after the current entry in the ordered set where userId = &#63;.
-	 *
-	 * @param entryId the primary key of the current entry
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next entry
-	 * @throws NoSuchEntryException if a entry with the primary key could not be found
-	 */
-	@Override
-	public Entry[] findByUserId_PrevAndNext(
-			long entryId, long userId,
-			OrderByComparator<Entry> orderByComparator)
-		throws NoSuchEntryException {
-
-		Entry entry = findByPrimaryKey(entryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Entry[] array = new EntryImpl[3];
-
-			array[0] = getByUserId_PrevAndNext(
-				session, entry, userId, orderByComparator, true);
-
-			array[1] = entry;
-
-			array[2] = getByUserId_PrevAndNext(
-				session, entry, userId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Entry getByUserId_PrevAndNext(
-		Session session, Entry entry, long userId,
-		OrderByComparator<Entry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_USERID_USERID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(EntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(entry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Entry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the entries where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -704,23 +494,6 @@ public class EntryPersistenceImpl
 					}
 				}
 				else {
-					if (list.size() > 1) {
-						Collections.sort(list, Collections.reverseOrder());
-
-						if (_log.isWarnEnabled()) {
-							if (!useFinderCache) {
-								finderArgs = new Object[] {
-									userId, emailAddress
-								};
-							}
-
-							_log.warn(
-								"EntryPersistenceImpl.fetchByU_EA(long, String, boolean) with parameters (" +
-									StringUtil.merge(finderArgs) +
-										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
-						}
-					}
-
 					Entry entry = list.get(0);
 
 					result = entry;
@@ -1420,3 +1193,4 @@ public class EntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1356453045

@@ -25,14 +25,6 @@ import java.util.ResourceBundle;
  */
 public class DepotRoleUtil {
 
-	public static final String[] DEPOT_ROLE_NAMES = {
-		DepotRolesConstants.ASSET_LIBRARY_ADMINISTRATOR,
-		DepotRolesConstants.ASSET_LIBRARY_CONNECTED_SITE_MEMBER,
-		DepotRolesConstants.ASSET_LIBRARY_CONTENT_REVIEWER,
-		DepotRolesConstants.ASSET_LIBRARY_MEMBER,
-		DepotRolesConstants.ASSET_LIBRARY_OWNER
-	};
-
 	public static Map<Locale, String> getDescriptionMap(
 		long companyId, Language language, String name) {
 
@@ -50,11 +42,7 @@ public class DepotRoleUtil {
 	}
 
 	public static Map<Locale, String> getTitleMap(
-		long companyId, Language language, String name) {
-
-		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-17564")) {
-			return null;
-		}
+		Language language, String name) {
 
 		Map<Locale, String> titleMap = new HashMap<>();
 
@@ -67,6 +55,16 @@ public class DepotRoleUtil {
 		}
 
 		return titleMap;
+	}
+
+	public static Map<Locale, String> getTitleMap(
+		long companyId, Language language, String name) {
+
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-17564")) {
+			return null;
+		}
+
+		return getTitleMap(language, name);
 	}
 
 	private static String _getDescription(

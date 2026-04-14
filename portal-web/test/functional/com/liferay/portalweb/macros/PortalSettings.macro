@@ -98,43 +98,6 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro configureContentSharingSubSitesCP(subSites = null) {
-		if (${subSites} == "enabledByDefault") {
-			Select(
-				locator1 = "PortalSettingsContentSharing#CONTENT_SHARING_SELECTOR",
-				value1 = "Enabled by Default");
-
-			PortletEntry.save();
-
-			AssertSelectedLabel(
-				locator1 = "PortalSettingsContentSharing#CONTENT_SHARING_SELECTOR",
-				value1 = "Enabled by Default");
-		}
-		else if (${subSites} == "disabledByDefault") {
-			Select(
-				locator1 = "PortalSettingsContentSharing#CONTENT_SHARING_SELECTOR",
-				value1 = "Disabled by Default");
-
-			PortletEntry.save();
-
-			AssertSelectedLabel(
-				locator1 = "PortalSettingsContentSharing#CONTENT_SHARING_SELECTOR",
-				value1 = "Disabled by Default");
-		}
-		else if (${subSites} == "disabled") {
-			Select(
-				locator1 = "PortalSettingsContentSharing#CONTENT_SHARING_SELECTOR",
-				value1 = "Disabled");
-
-			PortletEntry.save();
-
-			AssertSelectedLabel(
-				locator1 = "PortalSettingsContentSharing#CONTENT_SHARING_SELECTOR",
-				value1 = "Disabled");
-		}
-	}
-
-	@summary = "Default summary"
 	macro configureCurrentLanguagesCP(failExpected = null, errorMessage = null, currentPortalLanguages = null, useLanguageKey = null) {
 		if (isSet(currentPortalLanguages)) {
 			while (IsElementPresent(locator1 = "LanguageConfiguration#LANGUAGES_CURRENT_SELECT")) {
@@ -309,37 +272,6 @@ definition {
 		Type(
 			locator1 = "TextArea#CONFIGURATION",
 			value1 = ${editor});
-	}
-
-	@summary = "Default summary"
-	macro disableApplicationsMenu() {
-		PortalSettings.gotoConfiguration(
-			configurationCategory = "Navigation",
-			configurationName = "Applications Menu",
-			configurationScope = "Virtual Instance Scope");
-
-		AssertElementNotPresent(locator1 = "ProductMenu#TOGGLE");
-
-		AssertElementPresent(locator1 = "ApplicationsMenu#TOGGLE");
-
-		FormFields.disableCheckbox(fieldName = "enableApplicationsMenu");
-
-		if (IsElementPresent(locator1 = "Button#SAVE")) {
-			AssertClick(
-				locator1 = "Button#SAVE",
-				value1 = "Save");
-		}
-		else if (IsElementPresent(locator1 = "Button#UPDATE")) {
-			AssertClick(
-				locator1 = "Button#UPDATE",
-				value1 = "Update");
-		}
-
-		Alert.viewSuccessMessage();
-
-		AssertElementPresent(locator1 = "ProductMenu#TOGGLE");
-
-		AssertElementNotPresent(locator1 = "ApplicationsMenu#TOGGLE");
 	}
 
 	@summary = "Default summary"
@@ -565,42 +497,6 @@ definition {
 		AssertTextEquals(
 			locator1 = "PortalSettings#VIRTUAL_HOST_FIELD",
 			value1 = ${virtualHostName});
-	}
-
-	@summary = "Default summary"
-	macro enableApplicationsMenu() {
-		ProductMenu.gotoPortletWhenDisableApplicationsMenu(
-			category = "Configuration",
-			panel = "Control Panel",
-			portlet = "Instance Settings");
-
-		SystemSettings.gotoConfiguration(
-			configurationCategory = "Navigation",
-			configurationName = "Applications Menu",
-			configurationScope = "Virtual Instance Scope");
-
-		AssertElementPresent(locator1 = "ProductMenu#TOGGLE");
-
-		AssertElementNotPresent(locator1 = "ApplicationsMenu#TOGGLE");
-
-		FormFields.enableCheckbox(fieldName = "enableApplicationsMenu");
-
-		if (IsElementPresent(locator1 = "Button#SAVE")) {
-			AssertClick(
-				locator1 = "Button#SAVE",
-				value1 = "Save");
-		}
-		else if (IsElementPresent(locator1 = "Button#UPDATE")) {
-			AssertClick(
-				locator1 = "Button#UPDATE",
-				value1 = "Update");
-		}
-
-		Alert.viewSuccessMessage();
-
-		AssertElementNotPresent(locator1 = "ProductMenu#TOGGLE");
-
-		AssertElementPresent(locator1 = "ApplicationsMenu#TOGGLE");
 	}
 
 	@summary = "Default summary"

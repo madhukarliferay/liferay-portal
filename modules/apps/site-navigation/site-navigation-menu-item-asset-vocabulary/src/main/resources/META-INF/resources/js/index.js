@@ -15,12 +15,13 @@ import {
 } from 'frontend-js-components-web';
 import {fetch, objectToFormData} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 function AssetVocabularyContextualSidebar({
 	assetVocabulary,
 	chooseAssetVocabularyProps,
 	defaultLanguageId,
+	hasModel,
 	locales,
 	localizedNames,
 	namespace,
@@ -44,6 +45,7 @@ function AssetVocabularyContextualSidebar({
 		translations[selectedLocaleId] || assetVocabulary.title
 	);
 	const [customNameInvalid, setCustomNameInvalid] = useState(false);
+	const nameRef = useRef(null);
 
 	const {
 		assetVocabularySelectorURL,
@@ -52,11 +54,44 @@ function AssetVocabularyContextualSidebar({
 	} = chooseAssetVocabularyProps;
 
 	useEffect(() => {
+		if (!customNameEnabled) {
+			return;
+		}
+
+		if (
+			translations[selectedLocaleId] === undefined &&
+			selectedLocaleId !== defaultLanguageId
+		) {
+			setCustomName('');
+		}
+		else {
+			setCustomName(
+				translations[selectedLocaleId] ?? assetVocabulary.title
+			);
+		}
+
+		nameRef.current?.focus();
+	}, [
+		assetVocabulary.title,
+		customNameEnabled,
+		defaultLanguageId,
+		selectedLocaleId,
+		translations,
+	]);
+
+	useEffect(() => {
 		const onFormSubmit = (event) => {
 			if (!customName) {
 				event.preventDefault();
 
 				setCustomNameInvalid(true);
+			}
+
+			if (customName && translations[defaultLanguageId] === '') {
+				setTranslations({
+					...translations,
+					[defaultLanguageId]: assetVocabulary.title,
+				});
 			}
 		};
 
@@ -67,7 +102,7 @@ function AssetVocabularyContextualSidebar({
 		return () => {
 			submitButton?.removeEventListener('click', onFormSubmit);
 		};
-	}, [customName]);
+	}, [assetVocabulary.title, customName, defaultLanguageId, translations]);
 
 	const openChooseItemModal = () =>
 		openSelectionModal({
@@ -99,7 +134,7 @@ function AssetVocabularyContextualSidebar({
 
 					setSelectedVocabulary({
 						...item,
-						classPK: item.assetVocabularyId,
+						externalReferenceCode: item.externalReferenceCode,
 					});
 
 					const namespacedItem = Liferay.Util.ns(namespace, item);
@@ -185,6 +220,7 @@ function AssetVocabularyContextualSidebar({
 								setCustomName(event.target.value);
 								setCustomNameInvalid(false);
 							}}
+							ref={nameRef}
 							type="text"
 							value={customName}
 						/>
@@ -207,6 +243,14 @@ function AssetVocabularyContextualSidebar({
 					</ClayInput.GroupItem>
 				</ClayInput.Group>
 
+				{customNameEnabled &&
+					selectedLocaleId !== defaultLanguageId && (
+						<div className="form-text">
+							{translations[defaultLanguageId] ??
+								assetVocabulary.title}
+						</div>
+					)}
+
 				{customNameInvalid && (
 					<ClayForm.FeedbackItem>
 						{Liferay.Language.get('this-field-is-required')}
@@ -216,7 +260,7 @@ function AssetVocabularyContextualSidebar({
 
 			<ClayForm.Group
 				className={classNames({
-					'has-warning': !numberOfCategories,
+					'has-warning': !hasModel || !numberOfCategories,
 				})}
 			>
 				<label htmlFor={`${namespace}_itemInput`}>
@@ -251,14 +295,24 @@ function AssetVocabularyContextualSidebar({
 						<ClayAlert
 							className="mt-1"
 							displayType="warning"
-							title={Liferay.Language.get('no-categories-inside')}
+							title={
+								hasModel
+									? Liferay.Language.get(
+											'no-categories-inside'
+										)
+									: Liferay.Language.get('no-reference-found')
+							}
 							variant="feedback"
 						/>
 
 						<p className="small text-secondary">
-							{Liferay.Language.get(
-								'vocabularies-without-categories-are-hidden-from-navigation-menus'
-							)}
+							{hasModel
+								? Liferay.Language.get(
+										'vocabularies-without-categories-are-hidden-from-navigation-menus'
+									)
+								: Liferay.Language.get(
+										'this-item-references-an-entity-that-is-missing-or-not-yet-available'
+									)}
 						</p>
 					</>
 				)}
@@ -315,11 +369,10 @@ function AssetVocabularyContextualSidebar({
 
 AssetVocabularyContextualSidebar.propTypes = {
 	assetVocabulary: PropTypes.shape({
-		classPK: PropTypes.string,
-		groupId: PropTypes.string,
+		externalReferenceCode: PropTypes.string,
+		scopeExternalReferenceCode: PropTypes.string,
 		title: PropTypes.string,
 		type: PropTypes.string,
-		uuid: PropTypes.string,
 	}).isRequired,
 	chooseAssetVocabularyProps: PropTypes.shape({
 		assetVocabularySelectorURL: PropTypes.string,
@@ -346,22 +399,16 @@ function FormValues({
 	return (
 		<>
 			<input
-				name={getFieldName(namespace, 'classPK')}
-				readOnly
-				type="hidden"
-				value={selectedVocabulary.classPK || ''}
-			/>
-			<input
-				name={getFieldName(namespace, 'groupId')}
-				readOnly
-				type="hidden"
-				value={selectedVocabulary.groupId || ''}
-			/>
-			<input
 				name={getFieldName(namespace, 'externalReferenceCode')}
 				readOnly
 				type="hidden"
 				value={selectedVocabulary.externalReferenceCode || ''}
+			/>
+			<input
+				name={getFieldName(namespace, 'scopeExternalReferenceCode')}
+				readOnly
+				type="hidden"
+				value={selectedVocabulary.scopeExternalReferenceCode || ''}
 			/>
 			<input
 				name={getFieldName(namespace, 'title')}
@@ -393,12 +440,6 @@ function FormValues({
 				type="hidden"
 				value={useCustomName}
 			/>
-			<input
-				name={getFieldName(namespace, 'uuid')}
-				readOnly
-				type="hidden"
-				value={selectedVocabulary.uuid || ''}
-			/>
 		</>
 	);
 }
@@ -407,11 +448,10 @@ FormValues.propTypes = {
 	localizedNames: PropTypes.object.isRequired,
 	namespace: PropTypes.string.isRequired,
 	selectedVocabulary: PropTypes.shape({
-		classPK: PropTypes.string,
-		groupId: PropTypes.string,
+		externalReferenceCode: PropTypes.string,
+		scopeExternalReferenceCode: PropTypes.string,
 		title: PropTypes.string,
 		type: PropTypes.string,
-		uuid: PropTypes.string,
 	}).isRequired,
 	showAssetVocabularyLevel: PropTypes.bool,
 	useCustomName: PropTypes.bool,

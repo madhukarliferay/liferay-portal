@@ -208,52 +208,6 @@ public class RepositoryUtil {
 	}
 
 	/**
-	 * Returns the last repository in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository
-	 * @throws NoSuchRepositoryException if a matching repository could not be found
-	 */
-	public static Repository findByUuid_Last(
-			String uuid, OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last repository in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository, or <code>null</code> if a matching repository could not be found
-	 */
-	public static Repository fetchByUuid_Last(
-		String uuid, OrderByComparator<Repository> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the repositories before and after the current repository in the ordered set where uuid = &#63;.
-	 *
-	 * @param repositoryId the primary key of the current repository
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository
-	 * @throws NoSuchRepositoryException if a repository with the primary key could not be found
-	 */
-	public static Repository[] findByUuid_PrevAndNext(
-			long repositoryId, String uuid,
-			OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			repositoryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the repositories where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -446,59 +400,6 @@ public class RepositoryUtil {
 	}
 
 	/**
-	 * Returns the last repository in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository
-	 * @throws NoSuchRepositoryException if a matching repository could not be found
-	 */
-	public static Repository findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last repository in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository, or <code>null</code> if a matching repository could not be found
-	 */
-	public static Repository fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<Repository> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the repositories before and after the current repository in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param repositoryId the primary key of the current repository
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository
-	 * @throws NoSuchRepositoryException if a repository with the primary key could not be found
-	 */
-	public static Repository[] findByUuid_C_PrevAndNext(
-			long repositoryId, String uuid, long companyId,
-			OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			repositoryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the repositories where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -621,52 +522,6 @@ public class RepositoryUtil {
 	}
 
 	/**
-	 * Returns the last repository in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository
-	 * @throws NoSuchRepositoryException if a matching repository could not be found
-	 */
-	public static Repository findByGroupId_Last(
-			long groupId, OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last repository in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository, or <code>null</code> if a matching repository could not be found
-	 */
-	public static Repository fetchByGroupId_Last(
-		long groupId, OrderByComparator<Repository> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the repositories before and after the current repository in the ordered set where groupId = &#63;.
-	 *
-	 * @param repositoryId the primary key of the current repository
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository
-	 * @throws NoSuchRepositoryException if a repository with the primary key could not be found
-	 */
-	public static Repository[] findByGroupId_PrevAndNext(
-			long repositoryId, long groupId,
-			OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			repositoryId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the repositories where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -785,54 +640,6 @@ public class RepositoryUtil {
 
 		return getPersistence().fetchByPortletId_First(
 			portletId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last repository in the ordered set where portletId = &#63;.
-	 *
-	 * @param portletId the portlet ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository
-	 * @throws NoSuchRepositoryException if a matching repository could not be found
-	 */
-	public static Repository findByPortletId_Last(
-			String portletId, OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByPortletId_Last(
-			portletId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last repository in the ordered set where portletId = &#63;.
-	 *
-	 * @param portletId the portlet ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching repository, or <code>null</code> if a matching repository could not be found
-	 */
-	public static Repository fetchByPortletId_Last(
-		String portletId, OrderByComparator<Repository> orderByComparator) {
-
-		return getPersistence().fetchByPortletId_Last(
-			portletId, orderByComparator);
-	}
-
-	/**
-	 * Returns the repositories before and after the current repository in the ordered set where portletId = &#63;.
-	 *
-	 * @param repositoryId the primary key of the current repository
-	 * @param portletId the portlet ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next repository
-	 * @throws NoSuchRepositoryException if a repository with the primary key could not be found
-	 */
-	public static Repository[] findByPortletId_PrevAndNext(
-			long repositoryId, String portletId,
-			OrderByComparator<Repository> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchRepositoryException {
-
-		return getPersistence().findByPortletId_PrevAndNext(
-			repositoryId, portletId, orderByComparator);
 	}
 
 	/**
@@ -1155,3 +962,4 @@ public class RepositoryUtil {
 	private static volatile RepositoryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1100543445

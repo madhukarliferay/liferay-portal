@@ -54,6 +54,7 @@ public class KaleoDefinitionWrapper
 		attributes.put("scope", getScope());
 		attributes.put("version", getVersion());
 		attributes.put("active", isActive());
+		attributes.put("status", getStatus());
 
 		return attributes;
 	}
@@ -167,6 +168,12 @@ public class KaleoDefinitionWrapper
 
 		if (active != null) {
 			setActive(active);
+		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
 		}
 	}
 
@@ -338,6 +345,16 @@ public class KaleoDefinitionWrapper
 	}
 
 	/**
+	 * Returns the status of this kaleo definition.
+	 *
+	 * @return the status of this kaleo definition
+	 */
+	@Override
+	public int getStatus() {
+		return model.getStatus();
+	}
+
+	/**
 	 * Returns the title of this kaleo definition.
 	 *
 	 * @return the title of this kaleo definition
@@ -471,6 +488,11 @@ public class KaleoDefinitionWrapper
 	@Override
 	public boolean isActive() {
 		return model.isActive();
+	}
+
+	@Override
+	public boolean isSystem() {
+		return model.isSystem();
 	}
 
 	@Override
@@ -639,6 +661,16 @@ public class KaleoDefinitionWrapper
 	}
 
 	/**
+	 * Sets the status of this kaleo definition.
+	 *
+	 * @param status the status of this kaleo definition
+	 */
+	@Override
+	public void setStatus(int status) {
+		model.setStatus(status);
+	}
+
+	/**
 	 * Sets the title of this kaleo definition.
 	 *
 	 * @param title the title of this kaleo definition
@@ -782,3 +814,4 @@ public class KaleoDefinitionWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1540037244

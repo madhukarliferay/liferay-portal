@@ -9,6 +9,7 @@ import com.liferay.account.model.AccountEntry;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.commerce.account.test.util.CommerceAccountTestUtil;
 import com.liferay.commerce.constants.CommerceAddressConstants;
+import com.liferay.commerce.constants.CommerceOrderConstants;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.test.util.CommerceCurrencyTestUtil;
 import com.liferay.commerce.model.CommerceAddress;
@@ -18,8 +19,13 @@ import com.liferay.commerce.payment.model.CommercePaymentMethodGroupRel;
 import com.liferay.commerce.payment.service.CommercePaymentMethodGroupRelLocalService;
 import com.liferay.commerce.payment.test.util.TestCommercePaymentMethod;
 import com.liferay.commerce.product.constants.CommerceChannelAccountEntryRelConstants;
+import com.liferay.commerce.product.model.CPConfigurationEntry;
+import com.liferay.commerce.product.model.CPConfigurationList;
+import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
+import com.liferay.commerce.product.service.CPConfigurationListLocalService;
 import com.liferay.commerce.product.service.CommerceChannelAccountEntryRelLocalService;
 import com.liferay.commerce.product.test.util.CPTestUtil;
 import com.liferay.commerce.service.CommerceAddressLocalService;
@@ -42,6 +48,8 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.LocalRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.service.CountryLocalService;
 import com.liferay.portal.kernel.service.RegionLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -51,6 +59,8 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -58,6 +68,7 @@ import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import java.math.BigDecimal;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import org.frutilla.FrutillaRule;
@@ -325,6 +336,52 @@ public class CommerceOrderLocalServiceTest {
 	}
 
 	@Test
+	public void testAddCommerceOrderWithCPConfigurationEntryShippable()
+		throws Exception {
+
+		_accountEntry = CommerceAccountTestUtil.addBusinessAccountEntry(
+			_user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString() + "@liferay.com",
+			RandomTestUtil.randomString(), new long[] {_user.getUserId()}, null,
+			_serviceContext);
+
+		CommerceOrder commerceOrder = CommerceTestUtil.addB2BCommerceOrder(
+			_group.getGroupId(), _user.getUserId(),
+			_accountEntry.getAccountEntryId(),
+			_commerceCurrency.getCommerceCurrencyId());
+
+		CPInstance cpInstance = CPTestUtil.addCPInstanceWithRandomSku(
+			_group.getGroupId(), BigDecimal.valueOf(34.90));
+
+		CPDefinition cpDefinition = cpInstance.getCPDefinition();
+
+		CPConfigurationList masterCPConfigurationList =
+			cpDefinition.getMasterCPConfigurationList();
+
+		CPConfigurationEntry cpConfigurationEntry =
+			_cpConfigurationEntryLocalService.fetchCPConfigurationEntry(
+				_portal.getClassNameId(CPDefinition.class),
+				cpDefinition.getCPDefinitionId(),
+				masterCPConfigurationList.getCPConfigurationListId());
+
+		cpConfigurationEntry.setShippable(false);
+
+		cpConfigurationEntry =
+			_cpConfigurationEntryLocalService.updateCPConfigurationEntry(
+				cpConfigurationEntry);
+
+		CommerceTestUtil.addCommerceOrderItem(
+			commerceOrder.getCommerceOrderId(), cpInstance.getCPInstanceId(),
+			BigDecimal.ONE);
+
+		commerceOrder = _commerceOrderLocalService.getCommerceOrder(
+			commerceOrder.getCommerceOrderId());
+
+		Assert.assertEquals(
+			cpConfigurationEntry.isShippable(), commerceOrder.isShippable());
+	}
+
+	@Test
 	public void testDeleteCommerceOrderAttachment() throws Exception {
 		frutillaRule.scenario(
 			"Delete an attachment from an order"
@@ -373,6 +430,65 @@ public class CommerceOrderLocalServiceTest {
 				fileEntry.getExternalReferenceCode()));
 	}
 
+	@Test
+	public void testGetCommerceOrders() throws Exception {
+		_accountEntry = CommerceAccountTestUtil.addBusinessAccountEntry(
+			_user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString() + "@liferay.com",
+			RandomTestUtil.randomString(), new long[] {_user.getUserId()}, null,
+			_serviceContext);
+
+		CommerceOrder commerceOrder1 =
+			_commerceOrderLocalService.addCommerceOrder(
+				_user.getUserId(), _commerceChannel.getGroupId(),
+				_accountEntry.getAccountEntryId(), _commerceCurrency.getCode(),
+				0);
+		CommerceOrder commerceOrder2 =
+			_commerceOrderLocalService.addCommerceOrder(
+				_user.getUserId(), _commerceChannel.getGroupId(),
+				_accountEntry.getAccountEntryId(), _commerceCurrency.getCode(),
+				0);
+
+		List<CommerceOrder> commerceOrders =
+			_commerceOrderLocalService.getCommerceOrders(
+				_user.getCompanyId(), _commerceChannel.getGroupId(),
+				new long[] {_accountEntry.getAccountEntryId()}, null,
+				new int[] {CommerceOrderConstants.ORDER_STATUS_OPEN}, false,
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				new Sort(Field.CREATE_DATE, Sort.LONG_TYPE, false));
+
+		Assert.assertEquals(
+			commerceOrders.toString(), commerceOrder1, commerceOrders.get(0));
+		Assert.assertEquals(
+			commerceOrders.toString(), commerceOrder2, commerceOrders.get(1));
+
+		commerceOrder1.setOrderDate(
+			new Date(System.currentTimeMillis() + Time.YEAR));
+		commerceOrder1.setOrderStatus(
+			CommerceOrderConstants.ORDER_STATUS_PENDING);
+		commerceOrder2.setOrderDate(
+			new Date(System.currentTimeMillis() + Time.DAY));
+		commerceOrder2.setOrderStatus(
+			CommerceOrderConstants.ORDER_STATUS_PENDING);
+
+		commerceOrder1 = _commerceOrderLocalService.updateCommerceOrder(
+			commerceOrder1);
+		commerceOrder2 = _commerceOrderLocalService.updateCommerceOrder(
+			commerceOrder2);
+
+		commerceOrders = _commerceOrderLocalService.getCommerceOrders(
+			_user.getCompanyId(), _commerceChannel.getGroupId(),
+			new long[] {_accountEntry.getAccountEntryId()}, null,
+			new int[] {CommerceOrderConstants.ORDER_STATUS_OPEN}, true,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			new Sort("orderDate", Sort.LONG_TYPE, false));
+
+		Assert.assertEquals(
+			commerceOrders.toString(), commerceOrder1, commerceOrders.get(1));
+		Assert.assertEquals(
+			commerceOrders.toString(), commerceOrder2, commerceOrders.get(0));
+	}
+
 	@Rule
 	public FrutillaRule frutillaRule = new FrutillaRule();
 
@@ -414,7 +530,16 @@ public class CommerceOrderLocalServiceTest {
 	@Inject
 	private CountryLocalService _countryLocalService;
 
+	@Inject
+	private CPConfigurationEntryLocalService _cpConfigurationEntryLocalService;
+
+	@Inject
+	private CPConfigurationListLocalService _cpConfigurationListLocalService;
+
 	private Group _group;
+
+	@Inject
+	private Portal _portal;
 
 	@Inject
 	private RegionLocalService _regionLocalService;

@@ -8,9 +8,15 @@ import {Params} from 'react-router-dom';
 import SearchBuilder, {Operators} from '../core/SearchBuilder';
 import {AccountType} from '../enums/Account';
 import {MarketplaceCategory} from '../enums/Categories';
-import {OrderTypes, OrderWorkflowStatusCode} from '../enums/Order';
+import {
+	OrderTypes,
+	OrderWorkflowStatusCode,
+	PaymentStatus,
+	orderTypeLabel,
+} from '../enums/Order';
 import {ProductType, ProductWorkflowStatusCode} from '../enums/Product';
 import i18n from '../i18n';
+import {PublisherPayoutStatus} from '../pages/FinanceDashboard/pages/Payments';
 import {LIFERAY_VERSION_PICKLIST} from '../pages/PublisherDashboard/pages/NewAppFlow/constants';
 
 type AutoCompleteProps = {
@@ -246,20 +252,32 @@ const filterSchema = {
 				name: 'orderTypeExternalReferenceCode',
 				options: [
 					{
+						label: i18n.translate('ai-hub'),
+						value: OrderTypes.AI_HUB,
+					},
+					{
 						label: i18n.translate('client-extension'),
 						value: OrderTypes.CLIENT_EXTENSION,
 					},
 					{
 						label: i18n.translate('cloud-app'),
-						value: OrderTypes.CLOUDAPP,
+						value: OrderTypes.CLOUD_APP,
+					},
+					{
+						label: orderTypeLabel[OrderTypes.CMP],
+						value: OrderTypes.CMP,
 					},
 					{
 						label: i18n.translate('composite-app'),
 						value: OrderTypes.COMPOSITE_APP,
 					},
 					{
+						label: orderTypeLabel[OrderTypes.DXP],
+						value: OrderTypes.DXP,
+					},
+					{
 						label: i18n.translate('dxp-app'),
-						value: OrderTypes.DXPAPP,
+						value: OrderTypes.DXP_APP,
 					},
 					{
 						label: i18n.translate('low-code-configuration'),
@@ -344,8 +362,8 @@ const filterSchema = {
 			},
 			overrides(baseFilters.status, {
 				label: 'Trial Status',
-				name: 'orderStatusInfo/code',
-				operator: 'eq',
+				name: 'orderStatus',
+				operator: 'lambda',
 				options: [
 					{
 						label: i18n.translate('active'),
@@ -394,6 +412,96 @@ const filterSchema = {
 			}),
 		],
 		name: 'administratorSolutions',
+	},
+	financeDashboardOrders: {
+		fields: [
+			baseFilters.dateCreated,
+			overrides(baseFilters.dateCreated, {
+				label: i18n.translate('modified-date'),
+				name: 'modifiedDate',
+			}),
+			overrides(baseFilters.status, {
+				label: i18n.translate('payment-status'),
+				name: 'paymentStatusInfo/code',
+				options: [
+					{
+						label: i18n.translate('canceled'),
+						value: `${PaymentStatus.CANCELED}`,
+					},
+					{
+						label: i18n.translate('failed'),
+						value: `${PaymentStatus.FAILED}`,
+					},
+					{
+						label: i18n.translate('paid'),
+						value: `${PaymentStatus.PAID}`,
+					},
+					{
+						label: i18n.translate('unpaid'),
+						value: `${PaymentStatus.PENDING}`,
+					},
+				],
+				removeQuoteMark: true,
+				type: 'multiselect',
+			}),
+			overrides(baseFilters.status, {
+				label: i18n.translate('order-status'),
+				name: 'orderStatus',
+				options: [
+					{
+						label: i18n.translate('canceled'),
+						value: `${OrderWorkflowStatusCode.CANCELLED}`,
+					},
+					{
+						label: i18n.translate('completed'),
+						value: `${OrderWorkflowStatusCode.COMPLETED}`,
+					},
+					{
+						label: i18n.translate('in-progress'),
+						value: `${OrderWorkflowStatusCode.IN_PROGRESS}`,
+					},
+					{
+						label: i18n.translate('on-hold'),
+						value: `${OrderWorkflowStatusCode.ON_HOLD}`,
+					},
+					{
+						label: i18n.translate('pending'),
+						value: `${OrderWorkflowStatusCode.PENDING}`,
+					},
+					{
+						label: i18n.translate('processing'),
+						value: `${OrderWorkflowStatusCode.PROCESSING}`,
+					},
+				],
+				removeQuoteMark: true,
+				type: 'multiselect',
+			}),
+		],
+		name: 'financeOrders',
+	},
+	financeDashboardPayments: {
+		fields: [
+			overrides(baseFilters.dateCreated, {
+				name: 'dateCreated',
+			}),
+			overrides(baseFilters.status, {
+				label: i18n.translate('payment-status'),
+				name: 'paymentStatus',
+				operator: 'eq',
+				options: [
+					{
+						label: i18n.translate('paid'),
+						value: PublisherPayoutStatus.PAID,
+					},
+					{
+						label: i18n.translate('unpaid'),
+						value: PublisherPayoutStatus.UNPAID,
+					},
+				],
+				type: 'select',
+			}),
+		],
+		name: 'financePayments',
 	},
 };
 

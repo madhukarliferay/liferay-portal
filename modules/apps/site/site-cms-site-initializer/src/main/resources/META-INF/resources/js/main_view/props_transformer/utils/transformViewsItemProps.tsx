@@ -4,20 +4,17 @@
  */
 
 import ClayIcon from '@clayui/icon';
-import {Card, IView} from '@liferay/frontend-data-set-web';
+import {Card, IView, replaceTokens} from '@liferay/frontend-data-set-web';
 import React from 'react';
 
 import dateFormat from '../../../common/utils/dateFormat';
-import formatActionURL from '../../../common/utils/formatActionURL';
 
-import '../../../../css/props_transformer/ObjectDefinitionsIcons.scss';
+import '../../../../css/props_transformer/TransformViewsItemProps.scss';
+import {OBJECT_ENTRY_FOLDER_CLASS_NAME} from '../../../common/utils/constants';
 
 type Card = React.ComponentProps<typeof Card> & {
 	actions: {data: {id: string}; href?: string}[];
 };
-
-const OBJECT_ENTRY_FOLDER_CLASS_NAME =
-	'com.liferay.object.model.ObjectEntryFolder';
 
 const MULTIMEDIA_TYPES = ['audio/', 'image/', 'video/'];
 
@@ -40,7 +37,25 @@ const getHrefLink = (item: any, props: Card) => {
 		return null;
 	}
 
-	return formatActionURL(item, selectedAction.href);
+	return replaceTokens(selectedAction.href, item);
+};
+
+const getYouTubeVideoId = (videoURL: string) => {
+	try {
+		const url = new URL(videoURL);
+
+		if (['www.youtube.com', 'youtube.com'].includes(url.hostname)) {
+			return url.searchParams.get('v');
+		}
+		else if (['www.youtu.be', 'youtu.be'].includes(url.hostname)) {
+			return url.pathname.substring(1);
+		}
+	}
+	catch (_error) {
+		return null;
+	}
+
+	return null;
 };
 
 const getThumbnailProps = (item: any) => {
@@ -49,14 +64,34 @@ const getThumbnailProps = (item: any) => {
 	}
 
 	if (item.embedded.file) {
-		const {thumbnailURL} = item.embedded.file;
+		const {alternativeText, name, thumbnailURL} = item.embedded.file;
 
 		if (thumbnailURL) {
-			return {imgProps: thumbnailURL};
+			return {
+				imgProps: {
+					alt: alternativeText || name,
+					src: thumbnailURL,
+				},
+			};
 		}
 		else {
 			return {symbol: 'documents-and-media'};
 		}
+	}
+
+	if (item.embedded.videoURL) {
+		const videoId = getYouTubeVideoId(item.embedded.videoURL);
+
+		if (videoId) {
+			return {
+				imgProps: {
+					alt: item.embedded.title || item.title,
+					src: `https://img.youtube.com/vi/${videoId}/0.jpg`,
+				},
+			};
+		}
+
+		return {symbol: 'video'};
 	}
 
 	return {symbol: 'web-content'};
@@ -66,13 +101,13 @@ function isMultimediaMimeType(mimeType: string): boolean {
 	return MULTIMEDIA_TYPES.some((prefix) => mimeType.startsWith(prefix));
 }
 
-const getFileMimeTypeObjectDefinitionStickerValue = (
+export function getFileMimeTypeObjectDefinitionStickerValue(
 	fileMimeTypeValues: Record<string, string> | undefined,
-	item: any,
-	objectDefinitionValues: Record<string, string>
-) => {
+	objectDefinitionValues: Record<string, string>,
+	item: any
+) {
 	if (item.entryClassName === OBJECT_ENTRY_FOLDER_CLASS_NAME) {
-		return '';
+		return 'folder';
 	}
 
 	const objectDefinitionExternalReferenceCode =
@@ -89,9 +124,13 @@ const getFileMimeTypeObjectDefinitionStickerValue = (
 
 		if (
 			fileMimeTypeValues &&
-			objectDefinitionExternalReferenceCode === 'L_BASIC_DOCUMENT'
+			objectDefinitionExternalReferenceCode === 'L_CMS_BASIC_DOCUMENT'
 		) {
-			const mimeType = item.embedded.file.mimeType;
+			const mimeType = item.embedded.file?.mimeType;
+
+			if (!mimeType) {
+				return fileMimeTypeValues['default'];
+			}
 
 			const fileMimeTypeCssClass = fileMimeTypeValues[mimeType];
 
@@ -117,6 +156,19 @@ const getFileMimeTypeObjectDefinitionStickerValue = (
 	}
 
 	return '';
+}
+
+const getLabels = (item: any, props: Card) => {
+	if (item.entryClassName === OBJECT_ENTRY_FOLDER_CLASS_NAME) {
+		return [
+			{
+				displayType: 'empty',
+				value: '',
+			},
+		];
+	}
+
+	return props.labels;
 };
 
 type ViewsItemsProps = {
@@ -137,24 +189,37 @@ export function transformItemCardView(
 ) {
 	return {
 		...props,
-		description: dateFormat(item.dateModified),
+		description: dateFormat(
+			{
+				day: 'numeric',
+				hour: 'numeric',
+				minute: 'numeric',
+				month: 'short',
+				second: 'numeric',
+				timeZone: Liferay.ThemeDisplay.getTimeZone(),
+				year: 'numeric',
+			},
+			item.dateModified
+		),
 		href: getHrefLink(item, props),
+		labels: getLabels(item, props),
 		stickerProps: {
 			className: getFileMimeTypeObjectDefinitionStickerValue(
 				fileMimeTypeCssClasses,
-				item,
-				objectDefinitionCssClasses
+				objectDefinitionCssClasses,
+				item
 			),
 			content: (
 				<ClayIcon
 					symbol={getFileMimeTypeObjectDefinitionStickerValue(
 						fileMimeTypeIcons,
-						item,
-						objectDefinitionIcons
+						objectDefinitionIcons,
+						item
 					)}
 				/>
 			),
 		},
+		title: props.title || Liferay.Language.get('untitled-asset'),
 		...getThumbnailProps(item),
 	};
 }
@@ -167,7 +232,7 @@ export default function transformViewsItemProps({
 	views,
 }: ViewsItemsProps) {
 	return views.map((view) => {
-		if (view.name === 'cards') {
+		if (view.name === 'cards' || view.name === 'gallery') {
 			view.setItemComponentProps = ({
 				item,
 				props,

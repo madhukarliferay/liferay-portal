@@ -120,47 +120,6 @@ public interface LazyBlobEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last lazy blob entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching lazy blob entry
-	 * @throws NoSuchLazyBlobEntryException if a matching lazy blob entry could not be found
-	 */
-	public LazyBlobEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LazyBlobEntry>
-				orderByComparator)
-		throws NoSuchLazyBlobEntryException;
-
-	/**
-	 * Returns the last lazy blob entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching lazy blob entry, or <code>null</code> if a matching lazy blob entry could not be found
-	 */
-	public LazyBlobEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<LazyBlobEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the lazy blob entries before and after the current lazy blob entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param lazyBlobEntryId the primary key of the current lazy blob entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next lazy blob entry
-	 * @throws NoSuchLazyBlobEntryException if a lazy blob entry with the primary key could not be found
-	 */
-	public LazyBlobEntry[] findByUuid_PrevAndNext(
-			long lazyBlobEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LazyBlobEntry>
-				orderByComparator)
-		throws NoSuchLazyBlobEntryException;
-
-	/**
 	 * Removes all the lazy blob entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -346,3 +305,4 @@ public interface LazyBlobEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1927697422

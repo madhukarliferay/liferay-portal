@@ -27,12 +27,15 @@ export class CategoriesPage {
 		);
 
 		this.breadcrumbBar = this.page.locator('.breadcrumb-bar');
-		this.createNewCategoryButton = this.page.getByTitle('New Category');
-		this.createNewSubcategoryButton =
-			this.page.getByTitle('New Subcategory');
-		this.closePermissionsModalButton = this.page.locator(
-			'//button[@aria-label="close"]'
-		);
+		this.createNewCategoryButton = this.page.getByRole('button', {
+			name: 'New Category',
+		});
+		this.createNewSubcategoryButton = this.page.getByRole('button', {
+			name: 'New Subcategory',
+		});
+		this.closePermissionsModalButton = this.page
+			.locator('.modal-header')
+			.getByLabel('Close', {exact: true});
 		this.deleteConfirmationModal = this.page.locator('.modal-content', {
 			hasText: 'Delete',
 		});

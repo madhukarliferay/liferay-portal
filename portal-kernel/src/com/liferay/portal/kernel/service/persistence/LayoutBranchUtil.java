@@ -218,56 +218,6 @@ public class LayoutBranchUtil {
 	}
 
 	/**
-	 * Returns the last layout branch in the ordered set where layoutSetBranchId = &#63;.
-	 *
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch
-	 * @throws NoSuchLayoutBranchException if a matching layout branch could not be found
-	 */
-	public static LayoutBranch findByLayoutSetBranchId_Last(
-			long layoutSetBranchId,
-			OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByLayoutSetBranchId_Last(
-			layoutSetBranchId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout branch in the ordered set where layoutSetBranchId = &#63;.
-	 *
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch, or <code>null</code> if a matching layout branch could not be found
-	 */
-	public static LayoutBranch fetchByLayoutSetBranchId_Last(
-		long layoutSetBranchId,
-		OrderByComparator<LayoutBranch> orderByComparator) {
-
-		return getPersistence().fetchByLayoutSetBranchId_Last(
-			layoutSetBranchId, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout branches before and after the current layout branch in the ordered set where layoutSetBranchId = &#63;.
-	 *
-	 * @param layoutBranchId the primary key of the current layout branch
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout branch
-	 * @throws NoSuchLayoutBranchException if a layout branch with the primary key could not be found
-	 */
-	public static LayoutBranch[] findByLayoutSetBranchId_PrevAndNext(
-			long layoutBranchId, long layoutSetBranchId,
-			OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByLayoutSetBranchId_PrevAndNext(
-			layoutBranchId, layoutSetBranchId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the layout branches where layoutSetBranchId = &#63; from the database.
 	 *
 	 * @param layoutSetBranchId the layout set branch ID
@@ -381,52 +331,6 @@ public class LayoutBranchUtil {
 		long plid, OrderByComparator<LayoutBranch> orderByComparator) {
 
 		return getPersistence().fetchByPlid_First(plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout branch in the ordered set where plid = &#63;.
-	 *
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch
-	 * @throws NoSuchLayoutBranchException if a matching layout branch could not be found
-	 */
-	public static LayoutBranch findByPlid_Last(
-			long plid, OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByPlid_Last(plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout branch in the ordered set where plid = &#63;.
-	 *
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch, or <code>null</code> if a matching layout branch could not be found
-	 */
-	public static LayoutBranch fetchByPlid_Last(
-		long plid, OrderByComparator<LayoutBranch> orderByComparator) {
-
-		return getPersistence().fetchByPlid_Last(plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout branches before and after the current layout branch in the ordered set where plid = &#63;.
-	 *
-	 * @param layoutBranchId the primary key of the current layout branch
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout branch
-	 * @throws NoSuchLayoutBranchException if a layout branch with the primary key could not be found
-	 */
-	public static LayoutBranch[] findByPlid_PrevAndNext(
-			long layoutBranchId, long plid,
-			OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByPlid_PrevAndNext(
-			layoutBranchId, plid, orderByComparator);
 	}
 
 	/**
@@ -559,59 +463,6 @@ public class LayoutBranchUtil {
 
 		return getPersistence().fetchByL_P_First(
 			layoutSetBranchId, plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout branch in the ordered set where layoutSetBranchId = &#63; and plid = &#63;.
-	 *
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch
-	 * @throws NoSuchLayoutBranchException if a matching layout branch could not be found
-	 */
-	public static LayoutBranch findByL_P_Last(
-			long layoutSetBranchId, long plid,
-			OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByL_P_Last(
-			layoutSetBranchId, plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout branch in the ordered set where layoutSetBranchId = &#63; and plid = &#63;.
-	 *
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch, or <code>null</code> if a matching layout branch could not be found
-	 */
-	public static LayoutBranch fetchByL_P_Last(
-		long layoutSetBranchId, long plid,
-		OrderByComparator<LayoutBranch> orderByComparator) {
-
-		return getPersistence().fetchByL_P_Last(
-			layoutSetBranchId, plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout branches before and after the current layout branch in the ordered set where layoutSetBranchId = &#63; and plid = &#63;.
-	 *
-	 * @param layoutBranchId the primary key of the current layout branch
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout branch
-	 * @throws NoSuchLayoutBranchException if a layout branch with the primary key could not be found
-	 */
-	public static LayoutBranch[] findByL_P_PrevAndNext(
-			long layoutBranchId, long layoutSetBranchId, long plid,
-			OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByL_P_PrevAndNext(
-			layoutBranchId, layoutSetBranchId, plid, orderByComparator);
 	}
 
 	/**
@@ -832,62 +683,6 @@ public class LayoutBranchUtil {
 	}
 
 	/**
-	 * Returns the last layout branch in the ordered set where layoutSetBranchId = &#63; and plid = &#63; and master = &#63;.
-	 *
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param plid the plid
-	 * @param master the master
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch
-	 * @throws NoSuchLayoutBranchException if a matching layout branch could not be found
-	 */
-	public static LayoutBranch findByL_P_M_Last(
-			long layoutSetBranchId, long plid, boolean master,
-			OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByL_P_M_Last(
-			layoutSetBranchId, plid, master, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout branch in the ordered set where layoutSetBranchId = &#63; and plid = &#63; and master = &#63;.
-	 *
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param plid the plid
-	 * @param master the master
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout branch, or <code>null</code> if a matching layout branch could not be found
-	 */
-	public static LayoutBranch fetchByL_P_M_Last(
-		long layoutSetBranchId, long plid, boolean master,
-		OrderByComparator<LayoutBranch> orderByComparator) {
-
-		return getPersistence().fetchByL_P_M_Last(
-			layoutSetBranchId, plid, master, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout branches before and after the current layout branch in the ordered set where layoutSetBranchId = &#63; and plid = &#63; and master = &#63;.
-	 *
-	 * @param layoutBranchId the primary key of the current layout branch
-	 * @param layoutSetBranchId the layout set branch ID
-	 * @param plid the plid
-	 * @param master the master
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout branch
-	 * @throws NoSuchLayoutBranchException if a layout branch with the primary key could not be found
-	 */
-	public static LayoutBranch[] findByL_P_M_PrevAndNext(
-			long layoutBranchId, long layoutSetBranchId, long plid,
-			boolean master, OrderByComparator<LayoutBranch> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchLayoutBranchException {
-
-		return getPersistence().findByL_P_M_PrevAndNext(
-			layoutBranchId, layoutSetBranchId, plid, master, orderByComparator);
-	}
-
-	/**
 	 * Removes all the layout branches where layoutSetBranchId = &#63; and plid = &#63; and master = &#63; from the database.
 	 *
 	 * @param layoutSetBranchId the layout set branch ID
@@ -1072,3 +867,4 @@ public class LayoutBranchUtil {
 	private static volatile LayoutBranchPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:2059101822

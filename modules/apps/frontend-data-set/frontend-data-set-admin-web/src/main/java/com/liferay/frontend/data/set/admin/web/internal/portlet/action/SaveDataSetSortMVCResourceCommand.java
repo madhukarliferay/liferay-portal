@@ -75,8 +75,9 @@ public class SaveDataSetSortMVCResourceCommand
 			ParamUtil.getString(resourceRequest, "useAsDefaultSorting"));
 
 		ObjectDefinition dataSetObjectDefinition =
-			_objectDefinitionLocalService.fetchObjectDefinition(
-				themeDisplay.getCompanyId(), "DataSet");
+			_objectDefinitionLocalService.
+				fetchObjectDefinitionByExternalReferenceCode(
+					"L_DATA_SET", themeDisplay.getCompanyId());
 
 		if (useAsDefaultSorting) {
 			Collection<ObjectEntry> dataSetSortObjectEntries =
@@ -105,15 +106,17 @@ public class SaveDataSetSortMVCResourceCommand
 					values.put("default", false);
 
 					_objectEntryService.updateObjectEntry(
-						dataSetSortObjectEntry.getId(), values,
+						dataSetSortObjectEntry.getId(),
+						dataSetSortObjectEntry.getObjectEntryFolderId(), values,
 						new ServiceContext());
 				}
 			}
 		}
 
 		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.fetchObjectDefinition(
-				themeDisplay.getCompanyId(), "DataSetSort");
+			_objectDefinitionLocalService.
+				fetchObjectDefinitionByExternalReferenceCode(
+					"L_DATA_SET_SORT", themeDisplay.getCompanyId());
 
 		Map<String, Serializable> labelI18nMap =
 			(Map<String, Serializable>)_jsonFactory.looseDeserialize(labelI18n);
@@ -153,6 +156,7 @@ public class SaveDataSetSortMVCResourceCommand
 		DefaultObjectEntryManager defaultObjectEntryManager =
 			DefaultObjectEntryManagerProvider.provide(
 				_objectEntryManagerRegistry.getObjectEntryManager(
+					dataSetObjectDefinition.getCompanyId(),
 					dataSetObjectDefinition.getStorageType()));
 
 		Page<ObjectEntry> relatedObjectEntriesPage =

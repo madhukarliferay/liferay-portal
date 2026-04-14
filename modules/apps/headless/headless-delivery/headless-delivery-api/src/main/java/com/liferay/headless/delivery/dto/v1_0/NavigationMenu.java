@@ -723,9 +723,7 @@ public class NavigationMenu implements Serializable {
 			sb.append("\"navigationType\": ");
 
 			sb.append("\"");
-
 			sb.append(navigationType);
-
 			sb.append("\"");
 		}
 
@@ -903,3 +901,4 @@ public class NavigationMenu implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1078915085

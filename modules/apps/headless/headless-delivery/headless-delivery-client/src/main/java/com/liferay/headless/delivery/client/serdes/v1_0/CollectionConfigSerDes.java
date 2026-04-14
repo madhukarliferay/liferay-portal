@@ -71,9 +71,7 @@ public class CollectionConfigSerDes {
 			sb.append("\"collectionType\": ");
 
 			sb.append("\"");
-
 			sb.append(collectionConfig.getCollectionType());
-
 			sb.append("\"");
 		}
 
@@ -241,3 +239,4 @@ public class CollectionConfigSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1911030985

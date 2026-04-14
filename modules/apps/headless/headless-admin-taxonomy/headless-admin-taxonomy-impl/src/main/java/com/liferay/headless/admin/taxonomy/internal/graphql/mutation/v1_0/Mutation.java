@@ -131,6 +131,38 @@ public class Mutation {
 		return true;
 	}
 
+	@GraphQLField(
+		description = "Updates only the fields received in the request body. Other fields are left untouched."
+	)
+	public Keyword patchSiteKeyword(
+			@GraphQLName("siteKey") @NotEmpty String siteKey,
+			@GraphQLName("keyword") Keyword keyword)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_keywordResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			keywordResource -> keywordResource.patchSiteKeyword(
+				Long.valueOf(siteKey), keyword));
+	}
+
+	@GraphQLField(
+		description = "Updates only the fields received in the request body. Other fields are left untouched."
+	)
+	public Keyword patchSiteKeywordByExternalReferenceCode(
+			@GraphQLName("siteKey") @NotEmpty String siteKey,
+			@GraphQLName("externalReferenceCode") String externalReferenceCode,
+			@GraphQLName("keyword") Keyword keyword)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_keywordResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			keywordResource ->
+				keywordResource.patchSiteKeywordByExternalReferenceCode(
+					Long.valueOf(siteKey), externalReferenceCode, keyword));
+	}
+
 	@GraphQLField
 	public Keyword createAssetLibraryKeyword(
 			@GraphQLName("assetLibraryId") @NotEmpty String assetLibraryId,
@@ -178,48 +210,6 @@ public class Mutation {
 					_filterBiFunction.apply(keywordResource, filterString),
 					_sortsBiFunction.apply(keywordResource, sortsString),
 					callbackURL, contentType, fieldNames));
-	}
-
-	@GraphQLField
-	public Keyword createKeyword(@GraphQLName("keyword") Keyword keyword)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_keywordResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			keywordResource -> keywordResource.postKeyword(keyword));
-	}
-
-	@GraphQLField
-	public Response createKeywordBatch(
-			@GraphQLName("callbackURL") String callbackURL,
-			@GraphQLName("object") Object object)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_keywordResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			keywordResource -> keywordResource.postKeywordBatch(
-				callbackURL, object));
-	}
-
-	@GraphQLField
-	public Response createKeywordsPageExportBatch(
-			@GraphQLName("search") String search,
-			@GraphQLName("filter") String filterString,
-			@GraphQLName("sort") String sortsString,
-			@GraphQLName("callbackURL") String callbackURL,
-			@GraphQLName("contentType") String contentType,
-			@GraphQLName("fieldNames") String fieldNames)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_keywordResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			keywordResource -> keywordResource.postKeywordsPageExportBatch(
-				search, _filterBiFunction.apply(keywordResource, filterString),
-				_sortsBiFunction.apply(keywordResource, sortsString),
-				callbackURL, contentType, fieldNames));
 	}
 
 	@GraphQLField(description = "Inserts a new keyword in a Site.")
@@ -1013,60 +1003,6 @@ public class Mutation {
 					Long.valueOf(siteKey), callbackURL, object));
 	}
 
-	@GraphQLField
-	public Response createTaxonomyVocabulariesPageExportBatch(
-			@GraphQLName("search") String search,
-			@GraphQLName("filter") String filterString,
-			@GraphQLName("sort") String sortsString,
-			@GraphQLName("callbackURL") String callbackURL,
-			@GraphQLName("contentType") String contentType,
-			@GraphQLName("fieldNames") String fieldNames)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_taxonomyVocabularyResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			taxonomyVocabularyResource ->
-				taxonomyVocabularyResource.
-					postTaxonomyVocabulariesPageExportBatch(
-						search,
-						_filterBiFunction.apply(
-							taxonomyVocabularyResource, filterString),
-						_sortsBiFunction.apply(
-							taxonomyVocabularyResource, sortsString),
-						callbackURL, contentType, fieldNames));
-	}
-
-	@GraphQLField(
-		description = "Creates the asset library's taxonomy vocabulary in the given spaces."
-	)
-	public TaxonomyVocabulary createTaxonomyVocabulary(
-			@GraphQLName("taxonomyVocabulary") TaxonomyVocabulary
-				taxonomyVocabulary)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_taxonomyVocabularyResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			taxonomyVocabularyResource ->
-				taxonomyVocabularyResource.postTaxonomyVocabulary(
-					taxonomyVocabulary));
-	}
-
-	@GraphQLField
-	public Response createTaxonomyVocabularyBatch(
-			@GraphQLName("callbackURL") String callbackURL,
-			@GraphQLName("object") Object object)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_taxonomyVocabularyResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			taxonomyVocabularyResource ->
-				taxonomyVocabularyResource.postTaxonomyVocabularyBatch(
-					callbackURL, object));
-	}
-
 	@GraphQLField(
 		description = "Updates the asset library's taxonomy vocabulary with the given external reference code, or creates it if it not exists."
 	)
@@ -1335,3 +1271,4 @@ public class Mutation {
 		_vulcanBatchEngineImportTaskResource;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1557945465

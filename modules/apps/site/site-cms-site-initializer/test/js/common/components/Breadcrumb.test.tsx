@@ -3,14 +3,21 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {openModal} from 'frontend-js-components-web';
 import React from 'react';
 
 import Breadcrumb, {
+	ActionDropdownItemProps,
 	BreadcrumbItem,
 } from '../../../../src/main/resources/META-INF/resources/js/common/components/Breadcrumb';
+
+jest.mock('frontend-js-components-web', () => ({
+	FeatureIndicator: ({type}: {type: string}) => <span>{type}</span>,
+	openModal: jest.fn(),
+}));
 
 const testBreadcrumbItemsLong = [
 	{
@@ -89,6 +96,10 @@ function expectBreadcrumbItemSticker(breadcrumbItem: BreadcrumbItem) {
 }
 
 describe('Breadcrumb', () => {
+	afterEach(() => {
+		jest.clearAllMocks();
+	});
+
 	it('renders all elements of a short breadcrumb', () => {
 		render(<Breadcrumb breadcrumbItems={testBreadcrumbItemsShort} />);
 
@@ -146,5 +157,72 @@ describe('Breadcrumb', () => {
 				screen.getByRole('menuitem', {name: 'Space Settings'})
 			).toBeInTheDocument();
 		});
+
+		expect(screen.getByLabelText('more-actions')).toHaveAttribute(
+			'aria-expanded',
+			'true'
+		);
+	});
+
+	it('renders custom confirm modal when delete action is clicked', async () => {
+		const confirmationMessage =
+			'Are you sure you want to delete this space?';
+		const confirmationTitle = 'Delete space My Space';
+
+		render(
+			<Breadcrumb
+				actionItems={[
+					{
+						confirmationMessage,
+						confirmationTitle,
+						label: 'Delete',
+						target: 'asyncDelete',
+					} as ActionDropdownItemProps,
+				]}
+				breadcrumbItems={testBreadcrumbItemsSingle}
+			/>
+		);
+
+		await userEvent.click(screen.getByLabelText('more-actions'));
+
+		const deleteItem = await screen.getByRole('menuitem', {name: 'Delete'});
+		await userEvent.click(deleteItem);
+
+		expect(openModal).toHaveBeenCalledTimes(1);
+
+		expect(openModal).toHaveBeenCalledWith(
+			expect.objectContaining({
+				bodyHTML: confirmationMessage,
+				status: 'danger',
+				title: confirmationTitle,
+			})
+		);
+	});
+
+	it('renders the enterprise badge when `freeTier` is true and there is a single breadcrumb item', () => {
+		render(
+			<Breadcrumb breadcrumbItems={testBreadcrumbItemsSingle} freeTier />
+		);
+
+		expect(screen.getByText('enterprise')).toBeInTheDocument();
+	});
+
+	it('does not render the enterprise badge when `freeTier` is false', () => {
+		render(
+			<Breadcrumb
+				breadcrumbItems={testBreadcrumbItemsSingle}
+				freeTier={false}
+			/>
+		);
+
+		expect(screen.queryByText('enterprise')).not.toBeInTheDocument();
+	});
+
+	it('does not render the enterprise badge when there are multiple breadcrumb items', () => {
+		render(
+			<Breadcrumb breadcrumbItems={testBreadcrumbItemsShort} freeTier />
+		);
+
+		expect(screen.queryByText('enterprise')).not.toBeInTheDocument();
 	});
 });

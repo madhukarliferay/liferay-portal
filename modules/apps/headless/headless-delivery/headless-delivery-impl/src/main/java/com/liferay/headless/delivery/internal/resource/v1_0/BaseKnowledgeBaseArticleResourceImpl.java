@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.KnowledgeBaseArticle;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
@@ -495,28 +496,28 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			knowledgeBaseArticleId);
+		Long groupId = getPermissionCheckerGroupId(knowledgeBaseArticleId);
 		Long resourceId = getPermissionCheckerResourceId(
+			knowledgeBaseArticleId);
+		String resourceName = getPermissionCheckerResourceName(
 			knowledgeBaseArticleId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(knowledgeBaseArticleId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getKnowledgeBaseArticlePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getKnowledgeBaseArticlePermissionsPage", null,
+					resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putKnowledgeBaseArticlePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putKnowledgeBaseArticlePermissionsPage", null,
+					resourceName, groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -733,15 +734,15 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteKnowledgeBaseArticlePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteKnowledgeBaseArticlePermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteKnowledgeBaseArticlePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteKnowledgeBaseArticlePermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -1566,14 +1567,14 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			knowledgeBaseArticleId);
+		Long groupId = getPermissionCheckerGroupId(knowledgeBaseArticleId);
 		Long resourceId = getPermissionCheckerResourceId(
+			knowledgeBaseArticleId);
+		String resourceName = getPermissionCheckerResourceName(
 			knowledgeBaseArticleId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(knowledgeBaseArticleId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1609,23 +1610,22 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(knowledgeBaseArticleId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getKnowledgeBaseArticlePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getKnowledgeBaseArticlePermissionsPage", null,
+					resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putKnowledgeBaseArticlePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putKnowledgeBaseArticlePermissionsPage", null,
+					resourceName, groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1825,15 +1825,15 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteKnowledgeBaseArticlePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteKnowledgeBaseArticlePermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteKnowledgeBaseArticlePermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteKnowledgeBaseArticlePermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -2039,9 +2039,38 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 
 		UnsafeFunction<KnowledgeBaseArticle, KnowledgeBaseArticle, Exception>
 			knowledgeBaseArticleUnsafeFunction = knowledgeBaseArticle -> {
-				deleteKnowledgeBaseArticle(knowledgeBaseArticle.getId());
+				if (knowledgeBaseArticle.getId() != null) {
+					try {
+						deleteKnowledgeBaseArticle(
+							knowledgeBaseArticle.getId());
 
-				return knowledgeBaseArticle;
+						return knowledgeBaseArticle;
+					}
+					catch (Exception exception) {
+						if (knowledgeBaseArticle.getExternalReferenceCode() !=
+								null) {
+
+							if (parameters.containsKey("siteId")) {
+								deleteSiteKnowledgeBaseArticleByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									knowledgeBaseArticle.
+										getExternalReferenceCode());
+
+								return knowledgeBaseArticle;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteKnowledgeBaseArticleByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						knowledgeBaseArticle.getExternalReferenceCode());
+
+					return knowledgeBaseArticle;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -2094,21 +2123,21 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
 
-		if (parameters.containsKey("siteId")) {
-			return getSiteKnowledgeBaseArticlesPage(
-				(Long)parameters.get("siteId"),
-				_parseBoolean((String)parameters.get("flatten")), search, null,
-				filter, pagination, sorts);
-		}
-		else if (parameters.containsKey("knowledgeBaseFolderId")) {
+		if (parameters.containsKey("knowledgeBaseFolderId")) {
 			return getKnowledgeBaseFolderKnowledgeBaseArticlesPage(
 				_parseLong((String)parameters.get("knowledgeBaseFolderId")),
 				_parseBoolean((String)parameters.get("flatten")), search, null,
 				filter, pagination, sorts);
 		}
+		else if (parameters.containsKey("siteId")) {
+			return getSiteKnowledgeBaseArticlesPage(
+				(Long)parameters.get("siteId"),
+				_parseBoolean((String)parameters.get("flatten")), search, null,
+				filter, pagination, sorts);
+		}
 		else {
 			throw new NotSupportedException(
-				"One of the following parameters must be specified: [siteId, knowledgeBaseFolderId]");
+				"One of the following parameters must be specified: [knowledgeBaseFolderId, siteId]");
 		}
 	}
 
@@ -2129,6 +2158,15 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2366,6 +2404,9 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2938,3 +2979,4 @@ public abstract class BaseKnowledgeBaseArticleResourceImpl
 		LogFactoryUtil.getLog(BaseKnowledgeBaseArticleResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:613475075

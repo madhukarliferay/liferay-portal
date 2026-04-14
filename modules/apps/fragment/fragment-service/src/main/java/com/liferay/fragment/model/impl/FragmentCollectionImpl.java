@@ -147,6 +147,20 @@ public class FragmentCollectionImpl extends FragmentCollectionBaseImpl {
 	}
 
 	@Override
+	public boolean isExportable() throws PortalException {
+		if (FragmentCompositionLocalServiceUtil.
+				hasExportableFragmentCompositions(getFragmentCollectionId()) ||
+			FragmentEntryLocalServiceUtil.hasExportableFragmentEntries(
+				getFragmentCollectionId()) ||
+			hasResources()) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public void populateZipWriter(ZipWriter zipWriter) throws Exception {
 		populateZipWriter(zipWriter, StringPool.BLANK);
 	}

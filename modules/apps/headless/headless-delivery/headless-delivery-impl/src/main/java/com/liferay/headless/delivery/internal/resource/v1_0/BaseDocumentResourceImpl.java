@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.Document;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
@@ -390,14 +391,14 @@ public abstract class BaseDocumentResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryDocumentPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryDocumentPermissionsPage", null, portletName,
 					assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryDocumentPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryDocumentPermissionsPage", null, portletName,
 					assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, roleNames);
@@ -748,23 +749,24 @@ public abstract class BaseDocumentResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(documentId);
+		Long groupId = getPermissionCheckerGroupId(documentId);
 		Long resourceId = getPermissionCheckerResourceId(documentId);
+		String resourceName = getPermissionCheckerResourceName(documentId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(documentId), resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getDocumentPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDocumentPermissionsPage", null, resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putDocumentPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDocumentPermissionsPage", null, resourceName, groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -933,13 +935,13 @@ public abstract class BaseDocumentResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteDocumentPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteDocumentPermissionsPage", null, portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteDocumentPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteDocumentPermissionsPage", null, portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -1797,14 +1799,14 @@ public abstract class BaseDocumentResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryDocumentPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryDocumentPermissionsPage", null, portletName,
 					assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryDocumentPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryDocumentPermissionsPage", null, portletName,
 					assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, null);
@@ -1955,11 +1957,12 @@ public abstract class BaseDocumentResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(documentId);
+		Long groupId = getPermissionCheckerGroupId(documentId);
 		Long resourceId = getPermissionCheckerResourceId(documentId);
+		String resourceName = getPermissionCheckerResourceName(documentId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(documentId), resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1995,21 +1998,20 @@ public abstract class BaseDocumentResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(documentId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getDocumentPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDocumentPermissionsPage", null, resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putDocumentPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDocumentPermissionsPage", null, resourceName, groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -2133,13 +2135,13 @@ public abstract class BaseDocumentResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteDocumentPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteDocumentPermissionsPage", null, portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteDocumentPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteDocumentPermissionsPage", null, portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -2292,9 +2294,49 @@ public abstract class BaseDocumentResourceImpl
 
 		UnsafeFunction<Document, Document, Exception> documentUnsafeFunction =
 			document -> {
-				deleteDocument(document.getId());
+				if (document.getId() != null) {
+					try {
+						deleteDocument(document.getId());
 
-				return document;
+						return document;
+					}
+					catch (Exception exception) {
+						if (document.getExternalReferenceCode() != null) {
+							if (parameters.containsKey("assetLibraryId")) {
+								deleteAssetLibraryDocumentByExternalReferenceCode(
+									(Long)parameters.get("assetLibraryId"),
+									document.getExternalReferenceCode());
+
+								return document;
+							}
+
+							if (parameters.containsKey("siteId")) {
+								deleteSiteDocumentByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									document.getExternalReferenceCode());
+
+								return document;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("assetLibraryId")) {
+					deleteAssetLibraryDocumentByExternalReferenceCode(
+						(Long)parameters.get("assetLibraryId"),
+						document.getExternalReferenceCode());
+
+					return document;
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteDocumentByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						document.getExternalReferenceCode());
+
+					return document;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -2350,21 +2392,21 @@ public abstract class BaseDocumentResourceImpl
 				_parseBoolean((String)parameters.get("flatten")), search, null,
 				filter, pagination, sorts);
 		}
-		else if (parameters.containsKey("siteId")) {
-			return getSiteDocumentsPage(
-				(Long)parameters.get("siteId"),
-				_parseBoolean((String)parameters.get("flatten")), search, null,
-				filter, pagination, sorts);
-		}
 		else if (parameters.containsKey("documentFolderId")) {
 			return getDocumentFolderDocumentsPage(
 				_parseLong((String)parameters.get("documentFolderId")),
 				_parseBoolean((String)parameters.get("flatten")), search, null,
 				filter, pagination, sorts);
 		}
+		else if (parameters.containsKey("siteId")) {
+			return getSiteDocumentsPage(
+				(Long)parameters.get("siteId"),
+				_parseBoolean((String)parameters.get("flatten")), search, null,
+				filter, pagination, sorts);
+		}
 		else {
 			throw new NotSupportedException(
-				"One of the following parameters must be specified: [assetLibraryId, siteId, documentFolderId]");
+				"One of the following parameters must be specified: [assetLibraryId, documentFolderId, siteId]");
 		}
 	}
 
@@ -2385,6 +2427,15 @@ public abstract class BaseDocumentResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2617,6 +2668,9 @@ public abstract class BaseDocumentResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -3257,3 +3311,4 @@ public abstract class BaseDocumentResourceImpl
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-702697123

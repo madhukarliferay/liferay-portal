@@ -51,9 +51,7 @@ public class ObjectEntryLayoutDisplayPageProviderTest {
 		new LiferayIntegrationTestRule();
 
 	@Test
-	public void testGetObjectEntryLayoutDisplayPageObjectProvider()
-		throws Exception {
-
+	public void testGetLayoutDisplayPageObjectProvider() throws Exception {
 		String objectFieldName = StringUtil.randomId();
 
 		ObjectDefinition objectDefinition1 = _publishCustomObjectDefinition(
@@ -87,6 +85,7 @@ public class ObjectEntryLayoutDisplayPageProviderTest {
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
 			_layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByURLSeparator(
+					objectDefinition2.getCompanyId(),
 					FriendlyURLResolverConstants.URL_SEPARATOR_OBJECT_ENTRY);
 
 		Assert.assertEquals(

@@ -26,20 +26,15 @@ import com.liferay.portal.search.engine.adapter.document.DeleteByQueryDocumentRe
 import com.liferay.portal.search.engine.adapter.document.DeleteByQueryDocumentResponse;
 import com.liferay.portal.search.engine.adapter.document.DeleteDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.DeleteDocumentResponse;
-import com.liferay.portal.search.engine.adapter.document.DocumentRequestExecutor;
 import com.liferay.portal.search.engine.adapter.document.IndexDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.IndexDocumentResponse;
 import com.liferay.portal.search.engine.adapter.document.UpdateByQueryDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.UpdateByQueryDocumentResponse;
 import com.liferay.portal.search.engine.adapter.document.UpdateDocumentRequest;
 import com.liferay.portal.search.engine.adapter.document.UpdateDocumentResponse;
-import com.liferay.portal.search.internal.script.ScriptsImpl;
 import com.liferay.portal.search.opensearch2.internal.BaseOpenSearchTestCase;
 import com.liferay.portal.search.opensearch2.internal.OpenSearchTestRule;
 import com.liferay.portal.search.opensearch2.internal.connection.OpenSearchConnectionManager;
-import com.liferay.portal.search.opensearch2.internal.document.OpenSearchDocumentFactory;
-import com.liferay.portal.search.opensearch2.internal.document.OpenSearchDocumentFactoryImpl;
-import com.liferay.portal.search.opensearch2.internal.search.engine.adapter.document.DocumentRequestExecutorFixture;
 import com.liferay.portal.search.opensearch2.internal.util.ConversionUtil;
 import com.liferay.portal.search.opensearch2.internal.util.IndexUtil;
 import com.liferay.portal.search.script.Script;
@@ -49,6 +44,7 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.IOException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -109,8 +105,8 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 	public void testExecuteBulkDocumentRequest() throws JSONException {
 		Document document1 = new DocumentImpl();
 
-		document1.addKeyword(Field.UID, "1");
 		document1.addKeyword(_FIELD_NAME, Boolean.TRUE.toString());
+		document1.addKeyword(Field.UID, "1");
 
 		BulkDocumentRequest bulkDocumentRequest1 = new BulkDocumentRequest();
 
@@ -119,8 +115,8 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 
 		Document document2 = new DocumentImpl();
 
-		document2.addKeyword(Field.UID, "2");
 		document2.addKeyword(_FIELD_NAME, Boolean.FALSE.toString());
+		document2.addKeyword(Field.UID, "2");
 
 		bulkDocumentRequest1.addBulkableDocumentRequest(
 			new IndexDocumentRequest(TEST_INDEX_NAME, document2));
@@ -154,8 +150,8 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 
 		Document document2Update = new DocumentImpl();
 
-		document2Update.addKeyword(Field.UID, "2");
 		document2Update.addKeyword(_FIELD_NAME, Boolean.TRUE.toString());
+		document2Update.addKeyword(Field.UID, "2");
 
 		bulkDocumentRequest2.addBulkableDocumentRequest(
 			new UpdateDocumentRequest(TEST_INDEX_NAME, "2", document2Update));
@@ -250,9 +246,9 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 
 		Document document2Update = new DocumentImpl();
 
+		document2Update.addKeyword(_FIELD_NAME, Boolean.TRUE.toString());
 		document2Update.addKeyword(
 			Field.UID, bulkDocumentItemResponse2.getId());
-		document2Update.addKeyword(_FIELD_NAME, Boolean.TRUE.toString());
 
 		UpdateDocumentRequest updateDocumentRequest = new UpdateDocumentRequest(
 			TEST_INDEX_NAME, bulkDocumentItemResponse2.getId(),
@@ -463,8 +459,8 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 
 		Document document = new DocumentImpl();
 
-		document.addKeyword(Field.UID, id);
 		document.addKeyword(_FIELD_NAME, false);
+		document.addKeyword(Field.UID, id);
 
 		UpdateDocumentResponse updateDocumentResponse =
 			_updateDocumentWithAdapter(document, id);
@@ -531,8 +527,8 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 
 		Document document = new DocumentImpl();
 
-		document.addKeyword(Field.UID, id);
 		document.addKeyword(_FIELD_NAME, false);
+		document.addKeyword(Field.UID, id);
 
 		UpdateDocumentResponse updateDocumentResponse =
 			_updateDocumentWithAdapter(document, null);
@@ -564,7 +560,7 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 
 		UpdateDocumentResponse updateDocumentResponse =
 			_updateDocumentWithAdapter(
-				_scripts.script(
+				Scripts.INSTANCE.script(
 					StringBundler.concat(
 						"ctx._source.", _FIELD_NAME, "=\"false\" ")),
 				false, id);
@@ -586,7 +582,7 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 		String id = "1";
 
 		_updateDocumentWithAdapter(
-			_scripts.script(
+			Scripts.INSTANCE.script(
 				StringBundler.concat(
 					"ctx._source.", _FIELD_NAME, "=\"true\" ")),
 			true, id);
@@ -600,33 +596,16 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 	protected static SearchEngineAdapter createSearchEngineAdapter(
 		OpenSearchConnectionManager openSearchConnectionManager) {
 
-		SearchEngineAdapter searchEngineAdapter =
+		OpenSearchSearchEngineAdapterImpl openSearchSearchEngineAdapterImpl =
 			new OpenSearchSearchEngineAdapterImpl();
 
 		ReflectionTestUtil.setFieldValue(
-			searchEngineAdapter, "_documentRequestExecutor",
-			_createDocumentRequestExecutor(
-				openSearchConnectionManager,
-				new OpenSearchDocumentFactoryImpl()));
+			openSearchSearchEngineAdapterImpl, "_openSearchConnectionManager",
+			openSearchConnectionManager);
 
-		return searchEngineAdapter;
-	}
+		openSearchSearchEngineAdapterImpl.activate(Collections.emptyMap());
 
-	private static DocumentRequestExecutor _createDocumentRequestExecutor(
-		OpenSearchConnectionManager openSearchConnectionManager,
-		OpenSearchDocumentFactory openSearchDocumentFactory) {
-
-		DocumentRequestExecutorFixture documentRequestExecutorFixture =
-			new DocumentRequestExecutorFixture() {
-				{
-					setOpenSearchConnectionManager(openSearchConnectionManager);
-					setOpenSearchDocumentFactory(openSearchDocumentFactory);
-				}
-			};
-
-		documentRequestExecutorFixture.setUp();
-
-		return documentRequestExecutorFixture.getDocumentRequestExecutor();
+		return openSearchSearchEngineAdapterImpl;
 	}
 
 	private void _createIndex() throws Exception {
@@ -739,8 +718,6 @@ public class OpenSearchSearchEngineAdapterDocumentRequestTest
 	}
 
 	private static final String _FIELD_NAME = "matchDocument";
-
-	private static final Scripts _scripts = new ScriptsImpl();
 
 	private final DocumentFixture _documentFixture = new DocumentFixture();
 	private OpenSearchClient _openSearchClient;

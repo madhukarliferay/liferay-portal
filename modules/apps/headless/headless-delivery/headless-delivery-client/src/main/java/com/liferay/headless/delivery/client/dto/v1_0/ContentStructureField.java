@@ -47,6 +47,27 @@ public class ContentStructureField implements Cloneable, Serializable {
 
 	protected String dataType;
 
+	public String getFieldReference() {
+		return fieldReference;
+	}
+
+	public void setFieldReference(String fieldReference) {
+		this.fieldReference = fieldReference;
+	}
+
+	public void setFieldReference(
+		UnsafeSupplier<String, Exception> fieldReferenceUnsafeSupplier) {
+
+		try {
+			fieldReference = fieldReferenceUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String fieldReference;
+
 	public String getInputControl() {
 		return inputControl;
 	}
@@ -359,3 +380,4 @@ public class ContentStructureField implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1253436065

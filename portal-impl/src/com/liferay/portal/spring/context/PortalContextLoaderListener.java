@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.concurrent.SystemExecutorServiceUtil;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.deploy.auto.AutoDeployDir;
 import com.liferay.portal.kernel.deploy.hot.HotDeployUtil;
 import com.liferay.portal.kernel.exception.LoggedExceptionInInitializerError;
 import com.liferay.portal.kernel.log.Log;
@@ -42,6 +43,7 @@ import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ModuleFrameworkPropsValues;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.module.framework.ModuleFrameworkUtil;
 import com.liferay.portal.spring.aop.AopConfigurableApplicationContextConfigurator;
@@ -53,7 +55,6 @@ import com.liferay.portal.spring.transaction.TransactionManagerFactory;
 import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PortalClassPathUtil;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
@@ -144,6 +145,7 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 
 		if (DBManagerUtil.getDBType() == DBType.HYPERSONIC) {
 			try (Connection connection = DataAccess.getConnection();
+
 				Statement statement = connection.createStatement()) {
 
 				statement.executeUpdate("SHUTDOWN");
@@ -354,6 +356,8 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 			}
 		}
 
+		AutoDeployDir.scanDirectory();
+
 		ModuleFrameworkUtil.createFramework();
 
 		ExecutorService executorService =
@@ -468,6 +472,8 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 
 		if (upgradeDatabaseAutoRun) {
 			StartupHelperUtil.setUpgrading(true);
+
+			DBUpgrader.startUpgradeLogAppender();
 
 			try {
 				DBUpgrader.upgradePortal();

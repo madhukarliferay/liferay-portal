@@ -184,9 +184,7 @@ public class DocumentShortcutSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(documentShortcut.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -513,3 +511,4 @@ public class DocumentShortcutSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1631820502

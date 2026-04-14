@@ -3,39 +3,21 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {IInternalRenderer, IItemsActions} from '@liferay/frontend-data-set-web';
+import {
+	EConfigInURLBehavior,
+	IFrontendDataSetProps,
+} from '@liferay/frontend-data-set-web';
 
 import CarouselView from './CarouselView';
 
 export default function propsTransformer({
 	itemsActions,
 	...otherProps
-}: {
-	itemsActions: IItemsActions[];
-}) {
-	const carouselViewRenderer: IInternalRenderer = {
-		component: CarouselView,
-		default: true,
-		label: 'My Carousel View',
-		name: 'carouselViewRenderer',
-		schema: {
-			description: 'description',
-			image: 'imageURL',
-			link: '',
-			sticker: '',
-			symbol: '',
-			title: 'title',
-		},
-		symbol: 'rotate',
-		type: 'internal',
-	};
-
+}: IFrontendDataSetProps): IFrontendDataSetProps {
 	return {
 		...otherProps,
-		customRenderers: {
-			views: [carouselViewRenderer],
-		},
-		itemsActions: itemsActions.map((action) => {
+		configInURLBehavior: EConfigInURLBehavior.REPLACE,
+		itemsActions: itemsActions?.map((action) => {
 			const key = action?.data?.id as string;
 
 			if (!key || key !== 'turnGreen') {
@@ -48,6 +30,21 @@ export default function propsTransformer({
 			};
 		}),
 		views: [
+			{
+				component: CarouselView,
+				default: true,
+				label: 'My Carousel View',
+				name: 'carouselViewRenderer',
+				schema: {
+					description: 'description',
+					image: 'imageURL',
+					link: '',
+					sticker: '',
+					symbol: '',
+					title: 'title',
+				},
+				thumbnail: 'rotate',
+			},
 			{
 				contentRenderer: 'table',
 				label: 'My Table View',

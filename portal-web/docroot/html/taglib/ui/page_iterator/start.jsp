@@ -87,7 +87,7 @@ NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
 		<c:if test="<%= deltaConfigurable %>">
 			<div class="dropdown pagination-items-per-page" id="<%= ariaPagination %>">
 				<button aria-controls="<%= ariaPaginationPicker %>" aria-describedby="<%= ariaPaginationResults %>" aria-expanded="false" aria-haspopup="listbox" aria-label="<%= LanguageUtil.get(request, "items-per-page") %>" class="dropdown-toggle page-link" data-attribute="<%= delta %>" data-toggle="liferay-dropdown" id=<%= ariaPaginationButton %> role="combobox">
-					<liferay-ui:message arguments="<%= delta %>" key="x-entries" />
+					<liferay-ui:message arguments="<%= delta %>" key="x-entries" translateArguments="<%= false %>" />
 
 					<aui:icon image="caret-double-l" markupView="lexicon" />
 				</button>
@@ -127,10 +127,10 @@ NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
 							button.setAttribute('aria-expanded', 'true');
 							list.classList.add('show');
 
-							var selectedOption = list.querySelector('.active');
+							var element = list.querySelector('.active') || list;
 
-							if (selectedOption) {
-								selectedOption.focus();
+							if (element) {
+								element.focus();
 							}
 						}
 					}
@@ -194,8 +194,8 @@ NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
 			</aui:script>
 		</c:if>
 
-		<p aria-hidden="true" class="pagination-results" data-aria-hidden="true" id="<%= ariaPaginationResults %>">
-			<liferay-ui:message arguments="<%= new Object[] {numberFormat.format(start + 1), numberFormat.format(end), numberFormat.format(total)} %>" key="showing-x-to-x-of-x-entries" />
+		<p class="pagination-results" id="<%= ariaPaginationResults %>">
+			<liferay-ui:message arguments="<%= new Object[] {numberFormat.format(start + 1), numberFormat.format(end), numberFormat.format(total)} %>" key="showing-x-to-x-of-x-entries" translateArguments="<%= false %>" />
 		</p>
 
 		<nav aria-label="<liferay-ui:message key="pagination" />">
@@ -207,7 +207,7 @@ NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
 								<a class="lfr-portal-tooltip page-link" href="<%= _getHREF(formName, namespace + curParam, cur - 1, jsCall, url, urlAnchor) %>" onclick="<%= forcePost ? _getOnClick(namespace, curParam, cur -1) : "" %>" title="<%= LanguageUtil.get(request, "previous-page") %>">
 							</c:when>
 							<c:otherwise>
-								<div class="page-link">
+								<div aria-disabled="true" aria-label="<%= LanguageUtil.get(request, "previous-page") %>" class="page-link" role="link" tabindex="-1">
 							</c:otherwise>
 						</c:choose>
 
@@ -459,7 +459,7 @@ NumberFormat numberFormat = NumberFormat.getNumberInstance(locale);
 								<a class="lfr-portal-tooltip page-link" href="<%= _getHREF(formName, namespace + curParam, cur + 1, jsCall, url, urlAnchor) %>" onclick="<%= forcePost ? _getOnClick(namespace, curParam, cur + 1) : "" %>" title="<%= LanguageUtil.get(request, "next-page") %>">
 							</c:when>
 							<c:otherwise>
-								<div class="page-link">
+								<div aria-disabled="true" aria-label="<%= LanguageUtil.get(request, "next-page") %>" class="page-link" role="link" tabindex="-1">
 							</c:otherwise>
 						</c:choose>
 

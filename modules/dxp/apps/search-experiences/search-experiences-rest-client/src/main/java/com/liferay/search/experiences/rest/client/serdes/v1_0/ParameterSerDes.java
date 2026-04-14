@@ -117,9 +117,7 @@ public class ParameterSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(parameter.getType());
-
 			sb.append("\"");
 		}
 
@@ -325,3 +323,4 @@ public class ParameterSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1038740728

@@ -5,58 +5,49 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedLayoutTest} from '../../../fixtures/isolatedLayoutTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {systemSettingsPageTest} from '../../../fixtures/systemSettingsPageTest';
-import {waitForAlert} from '../../../utils/waitForAlert';
+import {
+	clearConsentCookies,
+	resetConsentManagerConfiguration,
+	updateConsentManagerConfiguration,
+} from './utils/consentManagerConfigurationHelper';
 
 export const test = mergeTests(
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+		'LPD-75032': {enabled: true},
+	}),
 	isolatedLayoutTest(),
 	loginTest(),
 	systemSettingsPageTest
 );
 
-test('LPD-25440 Cookie Banner Cadmin', async ({page, systemSettingsPage}) => {
+test.afterEach(async ({systemSettingsPage}) => {
+	await test.step('Reset Consent Manager Configuration', async () => {
+		await resetConsentManagerConfiguration(systemSettingsPage);
+	});
+
+	await test.step('Clear Consent Cookies if present', async () => {
+		await clearConsentCookies(systemSettingsPage.page);
+	});
+});
+
+test('LPD-25440 Cookie Banner Cadmin', async ({page}) => {
 	await test.step('Enable Third Party Cookies', async () => {
-		await systemSettingsPage.goToSystemSetting('Privacy', 'Cookie Manager');
-
-		const enabledButton = page.getByLabel('Enabled');
-
-		await enabledButton.waitFor({state: 'visible'});
-
-		const isChecked = await enabledButton.isChecked();
-
-		if (!isChecked) {
-			await enabledButton.click();
-		}
-
-		await expect(enabledButton).toBeChecked();
-
-		const updateButton = page.getByRole('button', {
-			name: 'Update',
+		await updateConsentManagerConfiguration(page, {
+			enabled: true,
+			forceReload: true,
 		});
-
-		const saveButton = page.getByRole('button', {
-			name: 'Save',
-		});
-
-		if (await saveButton.isVisible()) {
-			await saveButton.click();
-		}
-		else if (await updateButton.isVisible()) {
-			await updateButton.click();
-		}
-
-		await waitForAlert(page);
 	});
 
 	await test.step('Open Configuration', async () => {
 		await page.goto('/');
 
 		await page
-			.locator(
-				'#p_p_id_com_liferay_cookies_banner_web_portlet_CookiesBannerPortlet_'
-			)
+			.getByRole('dialog', {name: 'banner cookies'})
 			.waitFor({state: 'visible'});
 
 		const configuration = page.getByRole('button', {name: 'Configuration'});

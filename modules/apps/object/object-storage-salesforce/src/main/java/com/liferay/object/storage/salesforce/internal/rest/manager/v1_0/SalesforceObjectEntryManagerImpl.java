@@ -388,8 +388,9 @@ public class SalesforceObjectEntryManagerImpl
 	}
 
 	private int _getTotalCount(
-		long companyId, ObjectDefinition objectDefinition,
-		String predicateString, String scopeKey, String search) {
+			long companyId, ObjectDefinition objectDefinition,
+			String predicateString, String scopeKey, String search)
+		throws Exception {
 
 		if (Validator.isNotNull(search)) {
 			JSONObject responseJSONObject = _objectEntryManagerHttp.get(
@@ -523,7 +524,7 @@ public class SalesforceObjectEntryManagerImpl
 					}
 
 					return _configurationProvider.getGroupConfiguration(
-						SalesforceConfiguration.class, groupId);
+						SalesforceConfiguration.class, companyId, groupId);
 				}
 				catch (ConfigurationException configurationException) {
 					return ReflectionUtil.throwException(

@@ -338,7 +338,7 @@ local.bundles.backup.file=${liferay.home.parent.dir}/bundles-master-${git.commit
 		<replaceregexp
 			file="${project.dir}/test.properties"
 			flags="g"
-			match="(test\.batch\.names\[portal-release-acceptance\]=)\\(\n*.*?)*release-osgi-state-lpkg-test-postgresql155"
+			match="(test\.batch\.names\[portal-release-acceptance\]=)\\(\n*.*?)*release-osgi-state-lpkg-test-postgresql163"
 			replace="\1{test.batch.names[portal-release-acceptance]}"
 		/>
 
@@ -612,7 +612,7 @@ local.bundles.backup.file=${liferay.home.parent.dir}/bundles-master-${git.commit
 				<equals arg1="${app.server.bundles.size}" arg2="0" />
 			</not>
 			<then>
-				<ant antfile="build-test-elasticsearch7.xml" target="start-elasticsearch" />
+				<ant antfile="build-test-elasticsearch8.xml" target="start-elasticsearch" />
 
 				<prepare-additional-bundles />
 			</then>
@@ -768,7 +768,7 @@ database.type=db2
 				<get-test-app-server-lib-portal-dir />
 
 				<antcall inheritAll="false" target="copy-optional-jars">
-					<param name="test.jdbc.drivers.url" value="http://mirrors.lax.liferay.com/files.liferay.com/private/jdbc" />
+					<param name="test.jdbc.drivers.url" value="gs://jenkins-ci-data/jdbc" />
 					<param name="todir" value="${test.app.server.lib.portal.dir}" />
 				</antcall>
 			</then>
@@ -990,7 +990,7 @@ oracle.admin.user=system
 				<get-test-app-server-lib-portal-dir />
 
 				<antcall inheritAll="false" target="copy-optional-jars">
-					<param name="test.jdbc.drivers.url" value="http://mirrors.lax.liferay.com/files.liferay.com/private/jdbc" />
+					<param name="test.jdbc.drivers.url" value="gs://jenkins-ci-data/jdbc" />
 					<param name="todir" value="${test.app.server.lib.portal.dir}" />
 				</antcall>
 			</then>
@@ -1153,7 +1153,7 @@ database.type=sqlserver
 				<get-test-app-server-lib-portal-dir />
 
 				<antcall inheritAll="false" target="copy-optional-jars">
-					<param name="test.jdbc.drivers.url" value="http://mirrors.lax.liferay.com/files.liferay.com/private/jdbc" />
+					<param name="test.jdbc.drivers.url" value="gs://jenkins-ci-data/jdbc" />
 					<param name="todir" value="${test.app.server.lib.portal.dir}" />
 				</antcall>
 			</then>

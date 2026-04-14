@@ -3,44 +3,41 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {
-	ISearchAssetObjectEntry,
-	ISearchAssetTypeInformation,
-} from '../../../structure_builder/types/AssetType';
-import {ASSET_TYPE} from './constants';
+import {dateUtils} from 'frontend-js-web';
 
-export function getBaseAssetInformation({
-	actions: {
-		get: {href},
-	},
-	embedded: {externalReferenceCode, id, title, title_i18n},
-}: ISearchAssetObjectEntry): ISearchAssetTypeInformation {
-	const baseAssetInfo: ISearchAssetTypeInformation = {
-		externalReferenceCode,
-		id,
-		title,
-		title_i18n,
-	};
+import {IAssetObjectEntry} from '../../../common/types/AssetType';
+import {ASSET_TYPE, L_CONTENTS, L_FILES} from './constants';
 
-	if (href.includes('object-entry-folders')) {
-		baseAssetInfo.icon = 'folder';
-		baseAssetInfo.type = ASSET_TYPE.FOLDER;
+export function formatDate(date: string): string {
+	return dateUtils.format(new Date(date), 'P p');
+}
+
+export function getAssetType(objectEntry: IAssetObjectEntry): string {
+	const {
+		objectEntryFolderExternalReferenceCode:
+			objectEntryFolderExternalReferenceCode = '',
+	} = objectEntry;
+
+	let type = ASSET_TYPE.FOLDER;
+
+	if (objectEntryFolderExternalReferenceCode === L_CONTENTS) {
+		type = ASSET_TYPE.CONTENTS;
 	}
-	else if (
-		href.includes('basic-documents') ||
-		href.includes('external-videos')
-	) {
-		baseAssetInfo.icon = 'document-image';
-		baseAssetInfo.type = ASSET_TYPE.FILES;
-	}
-	else if (
-		href.includes('basic-web-contents') ||
-		href.includes('blogs') ||
-		href.includes('knowledge-bases')
-	) {
-		baseAssetInfo.icon = 'forms';
-		baseAssetInfo.type = ASSET_TYPE.CONTENTS;
+	else if (objectEntryFolderExternalReferenceCode === L_FILES) {
+		type = ASSET_TYPE.FILES;
 	}
 
-	return baseAssetInfo;
+	return type;
+}
+
+export function getAssetLanguages(
+	title_i18n: {[key: string]: string} = {}
+): string[] {
+	const assetLanguages = Object.keys(title_i18n);
+
+	if (assetLanguages.length) {
+		return Object.keys(title_i18n).map((key) => key.replace('_', '-'));
+	}
+
+	return [];
 }

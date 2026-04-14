@@ -502,8 +502,9 @@ public class LayoutPageTemplateCollectionLocalServiceUtil {
 	}
 
 	public static String getUniqueLayoutPageTemplateCollectionName(
-		long groupId, long layoutPageTemplateCollectionId, String sourceName,
-		int type) {
+			long groupId, long layoutPageTemplateCollectionId,
+			String sourceName, int type)
+		throws PortalException {
 
 		return getService().getUniqueLayoutPageTemplateCollectionName(
 			groupId, layoutPageTemplateCollectionId, sourceName, type);
@@ -566,3 +567,4 @@ public class LayoutPageTemplateCollectionLocalServiceUtil {
 			LayoutPageTemplateCollectionLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1611981504

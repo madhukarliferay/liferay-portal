@@ -5,6 +5,7 @@
 
 import {VerticalNav as ClayVerticalNav} from '@clayui/core';
 import ClayIcon from '@clayui/icon';
+import ClayLabel from '@clayui/label';
 import {FeatureIndicator} from 'frontend-js-components-web';
 import React from 'react';
 
@@ -12,15 +13,20 @@ export default function VerticalNav({
 	activation,
 	active,
 	additionalProps: _additionalProps,
+	collapse,
 	componentId: _componentId,
 	cssClass,
 	decorated,
 	defaultExpandedKeys,
+	displayType,
 	items,
 	large,
 	locale: _locale,
+	nestMargins,
 	portletId: _portletId,
 	portletNamespace: _portletNamespace,
+	size,
+	stacked,
 	triggerLabel,
 	...otherProps
 }) {
@@ -29,10 +35,15 @@ export default function VerticalNav({
 			activation={activation}
 			active={active}
 			className={cssClass}
+			collapse={collapse}
 			decorated={decorated}
 			defaultExpandedKeys={new Set(defaultExpandedKeys)}
+			displayType={displayType}
 			items={items}
 			large={large}
+			nestMargins={nestMargins}
+			size={size}
+			stacked={stacked}
 			triggerLabel={triggerLabel}
 			{...otherProps}
 		>
@@ -44,6 +55,15 @@ export default function VerticalNav({
 					key={item.id}
 					textValue={item.label}
 				>
+					{item.leadingIcon?.symbol && (
+						<ClayIcon
+							className="c-mr-2"
+							key={item.leadingIcon.symbol}
+							symbol={item.leadingIcon.symbol}
+							title={item.leadingIcon.title}
+						/>
+					)}
+
 					{item.label}
 
 					{item.icons?.map((icon) => {
@@ -56,6 +76,20 @@ export default function VerticalNav({
 							/>
 						);
 					})}
+
+					{item.labelItems && (
+						<span className="inline-item inline-item-after">
+							{item.labelItems.map(({label, ...props}) => (
+								<ClayLabel
+									className="c-ml-2"
+									key={label}
+									{...props}
+								>
+									{label}
+								</ClayLabel>
+							))}
+						</span>
+					)}
 
 					{item.deprecated ? (
 						<span className="inline-item inline-item-after">

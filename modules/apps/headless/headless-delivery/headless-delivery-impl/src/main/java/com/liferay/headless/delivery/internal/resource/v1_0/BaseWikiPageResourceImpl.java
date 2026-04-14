@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.WikiPage;
 import com.liferay.headless.delivery.resource.v1_0.WikiPageResource;
@@ -426,23 +427,24 @@ public abstract class BaseWikiPageResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(wikiPageId);
+		Long groupId = getPermissionCheckerGroupId(wikiPageId);
 		Long resourceId = getPermissionCheckerResourceId(wikiPageId);
+		String resourceName = getPermissionCheckerResourceName(wikiPageId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(wikiPageId), resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getWikiPagePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getWikiPagePermissionsPage", null, resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putWikiPagePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putWikiPagePermissionsPage", null, resourceName, groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -854,11 +856,12 @@ public abstract class BaseWikiPageResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(wikiPageId);
+		Long groupId = getPermissionCheckerGroupId(wikiPageId);
 		Long resourceId = getPermissionCheckerResourceId(wikiPageId);
+		String resourceName = getPermissionCheckerResourceName(wikiPageId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(wikiPageId), resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -894,21 +897,20 @@ public abstract class BaseWikiPageResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(wikiPageId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getWikiPagePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getWikiPagePermissionsPage", null, resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putWikiPagePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putWikiPagePermissionsPage", null, resourceName, groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1046,9 +1048,34 @@ public abstract class BaseWikiPageResourceImpl
 
 		UnsafeFunction<WikiPage, WikiPage, Exception> wikiPageUnsafeFunction =
 			wikiPage -> {
-				deleteWikiPage(wikiPage.getId());
+				if (wikiPage.getId() != null) {
+					try {
+						deleteWikiPage(wikiPage.getId());
 
-				return wikiPage;
+						return wikiPage;
+					}
+					catch (Exception exception) {
+						if (wikiPage.getExternalReferenceCode() != null) {
+							if (parameters.containsKey("siteId")) {
+								deleteSiteWikiPageByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									wikiPage.getExternalReferenceCode());
+
+								return wikiPage;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteWikiPageByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						wikiPage.getExternalReferenceCode());
+
+					return wikiPage;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -1126,6 +1153,15 @@ public abstract class BaseWikiPageResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1345,6 +1381,9 @@ public abstract class BaseWikiPageResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1908,3 +1947,4 @@ public abstract class BaseWikiPageResourceImpl
 		LogFactoryUtil.getLog(BaseWikiPageResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:674797021

@@ -49,7 +49,7 @@ public interface LayoutUtilityPageEntryService extends BaseService {
 	public LayoutUtilityPageEntry addLayoutUtilityPageEntry(
 			String externalReferenceCode, long groupId, long plid,
 			long previewFileEntryId, boolean defaultLayoutUtilityPageEntry,
-			String name, String type, long masterLayoutPlid,
+			String name, String type, String masterLayoutPageTemplateEntryERC,
 			ServiceContext serviceContext)
 		throws PortalException;
 
@@ -145,3 +145,4 @@ public interface LayoutUtilityPageEntryService extends BaseService {
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1878448636

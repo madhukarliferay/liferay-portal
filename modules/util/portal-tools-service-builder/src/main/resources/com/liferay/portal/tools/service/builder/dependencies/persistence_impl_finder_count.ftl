@@ -328,8 +328,8 @@ public int countBy${entityFinder.name}(
 
 		if (count == null) {
 			try {
-				if ((databaseInMaxParameters > 0) && (<#list entityFinderArrayableColsList as arrayablefinderCol>
-							(${arrayablefinderCol.pluralName}.length > databaseInMaxParameters)
+				if ((${databaseInMaxParameters} > 0) && (<#list entityFinderArrayableColsList as arrayablefinderCol>
+							(${arrayablefinderCol.pluralName}.length > ${databaseInMaxParameters})
 
 							<#if arrayablefinderCol_has_next>
 								||
@@ -338,7 +338,7 @@ public int countBy${entityFinder.name}(
 						count = Long.valueOf(0);
 
 						<#list entityFinderArrayableColsList as arrayablefinderCol>
-							${arrayablefinderCol.type}[][] ${arrayablefinderCol.pluralName}Pages = (${arrayablefinderCol.type}[][])ArrayUtil.split(${arrayablefinderCol.pluralName}, databaseInMaxParameters);
+							${arrayablefinderCol.type}[][] ${arrayablefinderCol.pluralName}Pages = (${arrayablefinderCol.type}[][])<#if serviceBuilder.isVersionGTE_7_1_0()>ArrayUtil.split<#else>_split</#if>(${arrayablefinderCol.pluralName}, ${databaseInMaxParameters});
 						</#list>
 
 						<#list entityFinderArrayableColsList as arrayablefinderCol>
@@ -486,6 +486,48 @@ public int countBy${entityFinder.name}(
 			);
 		}
 
+		<#if serviceBuilder.isVersionGTE_7_4_0()>
+			if (isPermissionsInMemoryFilterEnabled()) {
+				List<${entity.name}> ${entity.pluralVariableName} =
+
+				<#if !entityFinder.isCollection() || entityFinder.isUnique()>
+					Arrays.asList(fetchBy${entityFinder.name}(
+
+					<#list entityColumns as entityColumn>
+						${entityColumn.name}
+
+						<#if entityColumn_has_next>
+							,
+						</#if>
+					</#list>
+
+					));
+				<#else>
+					findBy${entityFinder.name}(
+
+					<#list entityColumns as entityColumn>
+						${entityColumn.name}
+
+						<#if entityColumn_has_next>
+							,
+						</#if>
+					</#list>
+
+					);
+				</#if>
+
+				${entity.pluralVariableName} = InlineSQLHelperUtil.filter(
+					${entity.pluralVariableName}
+
+					<#if entityFinder.hasEntityColumn("groupId")>
+						, groupId
+					</#if>
+				);
+
+				return ${entity.pluralVariableName}.size();
+			}
+		</#if>
+
 		<#list entityColumns as entityColumn>
 			<#if stringUtil.equals(entityColumn.type, "String") && entityColumn.isConvertNull()>
 				${entityColumn.name} = Objects.toString(${entityColumn.name}, "");
@@ -616,6 +658,39 @@ public int countBy${entityFinder.name}(
 
 				);
 			}
+
+			<#if serviceBuilder.isVersionGTE_7_4_0()>
+				if (isPermissionsInMemoryFilterEnabled()) {
+					List<${entity.name}> ${entity.pluralVariableName} = InlineSQLHelperUtil.filter(
+						findBy${entityFinder.name}(
+
+						<#list entityColumns as entityColumn>
+							<#if entityColumn.hasArrayableOperator()>
+								${entityColumn.pluralName}
+							<#else>
+								${entityColumn.name}
+							</#if>
+
+							<#if entityColumn_has_next>
+								,
+							</#if>
+						</#list>
+
+						)
+
+						<#if entityFinder.hasEntityColumn("groupId")>,
+							<#if entityFinder.getEntityColumn("groupId").hasArrayableOperator()>
+								groupIds
+							<#else>
+								groupId
+							</#if>
+						</#if>
+
+						);
+
+					return ${entity.pluralVariableName}.size();
+				}
+			</#if>
 
 			<#list entityColumns as entityColumn>
 				<#if entityColumn.hasArrayableOperator()>

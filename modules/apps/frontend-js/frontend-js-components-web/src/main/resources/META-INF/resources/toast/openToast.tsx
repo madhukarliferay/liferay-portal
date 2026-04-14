@@ -176,12 +176,14 @@ function openToast({
 	const root = render(
 		<ClayAlert
 			autoClose={autoClose}
+			closeButtonAriaLabel={Liferay.Language.get('close')}
 			displayType={type}
 			onClick={(event) => onClick({event, onClose: onCloseFn})}
 			onClose={onCloseFn as () => void}
 			variant={variant}
 			{...toastProps}
 			className={classNames('mb-3', toastProps?.className)}
+			role="alert"
 		>
 			<div
 				dangerouslySetInnerHTML={{
@@ -192,6 +194,14 @@ function openToast({
 		renderData,
 		rootElement
 	);
+
+	const alertElement =
+		rootElement.querySelector<HTMLElement>('[role="alert"]');
+
+	if (alertElement) {
+		alertElement.setAttribute('tabindex', '-1');
+		alertElement.focus();
+	}
 
 	rootsMap.set(id, root);
 }

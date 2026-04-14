@@ -51,6 +51,7 @@ import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -64,8 +65,6 @@ import com.liferay.portal.search.test.util.IndexerFixture;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.portal.util.PropsValues;
-import com.liferay.segments.constants.SegmentsEntryConstants;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.segments.test.util.SegmentsTestUtil;
@@ -282,8 +281,7 @@ public class LayoutWorkflowHandlerTest {
 
 		SegmentsExperience segmentsExperience1 =
 			SegmentsTestUtil.addSegmentsExperience(
-				_group.getGroupId(), SegmentsEntryConstants.ID_DEFAULT,
-				draftLayout.getPlid());
+				_group.getGroupId(), null, null, draftLayout.getPlid());
 
 		String experience1HeadingText = RandomTestUtil.randomString();
 
@@ -294,8 +292,7 @@ public class LayoutWorkflowHandlerTest {
 
 		SegmentsExperience segmentsExperience2 =
 			SegmentsTestUtil.addSegmentsExperience(
-				_group.getGroupId(), SegmentsEntryConstants.ID_DEFAULT,
-				draftLayout.getPlid());
+				_group.getGroupId(), null, null, draftLayout.getPlid());
 
 		String experience2HeadingText = RandomTestUtil.randomString();
 
@@ -373,8 +370,7 @@ public class LayoutWorkflowHandlerTest {
 
 		SegmentsExperience segmentsExperience1 =
 			SegmentsTestUtil.addSegmentsExperience(
-				_group.getGroupId(), SegmentsEntryConstants.ID_DEFAULT,
-				draftLayout.getPlid());
+				_group.getGroupId(), null, null, draftLayout.getPlid());
 
 		String experience1HeadingText = RandomTestUtil.randomString();
 
@@ -385,8 +381,7 @@ public class LayoutWorkflowHandlerTest {
 
 		SegmentsExperience segmentsExperience2 =
 			SegmentsTestUtil.addSegmentsExperience(
-				_group.getGroupId(), SegmentsEntryConstants.ID_DEFAULT,
-				draftLayout.getPlid());
+				_group.getGroupId(), null, null, draftLayout.getPlid());
 
 		String experience2HeadingText = RandomTestUtil.randomString();
 
@@ -530,9 +525,10 @@ public class LayoutWorkflowHandlerTest {
 				JSONUtil.put("headingLevel", "h1")
 			).toString(),
 			fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), layout, fragmentEntry.getFragmentEntryKey(),
-			fragmentEntry.getType(), null, 0, segmentsExperienceId);
+			fragmentEntry.getExternalReferenceCode(), null,
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), layout,
+			fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(), null,
+			0, segmentsExperienceId);
 	}
 
 	private void _approveUserWorkflowTasks() throws PortalException {

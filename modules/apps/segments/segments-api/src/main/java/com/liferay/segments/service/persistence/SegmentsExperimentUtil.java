@@ -213,53 +213,6 @@ public class SegmentsExperimentUtil {
 	}
 
 	/**
-	 * Returns the last segments experiment in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment
-	 * @throws NoSuchExperimentException if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment findByUuid_Last(
-			String uuid,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments experiment in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment, or <code>null</code> if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment fetchByUuid_Last(
-		String uuid, OrderByComparator<SegmentsExperiment> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments experiments before and after the current segments experiment in the ordered set where uuid = &#63;.
-	 *
-	 * @param segmentsExperimentId the primary key of the current segments experiment
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments experiment
-	 * @throws NoSuchExperimentException if a segments experiment with the primary key could not be found
-	 */
-	public static SegmentsExperiment[] findByUuid_PrevAndNext(
-			long segmentsExperimentId, String uuid,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			segmentsExperimentId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the segments experiments where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -454,59 +407,6 @@ public class SegmentsExperimentUtil {
 	}
 
 	/**
-	 * Returns the last segments experiment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment
-	 * @throws NoSuchExperimentException if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments experiment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment, or <code>null</code> if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SegmentsExperiment> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments experiments before and after the current segments experiment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param segmentsExperimentId the primary key of the current segments experiment
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments experiment
-	 * @throws NoSuchExperimentException if a segments experiment with the primary key could not be found
-	 */
-	public static SegmentsExperiment[] findByUuid_C_PrevAndNext(
-			long segmentsExperimentId, String uuid, long companyId,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			segmentsExperimentId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the segments experiments where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -630,53 +530,6 @@ public class SegmentsExperimentUtil {
 	}
 
 	/**
-	 * Returns the last segments experiment in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment
-	 * @throws NoSuchExperimentException if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment findByGroupId_Last(
-			long groupId,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments experiment in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment, or <code>null</code> if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment fetchByGroupId_Last(
-		long groupId, OrderByComparator<SegmentsExperiment> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments experiments before and after the current segments experiment in the ordered set where groupId = &#63;.
-	 *
-	 * @param segmentsExperimentId the primary key of the current segments experiment
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments experiment
-	 * @throws NoSuchExperimentException if a segments experiment with the primary key could not be found
-	 */
-	public static SegmentsExperiment[] findByGroupId_PrevAndNext(
-			long segmentsExperimentId, long groupId,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			segmentsExperimentId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the segments experiments that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -723,24 +576,6 @@ public class SegmentsExperimentUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments experiments before and after the current segments experiment in the ordered set of segments experiments that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param segmentsExperimentId the primary key of the current segments experiment
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments experiment
-	 * @throws NoSuchExperimentException if a segments experiment with the primary key could not be found
-	 */
-	public static SegmentsExperiment[] filterFindByGroupId_PrevAndNext(
-			long segmentsExperimentId, long groupId,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			segmentsExperimentId, groupId, orderByComparator);
 	}
 
 	/**
@@ -879,56 +714,6 @@ public class SegmentsExperimentUtil {
 
 		return getPersistence().fetchBySegmentsExperimentKey_First(
 			segmentsExperimentKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments experiment in the ordered set where segmentsExperimentKey = &#63;.
-	 *
-	 * @param segmentsExperimentKey the segments experiment key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment
-	 * @throws NoSuchExperimentException if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment findBySegmentsExperimentKey_Last(
-			String segmentsExperimentKey,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findBySegmentsExperimentKey_Last(
-			segmentsExperimentKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments experiment in the ordered set where segmentsExperimentKey = &#63;.
-	 *
-	 * @param segmentsExperimentKey the segments experiment key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments experiment, or <code>null</code> if a matching segments experiment could not be found
-	 */
-	public static SegmentsExperiment fetchBySegmentsExperimentKey_Last(
-		String segmentsExperimentKey,
-		OrderByComparator<SegmentsExperiment> orderByComparator) {
-
-		return getPersistence().fetchBySegmentsExperimentKey_Last(
-			segmentsExperimentKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments experiments before and after the current segments experiment in the ordered set where segmentsExperimentKey = &#63;.
-	 *
-	 * @param segmentsExperimentId the primary key of the current segments experiment
-	 * @param segmentsExperimentKey the segments experiment key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments experiment
-	 * @throws NoSuchExperimentException if a segments experiment with the primary key could not be found
-	 */
-	public static SegmentsExperiment[] findBySegmentsExperimentKey_PrevAndNext(
-			long segmentsExperimentId, String segmentsExperimentKey,
-			OrderByComparator<SegmentsExperiment> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchExperimentException {
-
-		return getPersistence().findBySegmentsExperimentKey_PrevAndNext(
-			segmentsExperimentId, segmentsExperimentKey, orderByComparator);
 	}
 
 	/**
@@ -1271,3 +1056,4 @@ public class SegmentsExperimentUtil {
 	private static volatile SegmentsExperimentPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-553706889

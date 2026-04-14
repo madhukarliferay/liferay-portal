@@ -123,47 +123,6 @@ public interface AnnouncementsDeliveryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last announcements delivery in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching announcements delivery
-	 * @throws NoSuchDeliveryException if a matching announcements delivery could not be found
-	 */
-	public AnnouncementsDelivery findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<AnnouncementsDelivery> orderByComparator)
-		throws NoSuchDeliveryException;
-
-	/**
-	 * Returns the last announcements delivery in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching announcements delivery, or <code>null</code> if a matching announcements delivery could not be found
-	 */
-	public AnnouncementsDelivery fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AnnouncementsDelivery>
-			orderByComparator);
-
-	/**
-	 * Returns the announcements deliveries before and after the current announcements delivery in the ordered set where companyId = &#63;.
-	 *
-	 * @param deliveryId the primary key of the current announcements delivery
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next announcements delivery
-	 * @throws NoSuchDeliveryException if a announcements delivery with the primary key could not be found
-	 */
-	public AnnouncementsDelivery[] findByCompanyId_PrevAndNext(
-			long deliveryId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<AnnouncementsDelivery> orderByComparator)
-		throws NoSuchDeliveryException;
-
-	/**
 	 * Removes all the announcements deliveries where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -264,47 +223,6 @@ public interface AnnouncementsDeliveryPersistence
 		long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<AnnouncementsDelivery>
 			orderByComparator);
-
-	/**
-	 * Returns the last announcements delivery in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching announcements delivery
-	 * @throws NoSuchDeliveryException if a matching announcements delivery could not be found
-	 */
-	public AnnouncementsDelivery findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<AnnouncementsDelivery> orderByComparator)
-		throws NoSuchDeliveryException;
-
-	/**
-	 * Returns the last announcements delivery in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching announcements delivery, or <code>null</code> if a matching announcements delivery could not be found
-	 */
-	public AnnouncementsDelivery fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<AnnouncementsDelivery>
-			orderByComparator);
-
-	/**
-	 * Returns the announcements deliveries before and after the current announcements delivery in the ordered set where userId = &#63;.
-	 *
-	 * @param deliveryId the primary key of the current announcements delivery
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next announcements delivery
-	 * @throws NoSuchDeliveryException if a announcements delivery with the primary key could not be found
-	 */
-	public AnnouncementsDelivery[] findByUserId_PrevAndNext(
-			long deliveryId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<AnnouncementsDelivery> orderByComparator)
-		throws NoSuchDeliveryException;
 
 	/**
 	 * Removes all the announcements deliveries where userId = &#63; from the database.
@@ -494,3 +412,4 @@ public interface AnnouncementsDeliveryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1269546320

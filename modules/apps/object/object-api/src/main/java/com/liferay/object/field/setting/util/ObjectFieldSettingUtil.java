@@ -9,7 +9,9 @@ import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpression;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTableUtil;
@@ -18,19 +20,39 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Carolina Barbosa
  */
 public class ObjectFieldSettingUtil {
+
+	public static Set<String> getAllowedFileSources(long companyId) {
+		return SetUtil.fromArray(
+			ObjectFieldSettingConstants.VALUE_CMS_BASIC_DOCUMENT,
+			ObjectFieldSettingConstants.VALUE_DOCS_AND_MEDIA,
+			ObjectFieldSettingConstants.
+				VALUE_USER_COMPUTER_TO_CMS_BASIC_DOCUMENT,
+			ObjectFieldSettingConstants.VALUE_USER_COMPUTER_TO_DOCS_AND_MEDIA);
+	}
 
 	public static Object getDefaultValue(
 		DDMExpressionFactory ddmExpressionFactory, ObjectField objectField,
@@ -74,21 +96,57 @@ public class ObjectFieldSettingUtil {
 						defaultValueObjectFieldSetting.getValue()
 					).build());
 
-			ddmExpression.setVariables(values);
+			ddmExpression.setVariables(
+				HashMapBuilder.<String, Object>put(
+					"currentDate",
+					() -> {
+						DateFormat dateFormat =
+							DateFormatFactoryUtil.getSimpleDateFormat(
+								"yyyy-MM-dd HH:mm");
 
-			return ddmExpression.evaluate();
+						return dateFormat.format(new Date());
+					}
+				).put(
+					"currentUserId", PrincipalThreadLocal.getUserId()
+				).putAll(
+					values
+				).build());
+
+			Object defaultValue = ddmExpression.evaluate();
+
+			if (defaultValue == null) {
+				return null;
+			}
+
+			if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_DATE)) {
+
+				return _getDateString(defaultValue, "yyyy-MM-dd");
+			}
+			else if (objectField.compareBusinessType(
+						ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME)) {
+
+				return _getDateString(defaultValue, "yyyy-MM-dd HH:mm");
+			}
+
+			return defaultValue;
 		}
 		catch (DDMExpressionException ddmExpressionException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(ddmExpressionException);
 			}
-
-			return StringPool.BLANK;
 		}
+		catch (ParseException parseException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(parseException);
+			}
+		}
+
+		return StringPool.BLANK;
 	}
 
 	public static Map<String, Object> getDefaultValues(
-		long objectDefinitionId) {
+		DDMExpressionFactory ddmExpressionFactory, long objectDefinitionId) {
 
 		Map<String, Object> defaultValues = new HashMap<>();
 
@@ -98,7 +156,7 @@ public class ObjectFieldSettingUtil {
 
 			defaultValues.put(
 				objectField.getName(),
-				getDefaultValue(null, objectField, null));
+				getDefaultValue(ddmExpressionFactory, objectField, null));
 		}
 
 		return defaultValues;
@@ -148,6 +206,16 @@ public class ObjectFieldSettingUtil {
 			getValue(
 				ObjectFieldSettingConstants.NAME_UNIQUE_VALUES,
 				objectFieldSetting));
+	}
+
+	private static String _getDateString(Object defaultValue, String pattern)
+		throws ParseException {
+
+		return DateUtil.getDate(
+			DateUtil.parseDate(
+				ObjectFieldUtil.getDateTimePattern(defaultValue.toString()),
+				defaultValue.toString(), LocaleUtil.getSiteDefault()),
+			pattern, LocaleUtil.getSiteDefault());
 	}
 
 	private static ObjectFieldSetting _getObjectFieldSetting(

@@ -57,22 +57,19 @@ public class ExportImportReportEntryTable
 		exportImportConfigurationId = createColumn(
 			"exportImportConfigurationId", Long.class, Types.BIGINT,
 			Column.FLAG_DEFAULT);
-	public final Column<ExportImportReportEntryTable, Clob> error =
-		createColumn("error", Clob.class, Types.CLOB, Column.FLAG_DEFAULT);
+	public final Column<ExportImportReportEntryTable, Clob> errorMessage =
+		createColumn(
+			"errorMessage", Clob.class, Types.CLOB, Column.FLAG_DEFAULT);
 	public final Column<ExportImportReportEntryTable, Clob> errorStacktrace =
 		createColumn(
 			"errorStacktrace", Clob.class, Types.CLOB, Column.FLAG_DEFAULT);
-	public final Column<ExportImportReportEntryTable, String> modelName =
-		createColumn(
-			"modelName", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<ExportImportReportEntryTable, String>
+		modelNameLanguageKey = createColumn(
+			"modelNameLanguageKey", String.class, Types.VARCHAR,
+			Column.FLAG_DEFAULT);
 	public final Column<ExportImportReportEntryTable, Integer> origin =
 		createColumn(
 			"origin", Integer.class, Types.INTEGER, Column.FLAG_DEFAULT);
-	public final Column<ExportImportReportEntryTable, String> scope =
-		createColumn("scope", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
-	public final Column<ExportImportReportEntryTable, String> scopeKey =
-		createColumn(
-			"scopeKey", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<ExportImportReportEntryTable, Integer> type =
 		createColumn(
 			"type_", Integer.class, Types.INTEGER, Column.FLAG_DEFAULT);
@@ -85,3 +82,4 @@ public class ExportImportReportEntryTable
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1289063528

@@ -1241,9 +1241,7 @@ public class Instance implements Serializable {
 			sb.append("\"slaStatus\": ");
 
 			sb.append("\"");
-
 			sb.append(slaStatus);
-
 			sb.append("\"");
 		}
 
@@ -1434,3 +1432,4 @@ public class Instance implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:858375329

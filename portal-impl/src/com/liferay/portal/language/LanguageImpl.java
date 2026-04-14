@@ -45,13 +45,13 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.portlet.PortletConfig;
 import jakarta.portlet.PortletRequest;
@@ -1656,7 +1656,7 @@ public class LanguageImpl implements Language, Serializable {
 		else {
 			content = content.replaceAll(
 				_LIFERAY_LANGUAGE_IMPORT_REGEXP,
-				"{/*removed: await import('@liferay/language...')*/}");
+				"{/*removed: import '@liferay/language...'*/}");
 		}
 
 		StringBundler sb = null;
@@ -2030,7 +2030,7 @@ public class LanguageImpl implements Language, Serializable {
 		LanguageImpl.class.getName() + "._groupLocalesPortalCache";
 
 	private static final String _LIFERAY_LANGUAGE_IMPORT_REGEXP =
-		"await import\\(.@liferay/language/.+?/all\\.js.\\)";
+		"import\\s+'@liferay/language/.+?/all\\.js'";
 
 	private static final double _STORAGE_SIZE_DENOMINATOR = 1024.0;
 

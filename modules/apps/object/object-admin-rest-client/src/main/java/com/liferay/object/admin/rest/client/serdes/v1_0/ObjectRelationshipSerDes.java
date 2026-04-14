@@ -64,9 +64,7 @@ public class ObjectRelationshipSerDes {
 			sb.append("\"deletionType\": ");
 
 			sb.append("\"");
-
 			sb.append(objectRelationship.getDeletionType());
-
 			sb.append("\"");
 		}
 
@@ -297,9 +295,7 @@ public class ObjectRelationshipSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(objectRelationship.getType());
-
 			sb.append("\"");
 		}
 
@@ -854,3 +850,4 @@ public class ObjectRelationshipSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-198459560

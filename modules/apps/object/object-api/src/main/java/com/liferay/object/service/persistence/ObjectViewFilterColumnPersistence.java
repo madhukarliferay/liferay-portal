@@ -120,47 +120,6 @@ public interface ObjectViewFilterColumnPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object view filter column in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
-
-	/**
-	 * Returns the last object view filter column in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column, or <code>null</code> if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectViewFilterColumn>
-			orderByComparator);
-
-	/**
-	 * Returns the object view filter columns before and after the current object view filter column in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectViewFilterColumnId the primary key of the current object view filter column
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a object view filter column with the primary key could not be found
-	 */
-	public ObjectViewFilterColumn[] findByUuid_PrevAndNext(
-			long objectViewFilterColumnId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
-
-	/**
 	 * Removes all the object view filter columns where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface ObjectViewFilterColumnPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object view filter column in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
-
-	/**
-	 * Returns the last object view filter column in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column, or <code>null</code> if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectViewFilterColumn>
-			orderByComparator);
-
-	/**
-	 * Returns the object view filter columns before and after the current object view filter column in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectViewFilterColumnId the primary key of the current object view filter column
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a object view filter column with the primary key could not be found
-	 */
-	public ObjectViewFilterColumn[] findByUuid_C_PrevAndNext(
-			long objectViewFilterColumnId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
-
-	/**
 	 * Removes all the object view filter columns where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -417,47 +332,6 @@ public interface ObjectViewFilterColumnPersistence
 		long objectViewId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectViewFilterColumn>
 			orderByComparator);
-
-	/**
-	 * Returns the last object view filter column in the ordered set where objectViewId = &#63;.
-	 *
-	 * @param objectViewId the object view ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn findByObjectViewId_Last(
-			long objectViewId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
-
-	/**
-	 * Returns the last object view filter column in the ordered set where objectViewId = &#63;.
-	 *
-	 * @param objectViewId the object view ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column, or <code>null</code> if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn fetchByObjectViewId_Last(
-		long objectViewId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectViewFilterColumn>
-			orderByComparator);
-
-	/**
-	 * Returns the object view filter columns before and after the current object view filter column in the ordered set where objectViewId = &#63;.
-	 *
-	 * @param objectViewFilterColumnId the primary key of the current object view filter column
-	 * @param objectViewId the object view ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a object view filter column with the primary key could not be found
-	 */
-	public ObjectViewFilterColumn[] findByObjectViewId_PrevAndNext(
-			long objectViewFilterColumnId, long objectViewId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
 
 	/**
 	 * Removes all the object view filter columns where objectViewId = &#63; from the database.
@@ -567,51 +441,6 @@ public interface ObjectViewFilterColumnPersistence
 		long objectViewId, String objectFieldName,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectViewFilterColumn>
 			orderByComparator);
-
-	/**
-	 * Returns the last object view filter column in the ordered set where objectViewId = &#63; and objectFieldName = &#63;.
-	 *
-	 * @param objectViewId the object view ID
-	 * @param objectFieldName the object field name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn findByOVI_OFN_Last(
-			long objectViewId, String objectFieldName,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
-
-	/**
-	 * Returns the last object view filter column in the ordered set where objectViewId = &#63; and objectFieldName = &#63;.
-	 *
-	 * @param objectViewId the object view ID
-	 * @param objectFieldName the object field name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object view filter column, or <code>null</code> if a matching object view filter column could not be found
-	 */
-	public ObjectViewFilterColumn fetchByOVI_OFN_Last(
-		long objectViewId, String objectFieldName,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectViewFilterColumn>
-			orderByComparator);
-
-	/**
-	 * Returns the object view filter columns before and after the current object view filter column in the ordered set where objectViewId = &#63; and objectFieldName = &#63;.
-	 *
-	 * @param objectViewFilterColumnId the primary key of the current object view filter column
-	 * @param objectViewId the object view ID
-	 * @param objectFieldName the object field name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object view filter column
-	 * @throws NoSuchObjectViewFilterColumnException if a object view filter column with the primary key could not be found
-	 */
-	public ObjectViewFilterColumn[] findByOVI_OFN_PrevAndNext(
-			long objectViewFilterColumnId, long objectViewId,
-			String objectFieldName,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectViewFilterColumn> orderByComparator)
-		throws NoSuchObjectViewFilterColumnException;
 
 	/**
 	 * Removes all the object view filter columns where objectViewId = &#63; and objectFieldName = &#63; from the database.
@@ -755,3 +584,4 @@ public interface ObjectViewFilterColumnPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-882718896

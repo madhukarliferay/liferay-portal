@@ -111,34 +111,24 @@ public class CIForwardProcessor {
 							_getCIForwardBranchName(), senderUsername,
 							_gitRepositoryDir);
 
+						String forwardLabel = "ci:forward";
+
 						if (_force) {
-							GitHubRemoteGitRepository
-								gitHubRemoteGitRepository =
-									_pullRequest.getGitHubRemoteGitRepository();
-
-							gitHubRemoteGitRepository.addLabel(
-								"bcf5db", "", "ci:forward:force");
-
-							GitHubRemoteGitRepository.Label
-								ciForwardForceLabel =
-									gitHubRemoteGitRepository.getLabel(
-										"ci:forward:force");
-
-							_pullRequest.addLabel(ciForwardForceLabel);
+							forwardLabel = "ci:forward:force";
 						}
 
+						GitHubRemoteGitRepository gitHubRemoteGitRepository =
+							_pullRequest.getGitHubRemoteGitRepository();
+
+						gitHubRemoteGitRepository.addLabel(
+							"bcf5db", "", forwardLabel);
+
+						GitHubRemoteGitRepository.Label ciForwardForceLabel =
+							gitHubRemoteGitRepository.getLabel(forwardLabel);
+
+						_pullRequest.addLabel(ciForwardForceLabel);
+
 						_pullRequest.close();
-
-						StringBuilder sb = new StringBuilder();
-
-						sb.append("Original Pull Request URL: ");
-						sb.append(_pullRequest.getURL());
-						sb.append("\nNew Pull Request URL: ");
-						sb.append(pullRequestURL);
-
-						NotificationUtil.sendSlackNotification(
-							sb.toString(), "#ci-notifications",
-							"Pull request successfully forwarded");
 
 						return pullRequestURL;
 					}
@@ -231,10 +221,10 @@ public class CIForwardProcessor {
 			ioException.printStackTrace();
 		}
 
-		if (!JenkinsResultsParserUtil.isNullOrEmpty(forwardedPullRequestURL)) {
-			_pullRequest.addComment(
-				_getSuccessCommentBody(forwardedPullRequestURL));
-		}
+		_pullRequest.addComment(
+			_getSuccessCommentBody(forwardedPullRequestURL));
+		_pullRequest.copyLabelsToPullRequest(forwardedPullRequest);
+		_pullRequest.copyStatusesToPullRequest(forwardedPullRequest);
 	}
 
 	private PullRequest.Comment _findMostRecentTestResultComment(

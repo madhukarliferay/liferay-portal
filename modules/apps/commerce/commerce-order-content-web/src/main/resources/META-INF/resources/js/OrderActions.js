@@ -4,7 +4,11 @@
  */
 
 import ClayButton from '@clayui/button';
-import {CommerceServiceProvider, commerceEvents} from 'commerce-frontend-js';
+import {
+	CommerceServiceProvider,
+	RequestQuote,
+	commerceEvents,
+} from 'commerce-frontend-js';
 import {openToast} from 'frontend-js-components-web';
 import React, {useCallback, useEffect, useState} from 'react';
 
@@ -14,6 +18,9 @@ import {PAYMENT_METHOD_TYPE_OFFLINE, getOrder} from './util';
 function OrderActions({
 	checkoutURL,
 	isOpen,
+	isPriceOnApplication,
+	manageNotesPermission,
+	manageRestrictedNotesPermission,
 	namespace,
 	orderId,
 	orderSummaryURL,
@@ -37,7 +44,7 @@ function OrderActions({
 				.then(({items: availableTransitions}) => {
 					let actions = availableTransitions;
 
-					if (quickCheckoutEnabled) {
+					if (!isPriceOnApplication && quickCheckoutEnabled) {
 						const quickCheckoutTransition =
 							availableTransitions.find(
 								(item) => item.name === 'quick-checkout'
@@ -76,7 +83,13 @@ function OrderActions({
 					});
 				});
 		},
-		[orderId, open, quickCheckoutEnabled, viewReturnableOrderItemsURL]
+		[
+			isPriceOnApplication,
+			orderId,
+			open,
+			quickCheckoutEnabled,
+			viewReturnableOrderItemsURL,
+		]
 	);
 
 	useEffect(() => {
@@ -178,19 +191,40 @@ function OrderActions({
 
 	return (
 		<div className="align-items-center d-flex">
-			{actions.map((action) => (
-				<div key={action.name}>
-					<ClayButton
-						aria-label={action.label}
-						className="mx-1"
-						disabled={action?.disabled}
-						displayType="primary"
-						onClick={(event) => onClick(event, action)}
-					>
-						{action.label}
-					</ClayButton>
-				</div>
-			))}
+			{actions.map((action) => {
+				if (action.name === 'request-quote') {
+					return (
+						<RequestQuote
+							data={{
+								cartId: orderId,
+								createCart: false,
+								notesPermission: manageNotesPermission,
+								orderDetailURL: orderSummaryURL,
+								restrictedNotesPermission:
+									manageRestrictedNotesPermission,
+							}}
+							style={{
+								displayType: 'primary',
+								size: 'md',
+							}}
+						/>
+					);
+				}
+
+				return (
+					<div key={action.name}>
+						<ClayButton
+							aria-label={action.label}
+							className="mx-1"
+							disabled={action?.disabled}
+							displayType="primary"
+							onClick={(event) => onClick(event, action)}
+						>
+							{action.label}
+						</ClayButton>
+					</div>
+				);
+			})}
 		</div>
 	);
 }

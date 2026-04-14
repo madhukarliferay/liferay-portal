@@ -397,101 +397,103 @@ that may or may not be enforced with a unique index at the database level. Case
 		return null;
 	}
 
-	/**
-	 * Returns the last ${entity.humanName} in the ordered set where ${entityFinder.getHumanConditions(false)}.
-	 *
-	<#list entityColumns as entityColumn>
-	 * @param ${entityColumn.name} the ${entityColumn.humanName}
-	</#list>
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ${entity.humanName}
-	 * @throws ${noSuchEntity}Exception if a matching ${entity.humanName} could not be found
-	 */
-	@Override
-	public ${entity.name} findBy${entityFinder.name}_Last(
-
-	<#list entityColumns as entityColumn>
-		${entityColumn.type} ${entityColumn.name},
-	</#list>
-
-	OrderByComparator<${entity.name}> orderByComparator) throws ${noSuchEntity}Exception {
-		${entity.name} ${entity.variableName} = fetchBy${entityFinder.name}_Last(
+	<#if !serviceBuilder.isVersionGTE_7_4_0()>
+		/**
+		 * Returns the last ${entity.humanName} in the ordered set where ${entityFinder.getHumanConditions(false)}.
+		 *
+		<#list entityColumns as entityColumn>
+		 * @param ${entityColumn.name} the ${entityColumn.humanName}
+		</#list>
+		 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+		 * @return the last matching ${entity.humanName}
+		 * @throws ${noSuchEntity}Exception if a matching ${entity.humanName} could not be found
+		 */
+		@Override
+		public ${entity.name} findBy${entityFinder.name}_Last(
 
 		<#list entityColumns as entityColumn>
-			${entityColumn.name},
+			${entityColumn.type} ${entityColumn.name},
 		</#list>
 
-		orderByComparator);
+		OrderByComparator<${entity.name}> orderByComparator) throws ${noSuchEntity}Exception {
+			${entity.name} ${entity.variableName} = fetchBy${entityFinder.name}_Last(
 
-		if (${entity.variableName} != null) {
-			return ${entity.variableName};
+			<#list entityColumns as entityColumn>
+				${entityColumn.name},
+			</#list>
+
+			orderByComparator);
+
+			if (${entity.variableName} != null) {
+				return ${entity.variableName};
+			}
+
+			StringBundler sb = new StringBundler(${(entityColumns?size * 2) + 2});
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			<#list entityColumns as entityColumn>
+				sb.append("<#if entityColumn_index != 0>, </#if>${entityColumn.name}${entityColumn.comparator}");
+				sb.append(${entityColumn.name});
+
+				<#if !entityColumn_has_next>
+					sb.append("}");
+				</#if>
+			</#list>
+
+			throw new ${noSuchEntity}Exception(sb.toString());
 		}
 
-		StringBundler sb = new StringBundler(${(entityColumns?size * 2) + 2});
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+		/**
+		 * Returns the last ${entity.humanName} in the ordered set where ${entityFinder.getHumanConditions(false)}.
+		 *
+		<#list entityColumns as entityColumn>
+		 * @param ${entityColumn.name} the ${entityColumn.humanName}
+		</#list>
+		 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+		 * @return the last matching ${entity.humanName}, or <code>null</code> if a matching ${entity.humanName} could not be found
+		 */
+		@Override
+		public ${entity.name} fetchBy${entityFinder.name}_Last(
 
 		<#list entityColumns as entityColumn>
-			sb.append("<#if entityColumn_index != 0>, </#if>${entityColumn.name}${entityColumn.comparator}");
-			sb.append(${entityColumn.name});
-
-			<#if !entityColumn_has_next>
-				sb.append("}");
-			</#if>
+			${entityColumn.type} ${entityColumn.name},
 		</#list>
 
-		throw new ${noSuchEntity}Exception(sb.toString());
-	}
+		OrderByComparator<${entity.name}> orderByComparator) {
+			int count = countBy${entityFinder.name}(
 
-	/**
-	 * Returns the last ${entity.humanName} in the ordered set where ${entityFinder.getHumanConditions(false)}.
-	 *
-	<#list entityColumns as entityColumn>
-	 * @param ${entityColumn.name} the ${entityColumn.humanName}
-	</#list>
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ${entity.humanName}, or <code>null</code> if a matching ${entity.humanName} could not be found
-	 */
-	@Override
-	public ${entity.name} fetchBy${entityFinder.name}_Last(
+			<#list entityColumns as entityColumn>
+				${entityColumn.name}
 
-	<#list entityColumns as entityColumn>
-		${entityColumn.type} ${entityColumn.name},
-	</#list>
+				<#if entityColumn_has_next>
+					,
+				</#if>
+			</#list>
 
-	OrderByComparator<${entity.name}> orderByComparator) {
-		int count = countBy${entityFinder.name}(
+			);
 
-		<#list entityColumns as entityColumn>
-			${entityColumn.name}
+			if (count == 0) {
+				return null;
+			}
 
-			<#if entityColumn_has_next>
-				,
-			</#if>
-		</#list>
+			List<${entity.name}> list = findBy${entityFinder.name}(
 
-		);
+			<#list entityColumns as entityColumn>
+				${entityColumn.name},
+			</#list>
 
-		if (count == 0) {
+			count - 1, count, orderByComparator);
+
+			if (!list.isEmpty()) {
+				return list.get(0);
+			}
+
 			return null;
 		}
+	</#if>
 
-		List<${entity.name}> list = findBy${entityFinder.name}(
-
-		<#list entityColumns as entityColumn>
-			${entityColumn.name},
-		</#list>
-
-		count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	<#if !entityFinder.hasEntityColumn(entity.PKVariableName)>
+	<#if !entityFinder.hasEntityColumn(entity.PKVariableName) && !serviceBuilder.isVersionGTE_7_4_0()>
 		/**
 		 * Returns the ${entity.pluralHumanName} before and after the current ${entity.humanName} in the ordered set where ${entityFinder.getHumanConditions(false)}.
 		 *
@@ -698,6 +700,25 @@ that may or may not be enforced with a unique index at the database level. Case
 				start, end, orderByComparator);
 			}
 
+			<#if serviceBuilder.isVersionGTE_7_4_0()>
+				if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) && isPermissionsInMemoryFilterEnabled()) {
+					return InlineSQLHelperUtil.filter(
+						findBy${entityFinder.name}(
+
+						<#list entityColumns as entityColumn>
+							${entityColumn.name},
+						</#list>
+
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator)
+
+						<#if entityFinder.hasEntityColumn("groupId")>
+							, groupId
+						</#if>
+
+						);
+				}
+			</#if>
+
 			<#list entityColumns as entityColumn>
 				<#if stringUtil.equals(entityColumn.type, "String") && entityColumn.isConvertNull()>
 					${entityColumn.name} = Objects.toString(${entityColumn.name}, "");
@@ -807,7 +828,7 @@ that may or may not be enforced with a unique index at the database level. Case
 			</#if>
 		}
 
-		<#if !entityFinder.hasEntityColumn(entity.PKVariableName)>
+		<#if !entityFinder.hasEntityColumn(entity.PKVariableName) && !serviceBuilder.isVersionGTE_7_4_0()>
 			/**
 			 * Returns the ${entity.pluralHumanName} before and after the current ${entity.humanName} in the ordered set of ${entity.pluralHumanName} that the user has permission to view where ${entityFinder.getHumanConditions(false)}.
 			 *
@@ -1209,6 +1230,33 @@ that may or may not be enforced with a unique index at the database level. Case
 
 					start, end, orderByComparator);
 				}
+
+				<#if serviceBuilder.isVersionGTE_7_4_0()>
+					if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) && isPermissionsInMemoryFilterEnabled()) {
+						return InlineSQLHelperUtil.filter(
+							findBy${entityFinder.name}(
+
+							<#list entityColumns as entityColumn>
+								<#if entityColumn.hasArrayableOperator()>
+									${entityColumn.pluralName},
+								<#else>
+									${entityColumn.name},
+								</#if>
+							</#list>
+
+							QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator)
+
+							<#if entityFinder.hasEntityColumn("groupId")>,
+								<#if entityFinder.getEntityColumn("groupId").hasArrayableOperator()>
+									groupIds
+								<#else>
+									groupId
+								</#if>
+							</#if>
+
+							);
+					}
+				</#if>
 
 				<#list entityColumns as entityColumn>
 					<#if entityColumn.hasArrayableOperator()>
@@ -2064,8 +2112,8 @@ that may or may not be enforced with a unique index at the database level. Case
 
 		if (list == null) {
 			try {
-				if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) && (databaseInMaxParameters > 0) && (<#list entityFinderArrayableColsList as arrayableentityColumn>
-						(${arrayableentityColumn.pluralName}.length > databaseInMaxParameters)
+				if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) && (${databaseInMaxParameters} > 0) && (<#list entityFinderArrayableColsList as arrayableentityColumn>
+						(${arrayableentityColumn.pluralName}.length > ${databaseInMaxParameters})
 
 						<#if arrayableentityColumn_has_next>
 							||
@@ -2075,7 +2123,7 @@ that may or may not be enforced with a unique index at the database level. Case
 					list = new ArrayList<${entity.name}>();
 
 					<#list entityFinderArrayableColsList as arrayableentityColumn>
-						${arrayableentityColumn.type}[][] ${arrayableentityColumn.pluralName}Pages = (${arrayableentityColumn.type}[][])ArrayUtil.split(${arrayableentityColumn.pluralName}, databaseInMaxParameters);
+						${arrayableentityColumn.type}[][] ${arrayableentityColumn.pluralName}Pages = (${arrayableentityColumn.type}[][])<#if serviceBuilder.isVersionGTE_7_1_0()>ArrayUtil.split<#else>_split</#if>(${arrayableentityColumn.pluralName}, ${databaseInMaxParameters});
 					</#list>
 
 					<#list entityFinderArrayableColsList as arrayableentityColumn>

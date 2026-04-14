@@ -126,50 +126,6 @@ public interface NotificationQueueEntryAttachmentPersistence
 				<NotificationQueueEntryAttachment> orderByComparator);
 
 	/**
-	 * Returns the last notification queue entry attachment in the ordered set where notificationQueueEntryId = &#63;.
-	 *
-	 * @param notificationQueueEntryId the notification queue entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification queue entry attachment
-	 * @throws NoSuchNotificationQueueEntryAttachmentException if a matching notification queue entry attachment could not be found
-	 */
-	public NotificationQueueEntryAttachment findByNotificationQueueEntryId_Last(
-			long notificationQueueEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationQueueEntryAttachment> orderByComparator)
-		throws NoSuchNotificationQueueEntryAttachmentException;
-
-	/**
-	 * Returns the last notification queue entry attachment in the ordered set where notificationQueueEntryId = &#63;.
-	 *
-	 * @param notificationQueueEntryId the notification queue entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification queue entry attachment, or <code>null</code> if a matching notification queue entry attachment could not be found
-	 */
-	public NotificationQueueEntryAttachment
-		fetchByNotificationQueueEntryId_Last(
-			long notificationQueueEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationQueueEntryAttachment> orderByComparator);
-
-	/**
-	 * Returns the notification queue entry attachments before and after the current notification queue entry attachment in the ordered set where notificationQueueEntryId = &#63;.
-	 *
-	 * @param notificationQueueEntryAttachmentId the primary key of the current notification queue entry attachment
-	 * @param notificationQueueEntryId the notification queue entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification queue entry attachment
-	 * @throws NoSuchNotificationQueueEntryAttachmentException if a notification queue entry attachment with the primary key could not be found
-	 */
-	public NotificationQueueEntryAttachment[]
-			findByNotificationQueueEntryId_PrevAndNext(
-				long notificationQueueEntryAttachmentId,
-				long notificationQueueEntryId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<NotificationQueueEntryAttachment> orderByComparator)
-		throws NoSuchNotificationQueueEntryAttachmentException;
-
-	/**
 	 * Removes all the notification queue entry attachments where notificationQueueEntryId = &#63; from the database.
 	 *
 	 * @param notificationQueueEntryId the notification queue entry ID
@@ -314,3 +270,4 @@ public interface NotificationQueueEntryAttachmentPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:951741007

@@ -80,6 +80,13 @@ public interface ObjectEntryFolderLocalService
 			ServiceContext serviceContext)
 		throws PortalException;
 
+	@Indexable(type = IndexableType.REINDEX)
+	public ObjectEntryFolder copyObjectEntryFolder(
+			long userId, long objectEntryFolderId,
+			long parentObjectEntryFolderId, boolean replace,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	/**
 	 * Creates a new object entry folder with the primary key. Does not add the object entry folder to the database.
 	 *
@@ -214,6 +221,11 @@ public interface ObjectEntryFolderLocalService
 	public ObjectEntryFolder fetchObjectEntryFolder(long objectEntryFolderId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectEntryFolder fetchObjectEntryFolder(
+		long groupId, long companyId, long parentObjectEntryFolderId,
+		String name);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ObjectEntryFolder fetchObjectEntryFolderByExternalReferenceCode(
 		String externalReferenceCode, long groupId, long companyId);
 
@@ -286,6 +298,10 @@ public interface ObjectEntryFolderLocalService
 		long groupId, long companyId, long parentObjectEntryFolderId, int start,
 		int end);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectEntryFolder> getObjectEntryFoldersByExternalReferenceCode(
+		String externalReferenceCode, List<Long> groupIds, long companyId);
+
 	/**
 	 * Returns all the object entry folders matching the UUID and company.
 	 *
@@ -346,6 +362,13 @@ public interface ObjectEntryFolderLocalService
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
 
+	@Indexable(type = IndexableType.REINDEX)
+	public ObjectEntryFolder moveObjectEntryFolder(
+			long userId, long objectEntryFolderId,
+			long parentObjectEntryFolderId, boolean replace,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	public void moveObjectEntryFoldersToTrash(
 			long userId, ObjectEntryFolder parentObjectEntryFolder,
 			ServiceContext serviceContext)
@@ -402,3 +425,4 @@ public interface ObjectEntryFolderLocalService
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:854044163

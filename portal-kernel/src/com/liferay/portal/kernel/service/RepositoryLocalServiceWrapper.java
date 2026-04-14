@@ -463,6 +463,13 @@ public class RepositoryLocalServiceWrapper
 	}
 
 	@Override
+	public boolean isHidden(long repositoryId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _repositoryLocalService.isHidden(repositoryId);
+	}
+
+	@Override
 	public void updateRepository(
 			long repositoryId, String name, String description)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -537,3 +544,4 @@ public class RepositoryLocalServiceWrapper
 	private RepositoryLocalService _repositoryLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-940450153

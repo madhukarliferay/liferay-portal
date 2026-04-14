@@ -404,9 +404,7 @@ public class SitePageSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(sitePage.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -1029,3 +1027,4 @@ public class SitePageSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1720438540

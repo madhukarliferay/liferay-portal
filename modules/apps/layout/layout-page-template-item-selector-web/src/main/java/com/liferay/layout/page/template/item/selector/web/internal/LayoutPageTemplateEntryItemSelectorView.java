@@ -260,7 +260,7 @@ public class LayoutPageTemplateEntryItemSelectorView
 					_httpServletRequest, "x-usages",
 					_layoutLocalService.getMasterLayoutsCount(
 						_layoutPageTemplateEntry.getGroupId(),
-						_layoutPageTemplateEntry.getPlid()));
+						_layoutPageTemplateEntry.getExternalReferenceCode()));
 			}
 
 			LayoutPageTemplateCollection layoutPageTemplateCollection =
@@ -304,6 +304,7 @@ public class LayoutPageTemplateEntryItemSelectorView
 			InfoItemFormVariation infoItemFormVariation =
 				infoItemFormVariationsProvider.getInfoItemFormVariation(
 					_layoutPageTemplateEntry.getGroupId(),
+					_layoutPageTemplateEntry.getClassTypeKey(),
 					String.valueOf(_layoutPageTemplateEntry.getClassTypeId()));
 
 			if (infoItemFormVariation != null) {

@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -59,7 +58,6 @@ public class StyleBookEntryVersionThemeIdUpgradeProcessTest {
 			_group, TestPropsValues.getUserId());
 	}
 
-	@FeatureFlag("LPD-30204")
 	@Test
 	public void testUpgrade() throws Exception {
 		long groupId = RandomTestUtil.randomLong();
@@ -99,24 +97,25 @@ public class StyleBookEntryVersionThemeIdUpgradeProcessTest {
 		}
 
 		try (Connection connection = DataAccess.getConnection();
-			 PreparedStatement preparedStatement = connection.prepareStatement(
-				 StringBundler.concat(
-					 "select uuid_, themeId from StyleBookEntryVersion where ",
-					 "styleBookEntryId = ",
-					 styleBookEntry.getStyleBookEntryId(), " or ",
-					 "styleBookEntryId = ",
-					 orphanedStyleBookEntry.getStyleBookEntryId()));
 
-			 ResultSet resultSet = preparedStatement.executeQuery()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				"select uuid_, themeId from StyleBookEntryVersion where " +
+					"styleBookEntryId = ? or styleBookEntryId = ?")) {
 
-			Assert.assertTrue(resultSet.next());
+			preparedStatement.setLong(1, styleBookEntry.getStyleBookEntryId());
+			preparedStatement.setLong(
+				2, orphanedStyleBookEntry.getStyleBookEntryId());
 
-			Assert.assertEquals(
-				styleBookEntry.getUuid(), resultSet.getString("uuid_"));
-			Assert.assertEquals(
-				"classic_WAR_classictheme", resultSet.getString("themeId"));
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Assert.assertTrue(resultSet.next());
 
-			Assert.assertFalse(resultSet.next());
+				Assert.assertEquals(
+					styleBookEntry.getUuid(), resultSet.getString("uuid_"));
+				Assert.assertEquals(
+					"classic_WAR_classictheme", resultSet.getString("themeId"));
+
+				Assert.assertFalse(resultSet.next());
+			}
 		}
 	}
 

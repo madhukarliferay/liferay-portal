@@ -128,50 +128,6 @@ public interface ExpandoTablePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last expando table in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando table
-	 * @throws NoSuchTableException if a matching expando table could not be found
-	 */
-	public ExpandoTable findByC_C_Last(
-			long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<ExpandoTable>
-				orderByComparator)
-		throws NoSuchTableException;
-
-	/**
-	 * Returns the last expando table in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando table, or <code>null</code> if a matching expando table could not be found
-	 */
-	public ExpandoTable fetchByC_C_Last(
-		long companyId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<ExpandoTable>
-			orderByComparator);
-
-	/**
-	 * Returns the expando tables before and after the current expando table in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param tableId the primary key of the current expando table
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next expando table
-	 * @throws NoSuchTableException if a expando table with the primary key could not be found
-	 */
-	public ExpandoTable[] findByC_C_PrevAndNext(
-			long tableId, long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<ExpandoTable>
-				orderByComparator)
-		throws NoSuchTableException;
-
-	/**
 	 * Removes all the expando tables where companyId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -366,3 +322,4 @@ public interface ExpandoTablePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:562473001

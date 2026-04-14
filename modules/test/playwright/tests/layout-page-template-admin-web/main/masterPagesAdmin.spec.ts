@@ -26,6 +26,7 @@ export const test = mergeTests(
 	pagesAdminPagesTest,
 	isolatedSiteTest,
 	featureFlagsTest({
+		'LPD-40054': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	loginTest(),
@@ -224,7 +225,7 @@ test(
 
 		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
 			groupId: site.id,
-			masterLayoutPlid: masterPage1.plid,
+			masterLayoutPageTemplateEntryERC: masterPage1.externalReferenceCode,
 			options: {type: 'content'},
 			title: layoutTitle,
 		});
@@ -578,7 +579,11 @@ test(
 
 		await dialog.getByLabel('Overwrite Existing Items').check();
 
-		await dialog.getByRole('button', {name: 'Import'}).click();
+		await dialog.getByRole('button', {name: 'Save'}).click();
+
+		await expect(dialog).not.toBeVisible();
+
+		await page.getByRole('button', {name: 'Import'}).click();
 
 		await expect(
 			page.getByRole('button', {name: '1 item was imported.'})
@@ -632,7 +637,8 @@ test.describe('Allowed fragments Configuration', () => {
 
 			const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage.externalReferenceCode,
 				options: {type: 'content'},
 				title: getRandomString(),
 			});
@@ -745,7 +751,8 @@ test.describe('Allowed fragments Configuration', () => {
 
 			const layout1 = await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage1.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage1.externalReferenceCode,
 				options: {type: 'content'},
 				title: getRandomString(),
 			});
@@ -762,7 +769,8 @@ test.describe('Allowed fragments Configuration', () => {
 
 			const layout2 = await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage2.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage2.externalReferenceCode,
 				options: {type: 'content'},
 				title: getRandomString(),
 			});

@@ -6,7 +6,7 @@
 import {render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {
 	MarketplaceRest,
 	useMarketplaceConfiguration,
@@ -74,6 +74,8 @@ jest.mock(
 	'../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/index',
 	() => ({
 		config: {
+			addFragmentCollectionURL: '/mockAddFragmentCollectionURL',
+			fragmentCollections: [{fragmentCollectionId: 1, name: 'Set Name'}],
 			fragmentPortletNamespace: 'mockNamespace',
 			fragmentsImportURL: '/mockImportURL',
 			portletNamespace: 'testPortlet',
@@ -161,7 +163,7 @@ describe('MarketplaceSearchResults', () => {
 			expect(screen.getByText(`Product ${index}`)).toBeInTheDocument();
 			expect(screen.getByText(`Catalog ${index}`)).toBeInTheDocument();
 
-			const imageElements = screen.getAllByRole('img');
+			const imageElements = screen.getAllByRole('presentation');
 			const urlImage = imageElements.find(
 				(image) => image.getAttribute('src') === `urlImage${index}`
 			);
@@ -306,7 +308,7 @@ describe('MarketplaceSearchResults', () => {
 			screen.getByRole('button', {name: 'see-marketplace-results'})
 		);
 
-		expect(screen.getAllByRole('menubar').length).toBe(1);
+		expect(screen.getAllByRole('menu').length).toBe(1);
 		expect(screen.getAllByRole('menuitem').length).toBe(2);
 
 		expect(
@@ -449,7 +451,11 @@ describe('MarketplaceSearchResults', () => {
 			require('@liferay/layout-js-components-web').MarketplaceModal
 		).toHaveBeenCalledWith(
 			expect.objectContaining({
+				addFragmentCollectionURL: '/mockAddFragmentCollectionURL',
 				children: expect.anything(),
+				fragmentCollections: [
+					{fragmentCollectionId: 1, name: 'Set Name'},
+				],
 				fragmentPortletNamespace: 'mockNamespace',
 				fragmentsImportURL: '/mockImportURL',
 				hideBackButton: true,

@@ -15,18 +15,18 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 
+import com.liferay.osb.faro.engine.client.mixin.BaseMixin;
+import com.liferay.osb.faro.engine.client.mixin.CredentialsMixin;
+import com.liferay.osb.faro.engine.client.mixin.OAuth1CredentialsMixin;
+import com.liferay.osb.faro.engine.client.mixin.OAuth2CredentialsMixin;
+import com.liferay.osb.faro.engine.client.mixin.PageVisitMixin;
+import com.liferay.osb.faro.engine.client.mixin.TokenCredentialsMixin;
 import com.liferay.osb.faro.engine.client.model.Credentials;
 import com.liferay.osb.faro.engine.client.model.Interest;
 import com.liferay.osb.faro.engine.client.model.PageVisited;
 import com.liferay.osb.faro.engine.client.model.credentials.OAuth1Credentials;
 import com.liferay.osb.faro.engine.client.model.credentials.OAuth2Credentials;
 import com.liferay.osb.faro.engine.client.model.credentials.TokenCredentials;
-import com.liferay.osb.faro.web.internal.model.display.contacts.mixin.BaseMixin;
-import com.liferay.osb.faro.web.internal.model.display.contacts.mixin.CredentialsMixin;
-import com.liferay.osb.faro.web.internal.model.display.contacts.mixin.OAuth1CredentialsMixin;
-import com.liferay.osb.faro.web.internal.model.display.contacts.mixin.OAuth2CredentialsMixin;
-import com.liferay.osb.faro.web.internal.model.display.contacts.mixin.PageVisitMixin;
-import com.liferay.osb.faro.web.internal.model.display.contacts.mixin.TokenCredentialsMixin;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 
@@ -87,7 +87,6 @@ public class JSONUtil {
 			addMixIn(PageVisited.class, PageVisitMixin.class);
 			addMixIn(TokenCredentials.class, TokenCredentialsMixin.class);
 			configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
 			setPropertyNamingStrategy(
 				new PropertyNamingStrategy() {
 
@@ -107,7 +106,6 @@ public class JSONUtil {
 					}
 
 				});
-
 			setVisibility(
 				PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 		}

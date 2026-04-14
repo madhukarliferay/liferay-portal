@@ -106,7 +106,7 @@ public interface AccountEntryService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AccountEntry getOrAddEmptyAccountEntry(
 			String externalReferenceCode, String name, String type)
-		throws Exception;
+		throws PortalException;
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -152,3 +152,4 @@ public interface AccountEntryService extends BaseService {
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:502648259

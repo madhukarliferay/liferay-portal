@@ -414,6 +414,10 @@ public class RepositoryLocalServiceUtil {
 		return getService().getTypeSettingsProperties(repositoryId);
 	}
 
+	public static boolean isHidden(long repositoryId) throws PortalException {
+		return getService().isHidden(repositoryId);
+	}
+
 	public static void updateRepository(
 			long repositoryId, String name, String description)
 		throws PortalException {
@@ -456,3 +460,4 @@ public class RepositoryLocalServiceUtil {
 	private static volatile RepositoryLocalService _service;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1498388955

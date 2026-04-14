@@ -10,6 +10,7 @@ import com.liferay.application.list.PanelAppRegistry;
 import com.liferay.application.list.PanelCategory;
 import com.liferay.application.list.constants.PanelCategoryKeys;
 import com.liferay.application.list.display.context.logic.PanelCategoryHelper;
+import com.liferay.application.list.util.PanelCategoryRegistryUtil;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.headless.asset.library.dto.v1_0.AssetLibrary;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
@@ -42,13 +44,13 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.webserver.WebServerServletToken;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.product.navigation.applications.menu.web.internal.constants.ProductNavigationApplicationsMenuPortletKeys;
-import com.liferay.product.navigation.applications.menu.web.internal.util.ApplicationsMenuUtil;
 import com.liferay.site.item.selector.SiteItemSelectorCriterion;
 import com.liferay.site.manager.RecentGroupManager;
 import com.liferay.site.provider.GroupURLProvider;
@@ -108,8 +110,11 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		return JSONUtil.put(
 			"cms", _getCMSJSONObject(httpServletRequest, themeDisplay)
 		).put(
+			"dsr", _getDSRJSONObject(themeDisplay)
+		).put(
 			"items",
-			_getPanelCategoriesJSONArray(httpServletRequest, themeDisplay)
+			_getPanelCategoriesJSONArray(
+				httpServletRequest, resourceRequest, themeDisplay)
 		).put(
 			"portletNamespace", resourceResponse.getNamespace()
 		).put(
@@ -154,6 +159,12 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 	private Page<AssetLibrary> _getAssetLibrariesPage(ThemeDisplay themeDisplay)
 		throws Exception {
 
+		if (!FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-17564")) {
+
+			return null;
+		}
+
 		AssetLibraryResource.Builder builder =
 			_assetLibraryResourceFactory.create();
 
@@ -163,7 +174,8 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 
 		Page<AssetLibrary> assetLibrariesPage =
 			assetLibraryResource.getAssetLibrariesPage(
-				null, null, null, Pagination.of(1, 5), null);
+				null, null, assetLibraryResource.toFilter("type eq 'Space'"),
+				Pagination.of(1, 5), null);
 
 		return Page.of(
 			assetLibrariesPage.getActions(),
@@ -231,11 +243,31 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 			HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay)
 		throws Exception {
 
-		JSONObject cmsJSONObject = _jsonFactory.createJSONObject();
-
+		Page<AssetLibrary> assetLibraryPage = _getAssetLibrariesPage(
+			themeDisplay);
 		Company company = themeDisplay.getCompany();
 
-		return cmsJSONObject.put(
+		return JSONUtil.put(
+			"active",
+			StringUtil.startsWith(
+				themeDisplay.getURLCurrent(),
+				themeDisplay.getPathFriendlyURLPublic() +
+					GroupConstants.CMS_FRIENDLY_URL)
+		).put(
+			"allSpacesCount",
+			() -> {
+				if (assetLibraryPage == null) {
+					return null;
+				}
+
+				return assetLibraryPage.getTotalCount();
+			}
+		).put(
+			"allSpacesURL",
+			StringBundler.concat(
+				themeDisplay.getPathFriendlyURLPublic(),
+				GroupConstants.CMS_FRIENDLY_URL, "/all-spaces")
+		).put(
 			"firstTimeAccess",
 			() -> {
 				ExpandoBridge bridge = company.getExpandoBridge();
@@ -243,22 +275,27 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 				return !bridge.hasAttribute("cmsFirstTimeAccess");
 			}
 		).put(
+			"key", "cms"
+		).put(
+			"label", LanguageUtil.get(httpServletRequest, "cms")
+		).put(
 			"logoURL",
 			StringBundler.concat(
 				themeDisplay.getPathImage(), "/company_logo?img_id=",
 				company.getLogoId(), "&t=",
 				_webServerServletToken.getToken(company.getLogoId()))
 		).put(
+			"newSpaceURL",
+			_getNewSpaceCreationURL(httpServletRequest, themeDisplay)
+		).put(
 			"spaces",
 			() -> {
-				if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
+				if (assetLibraryPage == null) {
 					return null;
 				}
 
-				Page<AssetLibrary> page = _getAssetLibrariesPage(themeDisplay);
-
 				return JSONUtil.toJSONArray(
-					page.getItems(),
+					assetLibraryPage.getItems(),
 					assetLibrary -> JSONUtil.put(
 						"active",
 						_isCMSSpaceAssetLibraryActive(
@@ -284,7 +321,9 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 					));
 			}
 		).put(
-			"url", GroupConstants.CMS_FRIENDLY_URL + "/home"
+			"url",
+			themeDisplay.getPathFriendlyURLPublic() +
+				GroupConstants.CMS_FRIENDLY_URL + "/home"
 		);
 	}
 
@@ -325,6 +364,26 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		return 0;
 	}
 
+	private JSONObject _getDSRJSONObject(ThemeDisplay themeDisplay)
+		throws Exception {
+
+		return JSONUtil.put(
+			"url",
+			StringBundler.concat(
+				themeDisplay.getPathFriendlyURLPublic(), "/",
+				StringUtil.toLowerCase(GroupConstants.DSR), "/rooms"));
+	}
+
+	private String _getNewSpaceCreationURL(
+			HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay)
+		throws Exception {
+
+		return StringBundler.concat(
+			themeDisplay.getPathFriendlyURLPublic(),
+			GroupConstants.CMS_FRIENDLY_URL, "/new-space?backURL=",
+			ParamUtil.getString(httpServletRequest, "backURL"));
+	}
+
 	private JSONObject _getPanelAppJSONObject(
 			HttpServletRequest httpServletRequest, PanelApp panelApp,
 			ThemeDisplay themeDisplay)
@@ -360,7 +419,8 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 	}
 
 	private JSONArray _getPanelCategoriesJSONArray(
-			HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay)
+			HttpServletRequest httpServletRequest,
+			ResourceRequest resourceRequest, ThemeDisplay themeDisplay)
 		throws Exception {
 
 		JSONArray panelCategoriesJSONArray = _jsonFactory.createJSONArray();
@@ -368,6 +428,18 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		List<PanelCategory> applicationsMenuPanelCategories =
 			_panelCategoryHelper.getChildPanelCategories(
 				PanelCategoryKeys.APPLICATIONS_MENU, themeDisplay);
+
+		if (FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-36105")) {
+
+			_processPanelCategories(
+				applicationsMenuPanelCategories, httpServletRequest,
+				panelCategoriesJSONArray,
+				ParamUtil.getString(resourceRequest, "selectedPortletId"),
+				themeDisplay);
+
+			return panelCategoriesJSONArray;
+		}
 
 		for (PanelCategory panelCategory : applicationsMenuPanelCategories) {
 			JSONArray childCategoriesJSONArray =
@@ -393,6 +465,26 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		return panelCategoriesJSONArray;
 	}
 
+	private String _getSelectedCategoryKey(long companyId, String portletId) {
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-36105")) {
+			return null;
+		}
+
+		List<PanelCategory> childPanelCategories =
+			PanelCategoryRegistryUtil.getChildPanelCategories(
+				PanelCategoryKeys.APPLICATIONS_MENU);
+
+		for (PanelCategory panelCategory : childPanelCategories) {
+			if (_panelCategoryHelper.containsPortlet(
+					portletId, panelCategory.getKey())) {
+
+				return panelCategory.getKey();
+			}
+		}
+
+		return null;
+	}
+
 	private JSONArray _getSitesJSONArray(
 			List<Group> groups, ResourceRequest resourceRequest,
 			ThemeDisplay themeDisplay)
@@ -400,8 +492,7 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 
 		JSONArray recentSitesJSONArray = _jsonFactory.createJSONArray();
 
-		boolean applicationMenuApp = _isApplicationMenuApp(
-			resourceRequest, themeDisplay);
+		boolean applicationMenuApp = _isApplicationMenuApp(resourceRequest);
 
 		for (Group group : groups) {
 			recentSitesJSONArray.put(
@@ -504,23 +595,12 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 				siteItemSelectorCriterion));
 	}
 
-	private boolean _isApplicationMenuApp(
-		ResourceRequest resourceRequest, ThemeDisplay themeDisplay) {
-
-		if (!ApplicationsMenuUtil.isEnableApplicationsMenu(
-				themeDisplay.getCompanyId(), _configurationProvider)) {
-
-			return false;
-		}
-
+	private boolean _isApplicationMenuApp(ResourceRequest resourceRequest) {
 		String selectedPortletId = ParamUtil.getString(
 			resourceRequest, "selectedPortletId");
 
-		PanelCategoryHelper panelCategoryHelper = new PanelCategoryHelper(
-			_panelAppRegistry);
-
 		if (Validator.isNull(selectedPortletId) ||
-			!panelCategoryHelper.isApplicationsMenuApp(selectedPortletId)) {
+			!_panelCategoryHelper.isApplicationsMenuApp(selectedPortletId)) {
 
 			return false;
 		}
@@ -539,6 +619,40 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		}
 
 		return false;
+	}
+
+	private void _processPanelCategories(
+			List<PanelCategory> applicationsMenuPanelCategories,
+			HttpServletRequest httpServletRequest,
+			JSONArray panelCategoriesJSONArray, String selectedPortletId,
+			ThemeDisplay themeDisplay)
+		throws Exception {
+
+		String selectedCategoryKey = _getSelectedCategoryKey(
+			themeDisplay.getCompanyId(), selectedPortletId);
+
+		for (PanelCategory panelCategory : applicationsMenuPanelCategories) {
+			PanelApp panelApp = _panelAppRegistry.getFirstAvailablePanelApp(
+				panelCategory.getKey(), themeDisplay.getPermissionChecker(),
+				themeDisplay.getScopeGroup());
+
+			if (panelApp == null) {
+				continue;
+			}
+
+			panelCategoriesJSONArray.put(
+				JSONUtil.put(
+					"active",
+					StringUtil.equals(
+						panelCategory.getKey(), selectedCategoryKey)
+				).put(
+					"homeURL", panelApp.getPortletURL(httpServletRequest)
+				).put(
+					"key", panelCategory.getKey()
+				).put(
+					"label", panelCategory.getLabel(themeDisplay.getLocale())
+				));
+		}
 	}
 
 	@Reference

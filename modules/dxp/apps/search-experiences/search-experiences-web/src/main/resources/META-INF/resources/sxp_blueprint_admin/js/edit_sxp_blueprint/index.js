@@ -23,6 +23,7 @@ export default function ({
 	locale,
 	namespace,
 	redirectURL,
+	selectScopeURL,
 	selectSitesURL,
 	sxpBlueprintId,
 }) {
@@ -56,6 +57,7 @@ export default function ({
 				locale,
 				namespace,
 				redirectURL,
+				selectScopeURL,
 				selectSitesURL,
 				sxpType: 'sxpBlueprint',
 			}}

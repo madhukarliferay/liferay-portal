@@ -7,14 +7,17 @@ package com.liferay.asset.publisher.web.internal.display.context;
 
 import com.liferay.asset.kernel.model.ClassType;
 import com.liferay.asset.kernel.model.ClassTypeReader;
+import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
 import com.liferay.asset.publisher.web.internal.configuration.AssetPublisherPortletInstanceConfiguration;
 import com.liferay.asset.publisher.web.internal.model.TestClassType;
+import com.liferay.asset.util.AssetHelper;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
+import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upgrade.MockPortletPreferences;
@@ -26,6 +29,7 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.AfterClass;
@@ -108,6 +112,75 @@ public class AssetPublisherDisplayContextTest {
 			TransformUtil.transformToLongArray(
 				_assetPublisherDisplayContext.getClassTypes(classTypeReader),
 				classType -> classType.getClassTypeId()));
+	}
+
+	@Test
+	public void testGetScopeAssetPublisherAddItemHolders() throws Exception {
+		AssetHelper assetHelper = Mockito.mock(AssetHelper.class);
+
+		AssetListEntry assetListEntry = Mockito.mock(AssetListEntry.class);
+
+		Mockito.when(
+			assetListEntry.getAssetEntrySubtype()
+		).thenReturn(
+			"0,3"
+		);
+
+		long[] classTypeIds = {1L, 2L};
+		long[] expectedClassTypeIds = {1L, 2L, 0L, 3L};
+
+		AssetPublisherDisplayContext assetPublisherDisplayContext =
+			new AssetPublisherDisplayContext(
+				assetHelper, null, null, null, _assetPublisherHelper, null,
+				null, null, null, _portal, _getLiferayPortletRequest(), null,
+				new MockPortletPreferences(), null, null) {
+
+				@Override
+				public AssetListEntry fetchAssetListEntry() {
+					return assetListEntry;
+				}
+
+				@Override
+				public long[] getAllAssetCategoryIds() {
+					return new long[0];
+				}
+
+				@Override
+				public String[] getAllAssetTagNames() {
+					return new String[0];
+				}
+
+				@Override
+				public long[] getClassNameIds() {
+					return new long[0];
+				}
+
+				@Override
+				public long[] getClassTypeIds() {
+					return classTypeIds;
+				}
+
+				@Override
+				public long[] getGroupIds() {
+					return new long[] {RandomTestUtil.randomLong()};
+				}
+
+			};
+
+		assetPublisherDisplayContext.getScopeAssetPublisherAddItemHolders(1);
+
+		Mockito.verify(
+			assetHelper
+		).getAssetPublisherAddItemHolders(
+			Mockito.nullable(LiferayPortletRequest.class),
+			Mockito.nullable(LiferayPortletResponse.class), Mockito.anyLong(),
+			Mockito.any(long[].class),
+			Mockito.argThat(
+				actualClassTypeIds -> Arrays.equals(
+					expectedClassTypeIds, actualClassTypeIds)),
+			Mockito.any(long[].class), Mockito.any(String[].class),
+			Mockito.nullable(String.class)
+		);
 	}
 
 	private LiferayPortletRequest _getLiferayPortletRequest() {

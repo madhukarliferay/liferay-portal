@@ -11,6 +11,7 @@ import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
 import com.liferay.document.library.kernel.service.DLAppHelperLocalService;
 import com.liferay.document.library.kernel.service.DLFolderLocalService;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanReference;
@@ -18,7 +19,6 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Repository;
@@ -579,6 +579,23 @@ public class DLAppLocalServiceImpl extends DLAppLocalServiceBaseImpl {
 		localRepository.deleteFolder(folderId);
 
 		_dlAppHelperLocalService.deleteFolder(folder);
+	}
+
+	@Override
+	public FileEntry fetchFileEntry(long fileEntryId) throws PortalException {
+		try {
+			LocalRepository localRepository =
+				RepositoryProviderUtil.getFileEntryLocalRepository(fileEntryId);
+
+			return localRepository.fetchFileEntry(fileEntryId);
+		}
+		catch (NoSuchFileEntryException noSuchFileEntryException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchFileEntryException);
+			}
+
+			return null;
+		}
 	}
 
 	/**

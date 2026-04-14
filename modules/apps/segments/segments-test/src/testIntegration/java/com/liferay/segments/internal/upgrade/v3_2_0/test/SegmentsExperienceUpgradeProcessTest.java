@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -15,13 +15,9 @@ import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocal
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalService;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.cache.MultiVMPool;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.db.DBType;
-import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
@@ -38,14 +34,12 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.portal.upgrade.test.util.UpgradeTestUtil;
-import com.liferay.segments.constants.SegmentsEntryConstants;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
@@ -53,10 +47,10 @@ import com.liferay.segments.test.util.SegmentsTestUtil;
 
 import java.sql.Connection;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -81,7 +75,19 @@ public class SegmentsExperienceUpgradeProcessTest
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
+		_connection = DataAccess.getConnection();
 		_db = DBManagerUtil.getDB();
+
+		_db.alterTableAddColumn(
+			_connection, "SegmentsExperience", "segmentsEntryId", "LONG");
+	}
+
+	@AfterClass
+	public static void tearDownClass() throws Exception {
+		_db.alterTableDropColumn(
+			_connection, "SegmentsExperience", "segmentsEntryId");
+
+		DataAccess.cleanUp(_connection);
 	}
 
 	@Before
@@ -123,9 +129,8 @@ public class SegmentsExperienceUpgradeProcessTest
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceLocalService.addSegmentsExperience(
-				null, TestPropsValues.getUserId(), _group.getGroupId(),
-				SegmentsEntryConstants.ID_DEFAULT,
-				SegmentsExperienceConstants.KEY_DEFAULT,
+				null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+				null, SegmentsExperienceConstants.KEY_DEFAULT,
 				RandomTestUtil.randomLong(),
 				RandomTestUtil.randomLocaleStringMap(), 0, true,
 				new UnicodeProperties(true),
@@ -144,24 +149,21 @@ public class SegmentsExperienceUpgradeProcessTest
 	public void testUpgradeWithClassPKColumns() throws Exception {
 		_deleteSegmentsExperiences();
 
-		List<IndexMetadata> indexMetadataList = new ArrayList<>();
-
 		try {
-			indexMetadataList.addAll(
-				_renameColumn(
-					"plid", "classPK", "LayoutPageTemplateStructure"));
-			indexMetadataList.addAll(
-				_renameColumn("plid", "plid2", "FragmentEntryLink"));
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "plid",
+				"classPK LONG");
+			_db.alterColumnName(
+				_connection, "FragmentEntryLink", "plid", "plid2 LONG");
 
 			runUpgrade();
 		}
 		finally {
-			_renameColumn("classPK", "plid", "LayoutPageTemplateStructure");
-			_renameColumn("plid2", "plid", "FragmentEntryLink");
-
-			if (ListUtil.isNotEmpty(indexMetadataList)) {
-				_db.addIndexes(DataAccess.getConnection(), indexMetadataList);
-			}
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "classPK",
+				"plid LONG");
+			_db.alterColumnName(
+				_connection, "FragmentEntryLink", "plid2", "plid LONG");
 		}
 
 		_assertSegmentsExperiences();
@@ -173,20 +175,15 @@ public class SegmentsExperienceUpgradeProcessTest
 
 		_deleteSegmentsExperiences();
 
-		List<IndexMetadata> indexMetadataList = new ArrayList<>();
-
 		try {
-			indexMetadataList.addAll(
-				_renameColumn("plid", "plid2", "FragmentEntryLink"));
+			_db.alterColumnName(
+				_connection, "FragmentEntryLink", "plid", "plid2 LONG");
 
 			runUpgrade();
 		}
 		finally {
-			_renameColumn("plid2", "plid", "FragmentEntryLink");
-
-			if (ListUtil.isNotEmpty(indexMetadataList)) {
-				_db.addIndexes(DataAccess.getConnection(), indexMetadataList);
-			}
+			_db.alterColumnName(
+				_connection, "FragmentEntryLink", "plid2", "plid LONG");
 		}
 
 		_assertSegmentsExperiences();
@@ -198,21 +195,81 @@ public class SegmentsExperienceUpgradeProcessTest
 
 		_deleteSegmentsExperiences();
 
-		List<IndexMetadata> indexMetadataList = new ArrayList<>();
-
 		try {
-			indexMetadataList.addAll(
-				_renameColumn(
-					"plid", "classPK", "LayoutPageTemplateStructure"));
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "plid",
+				"classPK LONG");
 
 			runUpgrade();
 		}
 		finally {
-			_renameColumn("classPK", "plid", "LayoutPageTemplateStructure");
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "classPK",
+				"plid LONG");
+		}
 
-			if (ListUtil.isNotEmpty(indexMetadataList)) {
-				_db.addIndexes(DataAccess.getConnection(), indexMetadataList);
-			}
+		_assertSegmentsExperiences();
+	}
+
+	@Test
+	public void testUpgradeWithoutCtCollectionIdAndSegmentsExperienceIdColumns()
+		throws Exception {
+
+		_deleteSegmentsExperiences();
+
+		try {
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "plid",
+				"classPK LONG");
+			_db.alterTableDropColumn(
+				_connection, "FragmentEntryLink", "segmentsExperienceId");
+			_db.alterTableDropColumn(
+				_connection, "LayoutPageTemplateStructureRel",
+				"ctCollectionId");
+
+			runUpgrade();
+		}
+		finally {
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "classPK",
+				"plid LONG");
+			_db.alterTableAddColumn(
+				_connection, "FragmentEntryLink", "segmentsExperienceId",
+				"LONG");
+			_db.alterTableAddColumn(
+				_connection, "LayoutPageTemplateStructureRel", "ctCollectionId",
+				"LONG default 0 not null");
+		}
+
+		_assertSegmentsExperiences(0);
+	}
+
+	@Test
+	public void testUpgradeWithoutCtCollectionIdColumns() throws Exception {
+		_deleteSegmentsExperiences();
+
+		try {
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "plid",
+				"classPK LONG");
+			_db.alterTableDropColumn(
+				_connection, "FragmentEntryLink", "ctCollectionId");
+			_db.alterTableDropColumn(
+				_connection, "LayoutPageTemplateStructureRel",
+				"ctCollectionId");
+
+			runUpgrade();
+		}
+		finally {
+			_db.alterColumnName(
+				_connection, "LayoutPageTemplateStructure", "classPK",
+				"plid LONG");
+			_db.alterTableAddColumn(
+				_connection, "FragmentEntryLink", "ctCollectionId",
+				"LONG default 0 not null");
+			_db.alterTableAddColumn(
+				_connection, "LayoutPageTemplateStructureRel", "ctCollectionId",
+				"LONG default 0 not null");
 		}
 
 		_assertSegmentsExperiences();
@@ -221,7 +278,8 @@ public class SegmentsExperienceUpgradeProcessTest
 	@Override
 	protected CTModel<?> addCTModel() throws Exception {
 		return SegmentsTestUtil.addSegmentsExperience(
-			_group.getGroupId(), 0, _draftLayout.getPlid());
+			_group.getGroupId(), SegmentsExperienceConstants.KEY_DEFAULT, null,
+			_draftLayout.getPlid());
 	}
 
 	@Override
@@ -292,11 +350,18 @@ public class SegmentsExperienceUpgradeProcessTest
 	}
 
 	private void _assertSegmentsExperiences() {
+		_assertSegmentsExperiences(1);
+	}
+
+	private void _assertSegmentsExperiences(
+		int fragmentEntryLinksExpectedCount) {
+
 		List<SegmentsExperience> segmentsExperiences =
 			_segmentsExperienceLocalService.getSegmentsExperiences(
 				_group.getGroupId(), _draftLayout.getPlid());
 
-		_assertFragmentEntryLinks(1, segmentsExperiences);
+		_assertFragmentEntryLinks(
+			fragmentEntryLinksExpectedCount, segmentsExperiences);
 
 		_assertLayoutPageTemplateStructureRels(_draftLayout.getPlid());
 		_assertSegmentsExperiences(2, segmentsExperiences);
@@ -360,43 +425,6 @@ public class SegmentsExperienceUpgradeProcessTest
 		return publishedSegmentsExperience.getSegmentsExperienceId();
 	}
 
-	private List<IndexMetadata> _renameColumn(
-			String columnName, String newColumnName, String tableName)
-		throws Exception {
-
-		try (Connection connection = DataAccess.getConnection()) {
-			DBInspector dbInspector = new DBInspector(connection);
-
-			List<IndexMetadata> indexMetadataList = new ArrayList<>();
-
-			if (dbInspector.hasColumn(tableName, newColumnName) ||
-				!dbInspector.hasColumn(tableName, columnName)) {
-
-				return indexMetadataList;
-			}
-
-			indexMetadataList.addAll(
-				_db.dropIndexes(connection, tableName, columnName));
-
-			// Special alter for reserved words like SYSTEM in MySQL
-
-			if (DBManagerUtil.getDBType() == DBType.MYSQL) {
-				_db.runSQLTemplate(
-					StringBundler.concat(
-						"alter table ", tableName, " change `", columnName,
-						"` ", newColumnName, " LONG"),
-					true);
-
-				return indexMetadataList;
-			}
-
-			_db.alterColumnName(
-				connection, tableName, columnName, newColumnName + " LONG");
-
-			return indexMetadataList;
-		}
-	}
-
 	private void _updateFragmentEntryLinks() {
 		for (FragmentEntryLink fragmentEntryLink :
 				_fragmentEntryLinkLocalService.getFragmentEntryLinksByPlid(
@@ -439,6 +467,7 @@ public class SegmentsExperienceUpgradeProcessTest
 		"com.liferay.segments.internal.upgrade.v3_2_0." +
 			"SegmentsExperienceUpgradeProcess";
 
+	private static Connection _connection;
 	private static DB _db;
 
 	@Inject(

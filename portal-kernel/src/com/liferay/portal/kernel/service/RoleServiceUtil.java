@@ -184,9 +184,7 @@ public class RoleServiceUtil {
 		return getService().getRoles(type, subtype);
 	}
 
-	public static List<Role> getRoles(long companyId, int[] types)
-		throws PortalException {
-
+	public static List<Role> getRoles(long companyId, int[] types) {
 		return getService().getRoles(companyId, types);
 	}
 
@@ -363,3 +361,4 @@ public class RoleServiceUtil {
 	private static volatile RoleService _service;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-29735624

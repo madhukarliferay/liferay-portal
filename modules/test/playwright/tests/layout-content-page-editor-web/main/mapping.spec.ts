@@ -5,6 +5,7 @@
 
 import {
 	ObjectActionAPI,
+	ObjectDefinition,
 	ObjectDefinitionAPI,
 } from '@liferay/object-admin-rest-client-js';
 import {expect, mergeTests} from '@playwright/test';
@@ -21,9 +22,7 @@ import {clickAndExpectToBeHidden} from '../../../utils/clickAndExpectToBeHidden'
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../../utils/getRandomString';
 import addApprovedStructuredContent from '../../../utils/structured-content/addApprovedStructuredContent';
-import getBasicWebContentStructureId, {
-	getWebContentStructureId,
-} from '../../../utils/structured-content/getBasicWebContentStructureId';
+import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
 import {waitForAlert} from '../../../utils/waitForAlert';
 import {
 	ANIMALS_COLLECTION_NAME,
@@ -31,6 +30,7 @@ import {
 } from '../../setup/page-management-site/main/constants/animals';
 import {getObjectERC} from '../../setup/page-management-site/main/utils/getObjectERC';
 import getCollectionDefinition from './utils/getCollectionDefinition';
+import getFormContainerDefinition from './utils/getFormContainerDefinition';
 import getFragmentDefinition from './utils/getFragmentDefinition';
 import getPageDefinition from './utils/getPageDefinition';
 
@@ -384,19 +384,13 @@ test(
 				'com.liferay.journal.model.JournalArticle'
 			);
 
-		const animalWebContentStructureId = await getWebContentStructureId(
-			apiHelpers,
-			pageManagementSite.id,
-			ANIMAL_DDM_STRUCTURE_KEY
-		);
-
 		const displayPageTemplateName = getRandomString();
 
 		const displayPage =
 			await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
 				{
 					classNameId: className.classNameId,
-					classTypeId: String(animalWebContentStructureId),
+					classTypeKey: ANIMAL_DDM_STRUCTURE_KEY,
 					groupId: pageManagementSite.id,
 					name: displayPageTemplateName,
 				}
@@ -554,6 +548,16 @@ test(
 		await expect(
 			page.locator('.component-image').getByRole('link')
 		).toHaveAttribute('href', 'https://en.wikipedia.org/wiki/Cat');
+
+		// Check we can clear mapped item
+
+		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
+
+		await pageEditorPage.selectEditable(headingId, 'element-text');
+
+		await page.getByRole('tab', {exact: true, name: 'Link'}).click();
+
+		await pageEditorPage.removeMapping();
 
 		// Delete layout
 
@@ -783,5 +787,171 @@ test(
 				name: secondObjectEntry.name,
 			})
 		).toBeVisible();
+	}
+);
+
+test(
+	'Unmaps input fragment when moving it to another parent',
+	{
+		tag: '@LPD-67588',
+	},
+	async ({apiHelpers, page, pageEditorPage, site}) => {
+
+		// Create object definitions
+
+		const objectDefinitionAPIClient =
+			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+
+		const fruitDefinition: ObjectDefinition = {
+			active: true,
+			externalReferenceCode: 'FruitERC',
+			label: {
+				en_US: 'Fruit',
+			},
+			name: 'Fruit',
+			objectFields: [
+				{
+					DBType: 'String',
+					businessType: 'Text',
+					externalReferenceCode: 'fruitSizeERC',
+					indexed: true,
+					indexedAsKeyword: false,
+					label: {
+						en_US: 'Fruit Size',
+					},
+					localized: false,
+					name: 'fruitSize',
+					required: false,
+				},
+			],
+			pluralLabel: {
+				en_US: 'Fruits',
+			},
+			scope: 'company',
+			status: {
+				code: 0,
+			},
+		};
+
+		const colorDefinition: ObjectDefinition = {
+			active: true,
+			externalReferenceCode: 'ColorERC',
+			label: {
+				en_US: 'Color',
+			},
+			name: 'Color',
+			objectFields: [
+				{
+					DBType: 'String',
+					businessType: 'Text',
+					externalReferenceCode: 'colorContrastERC',
+					indexed: true,
+					indexedAsKeyword: false,
+					label: {
+						en_US: 'Color Contrast',
+					},
+					localized: false,
+					name: 'colorContrast',
+					required: false,
+				},
+			],
+			pluralLabel: {
+				en_US: 'Colors',
+			},
+			scope: 'company',
+			status: {
+				code: 0,
+			},
+		};
+
+		for (const definition of [fruitDefinition, colorDefinition]) {
+			const {
+				body: {id},
+			} =
+				await objectDefinitionAPIClient.postObjectDefinition(
+					definition
+				);
+
+			apiHelpers.data.push({
+				id,
+				type: 'objectDefinition',
+			});
+		}
+
+		// Create content page with two forms and go to edit mode
+
+		const fruitFormId = getRandomString();
+
+		const fruitFormDefinition = getFormContainerDefinition({
+			id: fruitFormId,
+		});
+
+		const colorFormId = getRandomString();
+
+		const colorFormDefinition = getFormContainerDefinition({
+			id: colorFormId,
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				fruitFormDefinition,
+				colorFormDefinition,
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+		// Map forms
+
+		await pageEditorPage.mapFormFragment(fruitFormId, 'Fruit', [
+			'Fruit Size',
+		]);
+
+		await pageEditorPage.mapFormFragment(colorFormId, 'Color', []);
+
+		// Select fragment and check it's mapped
+
+		const fragmentId = await pageEditorPage.getFragmentId('Text');
+
+		await pageEditorPage.selectFragment(fragmentId);
+
+		await expect(
+			page
+				.getByLabel('Configuration Panel')
+				.getByLabel('Field', {exact: true})
+				.locator('option:checked')
+		).toHaveText('Fruit Size');
+
+		// Now move the fragment to the other form and check warning is shown
+
+		await pageEditorPage.dragTreeNode({
+			position: 'middle',
+			source: {label: 'Text'},
+			target: {label: 'Form Container', nth: 1},
+		});
+
+		await expect(
+			page.getByText('Text was moved and its mapping was reset')
+		).toBeVisible();
+
+		await expect(
+			page
+				.getByLabel('Configuration Panel')
+				.getByLabel('Field', {exact: true})
+				.locator('option:checked')
+		).toContainText('Unmapped');
+
+		// Undo the action and check the input is remapped
+
+		await pageEditorPage.undoAction();
+
+		await expect(
+			page
+				.getByLabel('Configuration Panel')
+				.getByLabel('Field', {exact: true})
+				.locator('option:checked')
+		).toHaveText('Fruit Size');
 	}
 );

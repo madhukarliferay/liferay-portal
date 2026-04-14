@@ -264,9 +264,7 @@ public class ChildTestEntity3 extends TestEntity implements Serializable {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -371,3 +369,4 @@ public class ChildTestEntity3 extends TestEntity implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1983856151

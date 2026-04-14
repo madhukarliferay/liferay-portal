@@ -219,6 +219,18 @@ public class AssetCategoryServiceWrapper
 			externalReferenceCode, groupId);
 	}
 
+	@Override
+	public AssetCategory getOrAddEmptyCategoryWithAncestors(
+			String externalReferenceCode, long groupId,
+			String parentCategoryExternalReferenceCode,
+			String vocabularyExternalReferenceCode)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _assetCategoryService.getOrAddEmptyCategoryWithAncestors(
+			externalReferenceCode, groupId, parentCategoryExternalReferenceCode,
+			vocabularyExternalReferenceCode);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -449,7 +461,8 @@ public class AssetCategoryServiceWrapper
 
 	@Override
 	public AssetCategory updateCategory(
-			long categoryId, long parentCategoryId,
+			String externalReferenceCode, long categoryId,
+			long parentCategoryId,
 			java.util.Map<java.util.Locale, String> titleMap,
 			java.util.Map<java.util.Locale, String> descriptionMap,
 			long vocabularyId, String[] categoryProperties,
@@ -457,8 +470,8 @@ public class AssetCategoryServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _assetCategoryService.updateCategory(
-			categoryId, parentCategoryId, titleMap, descriptionMap,
-			vocabularyId, categoryProperties, serviceContext);
+			externalReferenceCode, categoryId, parentCategoryId, titleMap,
+			descriptionMap, vocabularyId, categoryProperties, serviceContext);
 	}
 
 	@Override
@@ -474,3 +487,4 @@ public class AssetCategoryServiceWrapper
 	private AssetCategoryService _assetCategoryService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1230983580

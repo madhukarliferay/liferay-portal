@@ -54,9 +54,7 @@ public class GeneralConfigSerDes {
 			sb.append("\"applicationDecorator\": ");
 
 			sb.append("\"");
-
 			sb.append(generalConfig.getApplicationDecorator());
-
 			sb.append("\"");
 		}
 
@@ -262,3 +260,4 @@ public class GeneralConfigSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-2075727794

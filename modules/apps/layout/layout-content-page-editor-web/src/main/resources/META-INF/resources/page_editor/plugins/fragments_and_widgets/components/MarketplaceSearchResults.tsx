@@ -187,6 +187,8 @@ function SearchResults({
 		<>
 			{results?.items.length ? (
 				<MarketplaceModal
+					addFragmentCollectionURL={config.addFragmentCollectionURL}
+					fragmentCollections={config.fragmentCollections}
 					fragmentPortletNamespace={config.fragmentPortletNamespace}
 					fragmentsImportURL={config.fragmentsImportURL}
 					hideBackButton={true}
@@ -206,8 +208,9 @@ function SearchResults({
 							'marketplace-fragments'
 						)}
 						className="list-unstyled px-3"
+						data-menu
 						ref={listRef}
-						role="menubar"
+						role="menu"
 					>
 						{results.items.map((item: Product) => (
 							<MarketplaceSearchResultsList

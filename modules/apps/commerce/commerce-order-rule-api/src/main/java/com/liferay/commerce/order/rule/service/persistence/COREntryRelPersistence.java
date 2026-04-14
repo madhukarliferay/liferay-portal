@@ -119,47 +119,6 @@ public interface COREntryRelPersistence extends BasePersistence<COREntryRel> {
 			orderByComparator);
 
 	/**
-	 * Returns the last cor entry rel in the ordered set where COREntryId = &#63;.
-	 *
-	 * @param COREntryId the cor entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry rel
-	 * @throws NoSuchCOREntryRelException if a matching cor entry rel could not be found
-	 */
-	public COREntryRel findByCOREntryId_Last(
-			long COREntryId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
-				orderByComparator)
-		throws NoSuchCOREntryRelException;
-
-	/**
-	 * Returns the last cor entry rel in the ordered set where COREntryId = &#63;.
-	 *
-	 * @param COREntryId the cor entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry rel, or <code>null</code> if a matching cor entry rel could not be found
-	 */
-	public COREntryRel fetchByCOREntryId_Last(
-		long COREntryId,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entry rels before and after the current cor entry rel in the ordered set where COREntryId = &#63;.
-	 *
-	 * @param COREntryRelId the primary key of the current cor entry rel
-	 * @param COREntryId the cor entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry rel
-	 * @throws NoSuchCOREntryRelException if a cor entry rel with the primary key could not be found
-	 */
-	public COREntryRel[] findByCOREntryId_PrevAndNext(
-			long COREntryRelId, long COREntryId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
-				orderByComparator)
-		throws NoSuchCOREntryRelException;
-
-	/**
 	 * Removes all the cor entry rels where COREntryId = &#63; from the database.
 	 *
 	 * @param COREntryId the cor entry ID
@@ -267,50 +226,6 @@ public interface COREntryRelPersistence extends BasePersistence<COREntryRel> {
 		long classNameId, long COREntryId,
 		com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
 			orderByComparator);
-
-	/**
-	 * Returns the last cor entry rel in the ordered set where classNameId = &#63; and COREntryId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param COREntryId the cor entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry rel
-	 * @throws NoSuchCOREntryRelException if a matching cor entry rel could not be found
-	 */
-	public COREntryRel findByC_C_Last(
-			long classNameId, long COREntryId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
-				orderByComparator)
-		throws NoSuchCOREntryRelException;
-
-	/**
-	 * Returns the last cor entry rel in the ordered set where classNameId = &#63; and COREntryId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param COREntryId the cor entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cor entry rel, or <code>null</code> if a matching cor entry rel could not be found
-	 */
-	public COREntryRel fetchByC_C_Last(
-		long classNameId, long COREntryId,
-		com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
-			orderByComparator);
-
-	/**
-	 * Returns the cor entry rels before and after the current cor entry rel in the ordered set where classNameId = &#63; and COREntryId = &#63;.
-	 *
-	 * @param COREntryRelId the primary key of the current cor entry rel
-	 * @param classNameId the class name ID
-	 * @param COREntryId the cor entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cor entry rel
-	 * @throws NoSuchCOREntryRelException if a cor entry rel with the primary key could not be found
-	 */
-	public COREntryRel[] findByC_C_PrevAndNext(
-			long COREntryRelId, long classNameId, long COREntryId,
-			com.liferay.portal.kernel.util.OrderByComparator<COREntryRel>
-				orderByComparator)
-		throws NoSuchCOREntryRelException;
 
 	/**
 	 * Removes all the cor entry rels where classNameId = &#63; and COREntryId = &#63; from the database.
@@ -509,3 +424,4 @@ public interface COREntryRelPersistence extends BasePersistence<COREntryRel> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-463015010

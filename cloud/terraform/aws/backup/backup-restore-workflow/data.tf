@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "liferay_backup_restore_policy_doc" {
 			"s3:DeleteObject",
 			"s3:GetObject",
 			"s3:ListBucket",
-			"s3:PutObject"
+			"s3:PutObject",
 		]
 		effect="Allow"
 		resources=[
@@ -39,9 +39,7 @@ data "aws_iam_policy_document" "liferay_backup_restore_policy_doc" {
 		sid="AllowArtifactRepositoryAccess"
 	}
 	statement {
-		actions=[
-			"iam:PassRole"
-		]
+		actions=["iam:PassRole"]
 		effect="Allow"
 		resources=[var.aws_backup_service_assumed_iam_role_arn]
 		sid="AllowPassingRoleToAWSBackupService"
@@ -67,6 +65,7 @@ data "aws_iam_policy_document" "liferay_backup_restore_policy_doc" {
 			"rds:RestoreDBInstanceFromDBSnapshot",
 			"s3:CreateBucket",
 			"s3:DeleteBucket",
+			"s3:DeleteObject",
 			"s3:GetAccelerateConfiguration",
 			"s3:GetBucket*",
 			"s3:GetEncryptionConfiguration",
@@ -74,7 +73,7 @@ data "aws_iam_policy_document" "liferay_backup_restore_policy_doc" {
 			"s3:GetReplicationConfiguration",
 			"s3:ListBucket",
 			"s3:PutBucket*",
-			"s3:PutEncryptionConfiguration"
+			"s3:PutEncryptionConfiguration",
 		]
 		effect="Allow"
 		resources=["*"]
@@ -84,7 +83,7 @@ data "aws_iam_policy_document" "liferay_backup_restore_policy_doc" {
 		actions=[
 			"s3:GetObject",
 			"s3:ListBucket",
-			"s3:PutObject"
+			"s3:PutObject",
 		]
 		effect="Allow"
 		resources=[
@@ -93,18 +92,8 @@ data "aws_iam_policy_document" "liferay_backup_restore_policy_doc" {
 		]
 		sid="AllowTerraformStateBucketAccess"
 	}
-	statement {
-		actions=[
-			"dynamodb:DeleteItem",
-			"dynamodb:GetItem",
-			"dynamodb:PutItem",
-		]
-		effect="Allow"
-		resources=[var.terraform_state_dynamodb_table_arn]
-		sid="AllowTerraformStateLocking"
-	}
 }
 locals {
-	oidc_provider_arn="arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_provider_url}"
+	oidc_provider_arn="arn:${var.arn_partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_provider_url}"
 	oidc_provider_url=replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")
 }

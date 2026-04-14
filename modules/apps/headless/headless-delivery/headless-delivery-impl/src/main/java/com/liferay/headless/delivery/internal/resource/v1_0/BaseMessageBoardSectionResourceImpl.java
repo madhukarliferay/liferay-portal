@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.MessageBoardSection;
 import com.liferay.headless.delivery.resource.v1_0.MessageBoardSectionResource;
@@ -357,27 +358,27 @@ public abstract class BaseMessageBoardSectionResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(messageBoardSectionId);
+		Long resourceId = getPermissionCheckerResourceId(messageBoardSectionId);
 		String resourceName = getPermissionCheckerResourceName(
 			messageBoardSectionId);
-		Long resourceId = getPermissionCheckerResourceId(messageBoardSectionId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(messageBoardSectionId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getMessageBoardSectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getMessageBoardSectionPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putMessageBoardSectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putMessageBoardSectionPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -484,15 +485,15 @@ public abstract class BaseMessageBoardSectionResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteMessageBoardSectionPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteMessageBoardSectionPermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteMessageBoardSectionPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteMessageBoardSectionPermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -1012,13 +1013,13 @@ public abstract class BaseMessageBoardSectionResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(messageBoardSectionId);
+		Long resourceId = getPermissionCheckerResourceId(messageBoardSectionId);
 		String resourceName = getPermissionCheckerResourceName(
 			messageBoardSectionId);
-		Long resourceId = getPermissionCheckerResourceId(messageBoardSectionId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(messageBoardSectionId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1054,23 +1055,22 @@ public abstract class BaseMessageBoardSectionResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(messageBoardSectionId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getMessageBoardSectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getMessageBoardSectionPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putMessageBoardSectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putMessageBoardSectionPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1220,15 +1220,15 @@ public abstract class BaseMessageBoardSectionResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteMessageBoardSectionPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteMessageBoardSectionPermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteMessageBoardSectionPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteMessageBoardSectionPermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -1372,6 +1372,15 @@ public abstract class BaseMessageBoardSectionResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1600,6 +1609,9 @@ public abstract class BaseMessageBoardSectionResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2172,3 +2184,4 @@ public abstract class BaseMessageBoardSectionResourceImpl
 		LogFactoryUtil.getLog(BaseMessageBoardSectionResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-781179641

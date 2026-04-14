@@ -96,6 +96,28 @@ public class JournalArticleSitemapURLProviderTest {
 	}
 
 	@Test
+	public void testJournalArticleSitemapURLProviderArticleDefaultValues()
+		throws Exception {
+
+		JournalArticle article = JournalTestUtil.addArticleDefaultValues(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString());
+
+		DisplayPageTemplateTestUtil.addDisplayPageTemplate(
+			_group.getGroupId(),
+			_portal.getClassNameId(JournalArticle.class.getName()),
+			article.getDDMStructureKey(), true,
+			WorkflowConstants.STATUS_APPROVED);
+
+		Element rootElement = _getRootElement();
+
+		_journalArticleSitemapURLProvider.visitLayoutSet(
+			rootElement, _layoutSet, _themeDisplay);
+
+		Assert.assertFalse(rootElement.hasContent());
+	}
+
+	@Test
 	public void testJournalArticleSitemapURLProviderDefaultDisplayPage()
 		throws Exception {
 
@@ -108,7 +130,7 @@ public class JournalArticleSitemapURLProviderTest {
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				article.getDDMStructureId(), true,
+				article.getDDMStructureKey(), true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		_assertRootElement(
@@ -131,7 +153,7 @@ public class JournalArticleSitemapURLProviderTest {
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				article.getDDMStructureId(), true,
+				article.getDDMStructureKey(), true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		Layout layout = _layoutLocalService.getLayout(
@@ -180,7 +202,7 @@ public class JournalArticleSitemapURLProviderTest {
 				DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 					_group.getGroupId(),
 					_portal.getClassNameId(JournalArticle.class.getName()),
-					article.getDDMStructureId(), true,
+					article.getDDMStructureKey(), true,
 					WorkflowConstants.STATUS_APPROVED);
 
 			_assertRootElement(
@@ -219,7 +241,7 @@ public class JournalArticleSitemapURLProviderTest {
 				DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 					_group.getGroupId(),
 					_portal.getClassNameId(JournalArticle.class.getName()),
-					article.getDDMStructureId(), true,
+					article.getDDMStructureKey(), true,
 					WorkflowConstants.STATUS_APPROVED);
 
 			_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
@@ -342,7 +364,7 @@ public class JournalArticleSitemapURLProviderTest {
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				article.getDDMStructureId(), true,
+				article.getDDMStructureKey(), true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		_assertRootElement(
@@ -392,7 +414,7 @@ public class JournalArticleSitemapURLProviderTest {
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				article.getDDMStructureId(), true,
+				article.getDDMStructureKey(), true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		Element rootElement = _getRootElement();

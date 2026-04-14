@@ -159,20 +159,26 @@ public class ObjectEntryFolderModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long TREEPATH_COLUMN_BITMASK = 32L;
+	public static final long STATUS_COLUMN_BITMASK = 32L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long UUID_COLUMN_BITMASK = 64L;
+	public static final long TREEPATH_COLUMN_BITMASK = 64L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 128L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long OBJECTENTRYFOLDERID_COLUMN_BITMASK = 128L;
+	public static final long OBJECTENTRYFOLDERID_COLUMN_BITMASK = 256L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -856,6 +862,16 @@ public class ObjectEntryFolderModelImpl
 		_status = status;
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public int getOriginalStatus() {
+		return GetterUtil.getInteger(
+			this.<Integer>getColumnOriginalValue("status"));
+	}
+
 	@Override
 	public long getContainerModelId() {
 		return getObjectEntryFolderId();
@@ -1434,3 +1450,4 @@ public class ObjectEntryFolderModelImpl
 	private ObjectEntryFolder _escapedModel;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1586971189

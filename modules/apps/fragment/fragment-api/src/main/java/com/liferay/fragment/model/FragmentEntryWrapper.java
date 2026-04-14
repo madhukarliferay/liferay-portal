@@ -377,11 +377,6 @@ public class FragmentEntryWrapper
 		return model.getFragmentEntryKey();
 	}
 
-	@Override
-	public int getGlobalUsageCount() {
-		return model.getGlobalUsageCount();
-	}
-
 	/**
 	 * Returns the group ID of this fragment entry.
 	 *
@@ -1169,3 +1164,4 @@ public class FragmentEntryWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-676876707

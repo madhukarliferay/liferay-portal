@@ -121,47 +121,6 @@ public interface AssetLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset link in the ordered set where entryId1 = &#63;.
-	 *
-	 * @param entryId1 the entry id1
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link
-	 * @throws NoSuchLinkException if a matching asset link could not be found
-	 */
-	public AssetLink findByEntryId1_Last(
-			long entryId1,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId1 = &#63;.
-	 *
-	 * @param entryId1 the entry id1
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link, or <code>null</code> if a matching asset link could not be found
-	 */
-	public AssetLink fetchByEntryId1_Last(
-		long entryId1,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-			orderByComparator);
-
-	/**
-	 * Returns the asset links before and after the current asset link in the ordered set where entryId1 = &#63;.
-	 *
-	 * @param linkId the primary key of the current asset link
-	 * @param entryId1 the entry id1
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset link
-	 * @throws NoSuchLinkException if a asset link with the primary key could not be found
-	 */
-	public AssetLink[] findByEntryId1_PrevAndNext(
-			long linkId, long entryId1,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
 	 * Removes all the asset links where entryId1 = &#63; from the database.
 	 *
 	 * @param entryId1 the entry id1
@@ -262,47 +221,6 @@ public interface AssetLinkPersistence
 		long entryId2,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId2 = &#63;.
-	 *
-	 * @param entryId2 the entry id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link
-	 * @throws NoSuchLinkException if a matching asset link could not be found
-	 */
-	public AssetLink findByEntryId2_Last(
-			long entryId2,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId2 = &#63;.
-	 *
-	 * @param entryId2 the entry id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link, or <code>null</code> if a matching asset link could not be found
-	 */
-	public AssetLink fetchByEntryId2_Last(
-		long entryId2,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-			orderByComparator);
-
-	/**
-	 * Returns the asset links before and after the current asset link in the ordered set where entryId2 = &#63;.
-	 *
-	 * @param linkId the primary key of the current asset link
-	 * @param entryId2 the entry id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset link
-	 * @throws NoSuchLinkException if a asset link with the primary key could not be found
-	 */
-	public AssetLink[] findByEntryId2_PrevAndNext(
-			long linkId, long entryId2,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
 
 	/**
 	 * Removes all the asset links where entryId2 = &#63; from the database.
@@ -411,50 +329,6 @@ public interface AssetLinkPersistence
 		long entryId1, long entryId2,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId1 = &#63; and entryId2 = &#63;.
-	 *
-	 * @param entryId1 the entry id1
-	 * @param entryId2 the entry id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link
-	 * @throws NoSuchLinkException if a matching asset link could not be found
-	 */
-	public AssetLink findByE_E_Last(
-			long entryId1, long entryId2,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId1 = &#63; and entryId2 = &#63;.
-	 *
-	 * @param entryId1 the entry id1
-	 * @param entryId2 the entry id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link, or <code>null</code> if a matching asset link could not be found
-	 */
-	public AssetLink fetchByE_E_Last(
-		long entryId1, long entryId2,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-			orderByComparator);
-
-	/**
-	 * Returns the asset links before and after the current asset link in the ordered set where entryId1 = &#63; and entryId2 = &#63;.
-	 *
-	 * @param linkId the primary key of the current asset link
-	 * @param entryId1 the entry id1
-	 * @param entryId2 the entry id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset link
-	 * @throws NoSuchLinkException if a asset link with the primary key could not be found
-	 */
-	public AssetLink[] findByE_E_PrevAndNext(
-			long linkId, long entryId1, long entryId2,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
 
 	/**
 	 * Removes all the asset links where entryId1 = &#63; and entryId2 = &#63; from the database.
@@ -567,50 +441,6 @@ public interface AssetLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset link in the ordered set where entryId1 = &#63; and type = &#63;.
-	 *
-	 * @param entryId1 the entry id1
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link
-	 * @throws NoSuchLinkException if a matching asset link could not be found
-	 */
-	public AssetLink findByE1_T_Last(
-			long entryId1, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId1 = &#63; and type = &#63;.
-	 *
-	 * @param entryId1 the entry id1
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link, or <code>null</code> if a matching asset link could not be found
-	 */
-	public AssetLink fetchByE1_T_Last(
-		long entryId1, int type,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-			orderByComparator);
-
-	/**
-	 * Returns the asset links before and after the current asset link in the ordered set where entryId1 = &#63; and type = &#63;.
-	 *
-	 * @param linkId the primary key of the current asset link
-	 * @param entryId1 the entry id1
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset link
-	 * @throws NoSuchLinkException if a asset link with the primary key could not be found
-	 */
-	public AssetLink[] findByE1_T_PrevAndNext(
-			long linkId, long entryId1, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
 	 * Removes all the asset links where entryId1 = &#63; and type = &#63; from the database.
 	 *
 	 * @param entryId1 the entry id1
@@ -719,50 +549,6 @@ public interface AssetLinkPersistence
 		long entryId2, int type,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId2 = &#63; and type = &#63;.
-	 *
-	 * @param entryId2 the entry id2
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link
-	 * @throws NoSuchLinkException if a matching asset link could not be found
-	 */
-	public AssetLink findByE2_T_Last(
-			long entryId2, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
-
-	/**
-	 * Returns the last asset link in the ordered set where entryId2 = &#63; and type = &#63;.
-	 *
-	 * @param entryId2 the entry id2
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset link, or <code>null</code> if a matching asset link could not be found
-	 */
-	public AssetLink fetchByE2_T_Last(
-		long entryId2, int type,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-			orderByComparator);
-
-	/**
-	 * Returns the asset links before and after the current asset link in the ordered set where entryId2 = &#63; and type = &#63;.
-	 *
-	 * @param linkId the primary key of the current asset link
-	 * @param entryId2 the entry id2
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset link
-	 * @throws NoSuchLinkException if a asset link with the primary key could not be found
-	 */
-	public AssetLink[] findByE2_T_PrevAndNext(
-			long linkId, long entryId2, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetLink>
-				orderByComparator)
-		throws NoSuchLinkException;
 
 	/**
 	 * Removes all the asset links where entryId2 = &#63; and type = &#63; from the database.
@@ -955,3 +741,4 @@ public interface AssetLinkPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1582608086

@@ -791,9 +791,7 @@ public class Currency implements Serializable {
 			sb.append("\"roundingMode\": ");
 
 			sb.append("\"");
-
 			sb.append(roundingMode);
-
 			sb.append("\"");
 		}
 
@@ -954,3 +952,4 @@ public class Currency implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1777135056

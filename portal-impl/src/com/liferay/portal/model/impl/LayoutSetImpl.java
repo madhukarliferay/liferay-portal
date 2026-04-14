@@ -34,11 +34,11 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.sites.kernel.util.Sites;
 
 import java.io.IOException;
@@ -395,34 +395,6 @@ public class LayoutSetImpl extends LayoutSetBaseImpl {
 
 			if (Validator.isNotNull(layoutsUpdateable)) {
 				return GetterUtil.getBoolean(layoutsUpdateable, true);
-			}
-		}
-		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
-			}
-		}
-
-		return true;
-	}
-
-	@Override
-	public boolean isLayoutSetReadyForPropagation() {
-		if (!isLayoutSetPrototypeLinkActive()) {
-			return false;
-		}
-
-		try {
-			LayoutSetPrototype layoutSetPrototype =
-				LayoutSetPrototypeLocalServiceUtil.
-					getLayoutSetPrototypeByUuidAndCompanyId(
-						getLayoutSetPrototypeUuid(), getCompanyId());
-
-			String readyForPropagation = layoutSetPrototype.getSettingsProperty(
-				"readyForPropagation");
-
-			if (Validator.isNotNull(readyForPropagation)) {
-				return GetterUtil.getBoolean(readyForPropagation, true);
 			}
 		}
 		catch (Exception exception) {

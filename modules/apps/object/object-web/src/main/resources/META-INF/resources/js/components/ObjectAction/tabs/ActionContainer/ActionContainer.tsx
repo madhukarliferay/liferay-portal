@@ -24,6 +24,7 @@ interface ActionContainerProps {
 	currentObjectDefinitionFields: ObjectField[];
 	disableGroovyAction: boolean;
 	errors: ActionError;
+	hasUserNotificationHandler: boolean;
 	newObjectActionExecutors: ObjectActionTriggerExecutorItem[];
 	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: ObjectActionTriggerExecutorItem[];
@@ -43,6 +44,7 @@ export function ActionContainer({
 	currentObjectDefinitionFields,
 	disableGroovyAction,
 	errors,
+	hasUserNotificationHandler,
 	newObjectActionExecutors,
 	objectActionCodeEditorElements,
 	objectActionExecutors,
@@ -232,6 +234,7 @@ export function ActionContainer({
 			<ThenContainer
 				disabled={disableGroovyAction}
 				errors={errors}
+				hasUserNotificationHandler={hasUserNotificationHandler}
 				isValidField={isValidField}
 				newObjectActionExecutors={newObjectActionExecutors}
 				objectActionExecutors={objectActionExecutors}
@@ -337,7 +340,7 @@ export function ActionContainer({
 					}
 					readOnly={values.system || disableGroovyAction}
 					sidebarElements={objectActionCodeEditorElements.filter(
-						(element) => element.label === 'Fields'
+						(element) => element.key === 'fields'
 					)}
 					sidebarElementsDisabled={values.system}
 					value={values.parameters?.script ?? ''}

@@ -120,47 +120,6 @@ public interface MBBanPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last message boards ban in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban
-	 * @throws NoSuchBanException if a matching message boards ban could not be found
-	 */
-	public MBBan findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
-	 * Returns the last message boards ban in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 */
-	public MBBan fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards bans before and after the current message boards ban in the ordered set where uuid = &#63;.
-	 *
-	 * @param banId the primary key of the current message boards ban
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards ban
-	 * @throws NoSuchBanException if a message boards ban with the primary key could not be found
-	 */
-	public MBBan[] findByUuid_PrevAndNext(
-			long banId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
 	 * Removes all the message boards bans where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -319,50 +278,6 @@ public interface MBBanPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last message boards ban in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban
-	 * @throws NoSuchBanException if a matching message boards ban could not be found
-	 */
-	public MBBan findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
-	 * Returns the last message boards ban in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 */
-	public MBBan fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards bans before and after the current message boards ban in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param banId the primary key of the current message boards ban
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards ban
-	 * @throws NoSuchBanException if a message boards ban with the primary key could not be found
-	 */
-	public MBBan[] findByUuid_C_PrevAndNext(
-			long banId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
 	 * Removes all the message boards bans where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -467,47 +382,6 @@ public interface MBBanPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last message boards ban in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban
-	 * @throws NoSuchBanException if a matching message boards ban could not be found
-	 */
-	public MBBan findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
-	 * Returns the last message boards ban in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 */
-	public MBBan fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards bans before and after the current message boards ban in the ordered set where groupId = &#63;.
-	 *
-	 * @param banId the primary key of the current message boards ban
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards ban
-	 * @throws NoSuchBanException if a message boards ban with the primary key could not be found
-	 */
-	public MBBan[] findByGroupId_PrevAndNext(
-			long banId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
 	 * Removes all the message boards bans where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -607,47 +481,6 @@ public interface MBBanPersistence
 		long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
 			orderByComparator);
-
-	/**
-	 * Returns the last message boards ban in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban
-	 * @throws NoSuchBanException if a matching message boards ban could not be found
-	 */
-	public MBBan findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
-	 * Returns the last message boards ban in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 */
-	public MBBan fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards bans before and after the current message boards ban in the ordered set where userId = &#63;.
-	 *
-	 * @param banId the primary key of the current message boards ban
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards ban
-	 * @throws NoSuchBanException if a message boards ban with the primary key could not be found
-	 */
-	public MBBan[] findByUserId_PrevAndNext(
-			long banId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
 
 	/**
 	 * Removes all the message boards bans where userId = &#63; from the database.
@@ -750,47 +583,6 @@ public interface MBBanPersistence
 		long banUserId,
 		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
 			orderByComparator);
-
-	/**
-	 * Returns the last message boards ban in the ordered set where banUserId = &#63;.
-	 *
-	 * @param banUserId the ban user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban
-	 * @throws NoSuchBanException if a matching message boards ban could not be found
-	 */
-	public MBBan findByBanUserId_Last(
-			long banUserId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
-
-	/**
-	 * Returns the last message boards ban in the ordered set where banUserId = &#63;.
-	 *
-	 * @param banUserId the ban user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 */
-	public MBBan fetchByBanUserId_Last(
-		long banUserId,
-		com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-			orderByComparator);
-
-	/**
-	 * Returns the message boards bans before and after the current message boards ban in the ordered set where banUserId = &#63;.
-	 *
-	 * @param banId the primary key of the current message boards ban
-	 * @param banUserId the ban user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards ban
-	 * @throws NoSuchBanException if a message boards ban with the primary key could not be found
-	 */
-	public MBBan[] findByBanUserId_PrevAndNext(
-			long banId, long banUserId,
-			com.liferay.portal.kernel.util.OrderByComparator<MBBan>
-				orderByComparator)
-		throws NoSuchBanException;
 
 	/**
 	 * Removes all the message boards bans where banUserId = &#63; from the database.
@@ -976,3 +768,4 @@ public interface MBBanPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:122272724

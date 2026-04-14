@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  */
 @Generated("")
 @GraphQLName(
-	description = "A page on a site, which can be of type content or widget.",
+	description = "A page on a site, which can be of type content, embedded, link to page, link to URL, page set or widget.",
 	value = "SitePage"
 )
 @JsonFilter("Liferay.Vulcan")
@@ -149,53 +149,6 @@ public class SitePage implements Serializable {
 
 	@JsonIgnore
 	private Supplier<Creator> _creatorSupplier;
-
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The page's creator external reference code."
-	)
-	public String getCreatorExternalReferenceCode() {
-		if (_creatorExternalReferenceCodeSupplier != null) {
-			creatorExternalReferenceCode =
-				_creatorExternalReferenceCodeSupplier.get();
-
-			_creatorExternalReferenceCodeSupplier = null;
-		}
-
-		return creatorExternalReferenceCode;
-	}
-
-	public void setCreatorExternalReferenceCode(
-		String creatorExternalReferenceCode) {
-
-		this.creatorExternalReferenceCode = creatorExternalReferenceCode;
-
-		_creatorExternalReferenceCodeSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setCreatorExternalReferenceCode(
-		UnsafeSupplier<String, Exception>
-			creatorExternalReferenceCodeUnsafeSupplier) {
-
-		_creatorExternalReferenceCodeSupplier = () -> {
-			try {
-				return creatorExternalReferenceCodeUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(description = "The page's creator external reference code.")
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String creatorExternalReferenceCode;
-
-	@JsonIgnore
-	private Supplier<String> _creatorExternalReferenceCodeSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The page's creation date."
@@ -698,39 +651,83 @@ public class SitePage implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _parentSitePageExternalReferenceCodeSupplier;
 
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The external references to the associated categories."
-	)
+	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
-	public ItemExternalReference[] getTaxonomyCategoryItemExternalReferences() {
-		if (_taxonomyCategoryItemExternalReferencesSupplier != null) {
-			taxonomyCategoryItemExternalReferences =
-				_taxonomyCategoryItemExternalReferencesSupplier.get();
+	public com.liferay.portal.vulcan.permission.Permission[] getPermissions() {
+		if (_permissionsSupplier != null) {
+			permissions = _permissionsSupplier.get();
 
-			_taxonomyCategoryItemExternalReferencesSupplier = null;
+			_permissionsSupplier = null;
 		}
 
-		return taxonomyCategoryItemExternalReferences;
+		return permissions;
 	}
 
-	public void setTaxonomyCategoryItemExternalReferences(
-		ItemExternalReference[] taxonomyCategoryItemExternalReferences) {
+	public void setPermissions(
+		com.liferay.portal.vulcan.permission.Permission[] permissions) {
 
-		this.taxonomyCategoryItemExternalReferences =
-			taxonomyCategoryItemExternalReferences;
+		this.permissions = permissions;
 
-		_taxonomyCategoryItemExternalReferencesSupplier = null;
+		_permissionsSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setTaxonomyCategoryItemExternalReferences(
-		UnsafeSupplier<ItemExternalReference[], Exception>
-			taxonomyCategoryItemExternalReferencesUnsafeSupplier) {
+	public void setPermissions(
+		UnsafeSupplier
+			<com.liferay.portal.vulcan.permission.Permission[], Exception>
+				permissionsUnsafeSupplier) {
 
-		_taxonomyCategoryItemExternalReferencesSupplier = () -> {
+		_permissionsSupplier = () -> {
 			try {
-				return taxonomyCategoryItemExternalReferencesUnsafeSupplier.
-					get();
+				return permissionsUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected com.liferay.portal.vulcan.permission.Permission[] permissions;
+
+	@JsonIgnore
+	private Supplier<com.liferay.portal.vulcan.permission.Permission[]>
+		_permissionsSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The taxonomy categories associated with this page."
+	)
+	@Valid
+	public TaxonomyCategoryBrief[] getTaxonomyCategoryBriefs() {
+		if (_taxonomyCategoryBriefsSupplier != null) {
+			taxonomyCategoryBriefs = _taxonomyCategoryBriefsSupplier.get();
+
+			_taxonomyCategoryBriefsSupplier = null;
+		}
+
+		return taxonomyCategoryBriefs;
+	}
+
+	public void setTaxonomyCategoryBriefs(
+		TaxonomyCategoryBrief[] taxonomyCategoryBriefs) {
+
+		this.taxonomyCategoryBriefs = taxonomyCategoryBriefs;
+
+		_taxonomyCategoryBriefsSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setTaxonomyCategoryBriefs(
+		UnsafeSupplier<TaxonomyCategoryBrief[], Exception>
+			taxonomyCategoryBriefsUnsafeSupplier) {
+
+		_taxonomyCategoryBriefsSupplier = () -> {
+			try {
+				return taxonomyCategoryBriefsUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -742,14 +739,13 @@ public class SitePage implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "The external references to the associated categories."
+		description = "The taxonomy categories associated with this page."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected ItemExternalReference[] taxonomyCategoryItemExternalReferences;
+	protected TaxonomyCategoryBrief[] taxonomyCategoryBriefs;
 
 	@JsonIgnore
-	private Supplier<ItemExternalReference[]>
-		_taxonomyCategoryItemExternalReferencesSupplier;
+	private Supplier<TaxonomyCategoryBrief[]> _taxonomyCategoryBriefsSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
 	@JsonGetter("type")
@@ -972,22 +968,6 @@ public class SitePage implements Serializable {
 			sb.append(creator);
 		}
 
-		String creatorExternalReferenceCode = getCreatorExternalReferenceCode();
-
-		if (creatorExternalReferenceCode != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"creatorExternalReferenceCode\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(creatorExternalReferenceCode));
-
-			sb.append("\"");
-		}
-
 		Date dateCreated = getDateCreated();
 
 		if (dateCreated != null) {
@@ -1165,25 +1145,45 @@ public class SitePage implements Serializable {
 			sb.append("\"");
 		}
 
-		ItemExternalReference[] taxonomyCategoryItemExternalReferences =
-			getTaxonomyCategoryItemExternalReferences();
+		com.liferay.portal.vulcan.permission.Permission[] permissions =
+			getPermissions();
 
-		if (taxonomyCategoryItemExternalReferences != null) {
+		if (permissions != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"taxonomyCategoryItemExternalReferences\": ");
+			sb.append("\"permissions\": ");
 
 			sb.append("[");
 
-			for (int i = 0; i < taxonomyCategoryItemExternalReferences.length;
-				 i++) {
+			for (int i = 0; i < permissions.length; i++) {
+				sb.append(permissions[i]);
 
-				sb.append(
-					String.valueOf(taxonomyCategoryItemExternalReferences[i]));
+				if ((i + 1) < permissions.length) {
+					sb.append(", ");
+				}
+			}
 
-				if ((i + 1) < taxonomyCategoryItemExternalReferences.length) {
+			sb.append("]");
+		}
+
+		TaxonomyCategoryBrief[] taxonomyCategoryBriefs =
+			getTaxonomyCategoryBriefs();
+
+		if (taxonomyCategoryBriefs != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"taxonomyCategoryBriefs\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < taxonomyCategoryBriefs.length; i++) {
+				sb.append(String.valueOf(taxonomyCategoryBriefs[i]));
+
+				if ((i + 1) < taxonomyCategoryBriefs.length) {
 					sb.append(", ");
 				}
 			}
@@ -1201,9 +1201,7 @@ public class SitePage implements Serializable {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -1233,9 +1231,7 @@ public class SitePage implements Serializable {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(viewableBy);
-
 			sb.append("\"");
 		}
 
@@ -1254,7 +1250,9 @@ public class SitePage implements Serializable {
 	@GraphQLName("Type")
 	public static enum Type {
 
-		CONTENT_PAGE("ContentPage"), WIDGET_PAGE("WidgetPage");
+		CONTENT_PAGE("ContentPage"), EMBEDDED_PAGE("EmbeddedPage"),
+		LINK_TO_PAGE_PAGE("LinkToPagePage"), LINK_TO_URL_PAGE("LinkToURLPage"),
+		PAGE_SET_PAGE("PageSetPage"), WIDGET_PAGE("WidgetPage");
 
 		@JsonCreator
 		public static Type create(String value) {
@@ -1416,3 +1414,4 @@ public class SitePage implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1874935738

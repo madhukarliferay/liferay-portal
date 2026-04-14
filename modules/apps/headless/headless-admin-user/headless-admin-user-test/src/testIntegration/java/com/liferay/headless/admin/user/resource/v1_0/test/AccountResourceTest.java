@@ -27,6 +27,7 @@ import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.asset.test.util.AssetTestUtil;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.expando.kernel.exception.NoSuchValueException;
@@ -100,12 +101,11 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.permission.PermissionUtil;
 
 import java.io.InputStream;
@@ -121,6 +121,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -339,6 +340,7 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 		super.testGetAccount();
 
 		_testGetAccountWithNestedFields();
+		_testGetAccountWithoutLogo();
 	}
 
 	@Override
@@ -365,6 +367,51 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 			organization.getOrganizationId());
 		_testGetAccountsPageWithCustomFields();
 		_testGetAccountsPageWithNestedFields();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteOrganizationAccounts() throws Exception {
+		super.testGraphQLDeleteOrganizationAccounts();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteOrganizationAccountsByExternalReferenceCode()
+		throws Exception {
+
+		super.testGraphQLDeleteOrganizationAccountsByExternalReferenceCode();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteOrganizationByExternalReferenceCodeAccounts()
+		throws Exception {
+
+		super.testGraphQLDeleteOrganizationByExternalReferenceCodeAccounts();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteOrganizationByExternalReferenceCodeOrganizationExternalReferenceCodeAccountByExternalReferenceCode()
+		throws Exception {
+
+		super.
+			testGraphQLDeleteOrganizationByExternalReferenceCodeOrganizationExternalReferenceCodeAccountByExternalReferenceCode();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetOrganizationByExternalReferenceCodeOrganizationExternalReferenceCodeAccountsByExternalReferenceCodePage()
+		throws Exception {
+
+		super.
+			testGraphQLGetOrganizationByExternalReferenceCodeOrganizationExternalReferenceCodeAccountsByExternalReferenceCodePage();
 	}
 
 	@Override
@@ -489,7 +536,6 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 					organization2.getOrganizationId()));
 	}
 
-	@FeatureFlag("LPD-47858")
 	@LazyReferencing
 	@Override
 	@Test
@@ -667,6 +713,7 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 		account.setDefaultBillingAddressExternalReferenceCode(StringPool.BLANK);
 		account.setDefaultShippingAddressExternalReferenceCode(
 			StringPool.BLANK);
+		account.setId(0L);
 		account.setLogoBase64(StringPool.BLANK);
 		account.setLogoId(0L);
 		account.setParentAccountExternalReferenceCode(StringPool.BLANK);
@@ -833,6 +880,33 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 	@Override
 	protected Account testGraphQLAccount_addAccount() throws Exception {
 		return _postAccount();
+	}
+
+	@Override
+	protected Account testGraphQLAccount_addAccount(Account account)
+		throws Exception {
+
+		return _postAccount(account);
+	}
+
+	@Override
+	protected Long
+			testGraphQLDeleteOrganizationAccountsByExternalReferenceCode_getOrganizationId()
+		throws Exception {
+
+		Organization organization = OrganizationTestUtil.addOrganization();
+
+		return organization.getOrganizationId();
+	}
+
+	@Override
+	protected String
+			testGraphQLDeleteOrganizationByExternalReferenceCodeOrganizationExternalReferenceCodeAccountByExternalReferenceCode_getOrganizationExternalReferenceCode()
+		throws Exception {
+
+		Organization organization = OrganizationTestUtil.addOrganization();
+
+		return organization.getExternalReferenceCode();
 	}
 
 	@Override
@@ -1434,14 +1508,14 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 
 		Account postAccount = _postAccount(randomAccount);
 
-		User user = UserTestUtil.addUser();
+		User user = TestPropsValues.getUser();
 
 		_accountEntryUserRelLocalService.addAccountEntryUserRel(
 			postAccount.getId(), user.getUserId());
 
 		AccountGroup accountGroup = _accountGroupLocalService.addAccountGroup(
-			StringPool.BLANK, TestPropsValues.getUserId(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			StringPool.BLANK, user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext());
 
 		_accountGroupRelLocalService.addAccountGroupRel(
@@ -1449,7 +1523,7 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 			postAccount.getId());
 
 		AccountRole accountRole = _accountRoleLocalService.addAccountRole(
-			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			RandomTestUtil.randomString(), user.getUserId(),
 			postAccount.getId(), RandomTestUtil.randomString(), null, null);
 
 		_resourcePermissionLocalService.setResourcePermissions(
@@ -1484,12 +1558,6 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 
 		Account getAccount = accountResource.getAccount(postAccount.getId());
 
-		Assert.assertNotNull(getAccount.getCreator());
-
-		Creator creator = getAccount.getCreator();
-
-		Assert.assertTrue(creator.getId() == TestPropsValues.getUserId());
-
 		Assert.assertTrue(
 			ArrayUtil.exists(
 				getAccount.getAccountGroupBriefs(),
@@ -1508,6 +1576,15 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 			ArrayUtil.exists(
 				getAccount.getAccountUserAccounts(),
 				userAccount -> userAccount.getId() == user.getUserId()));
+
+		Creator creator = getAccount.getCreator();
+
+		Assert.assertTrue(creator.getId() == TestPropsValues.getUserId());
+		Assert.assertTrue(
+			Objects.equals(
+				creator.getExternalReferenceCode(),
+				user.getExternalReferenceCode()));
+
 		Assert.assertTrue(
 			ArrayUtil.exists(
 				getAccount.getKeywords(),
@@ -1532,6 +1609,22 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 				taxonomyCategoryBrief -> Objects.equals(
 					taxonomyCategoryBrief.getTaxonomyCategoryId(),
 					assetCategory.getCategoryId())));
+	}
+
+	private void _testGetAccountWithoutLogo() throws Exception {
+		Account postAccount = testGetAccount_addAccount();
+
+		Account getAccount = accountResource.getAccount(postAccount.getId());
+
+		assertEquals(postAccount, getAccount);
+		assertValid(getAccount);
+
+		Assert.assertEquals(0, GetterUtil.getLong(getAccount.getLogoId()));
+
+		String logoURL = getAccount.getLogoURL();
+
+		Assert.assertTrue(logoURL.contains("account_logo"));
+		Assert.assertFalse(logoURL.contains("organization_logo"));
 	}
 
 	private void _testPatchAccountByExternalReferenceCodeWithMoreExternalReferenceCodes()
@@ -1819,26 +1912,50 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 	private void _testPatchAccountWithPostalAddressPhoneNumber()
 		throws Exception {
 
-		Account postAccount = testPatchAccount_addAccount();
-
-		Account randomPatchAccount = randomPatchAccount();
+		Account postAccount = randomAccount();
 
 		PostalAddress postalAddress = _randomPostalAddress();
 
+		postalAddress.setAddressType(
+			AccountListTypeConstants.
+				ACCOUNT_ENTRY_ADDRESS_TYPE_BILLING_AND_SHIPPING);
 		postalAddress.setPhoneNumber(RandomTestUtil.randomString());
 
-		randomPatchAccount.setPostalAddresses(
-			new PostalAddress[] {postalAddress});
+		postAccount.setPostalAddresses(new PostalAddress[] {postalAddress});
 
-		Account patchAccount = accountResource.patchAccount(
-			postAccount.getId(), randomPatchAccount);
+		postAccount = testPostAccount_addAccount(postAccount);
 
 		List<Address> addresses = _addressLocalService.getAddresses(
 			TestPropsValues.getCompanyId(), AccountEntry.class.getName(),
-			patchAccount.getId());
+			postAccount.getId());
 
 		Address address = addresses.get(0);
 
+		Assert.assertEquals(
+			postalAddress.getPhoneNumber(), address.getPhoneNumber());
+
+		postalAddress.setExternalReferenceCode(
+			address.getExternalReferenceCode());
+
+		postalAddress.setPhoneNumber(RandomTestUtil.randomString() + "1");
+
+		postAccount.setPostalAddresses(new PostalAddress[] {postalAddress});
+
+		Account patchAccount = accountResource.patchAccount(
+			postAccount.getId(), postAccount);
+
+		addresses = _addressLocalService.getAddresses(
+			TestPropsValues.getCompanyId(), AccountEntry.class.getName(),
+			patchAccount.getId());
+
+		address = addresses.get(0);
+
+		Assert.assertEquals(
+			postAccount.getExternalReferenceCode(),
+			patchAccount.getExternalReferenceCode());
+		Assert.assertEquals(
+			postalAddress.getExternalReferenceCode(),
+			address.getExternalReferenceCode());
 		Assert.assertEquals(
 			postalAddress.getPhoneNumber(), address.getPhoneNumber());
 	}
@@ -1893,6 +2010,7 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 				name = accountGroup1.getName();
 			}
 		};
+
 		AccountGroupBrief accountGroupBrief2 = new AccountGroupBrief() {
 			{
 				externalReferenceCode = RandomTestUtil.randomString();
@@ -1952,6 +2070,7 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 					serviceBuilderRole1.getType());
 			}
 		};
+
 		Permission permission2 = new Permission() {
 			{
 				actionIds = new String[] {ActionKeys.UPDATE};
@@ -1964,11 +2083,11 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 
 		account.setPermissions(new Permission[] {permission1, permission2});
 
-		AssetVocabulary assetVocabulary = AssetTestUtil.addVocabulary(
+		AssetVocabulary assetVocabulary1 = AssetTestUtil.addVocabulary(
 			TestPropsValues.getGroupId());
 
 		AssetCategory assetCategory1 = AssetTestUtil.addCategory(
-			TestPropsValues.getGroupId(), assetVocabulary.getVocabularyId());
+			TestPropsValues.getGroupId(), assetVocabulary1.getVocabularyId());
 
 		Group group = _groupLocalService.getGroup(assetCategory1.getGroupId());
 
@@ -1980,6 +2099,10 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 					siteKey = group.getGroupKey();
 				}
 			};
+
+		String randomString1 = RandomTestUtil.randomString();
+		String randomString2 = RandomTestUtil.randomString();
+
 		TaxonomyCategoryReference taxonomyCategoryReference2 =
 			new TaxonomyCategoryReference() {
 				{
@@ -1997,6 +2120,9 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 				},
 				new TaxonomyCategoryBrief() {
 					{
+						parentTaxonomyCategoryExternalReferenceCode =
+							randomString2;
+						parentVocabularyExternalReferenceCode = randomString1;
 						taxonomyCategoryReference = taxonomyCategoryReference2;
 					}
 				}
@@ -2280,6 +2406,22 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 						assetCategory3.getCategoryId()));
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_EMPTY, assetCategory3.getStatus());
+
+		AssetCategory assetCategory4 =
+			_assetCategoryLocalService.
+				fetchAssetCategoryByExternalReferenceCode(
+					randomString2, group.getGroupId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_EMPTY, assetCategory4.getStatus());
+
+		AssetVocabulary assetVocabulary2 =
+			_assetVocabularyLocalService.
+				fetchAssetVocabularyByExternalReferenceCode(
+					randomString1, group.getGroupId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_EMPTY, assetVocabulary2.getStatus());
 	}
 
 	private void _testPostAccountDuplicateExternalReferenceCode()
@@ -2774,6 +2916,9 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 
 	@Inject
 	private AssetTagLocalService _assetTagLocalService;
+
+	@Inject
+	private AssetVocabularyLocalService _assetVocabularyLocalService;
 
 	@Inject
 	private ClassNameLocalService _classNameLocalService;

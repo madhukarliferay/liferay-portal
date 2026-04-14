@@ -6,11 +6,14 @@
 package com.liferay.object.definition.util;
 
 import com.liferay.batch.engine.unit.BatchEngineUnitThreadLocal;
+import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectPortletKeys;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.portlet.FriendlyURLResolver;
 import com.liferay.portal.kernel.portlet.FriendlyURLResolverRegistryUtil;
 import com.liferay.portal.kernel.portlet.constants.FriendlyURLResolverConstants;
+import com.liferay.portal.kernel.security.RandomUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortalRunMode;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -23,6 +26,20 @@ import java.util.Map;
  */
 public class ObjectDefinitionUtil {
 
+	public static String generateRandomClassName() {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(
+			ObjectDefinitionConstants.
+				CLASS_NAME_PREFIX_CUSTOM_OBJECT_DEFINITION);
+		sb.append(StringUtil.toUpperCase(StringUtil.randomId(1)));
+		sb.append(RandomUtil.nextInt(10));
+		sb.append(StringUtil.toUpperCase(StringUtil.randomId(1)));
+		sb.append(RandomUtil.nextInt(10));
+
+		return sb.toString();
+	}
+
 	public static String getModifiableSystemObjectDefinitionRESTContextPath(
 		String name) {
 
@@ -31,6 +48,14 @@ public class ObjectDefinitionUtil {
 		}
 
 		return _allowedModifiableSystemObjectDefinitionNames.get(name);
+	}
+
+	public static String getPortletId(String className) {
+		return StringUtil.replaceFirst(
+			className,
+			ObjectDefinitionConstants.
+				CLASS_NAME_PREFIX_CUSTOM_OBJECT_DEFINITION,
+			ObjectPortletKeys.OBJECT_DEFINITIONS + StringPool.UNDERLINE);
 	}
 
 	public static boolean isAllowedModifiableSystemObjectDefinitionName(
@@ -64,7 +89,8 @@ public class ObjectDefinitionUtil {
 	}
 
 	public static boolean isInvokerBundleAllowed() {
-		if (PortalInstances.isCurrentCompanyInDeletionProcess() ||
+		if (ObjectDefinitionThreadLocal.isSkipBundleAllowedCheck() ||
+			PortalInstances.isCurrentCompanyInDeletionProcess() ||
 			PortalRunMode.isTestMode() || StartupHelperUtil.isUpgrading()) {
 
 			return true;
@@ -96,16 +122,28 @@ public class ObjectDefinitionUtil {
 	}
 
 	private static final String[] _ALLOWED_INVOKER_BUNDLE_SYMBOLIC_NAMES = {
-		"com.liferay.commerce.service", "com.liferay.cookies.impl",
-		"com.liferay.frontend.data.set.admin.web",
+		"com.liferay.ai.hub.site.initializer", "com.liferay.commerce.service",
+		"com.liferay.cookies.impl", "com.liferay.frontend.data.set.admin.web",
 		"com.liferay.frontend.data.set.impl",
 		"com.liferay.headless.builder.impl", "com.liferay.list.type.service",
-		"com.liferay.notification.service", "com.liferay.object.service",
-		"com.liferay.site.initializer.cms"
+		"com.liferay.mcp.server", "com.liferay.notification.service",
+		"com.liferay.object.service", "com.liferay.site.initializer.cmp",
+		"com.liferay.site.initializer.cms", "com.liferay.site.initializer.dsr",
+		"com.liferay.site.initializer.seo.studio"
 	};
 
 	private static final Map<String, String>
 		_allowedModifiableSystemObjectDefinitionNames = HashMapBuilder.put(
+			"AIHubAgentDefinition", "/ai-hub/agent-definitions"
+		).put(
+			"AIHubChatbot", "/ai-hub/chatbots"
+		).put(
+			"AIHubContentRetriever", "/ai-hub/content-retrievers"
+		).put(
+			"AIHubInstructionDefinition", "/ai-hub/instruction-definitions"
+		).put(
+			"AIHubMCPServer", "/ai-hub/mcp-servers"
+		).put(
 			"APIApplication", "/headless-builder/applications"
 		).put(
 			"APIEndpoint", "/headless-builder/endpoints"
@@ -118,19 +156,23 @@ public class ObjectDefinitionUtil {
 		).put(
 			"APISort", "/headless-builder/sorts"
 		).put(
-			"BasicDocument", "/cms/basic-documents"
-		).put(
-			"BasicWebContent", "/cms/basic-web-contents"
-		).put(
-			"Blog", "/cms/blogs"
-		).put(
 			"Bookmark", "/bookmarks"
 		).put(
-			"BulkActionTask", "/cms/bulk-action-tasks"
+			"CMPProject", "/cmp/projects"
 		).put(
-			"BulkActionTaskItem", "/cms/bulk-action-task-items"
+			"CMPTask", "/cmp/tasks"
+		).put(
+			"CMSBasicDocument", "/cms/basic-documents"
+		).put(
+			"CMSBasicWebContent", "/cms/basic-web-contents"
+		).put(
+			"CMSBlog", "/cms/blogs"
+		).put(
+			"CMSBulkActionTask", "/cms/bulk-action-tasks"
 		).put(
 			"CMSDefaultPermission", "/cms/default-permissions"
+		).put(
+			"CMSExternalVideo", "/cms/external-videos"
 		).put(
 			"CommerceReturn", "/commerce/returns"
 		).put(
@@ -151,11 +193,15 @@ public class ObjectDefinitionUtil {
 		).put(
 			"DataSetSelectionFilter", "/data-set-admin/selection-filters"
 		).put(
+			"DataSetSnapshot", "/data-set-admin/snapshots"
+		).put(
 			"DataSetSort", "/data-set-admin/sorts"
 		).put(
 			"DataSetTableSection", "/data-set-admin/table-sections"
 		).put(
-			"ExternalVideo", "/cms/external-videos"
+			"DSRRoom", "/digital-sales-room/rooms"
+		).put(
+			"DSRTemplate", "/digital-sales-room/templates"
 		).put(
 			"FDSAction", "/data-set-manager/actions"
 		).put(
@@ -181,6 +227,8 @@ public class ObjectDefinitionUtil {
 			"FunctionalCookieEntry", "/functional-cookies-entries"
 		).put(
 			"KnowledgeBase", "/cms/knowledge-bases"
+		).put(
+			"MCPServerPrompt", "/mcp/server-prompts"
 		).put(
 			"NecessaryCookieEntry", "/necessary-cookies-entries"
 		).put(

@@ -269,6 +269,14 @@ public class ObjectEntryVersionPersistenceTest {
 	}
 
 	@Test
+	public void testCountByOEI_S() throws Exception {
+		_persistence.countByOEI_S(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
+
+		_persistence.countByOEI_S(0L, 0);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		ObjectEntryVersion newObjectEntryVersion = addObjectEntryVersion();
 
@@ -643,3 +651,4 @@ public class ObjectEntryVersionPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1780667422

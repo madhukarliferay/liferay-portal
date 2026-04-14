@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Locator, Page} from '@playwright/test';
+import {Locator, Page, expect} from '@playwright/test';
 
-import {ApplicationsMenuPage} from '../../../../pages/product-navigation-applications-menu/ApplicationsMenuPage';
+import {GlobalMenuPage} from '../../../../pages/product-navigation-applications-menu/GlobalMenuPage';
 import {readCSVFile} from '../../../../utils/fileReader';
 import {PORTLET_URLS} from '../../../../utils/portletUrls';
 import {getTempDir} from '../../../../utils/temp';
 import {unzipFile} from '../../../../utils/zip';
 
 export class DataMigrationCenterPage {
-	readonly applicationsMenuPage: ApplicationsMenuPage;
+	readonly globalMenuPage: GlobalMenuPage;
 	readonly page: Page;
 	readonly newButton: Locator;
 	readonly entityTypeSelector: Locator;
@@ -31,7 +31,7 @@ export class DataMigrationCenterPage {
 	readonly updateStrategySelector: Locator;
 
 	constructor(page: Page) {
-		this.applicationsMenuPage = new ApplicationsMenuPage(page);
+		this.globalMenuPage = new GlobalMenuPage(page);
 		this.page = page;
 		this.newButton = page.getByRole('button', {name: 'New'});
 		this.entityTypeSelector = page.getByLabel('Entity Type');
@@ -76,7 +76,7 @@ export class DataMigrationCenterPage {
 	}
 
 	async goto() {
-		await this.applicationsMenuPage.goToDataMigrationCenter();
+		await this.globalMenuPage.goToApplications('Data Migration Center');
 	}
 
 	async goToImportFile() {
@@ -101,6 +101,17 @@ export class DataMigrationCenterPage {
 		return readCSVFile(filePath);
 	}
 
+	async assertSampleFileDownload(entityType: string) {
+		await this.selectEntityType(entityType);
+
+		const downloadPromise = this.page.waitForEvent('download');
+		await this.downloadSampleButton.click();
+		const download = await downloadPromise;
+		await expect(download).toBeTruthy();
+		await expect(download.failure()).resolves.toBeNull();
+		expect(download.suggestedFilename()).toBeTruthy();
+	}
+
 	async importFile(
 		entitType: string,
 		filePath: string,
@@ -115,7 +126,7 @@ export class DataMigrationCenterPage {
 		if ((await this.scopeSelector.all()).length) {
 			this.scopeSelector.selectOption(
 				await this.page
-					.locator('option', {hasText: /^Liferay( DXP)?$/})
+					.locator('option', {hasText: /^Liferay( DXP Site)?$/})
 					.textContent()
 			);
 		}

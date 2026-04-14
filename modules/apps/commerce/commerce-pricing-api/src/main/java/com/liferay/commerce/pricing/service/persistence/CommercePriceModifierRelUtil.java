@@ -227,60 +227,6 @@ public class CommercePriceModifierRelUtil {
 	}
 
 	/**
-	 * Returns the last commerce price modifier rel in the ordered set where commercePriceModifierId = &#63;.
-	 *
-	 * @param commercePriceModifierId the commerce price modifier ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier rel
-	 * @throws NoSuchPriceModifierRelException if a matching commerce price modifier rel could not be found
-	 */
-	public static CommercePriceModifierRel findByCommercePriceModifierId_Last(
-			long commercePriceModifierId,
-			OrderByComparator<CommercePriceModifierRel> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPriceModifierRelException {
-
-		return getPersistence().findByCommercePriceModifierId_Last(
-			commercePriceModifierId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce price modifier rel in the ordered set where commercePriceModifierId = &#63;.
-	 *
-	 * @param commercePriceModifierId the commerce price modifier ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier rel, or <code>null</code> if a matching commerce price modifier rel could not be found
-	 */
-	public static CommercePriceModifierRel fetchByCommercePriceModifierId_Last(
-		long commercePriceModifierId,
-		OrderByComparator<CommercePriceModifierRel> orderByComparator) {
-
-		return getPersistence().fetchByCommercePriceModifierId_Last(
-			commercePriceModifierId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce price modifier rels before and after the current commerce price modifier rel in the ordered set where commercePriceModifierId = &#63;.
-	 *
-	 * @param commercePriceModifierRelId the primary key of the current commerce price modifier rel
-	 * @param commercePriceModifierId the commerce price modifier ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier rel
-	 * @throws NoSuchPriceModifierRelException if a commerce price modifier rel with the primary key could not be found
-	 */
-	public static CommercePriceModifierRel[]
-			findByCommercePriceModifierId_PrevAndNext(
-				long commercePriceModifierRelId, long commercePriceModifierId,
-				OrderByComparator<CommercePriceModifierRel> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPriceModifierRelException {
-
-		return getPersistence().findByCommercePriceModifierId_PrevAndNext(
-			commercePriceModifierRelId, commercePriceModifierId,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce price modifier rels where commercePriceModifierId = &#63; from the database.
 	 *
 	 * @param commercePriceModifierId the commerce price modifier ID
@@ -423,63 +369,6 @@ public class CommercePriceModifierRelUtil {
 	}
 
 	/**
-	 * Returns the last commerce price modifier rel in the ordered set where commercePriceModifierId = &#63; and classNameId = &#63;.
-	 *
-	 * @param commercePriceModifierId the commerce price modifier ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier rel
-	 * @throws NoSuchPriceModifierRelException if a matching commerce price modifier rel could not be found
-	 */
-	public static CommercePriceModifierRel findByCPM_CN_Last(
-			long commercePriceModifierId, long classNameId,
-			OrderByComparator<CommercePriceModifierRel> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPriceModifierRelException {
-
-		return getPersistence().findByCPM_CN_Last(
-			commercePriceModifierId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce price modifier rel in the ordered set where commercePriceModifierId = &#63; and classNameId = &#63;.
-	 *
-	 * @param commercePriceModifierId the commerce price modifier ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier rel, or <code>null</code> if a matching commerce price modifier rel could not be found
-	 */
-	public static CommercePriceModifierRel fetchByCPM_CN_Last(
-		long commercePriceModifierId, long classNameId,
-		OrderByComparator<CommercePriceModifierRel> orderByComparator) {
-
-		return getPersistence().fetchByCPM_CN_Last(
-			commercePriceModifierId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce price modifier rels before and after the current commerce price modifier rel in the ordered set where commercePriceModifierId = &#63; and classNameId = &#63;.
-	 *
-	 * @param commercePriceModifierRelId the primary key of the current commerce price modifier rel
-	 * @param commercePriceModifierId the commerce price modifier ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier rel
-	 * @throws NoSuchPriceModifierRelException if a commerce price modifier rel with the primary key could not be found
-	 */
-	public static CommercePriceModifierRel[] findByCPM_CN_PrevAndNext(
-			long commercePriceModifierRelId, long commercePriceModifierId,
-			long classNameId,
-			OrderByComparator<CommercePriceModifierRel> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPriceModifierRelException {
-
-		return getPersistence().findByCPM_CN_PrevAndNext(
-			commercePriceModifierRelId, commercePriceModifierId, classNameId,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce price modifier rels where commercePriceModifierId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param commercePriceModifierId the commerce price modifier ID
@@ -617,62 +506,6 @@ public class CommercePriceModifierRelUtil {
 
 		return getPersistence().fetchByCN_CPK_First(
 			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce price modifier rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier rel
-	 * @throws NoSuchPriceModifierRelException if a matching commerce price modifier rel could not be found
-	 */
-	public static CommercePriceModifierRel findByCN_CPK_Last(
-			long classNameId, long classPK,
-			OrderByComparator<CommercePriceModifierRel> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPriceModifierRelException {
-
-		return getPersistence().findByCN_CPK_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce price modifier rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier rel, or <code>null</code> if a matching commerce price modifier rel could not be found
-	 */
-	public static CommercePriceModifierRel fetchByCN_CPK_Last(
-		long classNameId, long classPK,
-		OrderByComparator<CommercePriceModifierRel> orderByComparator) {
-
-		return getPersistence().fetchByCN_CPK_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce price modifier rels before and after the current commerce price modifier rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param commercePriceModifierRelId the primary key of the current commerce price modifier rel
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier rel
-	 * @throws NoSuchPriceModifierRelException if a commerce price modifier rel with the primary key could not be found
-	 */
-	public static CommercePriceModifierRel[] findByCN_CPK_PrevAndNext(
-			long commercePriceModifierRelId, long classNameId, long classPK,
-			OrderByComparator<CommercePriceModifierRel> orderByComparator)
-		throws com.liferay.commerce.pricing.exception.
-			NoSuchPriceModifierRelException {
-
-		return getPersistence().findByCN_CPK_PrevAndNext(
-			commercePriceModifierRelId, classNameId, classPK,
-			orderByComparator);
 	}
 
 	/**
@@ -954,3 +787,4 @@ public class CommercePriceModifierRelUtil {
 	private static volatile CommercePriceModifierRelPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2143385910

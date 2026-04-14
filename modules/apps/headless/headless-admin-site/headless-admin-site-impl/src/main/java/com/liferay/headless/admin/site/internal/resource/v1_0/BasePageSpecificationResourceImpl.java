@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.site.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.admin.site.dto.v1_0.PageSpecification;
 import com.liferay.headless.admin.site.resource.v1_0.PageSpecificationResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -19,6 +20,7 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.odata.filter.ExpressionConvert;
@@ -42,6 +44,7 @@ import jakarta.annotation.Generated;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
@@ -108,7 +111,7 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public void deleteSiteSiteByExternalReferenceCodePageSpecification(
+	public void deleteSitePageSpecification(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.validation.constraints.NotNull
 			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
@@ -164,7 +167,7 @@ public abstract class BasePageSpecificationResourceImpl
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
 	public Page<PageSpecification>
-			getSiteSiteByExternalReferenceCodeDisplayPageTemplatePageSpecificationsPage(
+			getSiteDisplayPageTemplatePageSpecificationsPage(
 				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 				@jakarta.validation.constraints.NotNull
 				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
@@ -222,15 +225,14 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public Page<PageSpecification>
-			getSiteSiteByExternalReferenceCodeMasterPagePageSpecificationsPage(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.ws.rs.PathParam("masterPageExternalReferenceCode")
-				String masterPageExternalReferenceCode)
+	public Page<PageSpecification> getSiteMasterPagePageSpecificationsPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.PathParam("masterPageExternalReferenceCode")
+			String masterPageExternalReferenceCode)
 		throws Exception {
 
 		return Page.of(Collections.emptyList());
@@ -279,18 +281,15 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public PageSpecification
-			getSiteSiteByExternalReferenceCodePageSpecification(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam(
-					"pageSpecificationExternalReferenceCode"
-				)
-				String pageSpecificationExternalReferenceCode)
+	public PageSpecification getSitePageSpecification(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("pageSpecificationExternalReferenceCode")
+			String pageSpecificationExternalReferenceCode)
 		throws Exception {
 
 		return null;
@@ -339,15 +338,14 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public Page<PageSpecification>
-			getSiteSiteByExternalReferenceCodePageTemplatePageSpecificationsPage(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.ws.rs.PathParam("pageTemplateExternalReferenceCode")
-				String pageTemplateExternalReferenceCode)
+	public Page<PageSpecification> getSitePageTemplatePageSpecificationsPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.PathParam("pageTemplateExternalReferenceCode")
+			String pageTemplateExternalReferenceCode)
 		throws Exception {
 
 		return Page.of(Collections.emptyList());
@@ -396,15 +394,14 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public Page<PageSpecification>
-			getSiteSiteByExternalReferenceCodeSitePagePageSpecificationsPage(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
-				String sitePageExternalReferenceCode)
+	public Page<PageSpecification> getSiteSitePagePageSpecificationsPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.PathParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode)
 		throws Exception {
 
 		return Page.of(Collections.emptyList());
@@ -453,15 +450,14 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public Page<PageSpecification>
-			getSiteSiteByExternalReferenceCodeUtilityPagePageSpecificationsPage(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.ws.rs.PathParam("utilityPageExternalReferenceCode")
-				String utilityPageExternalReferenceCode)
+	public Page<PageSpecification> getSiteUtilityPagePageSpecificationsPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.PathParam("utilityPageExternalReferenceCode")
+			String utilityPageExternalReferenceCode)
 		throws Exception {
 
 		return Page.of(Collections.emptyList());
@@ -470,7 +466,7 @@ public abstract class BasePageSpecificationResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}' -d $'{"customFields": ___, "externalReferenceCode": ___, "settings": ___, "siteTemplatePageSpecificationExternalReferenceCode": ___, "status": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}' -d $'{"customFields": ___, "externalReferenceCode": ___, "siteTemplatePageSpecificationExternalReferenceCode": ___, "status": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates a page specification of a site page. Updates only the fields received in the request body, leaving any other fields untouched."
@@ -511,25 +507,20 @@ public abstract class BasePageSpecificationResourceImpl
 	)
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public PageSpecification
-			patchSiteSiteByExternalReferenceCodePageSpecification(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam(
-					"pageSpecificationExternalReferenceCode"
-				)
-				String pageSpecificationExternalReferenceCode,
-				PageSpecification pageSpecification)
+	public PageSpecification patchSitePageSpecification(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("pageSpecificationExternalReferenceCode")
+			String pageSpecificationExternalReferenceCode,
+			PageSpecification pageSpecification)
 		throws Exception {
 
-		PageSpecification existingPageSpecification =
-			getSiteSiteByExternalReferenceCodePageSpecification(
-				siteExternalReferenceCode,
-				pageSpecificationExternalReferenceCode);
+		PageSpecification existingPageSpecification = getSitePageSpecification(
+			siteExternalReferenceCode, pageSpecificationExternalReferenceCode);
 
 		if (pageSpecification.getCustomFields() != null) {
 			existingPageSpecification.setCustomFields(
@@ -561,7 +552,7 @@ public abstract class BasePageSpecificationResourceImpl
 
 		preparePatch(pageSpecification, existingPageSpecification);
 
-		return putSiteSiteByExternalReferenceCodePageSpecification(
+		return putSitePageSpecification(
 			siteExternalReferenceCode, pageSpecificationExternalReferenceCode,
 			existingPageSpecification);
 	}
@@ -610,18 +601,15 @@ public abstract class BasePageSpecificationResourceImpl
 	@jakarta.ws.rs.POST
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
-	public PageSpecification
-			postSiteSiteByExternalReferenceCodePageSpecificationPublish(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam(
-					"pageSpecificationExternalReferenceCode"
-				)
-				String pageSpecificationExternalReferenceCode)
+	public PageSpecification postSitePageSpecificationPublish(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("pageSpecificationExternalReferenceCode")
+			String pageSpecificationExternalReferenceCode)
 		throws Exception {
 
 		return null;
@@ -630,7 +618,7 @@ public abstract class BasePageSpecificationResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}' -d $'{"customFields": ___, "externalReferenceCode": ___, "settings": ___, "siteTemplatePageSpecificationExternalReferenceCode": ___, "status": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-admin-site/v1.0/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}' -d $'{"customFields": ___, "externalReferenceCode": ___, "siteTemplatePageSpecificationExternalReferenceCode": ___, "status": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates a page specification of a site page."
@@ -671,19 +659,16 @@ public abstract class BasePageSpecificationResourceImpl
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@jakarta.ws.rs.PUT
 	@Override
-	public PageSpecification
-			putSiteSiteByExternalReferenceCodePageSpecification(
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
-				String siteExternalReferenceCode,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.validation.constraints.NotNull
-				@jakarta.ws.rs.PathParam(
-					"pageSpecificationExternalReferenceCode"
-				)
-				String pageSpecificationExternalReferenceCode,
-				PageSpecification pageSpecification)
+	public PageSpecification putSitePageSpecification(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
+			String siteExternalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("pageSpecificationExternalReferenceCode")
+			String pageSpecificationExternalReferenceCode,
+			PageSpecification pageSpecification)
 		throws Exception {
 
 		return null;
@@ -696,8 +681,55 @@ public abstract class BasePageSpecificationResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		UnsafeFunction<PageSpecification, PageSpecification, Exception>
+			pageSpecificationUnsafeFunction = null;
+
+		String createStrategy = (String)parameters.getOrDefault(
+			"createStrategy", "INSERT");
+
+		if (StringUtil.equalsIgnoreCase(createStrategy, "UPSERT")) {
+			String updateStrategy = (String)parameters.getOrDefault(
+				"updateStrategy", "UPDATE");
+
+			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
+				pageSpecificationUnsafeFunction = pageSpecification -> {
+					PageSpecification persistedPageSpecification = null;
+
+					if (parameters.containsKey("siteExternalReferenceCode")) {
+						persistedPageSpecification = putSitePageSpecification(
+							(String)parameters.get("siteExternalReferenceCode"),
+							pageSpecification.getExternalReferenceCode(),
+							pageSpecification);
+					}
+					else {
+						throw new NotSupportedException(
+							"One of the following parameters must be specified: [siteExternalReferenceCode]");
+					}
+
+					return persistedPageSpecification;
+				};
+			}
+		}
+
+		if (pageSpecificationUnsafeFunction == null) {
+			throw new NotSupportedException(
+				"Create strategy \"" + createStrategy +
+					"\" is not supported for PageSpecification");
+		}
+
+		if (contextBatchUnsafeBiConsumer != null) {
+			contextBatchUnsafeBiConsumer.accept(
+				pageSpecifications, pageSpecificationUnsafeFunction);
+		}
+		else if (contextBatchUnsafeConsumer != null) {
+			contextBatchUnsafeConsumer.accept(
+				pageSpecifications, pageSpecificationUnsafeFunction::apply);
+		}
+		else {
+			for (PageSpecification pageSpecification : pageSpecifications) {
+				pageSpecificationUnsafeFunction.apply(pageSpecification);
+			}
+		}
 	}
 
 	@Override
@@ -706,12 +738,37 @@ public abstract class BasePageSpecificationResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		UnsafeFunction<PageSpecification, PageSpecification, Exception>
+			pageSpecificationUnsafeFunction = pageSpecification -> {
+				if (parameters.containsKey("siteExternalReferenceCode")) {
+					deleteSitePageSpecification(
+						(String)parameters.get("siteExternalReferenceCode"),
+						pageSpecification.getExternalReferenceCode());
+
+					return pageSpecification;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
+			};
+
+		if (contextBatchUnsafeBiConsumer != null) {
+			contextBatchUnsafeBiConsumer.accept(
+				pageSpecifications, pageSpecificationUnsafeFunction);
+		}
+		else if (contextBatchUnsafeConsumer != null) {
+			contextBatchUnsafeConsumer.accept(
+				pageSpecifications, pageSpecificationUnsafeFunction::apply);
+		}
+		else {
+			for (PageSpecification pageSpecification : pageSpecifications) {
+				pageSpecificationUnsafeFunction.apply(pageSpecification);
+			}
+		}
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
-		return SetUtil.fromArray();
+		return SetUtil.fromArray("UPSERT");
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
@@ -763,6 +820,15 @@ public abstract class BasePageSpecificationResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1346,3 +1412,4 @@ public abstract class BasePageSpecificationResourceImpl
 		LogFactoryUtil.getLog(BasePageSpecificationResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1684276487

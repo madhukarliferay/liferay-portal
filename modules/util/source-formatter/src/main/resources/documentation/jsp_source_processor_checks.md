@@ -18,6 +18,7 @@ ConstantNameCheck | [Naming Conventions](naming_conventions_checks.md#naming-con
 ContractionsCheck | [Styling](styling_checks.md#styling-checks) | Finds contractions in Strings (such as `can't` or `you're`). |
 [CopyrightCheck](check/copyright_check.md#copyrightcheck) | [Styling](styling_checks.md#styling-checks) | Validates `copyright` header. |
 [DefaultComesLastCheck](https://checkstyle.sourceforge.io/checks/coding/defaultcomeslast.html) | [Styling](styling_checks.md#styling-checks) | Checks that the `default` is after all the cases in a `switch` statement. |
+DeprecatedClassesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Replaces deprecated classes. |
 EmptyCollectionCheck | [Styling](styling_checks.md#styling-checks) | Checks that there are no calls to `Collections.EMPTY_LIST`, `Collections.EMPTY_MAP` or `Collections.EMPTY_SET`. |
 [ExceptionMessageCheck](check/message_check.md#messagecheck) | [Styling](styling_checks.md#styling-checks) | Validates messages that are passed to exceptions. |
 FactoryCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `*Factory` should be used when creating new instances of an object. |
@@ -46,6 +47,7 @@ JSPInlineVariableCheck | [Styling](styling_checks.md#styling-checks) | Finds cas
 JSPJavaParserCheck | [Styling](styling_checks.md#styling-checks) | Performs JavaParser on `.java` files. |
 JSPLanguageKeysCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds missing language keys in `Language.properties`. |
 JSPLanguageUtilCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds incorrect use of `LanguageUtil.get` in `.jsp` files. |
+[JSPLiferayUICSPTagCheck](check/jsp_liferay_uicsp_tag_check.md#jspliferayuicsptagcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds new usages of deprecated liferay-ui:csp tag. |
 JSPLineBreakCheck | [Styling](styling_checks.md#styling-checks) | Finds missing and unnecessary line breaks in `.jsp` lines. |
 JSPLogFileNameCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Validates the value that is passed to `LogFactoryUtil.getLog` in `.jsp`. |
 [JSPMethodCallsCheck](check/jsp_method_calls_check.md#jspmethodcallscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that type `LiferayPortletResponse` is used to call `getNamespace()`. |

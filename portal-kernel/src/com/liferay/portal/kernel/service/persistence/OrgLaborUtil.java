@@ -213,54 +213,6 @@ public class OrgLaborUtil {
 	}
 
 	/**
-	 * Returns the last org labor in the ordered set where organizationId = &#63;.
-	 *
-	 * @param organizationId the organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching org labor
-	 * @throws NoSuchOrgLaborException if a matching org labor could not be found
-	 */
-	public static OrgLabor findByOrganizationId_Last(
-			long organizationId, OrderByComparator<OrgLabor> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchOrgLaborException {
-
-		return getPersistence().findByOrganizationId_Last(
-			organizationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last org labor in the ordered set where organizationId = &#63;.
-	 *
-	 * @param organizationId the organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching org labor, or <code>null</code> if a matching org labor could not be found
-	 */
-	public static OrgLabor fetchByOrganizationId_Last(
-		long organizationId, OrderByComparator<OrgLabor> orderByComparator) {
-
-		return getPersistence().fetchByOrganizationId_Last(
-			organizationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the org labors before and after the current org labor in the ordered set where organizationId = &#63;.
-	 *
-	 * @param orgLaborId the primary key of the current org labor
-	 * @param organizationId the organization ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next org labor
-	 * @throws NoSuchOrgLaborException if a org labor with the primary key could not be found
-	 */
-	public static OrgLabor[] findByOrganizationId_PrevAndNext(
-			long orgLaborId, long organizationId,
-			OrderByComparator<OrgLabor> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchOrgLaborException {
-
-		return getPersistence().findByOrganizationId_PrevAndNext(
-			orgLaborId, organizationId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the org labors where organizationId = &#63; from the database.
 	 *
 	 * @param organizationId the organization ID
@@ -437,3 +389,4 @@ public class OrgLaborUtil {
 	private static volatile OrgLaborPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-733699937

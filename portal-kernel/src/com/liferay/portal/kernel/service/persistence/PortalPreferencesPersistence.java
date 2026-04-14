@@ -119,47 +119,6 @@ public interface PortalPreferencesPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last portal preferences in the ordered set where ownerType = &#63;.
-	 *
-	 * @param ownerType the owner type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preferences
-	 * @throws NoSuchPreferencesException if a matching portal preferences could not be found
-	 */
-	public PortalPreferences findByOwnerType_Last(
-			int ownerType,
-			com.liferay.portal.kernel.util.OrderByComparator<PortalPreferences>
-				orderByComparator)
-		throws NoSuchPreferencesException;
-
-	/**
-	 * Returns the last portal preferences in the ordered set where ownerType = &#63;.
-	 *
-	 * @param ownerType the owner type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preferences, or <code>null</code> if a matching portal preferences could not be found
-	 */
-	public PortalPreferences fetchByOwnerType_Last(
-		int ownerType,
-		com.liferay.portal.kernel.util.OrderByComparator<PortalPreferences>
-			orderByComparator);
-
-	/**
-	 * Returns the portal preferenceses before and after the current portal preferences in the ordered set where ownerType = &#63;.
-	 *
-	 * @param portalPreferencesId the primary key of the current portal preferences
-	 * @param ownerType the owner type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next portal preferences
-	 * @throws NoSuchPreferencesException if a portal preferences with the primary key could not be found
-	 */
-	public PortalPreferences[] findByOwnerType_PrevAndNext(
-			long portalPreferencesId, int ownerType,
-			com.liferay.portal.kernel.util.OrderByComparator<PortalPreferences>
-				orderByComparator)
-		throws NoSuchPreferencesException;
-
-	/**
 	 * Removes all the portal preferenceses where ownerType = &#63; from the database.
 	 *
 	 * @param ownerType the owner type
@@ -346,3 +305,4 @@ public interface PortalPreferencesPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:721700791

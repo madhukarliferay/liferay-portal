@@ -214,56 +214,6 @@ public class KaleoConditionUtil {
 	}
 
 	/**
-	 * Returns the last kaleo condition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo condition
-	 * @throws NoSuchConditionException if a matching kaleo condition could not be found
-	 */
-	public static KaleoCondition findByCompanyId_Last(
-			long companyId, OrderByComparator<KaleoCondition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchConditionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo condition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo condition, or <code>null</code> if a matching kaleo condition could not be found
-	 */
-	public static KaleoCondition fetchByCompanyId_Last(
-		long companyId, OrderByComparator<KaleoCondition> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo conditions before and after the current kaleo condition in the ordered set where companyId = &#63;.
-	 *
-	 * @param kaleoConditionId the primary key of the current kaleo condition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo condition
-	 * @throws NoSuchConditionException if a kaleo condition with the primary key could not be found
-	 */
-	public static KaleoCondition[] findByCompanyId_PrevAndNext(
-			long kaleoConditionId, long companyId,
-			OrderByComparator<KaleoCondition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchConditionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			kaleoConditionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kaleo conditions where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -390,58 +340,6 @@ public class KaleoConditionUtil {
 
 		return getPersistence().fetchByKaleoDefinitionVersionId_First(
 			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo condition in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo condition
-	 * @throws NoSuchConditionException if a matching kaleo condition could not be found
-	 */
-	public static KaleoCondition findByKaleoDefinitionVersionId_Last(
-			long kaleoDefinitionVersionId,
-			OrderByComparator<KaleoCondition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchConditionException {
-
-		return getPersistence().findByKaleoDefinitionVersionId_Last(
-			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo condition in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo condition, or <code>null</code> if a matching kaleo condition could not be found
-	 */
-	public static KaleoCondition fetchByKaleoDefinitionVersionId_Last(
-		long kaleoDefinitionVersionId,
-		OrderByComparator<KaleoCondition> orderByComparator) {
-
-		return getPersistence().fetchByKaleoDefinitionVersionId_Last(
-			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo conditions before and after the current kaleo condition in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoConditionId the primary key of the current kaleo condition
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo condition
-	 * @throws NoSuchConditionException if a kaleo condition with the primary key could not be found
-	 */
-	public static KaleoCondition[] findByKaleoDefinitionVersionId_PrevAndNext(
-			long kaleoConditionId, long kaleoDefinitionVersionId,
-			OrderByComparator<KaleoCondition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchConditionException {
-
-		return getPersistence().findByKaleoDefinitionVersionId_PrevAndNext(
-			kaleoConditionId, kaleoDefinitionVersionId, orderByComparator);
 	}
 
 	/**
@@ -690,3 +588,4 @@ public class KaleoConditionUtil {
 	private static volatile KaleoConditionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:228773619

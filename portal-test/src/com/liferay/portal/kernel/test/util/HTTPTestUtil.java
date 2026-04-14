@@ -15,7 +15,8 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.Time;
 
 import java.io.InputStream;
 
@@ -51,8 +52,16 @@ public class HTTPTestUtil {
 			String body, String endpoint, Http.Method httpMethod)
 		throws Exception {
 
+		return invokeToInputStream(body, endpoint, null, httpMethod);
+	}
+
+	public static InputStream invokeToInputStream(
+			String body, String endpoint, Map<String, String> headers,
+			Http.Method httpMethod)
+		throws Exception {
+
 		Http.Options options = _getHttpOptions(
-			body, endpoint, null, httpMethod);
+			body, endpoint, headers, httpMethod);
 
 		return HttpUtil.URLtoInputStream(options);
 	}
@@ -180,6 +189,11 @@ public class HTTPTestUtil {
 		}
 
 		options.setMethod(httpMethod);
+
+		// Added because modules/apps/object/**/ExportTaskResourceTest.java was
+		// slow to create companies. See LPD-73606.
+
+		options.setTimeout((int)Time.MINUTE * 2);
 
 		if (body != null) {
 			options.setBody(

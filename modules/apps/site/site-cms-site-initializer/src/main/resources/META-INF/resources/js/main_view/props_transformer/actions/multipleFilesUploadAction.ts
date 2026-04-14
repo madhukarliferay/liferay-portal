@@ -3,25 +3,26 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {openModal} from 'frontend-js-components-web';
+import {FileData} from 'frontend-js-components-web';
 
 import {AssetLibrary} from '../../../common/types/AssetLibrary';
+import {openCMSModal} from '../../../common/utils/openCMSModal';
 import MultipleFilesUploadModalContent from '../../modal/MultipleFilesUploadModalContent';
 
 export type MultipleFileUploaderData = {
 	assetLibraries: AssetLibrary[];
 	baseAssetLibraryViewURL: string;
+	keywords?: string;
 	parentObjectEntryFolderExternalReferenceCode: string;
 };
 
 export default function multipleFilesUploadAction(
-	data: MultipleFileUploaderData,
+	data: MultipleFileUploaderData & {
+		filesToUpload?: FileData[];
+	},
 	loadData?: () => void
 ) {
-	openModal({
-		containerProps: {
-			className: '',
-		},
+	openCMSModal({
 		contentComponent: ({closeModal}: {closeModal: () => void}) =>
 			MultipleFilesUploadModalContent({
 				...data,

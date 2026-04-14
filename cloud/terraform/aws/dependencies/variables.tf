@@ -1,3 +1,6 @@
+variable "arn_partition" {
+	default="aws"
+}
 variable "cluster_name" {
 	type=string
 }
@@ -12,16 +15,27 @@ variable "db_restore_snapshot_identifier" {
 	default=null
 }
 variable "deployment_name" {
-	default="liferay-self-hosted"
+	type=string
+	validation {
+		condition=can(regex("^[a-z][a-z0-9-]{2,23}$", var.deployment_name))
+		error_message="The variable \"deployment_name\" must be 3-24 characters, start with a lowercase letter, and contain only lowercase letters, numbers, and hyphens."
+	}
 }
 variable "deployment_namespace" {
 	default="liferay-system"
+	validation {
+		condition=can(regex("^[a-z0-9-]*$", var.deployment_namespace))
+		error_message="The deployment_namespace must contain only lowercase letters, numbers, and hyphens."
+	}
 }
 variable "is_restoring" {
 	default=false
 }
-variable "kube_config_path" {
-	default="~/.kube/config"
+variable "liferay_sa_role_arn" {
+	type=string
+}
+variable "liferay_sa_role_name" {
+	type=string
 }
 variable "private_subnet_ids" {
 	type=list(string)

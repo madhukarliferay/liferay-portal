@@ -219,9 +219,7 @@ public class WorkflowLogSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(workflowLog.getType());
-
 			sb.append("\"");
 		}
 
@@ -617,3 +615,4 @@ public class WorkflowLogSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-810848358

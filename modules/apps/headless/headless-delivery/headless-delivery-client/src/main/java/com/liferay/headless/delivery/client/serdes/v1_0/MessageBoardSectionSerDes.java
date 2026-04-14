@@ -236,9 +236,7 @@ public class MessageBoardSectionSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(messageBoardSection.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -667,3 +665,4 @@ public class MessageBoardSectionSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:503276878

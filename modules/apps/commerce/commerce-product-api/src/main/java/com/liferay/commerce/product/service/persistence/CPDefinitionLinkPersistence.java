@@ -123,47 +123,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByUuid_PrevAndNext(
-			long CPDefinitionLinkId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -323,50 +282,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByUuid_C_PrevAndNext(
-			long CPDefinitionLinkId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -472,47 +387,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCPDefinitionId_PrevAndNext(
-			long CPDefinitionLinkId, long CPDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where CPDefinitionId = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -613,47 +487,6 @@ public interface CPDefinitionLinkPersistence
 		long CProductId,
 		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCProductId_Last(
-			long CProductId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCProductId_Last(
-		long CProductId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCProductId_PrevAndNext(
-			long CPDefinitionLinkId, long CProductId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
 
 	/**
 	 * Removes all the cp definition links where CProductId = &#63; from the database.
@@ -763,50 +596,6 @@ public interface CPDefinitionLinkPersistence
 		long CPDefinitionId, String type,
 		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63; and type = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCPD_T_Last(
-			long CPDefinitionId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63; and type = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCPD_T_Last(
-		long CPDefinitionId, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CPDefinitionId = &#63; and type = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CPDefinitionId the cp definition ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCPD_T_PrevAndNext(
-			long CPDefinitionLinkId, long CPDefinitionId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
 
 	/**
 	 * Removes all the cp definition links where CPDefinitionId = &#63; and type = &#63; from the database.
@@ -920,50 +709,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCPD_S_Last(
-			long CPDefinitionId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCPD_S_Last(
-		long CPDefinitionId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CPDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CPDefinitionId the cp definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCPD_S_PrevAndNext(
-			long CPDefinitionLinkId, long CPDefinitionId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where CPDefinitionId = &#63; and status = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -1073,50 +818,6 @@ public interface CPDefinitionLinkPersistence
 		long CProductId, String type,
 		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63; and type = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCP_T_Last(
-			long CProductId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63; and type = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCP_T_Last(
-		long CProductId, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CProductId = &#63; and type = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CProductId the c product ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCP_T_PrevAndNext(
-			long CPDefinitionLinkId, long CProductId, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
 
 	/**
 	 * Removes all the cp definition links where CProductId = &#63; and type = &#63; from the database.
@@ -1230,50 +931,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63; and status = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCP_S_Last(
-			long CProductId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63; and status = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCP_S_Last(
-		long CProductId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CProductId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CProductId the c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCP_S_PrevAndNext(
-			long CPDefinitionLinkId, long CProductId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where CProductId = &#63; and status = &#63; from the database.
 	 *
 	 * @param CProductId the c product ID
@@ -1385,50 +1042,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByLtD_S_Last(
-			Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByLtD_S_Last(
-		Date displayDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByLtD_S_PrevAndNext(
-			long CPDefinitionLinkId, Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where displayDate &lt; &#63; and status = &#63; from the database.
 	 *
 	 * @param displayDate the display date
@@ -1538,50 +1151,6 @@ public interface CPDefinitionLinkPersistence
 		Date expirationDate, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp definition link in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByLtE_S_Last(
-			Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByLtE_S_Last(
-		Date expirationDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByLtE_S_PrevAndNext(
-			long CPDefinitionLinkId, Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
 
 	/**
 	 * Removes all the cp definition links where expirationDate &lt; &#63; and status = &#63; from the database.
@@ -1760,54 +1329,6 @@ public interface CPDefinitionLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCPD_T_S_Last(
-			long CPDefinitionId, String type, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CPDefinitionId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCPD_T_S_Last(
-		long CPDefinitionId, String type, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CPDefinitionId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CPDefinitionId the cp definition ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCPD_T_S_PrevAndNext(
-			long CPDefinitionLinkId, long CPDefinitionId, String type,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
 	 * Removes all the cp definition links where CPDefinitionId = &#63; and type = &#63; and status = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -1925,53 +1446,6 @@ public interface CPDefinitionLinkPersistence
 		long CProductId, String type, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink findByCP_T_S_Last(
-			long CProductId, String type, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
-
-	/**
-	 * Returns the last cp definition link in the ordered set where CProductId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition link, or <code>null</code> if a matching cp definition link could not be found
-	 */
-	public CPDefinitionLink fetchByCP_T_S_Last(
-		long CProductId, String type, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-			orderByComparator);
-
-	/**
-	 * Returns the cp definition links before and after the current cp definition link in the ordered set where CProductId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionLinkId the primary key of the current cp definition link
-	 * @param CProductId the c product ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition link
-	 * @throws NoSuchCPDefinitionLinkException if a cp definition link with the primary key could not be found
-	 */
-	public CPDefinitionLink[] findByCP_T_S_PrevAndNext(
-			long CPDefinitionLinkId, long CProductId, String type, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<CPDefinitionLink>
-				orderByComparator)
-		throws NoSuchCPDefinitionLinkException;
 
 	/**
 	 * Removes all the cp definition links where CProductId = &#63; and type = &#63; and status = &#63; from the database.
@@ -2113,3 +1587,4 @@ public interface CPDefinitionLinkPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1618245439

@@ -17,8 +17,6 @@ import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -237,10 +235,21 @@ public class KBArticleIndexer extends BaseIndexer<KBArticle> {
 	}
 
 	@Override
-	protected void doReindex(String[] ids) throws Exception {
-		long companyId = GetterUtil.getLong(ids[0]);
+	protected IndexableActionableDynamicQuery
+		getIndexableActionableDynamicQuery() {
 
-		_reindexKBArticles(companyId);
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
+			kbArticleLocalService.getIndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> {
+				Property property = PropertyFactoryUtil.forName("status");
+
+				dynamicQuery.add(
+					property.eq(WorkflowConstants.STATUS_APPROVED));
+			});
+
+		return indexableActionableDynamicQuery;
 	}
 
 	@Reference
@@ -282,40 +291,6 @@ public class KBArticleIndexer extends BaseIndexer<KBArticle> {
 		indexWriterHelper.updateDocuments(
 			kbArticle.getCompanyId(), documents, isCommitImmediately());
 	}
-
-	private void _reindexKBArticles(long companyId) throws Exception {
-		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
-			kbArticleLocalService.getIndexableActionableDynamicQuery();
-
-		indexableActionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> {
-				Property property = PropertyFactoryUtil.forName("status");
-
-				dynamicQuery.add(
-					property.eq(WorkflowConstants.STATUS_APPROVED));
-			});
-		indexableActionableDynamicQuery.setCompanyId(companyId);
-		indexableActionableDynamicQuery.setPerformActionMethod(
-			(KBArticle kbArticle) -> {
-				try {
-					indexableActionableDynamicQuery.addDocuments(
-						getDocument(kbArticle));
-				}
-				catch (PortalException portalException) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Unable to index knowledge base article " +
-								kbArticle.getKbArticleId(),
-							portalException);
-					}
-				}
-			});
-
-		indexableActionableDynamicQuery.performActions();
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		KBArticleIndexer.class);
 
 	@Reference(
 		target = "(model.class.name=com.liferay.knowledge.base.model.KBArticle)"

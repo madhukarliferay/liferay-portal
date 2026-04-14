@@ -7,18 +7,17 @@ import {ObjectFolder} from '@liferay/object-admin-rest-client-js';
 import {Locator, Page} from '@playwright/test';
 
 import {PORTLET_URLS} from '../../utils/portletUrls';
-import {ApplicationsMenuPage} from '../product-navigation-applications-menu/ApplicationsMenuPage';
 
 export class ViewObjectDefinitionsPage {
 	readonly actionsButton: Locator;
 	readonly addObjectFolderButton: Locator;
-	readonly applicationsMenuPage: ApplicationsMenuPage;
 	readonly createObjectDefinitionButton: Locator;
 	readonly createObjectFolderButton: Locator;
 	readonly confirmObjectFolderNameInput: Locator;
 	readonly defaultObjectFolder: Locator;
 	readonly deleteObjectDefinitionOption: Locator;
 	readonly deleteObjectFolderButton: Locator;
+	readonly exportObjectDefinitionOption: Locator;
 	readonly frontendDataSetEntries: Locator;
 	readonly objectFolderActions: Locator;
 	readonly objectFolderCardHeader: Locator;
@@ -32,7 +31,6 @@ export class ViewObjectDefinitionsPage {
 	constructor(page: Page) {
 		this.actionsButton = page.getByRole('button', {name: 'Actions'});
 		this.addObjectFolderButton = page.getByLabel('Add Object Folder');
-		this.applicationsMenuPage = new ApplicationsMenuPage(page);
 		this.confirmObjectFolderNameInput = page.locator(
 			'input[placeholder="Confirm Folder Name"]'
 		);
@@ -49,6 +47,9 @@ export class ViewObjectDefinitionsPage {
 		});
 		this.deleteObjectFolderButton = page.getByRole('button', {
 			name: 'Delete',
+		});
+		this.exportObjectDefinitionOption = page.getByRole('menuitem', {
+			name: 'Export Object Definition',
 		});
 		this.frontendDataSetEntries = page.locator('div.table-list-title a');
 		this.objectFolders = page
@@ -81,7 +82,20 @@ export class ViewObjectDefinitionsPage {
 		await this.page.getByRole('button', {name: 'Save'}).click();
 	}
 
-	async clickEditObjectDefinitionLink(objectDefinitionLabel: string) {
+	async clickEditObjectDefinitionLink(
+		objectDefinitionLabel: string,
+		placeholder?: string
+	) {
+		const input = this.page
+			.locator('.management-bar')
+			.getByRole('searchbox', {
+				name: placeholder ?? 'Search',
+			});
+
+		await input.fill(objectDefinitionLabel);
+
+		await this.page.keyboard.press('Enter');
+
 		await this.page
 			.getByRole('link', {exact: true, name: objectDefinitionLabel})
 			.click();
@@ -133,10 +147,13 @@ export class ViewObjectDefinitionsPage {
 		);
 	}
 
-	async openObjectFolder(objectFolderLabel: string) {
+	async openObjectFolder(
+		objectFolderLabel: string,
+		options: {timeout?: number} = {}
+	) {
 		await this.page
 			.getByRole('listitem')
 			.filter({hasText: objectFolderLabel})
-			.click();
+			.click({timeout: options?.timeout});
 	}
 }

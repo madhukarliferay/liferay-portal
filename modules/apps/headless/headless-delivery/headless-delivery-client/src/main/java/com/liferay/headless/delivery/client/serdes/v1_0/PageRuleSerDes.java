@@ -54,9 +54,7 @@ public class PageRuleSerDes {
 			sb.append("\"conditionType\": ");
 
 			sb.append("\"");
-
 			sb.append(pageRule.getConditionType());
-
 			sb.append("\"");
 		}
 
@@ -362,3 +360,4 @@ public class PageRuleSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-180658130

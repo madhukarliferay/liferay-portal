@@ -54,9 +54,7 @@ public class HtmlPropertiesSerDes {
 			sb.append("\"htmlTag\": ");
 
 			sb.append("\"");
-
 			sb.append(htmlProperties.getHtmlTag());
-
 			sb.append("\"");
 		}
 
@@ -204,3 +202,4 @@ public class HtmlPropertiesSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-316547704

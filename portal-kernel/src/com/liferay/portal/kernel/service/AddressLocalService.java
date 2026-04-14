@@ -331,7 +331,7 @@ public interface AddressLocalService
 	public Address getOrAddEmptyAddress(
 			String externalReferenceCode, long companyId, long userId,
 			String className, long classPK)
-		throws Exception;
+		throws PortalException;
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -399,3 +399,4 @@ public interface AddressLocalService
 		throws E;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-784472085

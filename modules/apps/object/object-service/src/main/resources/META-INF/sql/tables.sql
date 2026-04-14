@@ -42,9 +42,9 @@ create table ObjectDefinition (
 	dbTableName VARCHAR(75) null,
 	enableCategorization BOOLEAN,
 	enableComments BOOLEAN,
+	enableFormContainer BOOLEAN,
 	enableFriendlyURLCustomization BOOLEAN,
 	enableIndexSearch BOOLEAN,
-	enableLocalization BOOLEAN,
 	enableObjectEntryDraft BOOLEAN,
 	enableObjectEntryHistory BOOLEAN,
 	enableObjectEntrySchedule BOOLEAN,
@@ -92,6 +92,7 @@ create table ObjectEntry (
 	userName VARCHAR(75) null,
 	createDate DATE null,
 	modifiedDate DATE null,
+	headObjectEntryId LONG,
 	objectDefinitionId LONG,
 	objectEntryFolderId LONG,
 	rootObjectEntryId LONG,
@@ -190,7 +191,7 @@ create table ObjectFieldSetting (
 	modifiedDate DATE null,
 	objectFieldId LONG,
 	name VARCHAR(75) null,
-	value VARCHAR(255) null
+	value TEXT null
 );
 
 create table ObjectFilter (
@@ -219,7 +220,8 @@ create table ObjectFolder (
 	createDate DATE null,
 	modifiedDate DATE null,
 	label STRING null,
-	name VARCHAR(75) null
+	name VARCHAR(75) null,
+	status INTEGER
 );
 
 create table ObjectFolderItem (

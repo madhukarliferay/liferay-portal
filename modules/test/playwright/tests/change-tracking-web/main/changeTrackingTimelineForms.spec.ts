@@ -16,7 +16,7 @@ export const test = mergeTests(
 	formsPagesTest,
 	changeTrackingPagesTest,
 	featureFlagsTest({
-		'LPD-20556': {enabled: true},
+		'LPD-36105': {enabled: true},
 	})
 );
 

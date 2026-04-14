@@ -297,6 +297,19 @@ public class ObjectEntryVersionLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectEntryVersion
+		fetchLatestApprovedObjectEntryVersion(
+			long objectEntryId,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.object.model.ObjectEntryVersion>
+					orderByComparator) {
+
+		return _objectEntryVersionLocalService.
+			fetchLatestApprovedObjectEntryVersion(
+				objectEntryId, orderByComparator);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectEntryVersion fetchObjectEntryVersion(
 		long objectEntryVersionId) {
 
@@ -429,6 +442,18 @@ public class ObjectEntryVersionLocalServiceWrapper
 			objectEntryId, start, end);
 	}
 
+	@Override
+	public java.util.List<com.liferay.object.model.ObjectEntryVersion>
+		getObjectEntryVersions(
+			long objectEntryId, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.object.model.ObjectEntryVersion>
+					orderByComparator) {
+
+		return _objectEntryVersionLocalService.getObjectEntryVersions(
+			objectEntryId, start, end, orderByComparator);
+	}
+
 	/**
 	 * Returns the number of object entry versions.
 	 *
@@ -484,6 +509,17 @@ public class ObjectEntryVersionLocalServiceWrapper
 			objectEntry);
 	}
 
+	@Override
+	public com.liferay.object.model.ObjectEntryVersion
+			updateLatestObjectEntryVersionModifiedDate(
+				java.util.Date modifiedDate, long objectEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryVersionLocalService.
+			updateLatestObjectEntryVersionModifiedDate(
+				modifiedDate, objectEntryId);
+	}
+
 	/**
 	 * Updates the object entry version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -522,3 +558,4 @@ public class ObjectEntryVersionLocalServiceWrapper
 	private ObjectEntryVersionLocalService _objectEntryVersionLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1136742427

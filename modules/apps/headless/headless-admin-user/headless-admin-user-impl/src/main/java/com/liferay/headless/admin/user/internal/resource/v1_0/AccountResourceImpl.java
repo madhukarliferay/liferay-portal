@@ -47,7 +47,6 @@ import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.service.context.ServiceContextBuilder;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Address;
@@ -85,7 +84,6 @@ import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.vulcan.custom.field.CustomFieldsUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
@@ -105,9 +103,11 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -120,8 +120,11 @@ import org.osgi.service.component.annotations.ServiceScope;
  */
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/account.properties",
-	property = "nested.field.support=true", scope = ServiceScope.PROTOTYPE,
-	service = AccountResource.class
+	property = {
+		"export.import.vulcan.batch.engine.task.item.delegate=true",
+		"nested.field.support=true"
+	},
+	scope = ServiceScope.PROTOTYPE, service = AccountResource.class
 )
 public class AccountResourceImpl
 	extends BaseAccountResourceImpl
@@ -299,7 +302,7 @@ public class AccountResourceImpl
 					document.get(Field.ENTRY_CLASS_PK));
 
 				return _toAccount(
-					_accountEntryService.getAccountEntry(accountEntryId));
+					_accountEntryLocalService.getAccountEntry(accountEntryId));
 			});
 	}
 
@@ -310,18 +313,33 @@ public class AccountResourceImpl
 		return new AccountEntityModel(
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(AccountEntry.class.getName()),
-				contextCompany.getCompanyId(), _expandoBridgeIndexer,
-				_expandoColumnLocalService, _expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoColumnLocalService,
+				_expandoTableLocalService));
 	}
 
 	@Override
-	public ExportImportDescriptor getExportImportDescriptor() {
-		return new ExportImportDescriptor() {
+	public ExportImportDescriptor<AccountEntry> getExportImportDescriptor() {
+		return new ExportImportDescriptor<>() {
+
+			@Override
+			public String getKey() {
+				return AccountResourceImpl.class.getName();
+			}
+
+			@Override
+			public String getLabelLanguageKey() {
+				return "accounts";
+			}
+
+			@Override
+			public Class<AccountEntry> getModelClass() {
+				return AccountEntry.class;
+			}
 
 			@Override
 			public List<String> getNestedFields() {
 				return List.of(
-					"accountGroupBriefs", "accountRoles", "keywords",
+					"accountGroupBriefs", "accountRoles", "creator", "keywords",
 					"logoBase64", "postalAddresses", "taxonomyCategoryBriefs");
 			}
 
@@ -632,7 +650,8 @@ public class AccountResourceImpl
 		return accountEntry;
 	}
 
-	private void _addAddresses(Long accountId, Account account)
+	private void _addAddresses(
+			Account account, Long accountId, AccountEntry accountEntry)
 		throws Exception {
 
 		PostalAddress[] postalAddresses = account.getPostalAddresses();
@@ -640,6 +659,13 @@ public class AccountResourceImpl
 		if (ArrayUtil.isEmpty(postalAddresses)) {
 			return;
 		}
+
+		Set<Long> addressIds = new HashSet<>(
+			transform(
+				accountEntry.getListTypeAddresses(
+					PostalAddressUtil.getAccountEntryAddressListTypeIds(
+						accountEntry.getCompanyId(), _listTypeLocalService)),
+				Address::getAddressId));
 
 		for (PostalAddress postalAddress :
 				ListUtil.filter(
@@ -649,15 +675,72 @@ public class AccountResourceImpl
 				contextCompany.getCompanyId(), postalAddress,
 				AccountListTypeConstants.ACCOUNT_ENTRY_ADDRESS);
 
-			_addressLocalService.addAddress(
-				address.getExternalReferenceCode(), contextUser.getUserId(),
-				AccountEntry.class.getName(), accountId, address.getCountryId(),
-				address.getListTypeId(), address.getRegionId(),
-				address.getCity(), address.getDescription(),
-				address.isMailing(), address.getName(), address.isPrimary(),
-				address.getStreet1(), address.getStreet2(),
-				address.getStreet3(), address.getSubtype(), address.getZip(),
-				postalAddress.getPhoneNumber(), _createServiceContext(account));
+			if (address == null) {
+				continue;
+			}
+
+			Address existingAddress = null;
+
+			if (postalAddress.getId() != null) {
+				existingAddress = _addressLocalService.fetchAddress(
+					postalAddress.getId());
+			}
+			else if (postalAddress.getExternalReferenceCode() != null) {
+				existingAddress =
+					_addressLocalService.fetchAddressByExternalReferenceCode(
+						postalAddress.getExternalReferenceCode(),
+						contextCompany.getCompanyId());
+			}
+
+			if (existingAddress == null) {
+				_addressLocalService.addAddress(
+					address.getExternalReferenceCode(), contextUser.getUserId(),
+					AccountEntry.class.getName(), accountId,
+					address.getCountryId(), address.getListTypeId(),
+					address.getRegionId(), address.getCity(),
+					address.getDescription(), address.isMailing(),
+					address.getName(), address.isPrimary(),
+					address.getStreet1(), address.getStreet2(),
+					address.getStreet3(), address.getSubtype(),
+					address.getZip(), postalAddress.getPhoneNumber(),
+					_createServiceContext(account));
+			}
+			else if (addressIds.contains(existingAddress.getAddressId())) {
+				_addressLocalService.updateAddress(
+					GetterUtil.getString(
+						address.getExternalReferenceCode(),
+						existingAddress.getExternalReferenceCode()),
+					existingAddress.getAddressId(),
+					(address.getCountryId() == 0) ?
+						existingAddress.getCountryId() : address.getCountryId(),
+					(address.getListTypeId() == 0) ?
+						existingAddress.getListTypeId() :
+							address.getListTypeId(),
+					(address.getRegionId() == 0) ?
+						existingAddress.getRegionId() : address.getRegionId(),
+					GetterUtil.getString(
+						address.getCity(), existingAddress.getCity()),
+					existingAddress.getDescription(),
+					existingAddress.isMailing(),
+					GetterUtil.getString(
+						address.getName(), existingAddress.getName()),
+					GetterUtil.getBoolean(
+						postalAddress.getPrimary(),
+						existingAddress.isPrimary()),
+					GetterUtil.getString(
+						address.getStreet1(), existingAddress.getStreet1()),
+					GetterUtil.getString(
+						address.getStreet2(), existingAddress.getStreet2()),
+					GetterUtil.getString(
+						address.getStreet3(), existingAddress.getStreet3()),
+					GetterUtil.getString(
+						address.getSubtype(), existingAddress.getSubtype()),
+					GetterUtil.getString(
+						address.getZip(), existingAddress.getZip()),
+					GetterUtil.getString(
+						postalAddress.getPhoneNumber(),
+						existingAddress.getPhoneNumber()));
+			}
 		}
 	}
 
@@ -709,10 +792,6 @@ public class AccountResourceImpl
 	}
 
 	private Long[] _getAssetCategoryIds(Account account) {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			return null;
-		}
-
 		TaxonomyCategoryBrief[] taxonomyCategoryBriefs =
 			account.getTaxonomyCategoryBriefs();
 
@@ -744,8 +823,12 @@ public class AccountResourceImpl
 				}
 
 				AssetCategory assetCategory =
-					_assetCategoryService.getOrAddEmptyCategory(
-						externalReferenceCode, group.getGroupId());
+					_assetCategoryService.getOrAddEmptyCategoryWithAncestors(
+						externalReferenceCode, group.getGroupId(),
+						taxonomyCategoryBrief.
+							getParentTaxonomyCategoryExternalReferenceCode(),
+						taxonomyCategoryBrief.
+							getParentVocabularyExternalReferenceCode());
 
 				return assetCategory.getCategoryId();
 			},
@@ -786,8 +869,7 @@ public class AccountResourceImpl
 			Account account, long accountEntryId, long defaultBillingAddressId)
 		throws Exception {
 
-		if (FeatureFlagManagerUtil.isEnabled("LPD-47858") &&
-			Validator.isNotNull(
+		if (Validator.isNotNull(
 				account.getDefaultBillingAddressExternalReferenceCode())) {
 
 			Address address = _addressLocalService.getOrAddEmptyAddress(
@@ -821,8 +903,7 @@ public class AccountResourceImpl
 			Account account, long accountEntryId, long defaultShippingAddressId)
 		throws Exception {
 
-		if (FeatureFlagManagerUtil.isEnabled("LPD-47858") &&
-			Validator.isNotNull(
+		if (Validator.isNotNull(
 				account.getDefaultShippingAddressExternalReferenceCode())) {
 
 			Address address = _addressLocalService.getOrAddEmptyAddress(
@@ -1052,24 +1133,9 @@ public class AccountResourceImpl
 			organizationIds = transformToArray(
 				Arrays.asList(organizationExternalReferenceCodes),
 				externalReferenceCode -> {
-					if (FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-						com.liferay.portal.kernel.model.Organization
-							organization =
-								_organizationService.getOrAddEmptyOrganization(
-									externalReferenceCode, StringPool.BLANK);
-
-						return organization.getOrganizationId();
-					}
-
 					com.liferay.portal.kernel.model.Organization organization =
-						_organizationService.
-							fetchOrganizationByExternalReferenceCode(
-								externalReferenceCode,
-								contextCompany.getCompanyId());
-
-					if (organization == null) {
-						return null;
-					}
+						_organizationService.getOrAddEmptyOrganization(
+							externalReferenceCode, StringPool.BLANK);
 
 					return organization.getOrganizationId();
 				},
@@ -1089,8 +1155,7 @@ public class AccountResourceImpl
 			Account account, long defaultParentAccountId)
 		throws Exception {
 
-		if (FeatureFlagManagerUtil.isEnabled("LPD-47858") &&
-			Validator.isNotNull(
+		if (Validator.isNotNull(
 				account.getParentAccountExternalReferenceCode())) {
 
 			AccountEntry accountEntry =
@@ -1249,7 +1314,7 @@ public class AccountResourceImpl
 			Account account, AccountEntry accountEntry, Long accountId)
 		throws Exception {
 
-		_addAddresses(accountId, account);
+		_addAddresses(account, accountId, accountEntry);
 
 		accountEntry = _accountEntryLocalService.updateDefaultBillingAddressId(
 			accountId,
@@ -1339,10 +1404,6 @@ public class AccountResourceImpl
 			}
 		}
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			return accountEntry;
-		}
-
 		AccountGroupBrief[] accountGroupBriefs =
 			account.getAccountGroupBriefs();
 
@@ -1417,9 +1478,6 @@ public class AccountResourceImpl
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
-
-	@Reference
-	private ExpandoBridgeIndexer _expandoBridgeIndexer;
 
 	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;

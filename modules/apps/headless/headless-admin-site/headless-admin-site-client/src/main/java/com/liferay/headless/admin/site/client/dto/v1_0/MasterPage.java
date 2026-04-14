@@ -47,31 +47,6 @@ public class MasterPage implements Cloneable, Serializable {
 
 	protected Creator creator;
 
-	public String getCreatorExternalReferenceCode() {
-		return creatorExternalReferenceCode;
-	}
-
-	public void setCreatorExternalReferenceCode(
-		String creatorExternalReferenceCode) {
-
-		this.creatorExternalReferenceCode = creatorExternalReferenceCode;
-	}
-
-	public void setCreatorExternalReferenceCode(
-		UnsafeSupplier<String, Exception>
-			creatorExternalReferenceCodeUnsafeSupplier) {
-
-		try {
-			creatorExternalReferenceCode =
-				creatorExternalReferenceCodeUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String creatorExternalReferenceCode;
-
 	public Date getDateCreated() {
 		return dateCreated;
 	}
@@ -258,53 +233,82 @@ public class MasterPage implements Cloneable, Serializable {
 
 	protected PageSpecification[] pageSpecifications;
 
-	public ItemExternalReference[] getTaxonomyCategoryItemExternalReferences() {
-		return taxonomyCategoryItemExternalReferences;
+	public com.liferay.headless.admin.site.client.permission.Permission[]
+		getPermissions() {
+
+		return permissions;
 	}
 
-	public void setTaxonomyCategoryItemExternalReferences(
-		ItemExternalReference[] taxonomyCategoryItemExternalReferences) {
+	public void setPermissions(
+		com.liferay.headless.admin.site.client.permission.Permission[]
+			permissions) {
 
-		this.taxonomyCategoryItemExternalReferences =
-			taxonomyCategoryItemExternalReferences;
+		this.permissions = permissions;
 	}
 
-	public void setTaxonomyCategoryItemExternalReferences(
-		UnsafeSupplier<ItemExternalReference[], Exception>
-			taxonomyCategoryItemExternalReferencesUnsafeSupplier) {
+	public void setPermissions(
+		UnsafeSupplier
+			<com.liferay.headless.admin.site.client.permission.Permission[],
+			 Exception> permissionsUnsafeSupplier) {
 
 		try {
-			taxonomyCategoryItemExternalReferences =
-				taxonomyCategoryItemExternalReferencesUnsafeSupplier.get();
+			permissions = permissionsUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected ItemExternalReference[] taxonomyCategoryItemExternalReferences;
+	protected com.liferay.headless.admin.site.client.permission.Permission[]
+		permissions;
 
-	public ItemExternalReference getThumbnail() {
-		return thumbnail;
+	public TaxonomyCategoryBrief[] getTaxonomyCategoryBriefs() {
+		return taxonomyCategoryBriefs;
 	}
 
-	public void setThumbnail(ItemExternalReference thumbnail) {
-		this.thumbnail = thumbnail;
+	public void setTaxonomyCategoryBriefs(
+		TaxonomyCategoryBrief[] taxonomyCategoryBriefs) {
+
+		this.taxonomyCategoryBriefs = taxonomyCategoryBriefs;
 	}
 
-	public void setThumbnail(
-		UnsafeSupplier<ItemExternalReference, Exception>
-			thumbnailUnsafeSupplier) {
+	public void setTaxonomyCategoryBriefs(
+		UnsafeSupplier<TaxonomyCategoryBrief[], Exception>
+			taxonomyCategoryBriefsUnsafeSupplier) {
 
 		try {
-			thumbnail = thumbnailUnsafeSupplier.get();
+			taxonomyCategoryBriefs = taxonomyCategoryBriefsUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected ItemExternalReference thumbnail;
+	protected TaxonomyCategoryBrief[] taxonomyCategoryBriefs;
+
+	public ThumbnailURLReference getThumbnailURLReference() {
+		return thumbnailURLReference;
+	}
+
+	public void setThumbnailURLReference(
+		ThumbnailURLReference thumbnailURLReference) {
+
+		this.thumbnailURLReference = thumbnailURLReference;
+	}
+
+	public void setThumbnailURLReference(
+		UnsafeSupplier<ThumbnailURLReference, Exception>
+			thumbnailURLReferenceUnsafeSupplier) {
+
+		try {
+			thumbnailURLReference = thumbnailURLReferenceUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected ThumbnailURLReference thumbnailURLReference;
 
 	public String getUuid() {
 		return uuid;
@@ -357,3 +361,4 @@ public class MasterPage implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1817348529

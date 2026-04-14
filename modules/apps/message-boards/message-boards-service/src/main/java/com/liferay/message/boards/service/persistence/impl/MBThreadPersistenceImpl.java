@@ -339,227 +339,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByUuid_Last(
-			String uuid, OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByUuid_Last(
-		String uuid, OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where uuid = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByUuid_PrevAndNext(
-			long threadId, String uuid,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		uuid = Objects.toString(uuid, "");
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, mbThread, uuid, orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, mbThread, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByUuid_PrevAndNext(
-		Session session, MBThread mbThread, String uuid,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the message boards threads where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1106,240 +885,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByUuid_C_PrevAndNext(
-			long threadId, String uuid, long companyId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		uuid = Objects.toString(uuid, "");
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, mbThread, uuid, companyId, orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, mbThread, uuid, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByUuid_C_PrevAndNext(
-		Session session, MBThread mbThread, String uuid, long companyId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the message boards threads where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1659,214 +1204,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByGroupId_Last(
-			long groupId, OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByGroupId_Last(groupId, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByGroupId_Last(
-		long groupId, OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByGroupId(groupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByGroupId(
-			groupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByGroupId_PrevAndNext(
-			long threadId, long groupId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByGroupId_PrevAndNext(
-				session, mbThread, groupId, orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByGroupId_PrevAndNext(
-				session, mbThread, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByGroupId_PrevAndNext(
-		Session session, MBThread mbThread, long groupId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1917,6 +1254,16 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByGroupId(groupId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -1991,202 +1338,6 @@ public class MBThreadPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByGroupId_PrevAndNext(
-			long threadId, long groupId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByGroupId_PrevAndNext(
-				threadId, groupId, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByGroupId_PrevAndNext(
-				session, mbThread, groupId, orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByGroupId_PrevAndNext(
-				session, mbThread, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByGroupId_PrevAndNext(
-		Session session, MBThread mbThread, long groupId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2270,6 +1421,14 @@ public class MBThreadPersistenceImpl
 	public int filterCountByGroupId(long groupId) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByGroupId(groupId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByGroupId(groupId);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -2741,229 +1900,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_C_Last(
-			long groupId, long categoryId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_C_Last(
-			groupId, categoryId, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId=");
-		sb.append(categoryId);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_C_Last(
-		long groupId, long categoryId,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_C(groupId, categoryId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_C(
-			groupId, categoryId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_C_PrevAndNext(
-			long threadId, long groupId, long categoryId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_C_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_C_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_C_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_CATEGORYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3018,6 +1954,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_C(
 				groupId, categoryId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C(
+					groupId, categoryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -3100,209 +2046,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_C_PrevAndNext(
-			long threadId, long groupId, long categoryId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_C_PrevAndNext(
-				threadId, groupId, categoryId, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_C_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_C_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_C_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_C_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_CATEGORYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = any &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3357,6 +2100,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_C(
 				groupId, categoryIds, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C(
+					groupId, categoryIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		if (categoryIds == null) {
@@ -3819,6 +2572,14 @@ public class MBThreadPersistenceImpl
 			return countByG_C(groupId, categoryId);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_C(groupId, categoryId);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_MBTHREAD_WHERE);
@@ -3870,6 +2631,13 @@ public class MBThreadPersistenceImpl
 	public int filterCountByG_C(long groupId, long[] categoryIds) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_C(groupId, categoryIds);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = InlineSQLHelperUtil.filter(
+				findByG_C(groupId, categoryIds), groupId);
+
+			return mbThreads.size();
 		}
 
 		if (categoryIds == null) {
@@ -4171,229 +2939,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_NotC_Last(
-			long groupId, long categoryId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_NotC_Last(
-			groupId, categoryId, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId!=");
-		sb.append(categoryId);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_NotC_Last(
-		long groupId, long categoryId,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_NotC(groupId, categoryId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_NotC(
-			groupId, categoryId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_NotC_PrevAndNext(
-			long threadId, long groupId, long categoryId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_NotC_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_NotC_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_NotC_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_CATEGORYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -4448,6 +2993,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_NotC(
 				groupId, categoryId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_NotC(
+					groupId, categoryId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -4526,209 +3081,6 @@ public class MBThreadPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId &ne; &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_NotC_PrevAndNext(
-			long threadId, long groupId, long categoryId,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_NotC_PrevAndNext(
-				threadId, groupId, categoryId, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_NotC_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_NotC_PrevAndNext(
-				session, mbThread, groupId, categoryId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_NotC_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_NOTC_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_CATEGORYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4820,6 +3172,14 @@ public class MBThreadPersistenceImpl
 	public int filterCountByG_NotC(long groupId, long categoryId) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_NotC(groupId, categoryId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_NotC(groupId, categoryId);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5110,226 +3470,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_S_Last(
-			long groupId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_S_Last(groupId, status, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_S_Last(
-		long groupId, int status,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_S(groupId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_S(
-			groupId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_S_PrevAndNext(
-			long threadId, long groupId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_S_PrevAndNext(
-				session, mbThread, groupId, status, orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_S_PrevAndNext(
-				session, mbThread, groupId, status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_S_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, int status,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -5383,6 +3523,16 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_S(groupId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_S(
+					groupId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -5461,207 +3611,6 @@ public class MBThreadPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_S_PrevAndNext(
-			long threadId, long groupId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_S_PrevAndNext(
-				threadId, groupId, status, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_S_PrevAndNext(
-				session, mbThread, groupId, status, orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_S_PrevAndNext(
-				session, mbThread, groupId, status, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_S_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, int status,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -5753,6 +3702,14 @@ public class MBThreadPersistenceImpl
 	public int filterCountByG_S(long groupId, int status) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_S(groupId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_S(groupId, status);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -6041,229 +3998,6 @@ public class MBThreadPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where categoryId = &#63; and priority = &#63;.
-	 *
-	 * @param categoryId the category ID
-	 * @param priority the priority
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByC_P_Last(
-			long categoryId, double priority,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByC_P_Last(
-			categoryId, priority, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("categoryId=");
-		sb.append(categoryId);
-
-		sb.append(", priority=");
-		sb.append(priority);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where categoryId = &#63; and priority = &#63;.
-	 *
-	 * @param categoryId the category ID
-	 * @param priority the priority
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByC_P_Last(
-		long categoryId, double priority,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByC_P(categoryId, priority);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByC_P(
-			categoryId, priority, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where categoryId = &#63; and priority = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param categoryId the category ID
-	 * @param priority the priority
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByC_P_PrevAndNext(
-			long threadId, long categoryId, double priority,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByC_P_PrevAndNext(
-				session, mbThread, categoryId, priority, orderByComparator,
-				true);
-
-			array[1] = mbThread;
-
-			array[2] = getByC_P_PrevAndNext(
-				session, mbThread, categoryId, priority, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByC_P_PrevAndNext(
-		Session session, MBThread mbThread, long categoryId, double priority,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_P_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_C_P_PRIORITY_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(priority);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -6604,240 +4338,6 @@ public class MBThreadPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where lastPostDate = &#63; and priority = &#63;.
-	 *
-	 * @param lastPostDate the last post date
-	 * @param priority the priority
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByL_P_Last(
-			Date lastPostDate, double priority,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByL_P_Last(
-			lastPostDate, priority, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("lastPostDate=");
-		sb.append(lastPostDate);
-
-		sb.append(", priority=");
-		sb.append(priority);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where lastPostDate = &#63; and priority = &#63;.
-	 *
-	 * @param lastPostDate the last post date
-	 * @param priority the priority
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByL_P_Last(
-		Date lastPostDate, double priority,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByL_P(lastPostDate, priority);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByL_P(
-			lastPostDate, priority, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where lastPostDate = &#63; and priority = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param lastPostDate the last post date
-	 * @param priority the priority
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByL_P_PrevAndNext(
-			long threadId, Date lastPostDate, double priority,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByL_P_PrevAndNext(
-				session, mbThread, lastPostDate, priority, orderByComparator,
-				true);
-
-			array[1] = mbThread;
-
-			array[2] = getByL_P_PrevAndNext(
-				session, mbThread, lastPostDate, priority, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByL_P_PrevAndNext(
-		Session session, MBThread mbThread, Date lastPostDate, double priority,
-		OrderByComparator<MBThread> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		boolean bindLastPostDate = false;
-
-		if (lastPostDate == null) {
-			sb.append(_FINDER_COLUMN_L_P_LASTPOSTDATE_1);
-		}
-		else {
-			bindLastPostDate = true;
-
-			sb.append(_FINDER_COLUMN_L_P_LASTPOSTDATE_2);
-		}
-
-		sb.append(_FINDER_COLUMN_L_P_PRIORITY_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindLastPostDate) {
-			queryPos.add(new Timestamp(lastPostDate.getTime()));
-		}
-
-		queryPos.add(priority);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -7215,252 +4715,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and lastPostDate = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param lastPostDate the last post date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_C_L_Last(
-			long groupId, long categoryId, Date lastPostDate,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_C_L_Last(
-			groupId, categoryId, lastPostDate, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId=");
-		sb.append(categoryId);
-
-		sb.append(", lastPostDate=");
-		sb.append(lastPostDate);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and lastPostDate = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param lastPostDate the last post date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_C_L_Last(
-		long groupId, long categoryId, Date lastPostDate,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_C_L(groupId, categoryId, lastPostDate);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_C_L(
-			groupId, categoryId, lastPostDate, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and lastPostDate = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param lastPostDate the last post date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_C_L_PrevAndNext(
-			long threadId, long groupId, long categoryId, Date lastPostDate,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_C_L_PrevAndNext(
-				session, mbThread, groupId, categoryId, lastPostDate,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_C_L_PrevAndNext(
-				session, mbThread, groupId, categoryId, lastPostDate,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_C_L_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		Date lastPostDate, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_L_CATEGORYID_2);
-
-		boolean bindLastPostDate = false;
-
-		if (lastPostDate == null) {
-			sb.append(_FINDER_COLUMN_G_C_L_LASTPOSTDATE_1);
-		}
-		else {
-			bindLastPostDate = true;
-
-			sb.append(_FINDER_COLUMN_G_C_L_LASTPOSTDATE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		if (bindLastPostDate) {
-			queryPos.add(new Timestamp(lastPostDate.getTime()));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63; and lastPostDate = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7523,6 +4777,16 @@ public class MBThreadPersistenceImpl
 			return findByG_C_L(
 				groupId, categoryId, lastPostDate, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C_L(
+					groupId, categoryId, lastPostDate, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -7616,226 +4880,6 @@ public class MBThreadPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63; and lastPostDate = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param lastPostDate the last post date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_C_L_PrevAndNext(
-			long threadId, long groupId, long categoryId, Date lastPostDate,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_C_L_PrevAndNext(
-				threadId, groupId, categoryId, lastPostDate, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_C_L_PrevAndNext(
-				session, mbThread, groupId, categoryId, lastPostDate,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_C_L_PrevAndNext(
-				session, mbThread, groupId, categoryId, lastPostDate,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_C_L_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		Date lastPostDate, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_C_L_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_L_CATEGORYID_2);
-
-		boolean bindLastPostDate = false;
-
-		if (lastPostDate == null) {
-			sb.append(_FINDER_COLUMN_G_C_L_LASTPOSTDATE_1);
-		}
-		else {
-			bindLastPostDate = true;
-
-			sb.append(_FINDER_COLUMN_G_C_L_LASTPOSTDATE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		if (bindLastPostDate) {
-			queryPos.add(new Timestamp(lastPostDate.getTime()));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -7951,6 +4995,15 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_C_L(groupId, categoryId, lastPostDate);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_C_L(
+				groupId, categoryId, lastPostDate);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -8281,240 +5334,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_C_S_Last(
-			long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_C_S_Last(
-			groupId, categoryId, status, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId=");
-		sb.append(categoryId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_C_S_Last(
-		long groupId, long categoryId, int status,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_C_S(groupId, categoryId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_C_S(
-			groupId, categoryId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_C_S_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_C_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_C_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_C_S_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_S_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8575,6 +5394,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_C_S(
 				groupId, categoryId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C_S(
+					groupId, categoryId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -8661,215 +5490,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_C_S_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_C_S_PrevAndNext(
-				threadId, groupId, categoryId, status, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_C_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_C_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_C_S_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_C_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_S_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = any &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8931,6 +5551,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_C_S(
 				groupId, categoryIds, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C_S(
+					groupId, categoryIds, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (categoryIds == null) {
@@ -9428,6 +6058,14 @@ public class MBThreadPersistenceImpl
 			return countByG_C_S(groupId, categoryId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_C_S(groupId, categoryId, status);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_MBTHREAD_WHERE);
@@ -9486,6 +6124,13 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_C_S(groupId, categoryIds, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = InlineSQLHelperUtil.filter(
+				findByG_C_S(groupId, categoryIds, status), groupId);
+
+			return mbThreads.size();
 		}
 
 		if (categoryIds == null) {
@@ -9813,240 +6458,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_C_NotS_Last(
-			long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_C_NotS_Last(
-			groupId, categoryId, status, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId=");
-		sb.append(categoryId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_C_NotS_Last(
-		long groupId, long categoryId, int status,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_C_NotS(groupId, categoryId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_C_NotS(
-			groupId, categoryId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_C_NotS_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_C_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_C_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_C_NotS_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_C_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_NOTS_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -10108,6 +6519,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_C_NotS(
 				groupId, categoryId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C_NotS(
+					groupId, categoryId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -10194,215 +6615,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_C_NotS_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_C_NotS_PrevAndNext(
-				threadId, groupId, categoryId, status, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_C_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_C_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_C_NotS_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_C_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_NOTS_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_C_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId = any &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -10464,6 +6676,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_C_NotS(
 				groupId, categoryIds, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_C_NotS(
+					groupId, categoryIds, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		if (categoryIds == null) {
@@ -10963,6 +7185,15 @@ public class MBThreadPersistenceImpl
 			return countByG_C_NotS(groupId, categoryId, status);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_C_NotS(
+				groupId, categoryId, status);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_MBTHREAD_WHERE);
@@ -11021,6 +7252,13 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_C_NotS(groupId, categoryIds, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = InlineSQLHelperUtil.filter(
+				findByG_C_NotS(groupId, categoryIds, status), groupId);
+
+			return mbThreads.size();
 		}
 
 		if (categoryIds == null) {
@@ -11348,240 +7586,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_NotC_S_Last(
-			long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_NotC_S_Last(
-			groupId, categoryId, status, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId!=");
-		sb.append(categoryId);
-
-		sb.append(", status=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_NotC_S_Last(
-		long groupId, long categoryId, int status,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_NotC_S(groupId, categoryId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_NotC_S(
-			groupId, categoryId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63; and status = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_NotC_S_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_NotC_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_NotC_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_NotC_S_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_S_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_S_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId &ne; &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -11643,6 +7647,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_NotC_S(
 				groupId, categoryId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_NotC_S(
+					groupId, categoryId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -11725,215 +7739,6 @@ public class MBThreadPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId &ne; &#63; and status = &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_NotC_S_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_NotC_S_PrevAndNext(
-				threadId, groupId, categoryId, status, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_NotC_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_NotC_S_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_NotC_S_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_NOTC_S_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_S_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_S_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -12034,6 +7839,15 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_NotC_S(groupId, categoryId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_NotC_S(
+				groupId, categoryId, status);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -12338,240 +8152,6 @@ public class MBThreadPersistenceImpl
 	}
 
 	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread
-	 * @throws NoSuchThreadException if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread findByG_NotC_NotS_Last(
-			long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = fetchByG_NotC_NotS_Last(
-			groupId, categoryId, status, orderByComparator);
-
-		if (mbThread != null) {
-			return mbThread;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", categoryId!=");
-		sb.append(categoryId);
-
-		sb.append(", status!=");
-		sb.append(status);
-
-		sb.append("}");
-
-		throw new NoSuchThreadException(sb.toString());
-	}
-
-	/**
-	 * Returns the last message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message boards thread, or <code>null</code> if a matching message boards thread could not be found
-	 */
-	@Override
-	public MBThread fetchByG_NotC_NotS_Last(
-		long groupId, long categoryId, int status,
-		OrderByComparator<MBThread> orderByComparator) {
-
-		int count = countByG_NotC_NotS(groupId, categoryId, status);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<MBThread> list = findByG_NotC_NotS(
-			groupId, categoryId, status, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set where groupId = &#63; and categoryId &ne; &#63; and status &ne; &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] findByG_NotC_NotS_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = getByG_NotC_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = getByG_NotC_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread getByG_NotC_NotS_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_MBTHREAD_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_NOTS_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_NOTS_STATUS_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(MBThreadModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the message boards threads that the user has permission to view where groupId = &#63; and categoryId &ne; &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -12633,6 +8213,16 @@ public class MBThreadPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_NotC_NotS(
 				groupId, categoryId, status, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_NotC_NotS(
+					groupId, categoryId, status, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -12715,215 +8305,6 @@ public class MBThreadPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the message boards threads before and after the current message boards thread in the ordered set of message boards threads that the user has permission to view where groupId = &#63; and categoryId &ne; &#63; and status &ne; &#63;.
-	 *
-	 * @param threadId the primary key of the current message boards thread
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message boards thread
-	 * @throws NoSuchThreadException if a message boards thread with the primary key could not be found
-	 */
-	@Override
-	public MBThread[] filterFindByG_NotC_NotS_PrevAndNext(
-			long threadId, long groupId, long categoryId, int status,
-			OrderByComparator<MBThread> orderByComparator)
-		throws NoSuchThreadException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_NotC_NotS_PrevAndNext(
-				threadId, groupId, categoryId, status, orderByComparator);
-		}
-
-		MBThread mbThread = findByPrimaryKey(threadId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			MBThread[] array = new MBThreadImpl[3];
-
-			array[0] = filterGetByG_NotC_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, true);
-
-			array[1] = mbThread;
-
-			array[2] = filterGetByG_NotC_NotS_PrevAndNext(
-				session, mbThread, groupId, categoryId, status,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected MBThread filterGetByG_NotC_NotS_PrevAndNext(
-		Session session, MBThread mbThread, long groupId, long categoryId,
-		int status, OrderByComparator<MBThread> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_NOTC_NOTS_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_NOTS_CATEGORYID_2);
-
-		sb.append(_FINDER_COLUMN_G_NOTC_NOTS_STATUS_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_MBTHREAD_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(MBThreadModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), MBThread.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, MBThreadImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, MBThreadImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(categoryId);
-
-		queryPos.add(status);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(mbThread)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<MBThread> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -13024,6 +8405,15 @@ public class MBThreadPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_NotC_NotS(groupId, categoryId, status);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<MBThread> mbThreads = findByG_NotC_NotS(
+				groupId, categoryId, status);
+
+			mbThreads = InlineSQLHelperUtil.filter(mbThreads, groupId);
+
+			return mbThreads.size();
 		}
 
 		StringBundler sb = new StringBundler(4);
@@ -14330,3 +9720,4 @@ public class MBThreadPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1598466966

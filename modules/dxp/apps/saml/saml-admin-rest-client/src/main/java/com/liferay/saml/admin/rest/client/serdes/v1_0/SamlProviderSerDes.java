@@ -102,9 +102,7 @@ public class SamlProviderSerDes {
 			sb.append("\"role\": ");
 
 			sb.append("\"");
-
 			sb.append(samlProvider.getRole());
-
 			sb.append("\"");
 		}
 
@@ -397,3 +395,4 @@ public class SamlProviderSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-736748786

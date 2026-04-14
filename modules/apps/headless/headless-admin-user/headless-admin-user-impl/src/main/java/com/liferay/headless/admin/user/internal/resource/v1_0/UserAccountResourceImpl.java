@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.user.internal.resource.v1_0;
 
+import com.liferay.account.constants.AccountActionKeys;
 import com.liferay.account.constants.AccountWebKeys;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountEntryUserRel;
@@ -104,7 +105,6 @@ import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.security.auth.session.AuthenticatedSessionManagerUtil;
 import com.liferay.portal.vulcan.custom.field.CustomFieldsUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -287,26 +287,40 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 		throws Exception {
 
 		Map<String, Map<String, String>> actions = _getModelActions(
-			Collections.singletonMap(
-				ActionKeys.MANAGE_USERS,
-				new String[] {
-					"deleteAccountUserAccountByEmailAddress",
-					"deleteAccountUserAccountByExternalReferenceCodeBy" +
-						"EmailAddress",
-					"deleteAccountUserAccountsByEmailAddress",
-					"deleteAccountUserAccountsByExternalReferenceCodeBy" +
-						"EmailAddress",
-					"getAccountUserAccountsByExternalReferenceCodePage",
-					"getAccountUserAccountsPage", "postAccountUserAccount",
-					"postAccountUserAccountBatch",
-					"postAccountUserAccountByEmailAddress",
-					"postAccountUserAccountByExternalReferenceCode",
-					"postAccountUserAccountByExternalReferenceCodeBy" +
-						"EmailAddress",
-					"postAccountUserAccountsByEmailAddress",
-					"postAccountUserAccountsByExternalReferenceCodeBy" +
-						"EmailAddress"
-				}),
+			Collections.unmodifiableMap(
+				HashMapBuilder.put(
+					AccountActionKeys.ADD_USER,
+					new String[] {
+						"postAccountUserAccount", "postAccountUserAccountBatch",
+						"postAccountUserAccountByExternalReferenceCode"
+					}
+				).put(
+					AccountActionKeys.ASSIGN_USERS,
+					new String[] {
+						"postAccountUserAccountByEmailAddress",
+						"postAccountUserAccountByExternalReferenceCodeBy" +
+							"EmailAddress",
+						"postAccountUserAccountsByEmailAddress",
+						"postAccountUserAccountsByExternalReferenceCodeBy" +
+							"EmailAddress"
+					}
+				).put(
+					AccountActionKeys.UNASSIGN_USERS,
+					new String[] {
+						"deleteAccountUserAccountByEmailAddress",
+						"deleteAccountUserAccountByExternalReferenceCodeBy" +
+							"EmailAddress",
+						"deleteAccountUserAccountsByEmailAddress",
+						"deleteAccountUserAccountsByExternalReferenceCodeBy" +
+							"EmailAddress"
+					}
+				).put(
+					AccountActionKeys.VIEW_USERS,
+					new String[] {
+						"getAccountUserAccountsByExternalReferenceCodePage",
+						"getAccountUserAccountsPage"
+					}
+				).build()),
 			accountId, _accountEntryModelResourcePermission);
 
 		return SearchUtil.search(
@@ -336,8 +350,8 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 		return new UserAccountEntityModel(
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(User.class.getName()),
-				contextCompany.getCompanyId(), _expandoBridgeIndexer,
-				_expandoColumnLocalService, _expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoColumnLocalService,
+				_expandoTableLocalService));
 	}
 
 	@Override
@@ -1927,9 +1941,6 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
-
-	@Reference
-	private ExpandoBridgeIndexer _expandoBridgeIndexer;
 
 	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;

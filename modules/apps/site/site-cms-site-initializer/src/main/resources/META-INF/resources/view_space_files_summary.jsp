@@ -19,7 +19,7 @@ ViewSpaceFilesSummarySectionDisplayContext viewSpaceFilesSummarySectionDisplayCo
 		/>
 	</div>
 
-	<div class="cms-fds-fluid cms-section custom-empty-state">
+	<div class="cms-fds-fluid cms-space-summary custom-empty-state">
 		<frontend-data-set:headless-display
 			additionalProps="<%= viewSpaceFilesSummarySectionDisplayContext.getAdditionalProps() %>"
 			apiURL="<%= viewSpaceFilesSummarySectionDisplayContext.getAPIURL() %>"
@@ -28,7 +28,7 @@ ViewSpaceFilesSummarySectionDisplayContext viewSpaceFilesSummarySectionDisplayCo
 			fdsActionDropdownItems="<%= viewSpaceFilesSummarySectionDisplayContext.getFDSActionDropdownItems() %>"
 			formName="fm"
 			id="<%= CMSSiteInitializerFDSNames.SPACE_FILES_SUMMARY_SECTION %>"
-			propsTransformer="{FilesFDSPropsTransformer} from site-cms-site-initializer"
+			propsTransformer="{AssetsFDSPropsTransformer} from site-cms-site-initializer"
 			showManagementBar="<%= false %>"
 			showPagination="<%= false %>"
 			showSearch="<%= false %>"

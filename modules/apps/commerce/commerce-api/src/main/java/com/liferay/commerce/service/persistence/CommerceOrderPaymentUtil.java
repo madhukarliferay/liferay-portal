@@ -221,56 +221,6 @@ public class CommerceOrderPaymentUtil {
 	}
 
 	/**
-	 * Returns the last commerce order payment in the ordered set where commerceOrderId = &#63;.
-	 *
-	 * @param commerceOrderId the commerce order ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order payment
-	 * @throws NoSuchOrderPaymentException if a matching commerce order payment could not be found
-	 */
-	public static CommerceOrderPayment findByCommerceOrderId_Last(
-			long commerceOrderId,
-			OrderByComparator<CommerceOrderPayment> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderPaymentException {
-
-		return getPersistence().findByCommerceOrderId_Last(
-			commerceOrderId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce order payment in the ordered set where commerceOrderId = &#63;.
-	 *
-	 * @param commerceOrderId the commerce order ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order payment, or <code>null</code> if a matching commerce order payment could not be found
-	 */
-	public static CommerceOrderPayment fetchByCommerceOrderId_Last(
-		long commerceOrderId,
-		OrderByComparator<CommerceOrderPayment> orderByComparator) {
-
-		return getPersistence().fetchByCommerceOrderId_Last(
-			commerceOrderId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce order payments before and after the current commerce order payment in the ordered set where commerceOrderId = &#63;.
-	 *
-	 * @param commerceOrderPaymentId the primary key of the current commerce order payment
-	 * @param commerceOrderId the commerce order ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order payment
-	 * @throws NoSuchOrderPaymentException if a commerce order payment with the primary key could not be found
-	 */
-	public static CommerceOrderPayment[] findByCommerceOrderId_PrevAndNext(
-			long commerceOrderPaymentId, long commerceOrderId,
-			OrderByComparator<CommerceOrderPayment> orderByComparator)
-		throws com.liferay.commerce.exception.NoSuchOrderPaymentException {
-
-		return getPersistence().findByCommerceOrderId_PrevAndNext(
-			commerceOrderPaymentId, commerceOrderId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce order payments where commerceOrderId = &#63; from the database.
 	 *
 	 * @param commerceOrderId the commerce order ID
@@ -458,3 +408,4 @@ public class CommerceOrderPaymentUtil {
 	private static volatile CommerceOrderPaymentPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:989852270

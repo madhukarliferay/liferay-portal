@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -63,6 +64,11 @@ public class DeleteDuplicateUniqueFinderRowsUpgradeProcessTest {
 		_db = DBManagerUtil.getDB();
 
 		_dbInspector = new DBInspector(_connection);
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		DataAccess.cleanUp(_connection);
 	}
 
 	@Test
@@ -221,14 +227,15 @@ public class DeleteDuplicateUniqueFinderRowsUpgradeProcessTest {
 
 		try (PreparedStatement preparedStatement = _connection.prepareStatement(
 				StringBundler.concat(
-					"select count(*) from ", tableName, " group by ",
+					"select count(*) as count from ", tableName, " group by ",
 					String.join(", ", columnNames), " having count(*) > 1"));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (!duplicatesRemoved) {
 				Assert.assertTrue(resultSet.next());
 
-				Assert.assertEquals(2, resultSet.getInt(1));
+				Assert.assertEquals(2, resultSet.getLong("count"));
 
 				return;
 			}

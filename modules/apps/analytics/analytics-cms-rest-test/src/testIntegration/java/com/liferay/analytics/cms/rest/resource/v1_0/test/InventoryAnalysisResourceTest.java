@@ -16,13 +16,15 @@ import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
-import com.liferay.batch.engine.unit.BatchEngineUnitProcessor;
-import com.liferay.batch.engine.unit.BatchEngineUnitReader;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
+import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.rest.test.util.ObjectEntryTestUtil;
@@ -32,67 +34,147 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.site.cms.site.initializer.test.util.CMSTestUtil;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.Serializable;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Rachael Koestartyo
  */
 @FeatureFlags(
-	featureFlags = {
-		@FeatureFlag(value = "LPD-31149"), @FeatureFlag(value = "LPD-34594"),
-		@FeatureFlag(value = "LPS-179669"), @FeatureFlag(value = "LPD-17564"),
-		@FeatureFlag(value = "LPD-21926"), @FeatureFlag(value = "LPS-179669")
-	}
+	featureFlags = {@FeatureFlag("LPD-17564"), @FeatureFlag("LPD-34594")}
 )
 @RunWith(Arquillian.class)
 public class InventoryAnalysisResourceTest
 	extends BaseInventoryAnalysisResourceTestCase {
 
-	@Before
+	@ClassRule
+	@Rule
+	public static final PermissionCheckerMethodTestRule
+		permissionCheckerMethodTestRule =
+			PermissionCheckerMethodTestRule.INSTANCE;
+
 	@Override
-	public void setUp() throws Exception {
-		super.setUp();
+	@Test
+	public void testGetInventoryAnalysis() throws Exception {
+		_setUpCMSContext();
 
-		Bundle testBundle = FrameworkUtil.getBundle(OverviewResourceTest.class);
+		InventoryAnalysis inventoryAnalysis =
+			inventoryAnalysisResource.getInventoryAnalysis(
+				null, _depotEntry.getDepotEntryId(), null, null, null, null,
+				null, null, null, null, null);
 
-		BundleContext bundleContext = testBundle.getBundleContext();
+		_assertInventoryAnalysis(inventoryAnalysis, 3, 5L, null);
 
-		for (Bundle bundle : bundleContext.getBundles()) {
-			if (Objects.equals(
-					bundle.getSymbolicName(),
-					"com.liferay.site.initializer.cms")) {
+		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
+			null, _depotEntry.getDepotEntryId(), null, null, null, null, null,
+			_webContentDefinition.getObjectDefinitionId(), null, null, null);
 
-				_deleteFile(bundle, "01.object.folder");
-				_deleteFile(bundle, "02.object.definition");
+		_assertInventoryAnalysis(inventoryAnalysis, 1, 3L, "Basic Web Content");
 
-				CompletableFuture<Void> completableFuture =
-					_batchEngineUnitProcessor.processBatchEngineUnits(
-						_batchEngineUnitReader.getBatchEngineUnits(bundle));
+		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
+			null, _depotEntry.getDepotEntryId(), null, null, null, null, null,
+			_documentDefinition.getObjectDefinitionId(), null, null, null);
 
-				completableFuture.join();
-			}
+		_assertInventoryAnalysis(inventoryAnalysis, 1, 1L, "Basic Document");
+
+		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
+			null, _depotEntry.getDepotEntryId(), null, null, null, null, null,
+			_externalVideoDefinition.getObjectDefinitionId(), null, null, null);
+
+		_assertInventoryAnalysis(inventoryAnalysis, 1, 1L, "External Video");
+
+		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
+			null, _depotEntry.getDepotEntryId(), "category", null, null, null,
+			null, null, null, null, null);
+
+		Assert.assertEquals(
+			2L, (long)inventoryAnalysis.getInventoryAnalysisItemsCount());
+
+		InventoryAnalysisItem[] inventoryAnalysisItems =
+			inventoryAnalysis.getInventoryAnalysisItems();
+
+		Assert.assertEquals(
+			Arrays.toString(inventoryAnalysisItems), 2,
+			inventoryAnalysisItems.length);
+
+		InventoryAnalysisItem inventoryAnalysisItem = inventoryAnalysisItems[0];
+
+		Assert.assertEquals(4L, (long)inventoryAnalysisItem.getCount());
+
+		Assert.assertEquals("Unknown", inventoryAnalysisItem.getTitle());
+
+		inventoryAnalysisItem = inventoryAnalysisItems[1];
+
+		Assert.assertEquals(1L, (long)inventoryAnalysisItem.getCount());
+
+		Assert.assertEquals("Category", inventoryAnalysisItem.getTitle());
+
+		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
+			_assetCategory.getCategoryId(), _depotEntry.getDepotEntryId(),
+			"category", null, null, null, null, null, null, null, null);
+
+		Assert.assertEquals(
+			1L, (long)inventoryAnalysis.getInventoryAnalysisItemsCount());
+
+		inventoryAnalysisItems = inventoryAnalysis.getInventoryAnalysisItems();
+
+		Assert.assertEquals(
+			Arrays.toString(inventoryAnalysisItems), 1,
+			inventoryAnalysisItems.length);
+
+		inventoryAnalysisItem = inventoryAnalysisItems[0];
+
+		Assert.assertEquals(1L, (long)inventoryAnalysisItem.getCount());
+
+		Assert.assertEquals("Category", inventoryAnalysisItem.getTitle());
+	}
+
+	private void _assertInventoryAnalysis(
+			InventoryAnalysis inventoryAnalysis, int expectedItemsCount,
+			long expectedTotalCount, String expectedTitle)
+		throws Exception {
+
+		InventoryAnalysisItem[] inventoryAnalysisItems =
+			inventoryAnalysis.getInventoryAnalysisItems();
+
+		Assert.assertEquals(
+			Arrays.toString(inventoryAnalysisItems), expectedItemsCount,
+			inventoryAnalysisItems.length);
+
+		Assert.assertEquals(
+			expectedTotalCount, (long)inventoryAnalysis.getTotalCount());
+
+		if (expectedTitle != null) {
+			InventoryAnalysisItem inventoryAnalysisItem =
+				inventoryAnalysisItems[0];
+
+			Assert.assertEquals(
+				expectedTitle, inventoryAnalysisItem.getTitle());
 		}
+	}
+
+	private void _setUpCMSContext() throws Exception {
+		CMSTestUtil.getOrAddGroup(InventoryAnalysisResourceTest.class);
 
 		_serviceContext = ServiceContextTestUtil.getServiceContext(
 			testGroup.getGroupId(), TestPropsValues.getUserId());
@@ -106,31 +188,40 @@ public class InventoryAnalysisResourceTest
 			).build(),
 			DepotConstants.TYPE_ASSET_LIBRARY, _serviceContext);
 
-		ObjectDefinition objectDefinition =
+		_webContentDefinition =
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
-					"L_BASIC_WEB_CONTENT", testCompany.getCompanyId());
+					"L_CMS_BASIC_WEB_CONTENT", testCompany.getCompanyId());
+
+		Map<String, Serializable> webContentValues =
+			HashMapBuilder.<String, Serializable>put(
+				"title_i18n",
+				HashMapBuilder.put(
+					"en_US", RandomTestUtil.randomString()
+				).build()
+			).build();
 
 		_objectEntries.add(
 			ObjectEntryTestUtil.addObjectEntry(
-				_depotEntry.getGroupId(), objectDefinition,
-				Collections.emptyMap()));
+				_depotEntry.getGroupId(), _webContentDefinition,
+				webContentValues));
 
 		_assetVocabulary = _assetVocabularyLocalService.addVocabulary(
-			TestPropsValues.getUserId(), _depotEntry.getGroupId(),
-			"My Vocabulary", _serviceContext);
+			TestPropsValues.getUserId(), _depotEntry.getGroupId(), "Vocabulary",
+			_serviceContext);
 
 		_assetCategory = _assetCategoryLocalService.addCategory(
-			TestPropsValues.getUserId(), _depotEntry.getGroupId(),
-			"My Category", _assetVocabulary.getVocabularyId(), _serviceContext);
+			TestPropsValues.getUserId(), _depotEntry.getGroupId(), "Category",
+			_assetVocabulary.getVocabularyId(), _serviceContext);
 
 		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
-			_depotEntry.getGroupId(), objectDefinition, Collections.emptyMap());
+			_depotEntry.getGroupId(), _webContentDefinition, webContentValues);
 
 		_objectEntries.add(objectEntry);
 
 		AssetEntry assetEntry = _assetEntryLocalService.getEntry(
-			objectDefinition.getClassName(), objectEntry.getObjectEntryId());
+			_webContentDefinition.getClassName(),
+			objectEntry.getObjectEntryId());
 
 		_assetEntryAssetCategoryRel =
 			_assetEntryAssetCategoryRelLocalService.
@@ -139,77 +230,62 @@ public class InventoryAnalysisResourceTest
 
 		_objectEntries.add(
 			ObjectEntryTestUtil.addObjectEntry(
-				_depotEntry.getGroupId(), objectDefinition,
-				Collections.emptyMap(), RandomTestUtil.randomString()));
-	}
+				_depotEntry.getGroupId(), _webContentDefinition,
+				webContentValues, RandomTestUtil.randomString()));
 
-	@Override
-	@Test
-	public void testGetInventoryAnalysis() throws Exception {
-		InventoryAnalysis inventoryAnalysis =
-			inventoryAnalysisResource.getInventoryAnalysis(
-				null, _depotEntry.getDepotEntryId(), null, null, null, null,
-				null, null, null, null, null);
+		DLFolder dlFolder = _dlFolderLocalService.addFolder(
+			null, TestPropsValues.getUserId(), _depotEntry.getGroupId(),
+			_depotEntry.getGroupId(), false,
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), false,
+			_serviceContext);
 
-		InventoryAnalysisItem[] inventoryAnalysisItems =
-			inventoryAnalysis.getInventoryAnalysisItems();
+		byte[] bytes = RandomTestUtil.randomBytes();
 
-		Assert.assertEquals(
-			inventoryAnalysisItems.toString(), 1,
-			inventoryAnalysisItems.length);
+		String fileName = RandomTestUtil.randomString() + ".pdf";
 
-		InventoryAnalysisItem inventoryAnalysisItem = inventoryAnalysisItems[0];
+		DLFileEntry dlFileEntry = _dlFileEntryLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), dlFolder.getGroupId(),
+			dlFolder.getGroupId(), dlFolder.getFolderId(), fileName,
+			ContentTypes.APPLICATION_PDF, fileName, fileName, "", "",
+			DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_BASIC_DOCUMENT, null,
+			null, new ByteArrayInputStream(bytes), bytes.length, null, null,
+			null,
+			ServiceContextTestUtil.getServiceContext(dlFolder.getGroupId()));
 
-		Assert.assertEquals(3L, (long)inventoryAnalysisItem.getCount());
+		_documentDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_CMS_BASIC_DOCUMENT", testCompany.getCompanyId());
 
-		Assert.assertEquals(
-			"Basic Web Content", inventoryAnalysisItem.getTitle());
+		_objectEntries.add(
+			ObjectEntryTestUtil.addObjectEntry(
+				_depotEntry.getGroupId(), _documentDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"file", String.valueOf(dlFileEntry.getFileEntryId())
+				).put(
+					"title_i18n",
+					HashMapBuilder.put(
+						"en_US", RandomTestUtil.randomString()
+					).build()
+				).build()));
 
-		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
-			null, _depotEntry.getDepotEntryId(), "category", null, null, null,
-			null, null, null, null, null);
+		_externalVideoDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_CMS_EXTERNAL_VIDEO", testCompany.getCompanyId());
 
-		inventoryAnalysisItems = inventoryAnalysis.getInventoryAnalysisItems();
-
-		Assert.assertEquals(
-			inventoryAnalysisItems.toString(), 2,
-			inventoryAnalysisItems.length);
-
-		inventoryAnalysisItem = inventoryAnalysisItems[0];
-
-		Assert.assertEquals(2L, (long)inventoryAnalysisItem.getCount());
-
-		Assert.assertEquals("Unknown", inventoryAnalysisItem.getTitle());
-
-		inventoryAnalysisItem = inventoryAnalysisItems[1];
-
-		Assert.assertEquals(1L, (long)inventoryAnalysisItem.getCount());
-
-		Assert.assertEquals("My Category", inventoryAnalysisItem.getTitle());
-
-		inventoryAnalysis = inventoryAnalysisResource.getInventoryAnalysis(
-			_assetCategory.getCategoryId(), _depotEntry.getDepotEntryId(),
-			"category", null, null, null, null, null, null, null, null);
-
-		inventoryAnalysisItems = inventoryAnalysis.getInventoryAnalysisItems();
-
-		Assert.assertEquals(
-			inventoryAnalysisItems.toString(), 1,
-			inventoryAnalysisItems.length);
-
-		Assert.assertEquals(1L, (long)inventoryAnalysisItem.getCount());
-
-		Assert.assertEquals("My Category", inventoryAnalysisItem.getTitle());
-	}
-
-	private void _deleteFile(Bundle bundle, String fileName) {
-		File file = bundle.getDataFile(
-			".com.liferay.headless.builder.internal.batch." + fileName +
-				".batch.engine.data.json.0.processed");
-
-		if ((file != null) && file.exists()) {
-			file.delete();
-		}
+		_objectEntries.add(
+			ObjectEntryTestUtil.addObjectEntry(
+				_depotEntry.getGroupId(), _externalVideoDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"title_i18n",
+					HashMapBuilder.put(
+						"en_US", RandomTestUtil.randomString()
+					).build()
+				).put(
+					"videoURL", "https://www.youtube.com/watch?v=HOdbzGCI5ME"
+				).build()));
 	}
 
 	@DeleteAfterTestRun
@@ -234,23 +310,20 @@ public class InventoryAnalysisResourceTest
 	@Inject
 	private AssetVocabularyLocalService _assetVocabularyLocalService;
 
-	@Inject
-	private BatchEngineUnitProcessor _batchEngineUnitProcessor;
-
-	@Inject
-	private BatchEngineUnitReader _batchEngineUnitReader;
-
 	@DeleteAfterTestRun
 	private DepotEntry _depotEntry;
 
 	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;
 
-	@DeleteAfterTestRun
-	private DLFileEntry _dlFileEntry;
-
 	@Inject
 	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@Inject
+	private DLFolderLocalService _dlFolderLocalService;
+
+	private ObjectDefinition _documentDefinition;
+	private ObjectDefinition _externalVideoDefinition;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
@@ -259,5 +332,6 @@ public class InventoryAnalysisResourceTest
 	private List<ObjectEntry> _objectEntries = new ArrayList<>();
 
 	private ServiceContext _serviceContext;
+	private ObjectDefinition _webContentDefinition;
 
 }

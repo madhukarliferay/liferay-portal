@@ -327,230 +327,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByUuid_Last(
-			String uuid, OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByUuid_Last(
-			uuid, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByUuid_Last(
-		String uuid, OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where uuid = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByUuid_PrevAndNext(
-			long dispatchTriggerId, String uuid,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		uuid = Objects.toString(uuid, "");
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, dispatchTrigger, uuid, orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, dispatchTrigger, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByUuid_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, String uuid,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -601,6 +377,15 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -697,220 +482,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByUuid_PrevAndNext(
-			long dispatchTriggerId, String uuid,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByUuid_PrevAndNext(
-				dispatchTriggerId, uuid, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByUuid_PrevAndNext(
-				session, dispatchTrigger, uuid, orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByUuid_PrevAndNext(
-				session, dispatchTrigger, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByUuid_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, String uuid,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the dispatch triggers where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -996,6 +567,14 @@ public class DispatchTriggerPersistenceImpl
 	public int filterCountByUuid(String uuid) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByUuid(uuid);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1311,244 +890,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByUuid_C_PrevAndNext(
-			long dispatchTriggerId, String uuid, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		uuid = Objects.toString(uuid, "");
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, dispatchTrigger, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, dispatchTrigger, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByUuid_C_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, String uuid,
-		long companyId, OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -1604,6 +945,15 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1704,227 +1054,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByUuid_C_PrevAndNext(
-			long dispatchTriggerId, String uuid, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByUuid_C_PrevAndNext(
-				dispatchTriggerId, uuid, companyId, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByUuid_C_PrevAndNext(
-				session, dispatchTrigger, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByUuid_C_PrevAndNext(
-				session, dispatchTrigger, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByUuid_C_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, String uuid,
-		long companyId, OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the dispatch triggers where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -2019,6 +1148,15 @@ public class DispatchTriggerPersistenceImpl
 	public int filterCountByUuid_C(String uuid, long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByUuid_C(
+				uuid, companyId);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -2311,218 +1449,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByCompanyId_Last(
-		long companyId, OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByCompanyId_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, dispatchTrigger, companyId, orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, dispatchTrigger, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByCompanyId_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, long companyId,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2573,6 +1499,15 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2656,207 +1591,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByCompanyId_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				dispatchTriggerId, companyId, orderByComparator);
-		}
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, dispatchTrigger, companyId, orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, dispatchTrigger, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByCompanyId_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, long companyId,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the dispatch triggers where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -2930,6 +1664,14 @@ public class DispatchTriggerPersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByCompanyId(companyId);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -3190,218 +1932,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63;.
-	 *
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByActive_Last(
-			boolean active,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByActive_Last(
-			active, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("active=");
-		sb.append(active);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63;.
-	 *
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByActive_Last(
-		boolean active, OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByActive(active);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByActive(
-			active, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where active = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByActive_PrevAndNext(
-			long dispatchTriggerId, boolean active,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByActive_PrevAndNext(
-				session, dispatchTrigger, active, orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByActive_PrevAndNext(
-				session, dispatchTrigger, active, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByActive_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, boolean active,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		sb.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(active);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where active = &#63;.
 	 *
 	 * @param active the active
@@ -3452,6 +1982,15 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByActive(active, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByActive(
+					active, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -3535,207 +2074,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where active = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByActive_PrevAndNext(
-			long dispatchTriggerId, boolean active,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByActive_PrevAndNext(
-				dispatchTriggerId, active, orderByComparator);
-		}
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByActive_PrevAndNext(
-				session, dispatchTrigger, active, orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByActive_PrevAndNext(
-				session, dispatchTrigger, active, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByActive_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, boolean active,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(active);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the dispatch triggers where active = &#63; from the database.
 	 *
 	 * @param active the active
@@ -3809,6 +2147,14 @@ public class DispatchTriggerPersistenceImpl
 	public int filterCountByActive(boolean active) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByActive(active);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByActive(active);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -4092,231 +2438,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", userId=");
-		sb.append(userId);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByC_U(companyId, userId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByC_U(
-			companyId, userId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByC_U_PrevAndNext(
-			long dispatchTriggerId, long companyId, long userId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByC_U_PrevAndNext(
-				session, dispatchTrigger, companyId, userId, orderByComparator,
-				true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByC_U_PrevAndNext(
-				session, dispatchTrigger, companyId, userId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByC_U_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, long companyId,
-		long userId, OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_U_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_U_USERID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -4370,6 +2491,15 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_U(companyId, userId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_U(
+					companyId, userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -4457,214 +2587,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByC_U_PrevAndNext(
-			long dispatchTriggerId, long companyId, long userId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_U_PrevAndNext(
-				dispatchTriggerId, companyId, userId, orderByComparator);
-		}
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByC_U_PrevAndNext(
-				session, dispatchTrigger, companyId, userId, orderByComparator,
-				true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByC_U_PrevAndNext(
-				session, dispatchTrigger, companyId, userId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByC_U_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, long companyId,
-		long userId, OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_U_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_U_USERID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(userId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the dispatch triggers where companyId = &#63; and userId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -4746,6 +2668,15 @@ public class DispatchTriggerPersistenceImpl
 	public int filterCountByC_U(long companyId, long userId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_U(companyId, userId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByC_U(
+				companyId, userId);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
 		}
 
 		StringBundler sb = new StringBundler(3);
@@ -5054,248 +2985,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByC_DTET_Last(
-			long companyId, String dispatchTaskExecutorType,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByC_DTET_Last(
-			companyId, dispatchTaskExecutorType, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", dispatchTaskExecutorType=");
-		sb.append(dispatchTaskExecutorType);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByC_DTET_Last(
-		long companyId, String dispatchTaskExecutorType,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByC_DTET(companyId, dispatchTaskExecutorType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByC_DTET(
-			companyId, dispatchTaskExecutorType, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByC_DTET_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			String dispatchTaskExecutorType,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		dispatchTaskExecutorType = Objects.toString(
-			dispatchTaskExecutorType, "");
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByC_DTET_PrevAndNext(
-				session, dispatchTrigger, companyId, dispatchTaskExecutorType,
-				orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByC_DTET_PrevAndNext(
-				session, dispatchTrigger, companyId, dispatchTaskExecutorType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByC_DTET_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, long companyId,
-		String dispatchTaskExecutorType,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_DTET_COMPANYID_2);
-
-		boolean bindDispatchTaskExecutorType = false;
-
-		if (dispatchTaskExecutorType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_DTET_DISPATCHTASKEXECUTORTYPE_3);
-		}
-		else {
-			bindDispatchTaskExecutorType = true;
-
-			sb.append(_FINDER_COLUMN_C_DTET_DISPATCHTASKEXECUTORTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (bindDispatchTaskExecutorType) {
-			queryPos.add(dispatchTaskExecutorType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where companyId = &#63; and dispatchTaskExecutorType = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -5355,6 +3044,15 @@ public class DispatchTriggerPersistenceImpl
 			return findByC_DTET(
 				companyId, dispatchTaskExecutorType, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_DTET(
+					companyId, dispatchTaskExecutorType, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		dispatchTaskExecutorType = Objects.toString(
@@ -5452,231 +3150,6 @@ public class DispatchTriggerPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByC_DTET_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			String dispatchTaskExecutorType,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_DTET_PrevAndNext(
-				dispatchTriggerId, companyId, dispatchTaskExecutorType,
-				orderByComparator);
-		}
-
-		dispatchTaskExecutorType = Objects.toString(
-			dispatchTaskExecutorType, "");
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByC_DTET_PrevAndNext(
-				session, dispatchTrigger, companyId, dispatchTaskExecutorType,
-				orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByC_DTET_PrevAndNext(
-				session, dispatchTrigger, companyId, dispatchTaskExecutorType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByC_DTET_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, long companyId,
-		String dispatchTaskExecutorType,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_DTET_COMPANYID_2);
-
-		boolean bindDispatchTaskExecutorType = false;
-
-		if (dispatchTaskExecutorType.isEmpty()) {
-			sb.append(_FINDER_COLUMN_C_DTET_DISPATCHTASKEXECUTORTYPE_3);
-		}
-		else {
-			bindDispatchTaskExecutorType = true;
-
-			sb.append(_FINDER_COLUMN_C_DTET_DISPATCHTASKEXECUTORTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (bindDispatchTaskExecutorType) {
-			queryPos.add(dispatchTaskExecutorType);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -5782,6 +3255,15 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_DTET(companyId, dispatchTaskExecutorType);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByC_DTET(
+				companyId, dispatchTaskExecutorType);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
 		}
 
 		dispatchTaskExecutorType = Objects.toString(
@@ -6292,233 +3774,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger findByA_DTCM_Last(
-			boolean active, int dispatchTaskClusterMode,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = fetchByA_DTCM_Last(
-			active, dispatchTaskClusterMode, orderByComparator);
-
-		if (dispatchTrigger != null) {
-			return dispatchTrigger;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("active=");
-		sb.append(active);
-
-		sb.append(", dispatchTaskClusterMode=");
-		sb.append(dispatchTaskClusterMode);
-
-		sb.append("}");
-
-		throw new NoSuchTriggerException(sb.toString());
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	@Override
-	public DispatchTrigger fetchByA_DTCM_Last(
-		boolean active, int dispatchTaskClusterMode,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		int count = countByA_DTCM(active, dispatchTaskClusterMode);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<DispatchTrigger> list = findByA_DTCM(
-			active, dispatchTaskClusterMode, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] findByA_DTCM_PrevAndNext(
-			long dispatchTriggerId, boolean active, int dispatchTaskClusterMode,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = getByA_DTCM_PrevAndNext(
-				session, dispatchTrigger, active, dispatchTaskClusterMode,
-				orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = getByA_DTCM_PrevAndNext(
-				session, dispatchTrigger, active, dispatchTaskClusterMode,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger getByA_DTCM_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, boolean active,
-		int dispatchTaskClusterMode,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-
-		sb.append(_FINDER_COLUMN_A_DTCM_ACTIVE_2);
-
-		sb.append(_FINDER_COLUMN_A_DTCM_DISPATCHTASKCLUSTERMODE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(DispatchTriggerModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(active);
-
-		queryPos.add(dispatchTaskClusterMode);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where active = &#63; and dispatchTaskClusterMode = &#63;.
 	 *
 	 * @param active the active
@@ -6577,6 +3832,15 @@ public class DispatchTriggerPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByA_DTCM(
 				active, dispatchTaskClusterMode, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByA_DTCM(
+					active, dispatchTaskClusterMode, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -6664,216 +3928,6 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	@Override
-	public DispatchTrigger[] filterFindByA_DTCM_PrevAndNext(
-			long dispatchTriggerId, boolean active, int dispatchTaskClusterMode,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws NoSuchTriggerException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByA_DTCM_PrevAndNext(
-				dispatchTriggerId, active, dispatchTaskClusterMode,
-				orderByComparator);
-		}
-
-		DispatchTrigger dispatchTrigger = findByPrimaryKey(dispatchTriggerId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			DispatchTrigger[] array = new DispatchTriggerImpl[3];
-
-			array[0] = filterGetByA_DTCM_PrevAndNext(
-				session, dispatchTrigger, active, dispatchTaskClusterMode,
-				orderByComparator, true);
-
-			array[1] = dispatchTrigger;
-
-			array[2] = filterGetByA_DTCM_PrevAndNext(
-				session, dispatchTrigger, active, dispatchTaskClusterMode,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected DispatchTrigger filterGetByA_DTCM_PrevAndNext(
-		Session session, DispatchTrigger dispatchTrigger, boolean active,
-		int dispatchTaskClusterMode,
-		OrderByComparator<DispatchTrigger> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_DISPATCHTRIGGER_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_A_DTCM_ACTIVE_2_SQL);
-
-		sb.append(_FINDER_COLUMN_A_DTCM_DISPATCHTASKCLUSTERMODE_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_DISPATCHTRIGGER_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					DispatchTriggerModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(DispatchTriggerModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), DispatchTrigger.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, DispatchTriggerImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, DispatchTriggerImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(active);
-
-		queryPos.add(dispatchTaskClusterMode);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						dispatchTrigger)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<DispatchTrigger> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where active = &#63; and dispatchTaskClusterMode = any &#63;.
 	 *
 	 * @param active the active
@@ -6933,6 +3987,15 @@ public class DispatchTriggerPersistenceImpl
 			return findByA_DTCM(
 				active, dispatchTaskClusterModes, start, end,
 				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByA_DTCM(
+					active, dispatchTaskClusterModes, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
 		}
 
 		if (dispatchTaskClusterModes == null) {
@@ -7394,6 +4457,15 @@ public class DispatchTriggerPersistenceImpl
 			return countByA_DTCM(active, dispatchTaskClusterMode);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = findByA_DTCM(
+				active, dispatchTaskClusterMode);
+
+			dispatchTriggers = InlineSQLHelperUtil.filter(dispatchTriggers);
+
+			return dispatchTriggers.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_DISPATCHTRIGGER_WHERE);
@@ -7447,6 +4519,13 @@ public class DispatchTriggerPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByA_DTCM(active, dispatchTaskClusterModes);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<DispatchTrigger> dispatchTriggers = InlineSQLHelperUtil.filter(
+				findByA_DTCM(active, dispatchTaskClusterModes));
+
+			return dispatchTriggers.size();
 		}
 
 		if (dispatchTaskClusterModes == null) {
@@ -8643,3 +5722,4 @@ public class DispatchTriggerPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:395839693

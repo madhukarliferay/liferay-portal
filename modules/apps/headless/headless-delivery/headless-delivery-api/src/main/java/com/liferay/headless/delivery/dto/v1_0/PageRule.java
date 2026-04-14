@@ -318,9 +318,7 @@ public class PageRule implements Serializable {
 			sb.append("\"conditionType\": ");
 
 			sb.append("\"");
-
 			sb.append(conditionType);
-
 			sb.append("\"");
 		}
 
@@ -539,3 +537,4 @@ public class PageRule implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1691053068

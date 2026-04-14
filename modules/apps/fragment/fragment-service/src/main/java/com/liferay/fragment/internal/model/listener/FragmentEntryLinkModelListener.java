@@ -10,17 +10,18 @@ import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentRendererController;
 import com.liferay.info.field.InfoField;
-import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.layout.util.InfoFieldUtil;
-import com.liferay.layout.util.LayoutServiceContextHelper;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
-import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.ModelListener;
-import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.sanitizer.SanitizerException;
+import com.liferay.portal.kernel.sanitizer.SanitizerUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
@@ -61,8 +62,59 @@ public class FragmentEntryLinkModelListener
 		_processInfoFields(fragmentEntryLink);
 	}
 
-	private String _escapeTextEditableValues(
-		JSONObject editableValuesJSONObject, List<InfoField<?>> infoFields) {
+	private void _processInfoFields(FragmentEntryLink fragmentEntryLink) {
+		List<ObjectValuePair<InfoField<?>, String>> infoFieldObjectValuePairs =
+			new ArrayList<>();
+
+		try {
+			InfoFieldUtil.forEachInfoField(
+				fragmentEntryLink, _fragmentRendererController,
+				(infoField, type, unsafeSupplier) ->
+					infoFieldObjectValuePairs.add(
+						new ObjectValuePair<>(infoField, type)));
+
+			if (infoFieldObjectValuePairs.isEmpty()) {
+				return;
+			}
+
+			fragmentEntryLink.setEditableValues(
+				_sanitizeEditableValues(
+					fragmentEntryLink.getEditableValuesJSONObject(),
+					fragmentEntryLink, infoFieldObjectValuePairs));
+		}
+		catch (Exception exception) {
+			throw new ModelListenerException(exception);
+		}
+	}
+
+	private String _sanitizeEditableValue(
+			FragmentEntryLink fragmentEntryLink, String type, String value)
+		throws SanitizerException {
+
+		if (Objects.equals(type, "text")) {
+			value = HtmlUtil.unescape(value);
+			value = HtmlUtil.escape(value);
+		}
+		else {
+			value = SanitizerUtil.sanitize(
+				fragmentEntryLink.getCompanyId(),
+				fragmentEntryLink.getGroupId(), fragmentEntryLink.getUserId(),
+				FragmentEntryLink.class.getName(),
+				fragmentEntryLink.getFragmentEntryLinkId(),
+				ContentTypes.TEXT_HTML, value);
+
+			value = StringUtil.trim(value);
+		}
+
+		return value;
+	}
+
+	private String _sanitizeEditableValues(
+			JSONObject editableValuesJSONObject,
+			FragmentEntryLink fragmentEntryLink,
+			List<ObjectValuePair<InfoField<?>, String>>
+				infoFieldObjectValuePairs)
+		throws SanitizerException {
 
 		for (String fragmentEntryProcessorKey :
 				_FRAGMENT_ENTRY_PROCESSOR_KEYS) {
@@ -75,13 +127,20 @@ public class FragmentEntryLinkModelListener
 				continue;
 			}
 
-			for (InfoField<?> infoField : infoFields) {
-				if (!Objects.equals(
-						infoField.getInfoFieldType(),
-						TextInfoFieldType.INSTANCE)) {
+			for (ObjectValuePair<InfoField<?>, String>
+					infoFieldObjectValuePair : infoFieldObjectValuePairs) {
+
+				String type = infoFieldObjectValuePair.getValue();
+
+				if (!(Objects.equals(type, "action") ||
+					  Objects.equals(type, "link") ||
+					  Objects.equals(type, "text") ||
+					  Objects.equals(type, "rich-text"))) {
 
 					continue;
 				}
+
+				InfoField<?> infoField = infoFieldObjectValuePair.getKey();
 
 				InfoLocalizedValue<String> labelInfoLocalizedValue =
 					infoField.getLabelInfoLocalizedValue();
@@ -98,10 +157,10 @@ public class FragmentEntryLinkModelListener
 					"defaultValue");
 
 				if (Validator.isNotNull(defaultValue)) {
-					defaultValue = HtmlUtil.unescape(defaultValue);
-
 					editableValueJSONObject.put(
-						"defaultValue", HtmlUtil.escape(defaultValue));
+						"defaultValue",
+						_sanitizeEditableValue(
+							fragmentEntryLink, type, defaultValue));
 				}
 
 				if (!_fragmentEntryProcessorHelper.isMapped(
@@ -126,50 +185,16 @@ public class FragmentEntryLinkModelListener
 						String value = editableValueJSONObject.getString(
 							valueKey);
 
-						value = HtmlUtil.unescape(value);
-
 						editableValueJSONObject.put(
-							valueKey, HtmlUtil.escape(value));
+							valueKey,
+							_sanitizeEditableValue(
+								fragmentEntryLink, type, value));
 					}
 				}
 			}
 		}
 
 		return editableValuesJSONObject.toString();
-	}
-
-	private void _processInfoFields(FragmentEntryLink fragmentEntryLink) {
-		Layout layout = _layoutLocalService.fetchLayout(
-			fragmentEntryLink.getPlid());
-
-		if (layout == null) {
-			return;
-		}
-
-		List<InfoField<?>> infoFields = new ArrayList<>();
-
-		try {
-			try (AutoCloseable autoCloseable =
-					_layoutServiceContextHelper.getServiceContextAutoCloseable(
-						layout)) {
-
-				InfoFieldUtil.forEachInfoField(
-					fragmentEntryLink, _fragmentRendererController,
-					(name, infoField, unsafeSupplier) -> infoFields.add(
-						infoField));
-			}
-		}
-		catch (Exception exception) {
-			throw new ModelListenerException(exception);
-		}
-
-		if (infoFields.isEmpty()) {
-			return;
-		}
-
-		fragmentEntryLink.setEditableValues(
-			_escapeTextEditableValues(
-				fragmentEntryLink.getEditableValuesJSONObject(), infoFields));
 	}
 
 	private static final String[] _FRAGMENT_ENTRY_PROCESSOR_KEYS = {
@@ -181,11 +206,5 @@ public class FragmentEntryLinkModelListener
 
 	@Reference
 	private FragmentRendererController _fragmentRendererController;
-
-	@Reference
-	private LayoutLocalService _layoutLocalService;
-
-	@Reference
-	private LayoutServiceContextHelper _layoutServiceContextHelper;
 
 }

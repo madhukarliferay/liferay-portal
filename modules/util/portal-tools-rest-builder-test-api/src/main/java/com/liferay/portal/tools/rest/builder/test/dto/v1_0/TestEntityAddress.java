@@ -38,9 +38,7 @@ import java.util.function.Supplier;
  * @generated
  */
 @Generated("")
-@GraphQLName(
-	description = "https://www.schema.org/Document", value = "TestEntityAddress"
-)
+@GraphQLName("TestEntityAddress")
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "TestEntityAddress")
 public class TestEntityAddress implements Serializable {
@@ -572,3 +570,4 @@ public class TestEntityAddress implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1523303935

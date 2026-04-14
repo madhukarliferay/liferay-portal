@@ -50,7 +50,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletProvider;
@@ -58,6 +57,7 @@ import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.sanitizer.SanitizerException;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -271,6 +271,30 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 				sendRedirect(actionRequest, actionResponse, redirect);
 			}
 			else {
+				if (throwable instanceof RuntimeException) {
+					Throwable currentThrowable = throwable;
+
+					while (currentThrowable != null) {
+						currentThrowable = currentThrowable.getCause();
+
+						if (currentThrowable instanceof
+								SanitizerException sanitizerException) {
+
+							SessionErrors.add(
+								actionRequest, SanitizerException.class,
+								sanitizerException);
+
+							String redirect = ParamUtil.getString(
+								actionRequest, "redirect");
+
+							sendRedirect(
+								actionRequest, actionResponse, redirect);
+
+							return;
+						}
+					}
+				}
+
 				_log.error(throwable, throwable);
 
 				throw new Exception(throwable);
@@ -559,34 +583,47 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 				actionRequest, "productTypeName");
 
 			cpDefinition = _cpDefinitionService.addCPDefinition(
-				null, commerceCatalogGroupId, nameMap, shortDescriptionMap,
-				descriptionMap, urlTitleMap, metaTitleMap, metaDescriptionMap,
-				metaKeywordsMap, productTypeName, true, true, false, false, 0D,
-				0D, 0D, 0D, 0D, 0L, false, false, null, published,
-				displayDateMonth, displayDateDay, displayDateYear,
-				displayDateHour, displayDateMinute, expirationDateMonth,
-				expirationDateDay, expirationDateYear, expirationDateHour,
-				expirationDateMinute, neverExpire,
-				CPInstanceConstants.DEFAULT_SKU, false, 1, null, null, 0L,
-				WorkflowConstants.STATUS_DRAFT, serviceContext);
+				null, commerceCatalogGroupId, 0L, false, false, null,
+				CPInstanceConstants.DEFAULT_SKU, 0, false, 1, null, null, 0D,
+				descriptionMap, displayDateDay, displayDateHour,
+				displayDateMinute, displayDateMonth, displayDateYear,
+				expirationDateDay, expirationDateHour, expirationDateMinute,
+				expirationDateMonth, expirationDateYear, false, 0D, true, 0L,
+				metaDescriptionMap, metaKeywordsMap, metaTitleMap, nameMap,
+				neverExpire, productTypeName, published, false, true, 0D,
+				shortDescriptionMap, false, 1, null, null, false, false,
+				urlTitleMap, 0D, 0D, WorkflowConstants.STATUS_DRAFT,
+				serviceContext);
 		}
 		else {
 			cpDefinition = _cpDefinitionService.updateCPDefinition(
-				cpDefinition.getCPDefinitionId(), nameMap, shortDescriptionMap,
-				descriptionMap, urlTitleMap, metaTitleMap, metaDescriptionMap,
-				metaKeywordsMap, cpDefinition.isIgnoreSKUCombinations(), null,
-				published, displayDateMonth, displayDateDay, displayDateYear,
-				displayDateHour, displayDateMinute, expirationDateMonth,
-				expirationDateDay, expirationDateYear, expirationDateHour,
-				expirationDateMinute, neverExpire, serviceContext);
+				cpDefinition.getCPDefinitionId(),
+				cpDefinition.getCPTaxCategoryId(),
+				cpDefinition.isAccountGroupFilterEnabled(),
+				cpDefinition.isChannelFilterEnabled(), null,
+				cpDefinition.getDepth(), descriptionMap, displayDateDay,
+				displayDateHour, displayDateMinute, displayDateMonth,
+				displayDateYear, expirationDateDay, expirationDateHour,
+				expirationDateMinute, expirationDateMonth, expirationDateYear,
+				cpDefinition.isFreeShipping(), cpDefinition.getHeight(),
+				cpDefinition.isIgnoreSKUCombinations(), metaDescriptionMap,
+				metaKeywordsMap, metaTitleMap, nameMap, neverExpire, published,
+				cpDefinition.isShipSeparately(), cpDefinition.isShippable(),
+				cpDefinition.getShippingExtraPrice(), shortDescriptionMap,
+				cpDefinition.isTaxExempt(), cpDefinition.isTelcoOrElectronics(),
+				urlTitleMap, cpDefinition.getWeight(), cpDefinition.getWidth(),
+				serviceContext);
 		}
 
 		return cpDefinition;
 	}
 
 	private CPDefinition _updateCPDefinition(
-			CPDefinition cpDefinition, ServiceContext serviceContext)
+			long cpDefinitionId, ServiceContext serviceContext)
 		throws Exception {
+
+		CPDefinition cpDefinition = _cpDefinitionService.getCPDefinition(
+			cpDefinitionId);
 
 		Date displayDate = cpDefinition.getDisplayDate();
 
@@ -633,20 +670,26 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		return _cpDefinitionService.updateCPDefinition(
-			cpDefinition.getCPDefinitionId(), cpDefinition.getNameMap(),
-			cpDefinition.getShortDescriptionMap(),
-			cpDefinition.getDescriptionMap(), cpDefinition.getUrlTitleMap(),
-			cpDefinition.getMetaTitleMap(),
-			cpDefinition.getMetaDescriptionMap(),
-			cpDefinition.getMetaKeywordsMap(),
-			cpDefinition.isIgnoreSKUCombinations(),
-			cpDefinition.getDDMStructureKey(), cpDefinition.isPublished(),
+			cpDefinition.getCPDefinitionId(), cpDefinition.getCPTaxCategoryId(),
+			cpDefinition.isAccountGroupFilterEnabled(),
+			cpDefinition.isChannelFilterEnabled(),
+			cpDefinition.getDDMStructureKey(), cpDefinition.getDepth(),
+			cpDefinition.getDescriptionMap(),
+			displayCalendar.get(Calendar.DAY_OF_MONTH), displayDateHour,
+			displayCalendar.get(Calendar.MINUTE),
 			displayCalendar.get(Calendar.MONTH),
-			displayCalendar.get(Calendar.DAY_OF_MONTH),
-			displayCalendar.get(Calendar.YEAR), displayDateHour,
-			displayCalendar.get(Calendar.MINUTE), expirationDateMonth,
-			expirationDateDay, expirationDateYear, expirationDateHour,
-			expirationDateMinute, neverExpire, serviceContext);
+			displayCalendar.get(Calendar.YEAR), expirationDateDay,
+			expirationDateHour, expirationDateMinute, expirationDateMonth,
+			expirationDateYear, cpDefinition.isFreeShipping(),
+			cpDefinition.getHeight(), cpDefinition.isIgnoreSKUCombinations(),
+			cpDefinition.getMetaDescriptionMap(),
+			cpDefinition.getMetaKeywordsMap(), cpDefinition.getMetaTitleMap(),
+			cpDefinition.getNameMap(), neverExpire, cpDefinition.isPublished(),
+			cpDefinition.isShipSeparately(), cpDefinition.isShippable(),
+			cpDefinition.getShippingExtraPrice(),
+			cpDefinition.getShortDescriptionMap(), cpDefinition.isTaxExempt(),
+			cpDefinition.isTelcoOrElectronics(), cpDefinition.getUrlTitleMap(),
+			cpDefinition.getWeight(), cpDefinition.getWidth(), serviceContext);
 	}
 
 	private void _updateCPDefinitionInventory(
@@ -789,19 +832,15 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 				shippingExtraPrice, shipSeparately, taxExempt, weight, width);
 		}
 
-		if (FeatureFlagManagerUtil.isEnabled(
-				cpDefinition.getCompanyId(), "LPD-10889")) {
+		List<CPInstance> cpInstances =
+			_cpInstanceLocalService.getCPDefinitionInstances(
+				cpDefinitionId, WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null);
 
-			List<CPInstance> cpInstances =
-				_cpInstanceLocalService.getCPDefinitionInstances(
-					cpDefinitionId, WorkflowConstants.STATUS_ANY,
-					QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+		for (CPInstance cpInstance : cpInstances) {
+			cpInstance.setPurchasable(purchasable);
 
-			for (CPInstance cpInstance : cpInstances) {
-				cpInstance.setPurchasable(purchasable);
-
-				_cpInstanceLocalService.updateCPInstance(cpInstance);
-			}
+			_cpInstanceLocalService.updateCPInstance(cpInstance);
 		}
 	}
 
@@ -1027,7 +1066,7 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 			_updateTaxCategoryInfo(_actionRequest, cpDefinitionId);
 
 			_updateCPDefinition(
-				_cpDefinition,
+				_cpDefinition.getCPDefinitionId(),
 				_getServiceContext(_actionRequest, _cpDefinition));
 
 			return null;
@@ -1057,7 +1096,7 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 			_updateSubscriptionInfo(_actionRequest, _cpDefinition);
 
 			_updateCPDefinition(
-				_cpDefinition,
+				_cpDefinition.getCPDefinitionId(),
 				_getServiceContext(_actionRequest, _cpDefinition));
 
 			return null;
@@ -1080,7 +1119,7 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 		@Override
 		public CPDefinition call() throws Exception {
 			return _updateCPDefinition(
-				_cpDefinition,
+				_cpDefinition.getCPDefinitionId(),
 				_getServiceContext(_actionRequest, _cpDefinition));
 		}
 
@@ -1108,7 +1147,7 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 				_actionRequest, _cpDefinition.getCPDefinitionId());
 
 			_updateCPDefinition(
-				_cpDefinition,
+				_cpDefinition.getCPDefinitionId(),
 				_getServiceContext(_actionRequest, _cpDefinition));
 
 			return null;

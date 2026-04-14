@@ -62,6 +62,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.search.test.util.IndexerFixture;
@@ -152,8 +153,8 @@ public class LayoutModelDocumentContributorTest {
 					))
 			).toString(),
 			fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), _draftLayout,
+			fragmentEntry.getExternalReferenceCode(), null,
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), _draftLayout,
 			fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(), null,
 			0,
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
@@ -246,8 +247,10 @@ public class LayoutModelDocumentContributorTest {
 						LocaleUtil.toLanguageId(_locale), expectedContent))
 			).toString(),
 			fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), _draftLayout,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), _draftLayout.getGroupId()),
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), _draftLayout,
 			fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(), null,
 			0, segmentsExperienceId);
 
@@ -266,8 +269,8 @@ public class LayoutModelDocumentContributorTest {
 			_draftLayout, _layoutStructureProvider, null, null, 0,
 			segmentsExperienceId,
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
-				null, TestPropsValues.getUserId(), _group.getGroupId(), 0, 0,
-				segmentsExperienceId, _draftLayout.getPlid(),
+				null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+				null, null, segmentsExperienceId, _draftLayout.getPlid(),
 				fragmentEntry.getCss(), fragmentEntry.getHtml(),
 				fragmentEntry.getJs(), fragmentEntry.getConfiguration(),
 				JSONUtil.put(
@@ -565,6 +568,13 @@ public class LayoutModelDocumentContributorTest {
 	}
 
 	@Test
+	public void testSearchEmptyLayout() throws Exception {
+		Layout layout = LayoutTestUtil.addTypeEmptyLayout(_group);
+
+		_layoutIndexerFixture.searchOnlyOne(layout.getName(_locale));
+	}
+
+	@Test
 	@TestInfo("LPS-152949")
 	public void testSearchFullPageApplicationLayout() throws Exception {
 		Layout layout = LayoutTestUtil.addTypeFullPageApplicationLayout(
@@ -644,9 +654,12 @@ public class LayoutModelDocumentContributorTest {
 		return ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			editableValues, fragmentEntry.getCss(),
 			fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), layout, fragmentEntry.getFragmentEntryKey(),
-			fragmentEntry.getType(), null, 0,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), layout.getGroupId()),
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), layout,
+			fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(), null,
+			0,
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				layout.getPlid()));
 	}

@@ -327,6 +327,15 @@ public class FragmentEntryLocalServiceWrapper
 	}
 
 	@Override
+	public FragmentEntry fetchFragmentEntryByExternalReferenceCode(
+		String externalReferenceCode, long groupId, boolean head) {
+
+		return _fragmentEntryLocalService.
+			fetchFragmentEntryByExternalReferenceCode(
+				externalReferenceCode, groupId, head);
+	}
+
+	@Override
 	public FragmentEntry fetchFragmentEntryByUuidAndGroupId(
 		String uuid, long groupId) {
 
@@ -523,6 +532,26 @@ public class FragmentEntryLocalServiceWrapper
 	}
 
 	@Override
+	public FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryLocalService.
+			getFragmentEntryByExternalReferenceCode(
+				externalReferenceCode, groupId);
+	}
+
+	@Override
+	public FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId, boolean head)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _fragmentEntryLocalService.
+			getFragmentEntryByExternalReferenceCode(
+				externalReferenceCode, groupId, head);
+	}
+
+	@Override
 	public FragmentEntry getFragmentEntryByUuidAndGroupId(
 			String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -589,6 +618,12 @@ public class FragmentEntryLocalServiceWrapper
 		getVersions(FragmentEntry fragmentEntry) {
 
 		return _fragmentEntryLocalService.getVersions(fragmentEntry);
+	}
+
+	@Override
+	public boolean hasExportableFragmentEntries(long fragmentCollectionId) {
+		return _fragmentEntryLocalService.hasExportableFragmentEntries(
+			fragmentCollectionId);
 	}
 
 	@Override
@@ -731,3 +766,4 @@ public class FragmentEntryLocalServiceWrapper
 	private FragmentEntryLocalService _fragmentEntryLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:656993293

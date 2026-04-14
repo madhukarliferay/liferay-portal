@@ -4,33 +4,27 @@
  */
 
 import ClayAlert from '@clayui/alert';
+import {NetworkStatus} from '@clayui/data-provider';
 import {ClayCheckbox} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayMultiSelect from '@clayui/multi-select';
 import {sub} from 'frontend-js-web';
-import React, {ChangeEvent, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import SpaceSticker from '../../../common/components/SpaceSticker';
 import SpaceService from '../../../common/services/SpaceService';
 import {LogoColor} from '../../../common/types/Space';
 
 type Space = {
-	displayType?: string;
+	displayType?: LogoColor;
 	label: string;
+	scopeKey: string;
 	value: any;
 };
-
-const ALL_SPACES: Space[] = [
-	{
-		label: 'All Spaces',
-		value: -1,
-	},
-];
 
 export default function CategorizationSpaces({
 	assetLibraries,
 	checkboxText,
-	selectedSpaces,
 	setSelectedSpaces,
 	setSpaceChange,
 	setSpaceInputError,
@@ -38,28 +32,37 @@ export default function CategorizationSpaces({
 }: {
 	assetLibraries?: any;
 	checkboxText: string;
-	selectedSpaces: number[];
 	setSelectedSpaces: (value: any) => void;
 	setSpaceChange?: (value: boolean) => void;
 	setSpaceInputError: (value: string) => void;
 	spaceInputError: string;
 }) {
 	const [availableSpaces, setAvailableSpaces] = useState<Space[]>([]);
+	const [availableSpacesKey, setAvailableSpacesKey] = useState(0);
 	const [checkbox, setCheckbox] = useState(true);
+	const isVocabulary = checkboxText === 'vocabulary';
+	const [displaySpaceError, setDisplaySpaceError] = useState(!isVocabulary);
+	const [query, setQuery] = useState('');
 	const [selectedItems, setSelectedItems] = useState<Space[]>([]);
 	const [initialSelectedSpaces, setInitialSelectedSpaces] = useState<
 		number[]
 	>([]);
+
+	const loadingState = !availableSpaces.length
+		? NetworkStatus.Polling
+		: undefined;
 
 	useEffect(() => {
 		SpaceService.getSpaces().then((response) => {
 			const spaces = response.map((item) => ({
 				displayType: item.settings?.logoColor,
 				label: item.name,
+				scopeKey: item.assetLibraryKey,
 				value: item.id,
 			}));
 
 			setAvailableSpaces(spaces);
+			setAvailableSpacesKey((key) => key + 1);
 
 			const initialSpaces = assetLibraries?.map(
 				(item: {name: string}) =>
@@ -75,7 +78,7 @@ export default function CategorizationSpaces({
 			) {
 				setCheckbox(true);
 
-				setSelectedItems(ALL_SPACES);
+				setSelectedItems([]);
 			}
 			else if (initialSpaces) {
 				setCheckbox(false);
@@ -89,7 +92,7 @@ export default function CategorizationSpaces({
 
 	useEffect(() => {
 		if (setSpaceChange) {
-			if (selectedItems?.find((space) => space.value === -1)) {
+			if (checkbox) {
 				setSpaceChange(false);
 			}
 			else if (
@@ -105,7 +108,7 @@ export default function CategorizationSpaces({
 			}
 		}
 
-		if (selectedItems.length) {
+		if (checkbox || selectedItems.length) {
 			setSpaceInputError('');
 		}
 		else {
@@ -117,46 +120,35 @@ export default function CategorizationSpaces({
 			);
 		}
 	}, [
+		checkbox,
 		initialSelectedSpaces,
 		selectedItems,
 		setSpaceChange,
 		setSpaceInputError,
 	]);
 
-	const _handleChangeAllSpaces = (event: ChangeEvent<HTMLInputElement>) => {
-		if (!event.target.checked) {
-			setSelectedItems([]);
-			setSelectedSpaces([]);
-		}
-		else {
-			setSelectedItems(ALL_SPACES);
-			setSelectedSpaces([-1]);
+	const _getAvailableSpaces = (items: Space[]) => {
+		return availableSpaces.filter((availableItem) =>
+			items.some((item) => availableItem.value === item.value)
+		);
+	};
+
+	const _handleChangeAllSpaces = () => {
+		if (isVocabulary && checkbox) {
+			setDisplaySpaceError(false);
 		}
 
+		setSelectedItems([]);
+		setSelectedSpaces([]);
+		setQuery('');
 		setCheckbox((checkbox) => !checkbox);
 	};
 
 	const _handleChangeSpaces = (items: Space[]) => {
-		setSelectedItems(
-			availableSpaces.filter((item) => items.includes(item))
-		);
+		setDisplaySpaceError(true);
+		setSelectedItems(_getAvailableSpaces(items));
 
-		setSelectedSpaces(items.map((item) => item.value));
-	};
-
-	const isChecked = (itemValue: number) => {
-		return selectedSpaces.includes(itemValue);
-	};
-
-	const _handleCheckboxChange = (itemValue: any) => {
-		setSelectedSpaces((prevSelectedSpaces: number[]) => {
-			if (isChecked(itemValue)) {
-				return prevSelectedSpaces.filter((id) => id !== itemValue);
-			}
-			else {
-				return [...prevSelectedSpaces, itemValue];
-			}
-		});
+		setSelectedSpaces(items.map((item) => item.scopeKey));
 	};
 
 	return (
@@ -169,49 +161,40 @@ export default function CategorizationSpaces({
 				</span>
 			</label>
 
-			<div className={spaceInputError ? 'has-error' : ''}>
+			<div
+				className={
+					displaySpaceError && spaceInputError ? 'has-error' : ''
+				}
+			>
 				<ClayMultiSelect
 					aria-label={Liferay.Language.get('space-selector')}
 					disabled={checkbox}
 					id="multiSelect"
 					items={selectedItems}
-					loadingState={3}
-					onItemsChange={(items: Space[]) => {
-						_handleChangeSpaces(items);
-					}}
+					key={availableSpacesKey}
+					loadingState={loadingState}
+					onChange={setQuery}
+					onItemsChange={_handleChangeSpaces}
 					sourceItems={availableSpaces}
+					value={
+						checkbox ? Liferay.Language.get('all-spaces') : query
+					}
 				>
 					{(item) => (
 						<ClayMultiSelect.Item
 							key={item.value}
 							textValue={item.label}
 						>
-							<div className="autofit-row autofit-row-center">
-								<div className="autofit-col">
-									<ClayCheckbox
-										aria-label={item.label}
-										checked={isChecked(item.value)}
-										onChange={() => {
-											_handleCheckboxChange(item.value);
-										}}
-									/>
-								</div>
-
-								<span className="align-items-center d-flex space-renderer-sticker">
-									<SpaceSticker
-										displayType={
-											item.displayType as LogoColor
-										}
-										name={item.label}
-										size="sm"
-									/>
-								</span>
-							</div>
+							<SpaceSticker
+								displayType={item.displayType}
+								name={item.label}
+								size="sm"
+							/>
 						</ClayMultiSelect.Item>
 					)}
 				</ClayMultiSelect>
 
-				{spaceInputError && (
+				{displaySpaceError && spaceInputError && (
 					<ClayAlert displayType="danger" variant="feedback">
 						<strong>{Liferay.Language.get('error')}: </strong>
 

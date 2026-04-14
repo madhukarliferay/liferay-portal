@@ -5,22 +5,29 @@
 
 package com.liferay.site.cms.site.initializer.internal.display.context;
 
+import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
+import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -41,11 +48,17 @@ public class ViewHomeQuickActionsDisplayContext {
 		DepotEntryLocalService depotEntryLocalService,
 		GroupLocalService groupLocalService,
 		ObjectDefinitionService objectDefinitionService,
+		ObjectEntryFolderLocalService objectEntryFolderLocalService,
+		ModelResourcePermission<ObjectEntryFolder>
+			objectEntryFolderModelResourcePermission,
 		ThemeDisplay themeDisplay) {
 
 		_depotEntryLocalService = depotEntryLocalService;
 		_groupLocalService = groupLocalService;
 		_objectDefinitionService = objectDefinitionService;
+		_objectEntryFolderLocalService = objectEntryFolderLocalService;
+		_objectEntryFolderModelResourcePermission =
+			objectEntryFolderModelResourcePermission;
 		_themeDisplay = themeDisplay;
 	}
 
@@ -53,6 +66,36 @@ public class ViewHomeQuickActionsDisplayContext {
 		return HashMapBuilder.<String, Object>put(
 			"quickActions", _getQuickActions()
 		).build();
+	}
+
+	public boolean hasAddEntryPermission() {
+		List<ObjectEntryFolder> objectEntryFolders =
+			_objectEntryFolderLocalService.
+				getObjectEntryFoldersByExternalReferenceCode(
+					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS,
+					_depotEntryLocalService.getDepotEntryGroupIds(
+						_themeDisplay.getCompanyId(),
+						DepotConstants.TYPE_SPACE),
+					_themeDisplay.getCompanyId());
+
+		for (ObjectEntryFolder objectEntryFolder : objectEntryFolders) {
+			try {
+				if (_objectEntryFolderModelResourcePermission.contains(
+						_themeDisplay.getPermissionChecker(),
+						objectEntryFolder.getObjectEntryFolderId(),
+						ActionKeys.ADD_ENTRY)) {
+
+					return true;
+				}
+			}
+			catch (PortalException portalException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(portalException);
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private Map<String, Object> _createQuickAction(
@@ -85,7 +128,7 @@ public class ViewHomeQuickActionsDisplayContext {
 		return _getDepotEntriesJSONArray(
 			TransformUtil.transform(
 				_depotEntryLocalService.getDepotEntries(
-					QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+					_themeDisplay.getCompanyId(), DepotConstants.TYPE_SPACE),
 				DepotEntry::getGroupId));
 	}
 
@@ -147,36 +190,42 @@ public class ViewHomeQuickActionsDisplayContext {
 			_objectDefinitionService.getCMSObjectDefinitions(
 				_themeDisplay.getCompanyId(),
 				new String[] {
+					ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES,
 					ObjectFolderConstants.
 						EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES
 				});
 
-		for (int i = 0; i < objectDefinitions.size(); i++) {
-			ObjectDefinition objectDefinition = objectDefinitions.get(i);
+		for (ObjectDefinition objectDefinition : objectDefinitions) {
+			String actionIcon = _icons.get(
+				objectDefinition.getExternalReferenceCode());
+
+			if (actionIcon == null) {
+				String entryFolderERC =
+					_getObjectEntryFolderExternalReferenceCode(
+						objectDefinition);
+
+				actionIcon = _icons.getOrDefault(entryFolderERC, "forms");
+			}
 
 			quickActions.add(
 				_createQuickAction(
-					depotEntriesJSONArray, _ICONS[i], objectDefinition));
+					depotEntriesJSONArray, actionIcon, objectDefinition));
 		}
 
-		quickActions.add(
-			_createQuickAction(
-				depotEntriesJSONArray, _ICONS[_ICONS.length - 2],
-				_objectDefinitionService.
-					getObjectDefinitionByExternalReferenceCode(
-						"L_BASIC_DOCUMENT", _themeDisplay.getCompanyId())));
 		quickActions.add(
 			HashMapBuilder.<String, Object>put(
 				"action", "createVocabulary"
 			).put(
-				"icon", _ICONS[_ICONS.length - 1]
+				"icon", _icons.get("L_CMS_VOCABULARY")
 			).put(
 				"redirect",
-				PortalUtil.getLayoutFullURL(
-					LayoutLocalServiceUtil.getLayoutByFriendlyURL(
-						_themeDisplay.getScopeGroupId(), false,
-						"/categorization/new-vocabulary"),
-					_themeDisplay)
+				StringBundler.concat(
+					PortalUtil.getLayoutFullURL(
+						LayoutLocalServiceUtil.getLayoutByFriendlyURL(
+							_themeDisplay.getScopeGroupId(), false,
+							"/categorization/new-vocabulary"),
+						_themeDisplay),
+					"?backURL=", _themeDisplay.getURLCurrent())
 			).put(
 				"title",
 				LanguageUtil.get(_themeDisplay.getLocale(), "vocabulary")
@@ -185,13 +234,31 @@ public class ViewHomeQuickActionsDisplayContext {
 		return quickActions;
 	}
 
-	private static final String[] _ICONS = {
-		"forms", "blogs", "wiki", "documents-and-media", "vocabulary"
-	};
+	private static final Log _log = LogFactoryUtil.getLog(
+		ViewHomeQuickActionsDisplayContext.class);
+
+	private static final Map<String, String> _icons = HashMapBuilder.put(
+		"L_CMS_BASIC_DOCUMENT", "documents-and-media"
+	).put(
+		"L_CMS_BASIC_WEB_CONTENT", "forms"
+	).put(
+		"L_CMS_BLOG", "blogs"
+	).put(
+		"L_CMS_EXTERNAL_VIDEO", "video"
+	).put(
+		"L_CMS_VOCABULARY", "vocabulary"
+	).put(
+		"L_CONTENTS", "web-content"
+	).put(
+		"L_FILES", "document-default"
+	).build();
 
 	private final DepotEntryLocalService _depotEntryLocalService;
 	private final GroupLocalService _groupLocalService;
 	private final ObjectDefinitionService _objectDefinitionService;
+	private final ObjectEntryFolderLocalService _objectEntryFolderLocalService;
+	private final ModelResourcePermission<ObjectEntryFolder>
+		_objectEntryFolderModelResourcePermission;
 	private final ThemeDisplay _themeDisplay;
 
 }

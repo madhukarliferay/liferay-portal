@@ -7,16 +7,12 @@ provider "aws" {
 	region=var.region
 }
 provider "kubernetes" {
-	config_paths=[
-		var.kube_config_path,
-		"/tmp/this-kubeconfig-file-does-not-exist",
-	]
 }
 terraform {
 	required_providers {
 		aws={
 			source="hashicorp/aws"
-			version="~> 5.0"
+			version="~> 6.14.1"
 		}
 		kubernetes={
 			source="hashicorp/kubernetes"

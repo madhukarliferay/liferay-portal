@@ -6,10 +6,11 @@
 import {ObjectActionAPI} from '@liferay/object-admin-rest-client-js';
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
+import {displayPageTemplatesPagesTest} from '../../../../fixtures/displayPageTemplatesPagesTest';
 import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../../fixtures/globalMenuPagesTest';
 import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import {notificationPagesTest} from '../../../../fixtures/notificationPagesTest';
@@ -19,20 +20,30 @@ import {usersAndOrganizationsPagesTest} from '../../../../fixtures/usersAndOrgan
 import {liferayConfig} from '../../../../liferay.config';
 import {getRandomInt} from '../../../../utils/getRandomInt';
 import getRandomString from '../../../../utils/getRandomString';
-import performLogin, {
+import {
 	performLoginViaApi,
 	performLogout,
 	userData,
 } from '../../../../utils/performLogin';
+import {waitForAlert} from '../../../../utils/waitForAlert';
+import getFragmentDefinition from '../../../layout-content-page-editor-web/main/utils/getFragmentDefinition';
 import getPageDefinition from '../../../layout-content-page-editor-web/main/utils/getPageDefinition';
 import getWidgetDefinition from '../../../layout-content-page-editor-web/main/utils/getWidgetDefinition';
-import {miniumSetUp} from '../../utils/commerce';
+import {
+	configureBuyerUserForSite,
+	configureOperationsManagerUserForSite,
+	configureOrderManagerUserForSite,
+	miniumSetUp,
+} from '../../utils/commerce';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
+	globalMenuPagesTest,
 	commercePagesTest,
 	dataApiHelpersTest,
+	displayPageTemplatesPagesTest,
 	featureFlagsTest({
+		'LPD-20379': {enabled: true},
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	isolatedSiteTest,
@@ -191,89 +202,102 @@ test(
 	}
 );
 
-test('LPD-13627 Edit pending order item with UOM', async ({
-	apiHelpers,
-	commerceAdminChannelsPage,
-	page,
-	pendingOrdersPage,
-	site,
-	widgetPagePage,
-}) => {
-	const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
-		groupId: site.id,
-		title: getRandomString(),
-	});
+test(
+	'Edit pending order item with UOM',
+	{tag: '@LPD-13627'},
+	async ({
+		apiHelpers,
+		commerceAdminChannelsPage,
+		page,
+		pendingOrdersPage,
+		site,
+		widgetPagePage,
+	}) => {
+		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			title: getRandomString(),
+		});
 
-	const channel = await apiHelpers.headlessCommerceAdminChannel.postChannel({
-		siteGroupId: site.id,
-	});
+		const channel =
+			await apiHelpers.headlessCommerceAdminChannel.postChannel({
+				siteGroupId: site.id,
+			});
 
-	await commerceAdminChannelsPage.changeCommerceChannelSiteType(
-		channel.name,
-		'B2C'
-	);
-
-	const catalog = await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
-		name: 'Edit pending order Catalog',
-	});
-
-	const product1 = await apiHelpers.headlessCommerceAdminCatalog.postProduct({
-		catalogId: catalog.id,
-		name: {en_US: 'Product1'},
-	});
-
-	const sku1 = product1.skus[0];
-
-	const uom1 =
-		await apiHelpers.headlessCommerceAdminCatalog.postSkuUnitOfMeasure(
-			sku1.id,
-			{
-				incrementalOrderQuantity: 3,
-				name: {en_US: 'Box'},
-				primary: true,
-				priority: 1,
-				rate: 1,
-			}
+		await commerceAdminChannelsPage.changeCommerceChannelSiteType(
+			channel.name,
+			'B2C'
 		);
 
-	const account = await apiHelpers.headlessAdminUser.postAccount({
-		name: getRandomString(),
-		type: 'person',
-	});
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
+				name: getRandomString(),
+			});
 
-	await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
-		account.id,
-		['test@liferay.com']
-	);
+		const product1 =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+				name: {en_US: getRandomString()},
+			});
 
-	await apiHelpers.headlessCommerceDeliveryCart.postCart(
-		{
-			accountId: account.id,
-			cartItems: [
+		const sku1 = product1.skus[0];
+
+		const uom1 =
+			await apiHelpers.headlessCommerceAdminCatalog.postSkuUnitOfMeasure(
+				sku1.id,
 				{
-					options: '[]',
-					quantity: 3,
-					replacedSkuId: 0,
-					skuId: sku1.id,
-					skuUnitOfMeasure: {key: uom1.key},
-				},
-			],
-		},
-		channel.id
-	);
+					incrementalOrderQuantity: 3,
+					name: {en_US: 'Box'},
+					primary: true,
+					priority: 1,
+					rate: 1,
+				}
+			);
 
-	await page.waitForLoadState('networkidle');
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			name: getRandomString(),
+			type: 'person',
+		});
 
-	await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account.id,
+			['test@liferay.com']
+		);
 
-	await widgetPagePage.addPortlet('Open Carts');
+		await apiHelpers.headlessCommerceDeliveryCart.postCart(
+			{
+				accountId: account.id,
+				cartItems: [
+					{
+						options: '[]',
+						quantity: 3,
+						replacedSkuId: 0,
+						skuId: sku1.id,
+						skuUnitOfMeasure: {key: uom1.key},
+					},
+				],
+			},
+			channel.id
+		);
 
-	await pendingOrdersPage.viewButton.click();
+		await page.waitForLoadState('networkidle');
 
-	await pendingOrdersPage.orderItemActionsButton.click();
+		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
 
-	await expect(pendingOrdersPage.orderItemActionsButtonEdit).toBeVisible();
-});
+		await widgetPagePage.addPortlet('Open Carts');
+
+		await pendingOrdersPage.viewButton.click();
+
+		await (
+			await pendingOrdersPage.orderItemsTableRowLink(
+				product1.name['en_US']
+			)
+		).click();
+
+		await expect(
+			pendingOrdersPage.orderItemActionsButtonEdit
+		).toBeVisible();
+	}
+);
 
 test('LPD-13627 Edit pending order item without UOM', async ({
 	apiHelpers,
@@ -354,9 +378,9 @@ test('LPD-13627 Edit pending order item without UOM', async ({
 
 test('LPD-4174 Sales agent can receive email notifications for new orders placed to their accounts', async ({
 	apiHelpers,
-	applicationsMenuPage,
 	checkoutPage,
 	commerceMiniCartPage,
+	globalMenuPage,
 	page,
 	queuePage,
 }) => {
@@ -444,7 +468,7 @@ test('LPD-4174 Sales agent can receive email notifications for new orders placed
 		type: 'objectAction',
 	});
 
-	await applicationsMenuPage.goToSite(site.name);
+	await globalMenuPage.goToSite(site.name);
 
 	try {
 		await commerceMiniCartPage.miniCartButton.waitFor();
@@ -466,7 +490,7 @@ test('LPD-4174 Sales agent can receive email notifications for new orders placed
 
 		await expect(checkoutPage.orderSuccessMessage).toBeVisible();
 
-		await applicationsMenuPage.goToQueue();
+		await globalMenuPage.goToControlPanel('Queue');
 
 		await expect(queuePage.pageTitle).toBeVisible();
 		await expect(
@@ -580,119 +604,125 @@ test(
 	}
 );
 
-test('LPD-28683 When clicking on order item without visibility the user is not redirected to the catalog page', async ({
-	apiHelpers,
-	commerceMiniCartPage,
-	commerceThemeMiniumPage,
-	page,
-	pendingOrdersPage,
-}) => {
-	const account = await apiHelpers.headlessAdminUser.postAccount({
-		name: getRandomString(),
-		type: 'business',
-	});
+test(
+	'When clicking on order item without visibility the user is not redirected to the catalog page',
+	{tag: '@LPD-28683'},
+	async ({
+		apiHelpers,
+		commerceMiniCartPage,
+		commerceThemeMiniumPage,
+		page,
+		pendingOrdersPage,
+	}) => {
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			name: getRandomString(),
+			type: 'business',
+		});
 
-	const {site} = await miniumSetUp(apiHelpers);
+		const {site} = await miniumSetUp(apiHelpers);
 
-	const accountGroup = await apiHelpers.headlessAdminUser.postAccountGroup({
-		name: 'AG1',
-	});
+		const accountGroup =
+			await apiHelpers.headlessAdminUser.postAccountGroup({
+				name: 'AG1',
+			});
 
-	apiHelpers.data.push({id: accountGroup.id, type: 'accountGroup'});
+		apiHelpers.data.push({id: accountGroup.id, type: 'accountGroup'});
 
-	await apiHelpers.headlessAdminUser.assignAccountToAccountGroup(
-		account.externalReferenceCode,
-		accountGroup.externalReferenceCode
-	);
-
-	await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
-		account.id,
-		['demo.unprivileged@liferay.com']
-	);
-
-	const user =
-		await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
-			'demo.unprivileged@liferay.com'
+		await apiHelpers.headlessAdminUser.assignAccountToAccountGroup(
+			account.externalReferenceCode,
+			accountGroup.externalReferenceCode
+		);
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account.id,
+			['demo.unprivileged@liferay.com']
 		);
 
-	const rolesResponse = await apiHelpers.headlessAdminUser.getAccountRoles(
-		account.id
-	);
+		const user =
+			await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
+				'demo.unprivileged@liferay.com'
+			);
 
-	const accountRoleBuyer = rolesResponse?.items?.filter((role) => {
-		return role.name === 'Buyer';
-	});
+		const rolesResponse =
+			await apiHelpers.headlessAdminUser.getAccountRoles(account.id);
 
-	await apiHelpers.headlessAdminUser.assignAccountRoles(
-		account.externalReferenceCode,
-		accountRoleBuyer[0].id,
-		user.emailAddress
-	);
+		const accountRoleBuyer = rolesResponse?.items?.filter((role) => {
+			return role.name === 'Buyer';
+		});
 
-	const product = await apiHelpers.headlessCommerceAdminCatalog.getProducts(
-		new URLSearchParams({
-			filter: `name eq 'U-Joint'`,
-			nestedFields: `productSkus`,
-		})
-	);
-
-	await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
-		product.items[0].productId,
-		{
-			productAccountGroupFilter: true,
-			productAccountGroups: [
-				{
-					accountGroupId: accountGroup.id,
-				},
-			],
-		}
-	);
-
-	const productAccountGroups =
-		await apiHelpers.headlessCommerceAdminCatalog.getProductAccountGroups(
-			product.items[0].productId
+		await apiHelpers.headlessAdminUser.assignAccountRoles(
+			account.externalReferenceCode,
+			accountRoleBuyer[0].id,
+			user.emailAddress
 		);
 
-	const siteRole =
-		await apiHelpers.headlessAdminUser.getRoleByName('Site Member');
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.getProducts(
+				new URLSearchParams({
+					filter: `name eq 'U-Joint'`,
+					nestedFields: `productSkus`,
+				})
+			);
 
-	await apiHelpers.headlessAdminUser.assignUserToSite(
-		siteRole.id,
-		site.id,
-		user.id
-	);
+		await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
+			product.items[0].productId,
+			{
+				productAccountGroupFilter: true,
+				productAccountGroups: [
+					{
+						accountGroupId: accountGroup.id,
+					},
+				],
+			}
+		);
 
-	await performLogout(page);
-	await performLoginViaApi({page, screenName: user.alternateName});
+		const productAccountGroups =
+			await apiHelpers.headlessCommerceAdminCatalog.getProductAccountGroups(
+				product.items[0].productId
+			);
 
-	await page.goto(`/web/${site.name}`, {waitUntil: 'networkidle'});
+		const siteRole =
+			await apiHelpers.headlessAdminUser.getRoleByName('Site Member');
 
-	await commerceMiniCartPage.quickAddToCart(product.items[0].skuFormatted);
+		await apiHelpers.headlessAdminUser.assignUserToSite(
+			siteRole.id,
+			site.id,
+			user.id
+		);
 
-	await expect(
-		await commerceMiniCartPage.priceField(
-			'$ 24.00',
-			commerceMiniCartPage.miniCartItemsContainer
-		)
-	).toBeVisible();
+		await performLogout(page);
+		await performLoginViaApi({page, screenName: user.alternateName});
 
-	await apiHelpers.headlessCommerceAdminCatalog.deleteProductAccountGroup(
-		productAccountGroups.items[0].id
-	);
+		await page.goto(`/web/${site.name}`, {waitUntil: 'networkidle'});
 
-	await commerceMiniCartPage.viewDetailsButton.click();
+		await commerceMiniCartPage.quickAddToCart(
+			product.items[0].skuFormatted
+		);
 
-	await expect(
-		page.getByText('One or more products are no longer available.')
-	).toBeVisible();
+		await expect(
+			await commerceMiniCartPage.priceField(
+				'$ 24.00',
+				commerceMiniCartPage.miniCartItemsContainer
+			)
+		).toBeVisible();
 
-	await pendingOrdersPage.errorMessageCloseButton.click();
-	await pendingOrdersPage.skuLink(product.items[0].skuFormatted).click();
+		await apiHelpers.headlessCommerceAdminCatalog.deleteProductAccountGroup(
+			productAccountGroups.items[0].id
+		);
 
-	await expect(
-		await commerceThemeMiniumPage.goToMiniumLink(site.name)
-	).toBeVisible();
-});
+		await commerceMiniCartPage.viewDetailsButton.click();
+
+		await expect(
+			page.getByText('One or more products are no longer available.')
+		).toBeVisible();
+
+		await pendingOrdersPage.errorMessageCloseButton.click();
+		await pendingOrdersPage.skuLink(product.items[0].skuFormatted).click();
+
+		await expect(
+			await commerceThemeMiniumPage.goToMiniumLink(site.name)
+		).toBeVisible();
+	}
+);
 
 test('LPD-26906 As a buyer, I can edit product options from the pending orders page', async ({
 	apiHelpers,
@@ -1059,128 +1089,236 @@ test('LPD-33783 Pending orders table displays correct fields', async ({
 	});
 });
 
-test('LPD-3440 As a order manager with buyer approval workflow, I can approve orders on pending orders page', async ({
-	apiHelpers,
-	commerceAdminChannelDetailsPage,
-	commerceAdminChannelsPage,
-	commerceLayoutsPage,
-	commerceMiniCartPage,
-	page,
-	pendingOrdersPage,
-}) => {
-	const {channel, site} = await miniumSetUp(apiHelpers);
+test(
+	'As a order manager with buyer approval workflow, I can manage order workflow status',
+	{tag: ['@LPD-3440', '@LPD-70123']},
+	async ({
+		apiHelpers,
+		commerceAdminChannelsPage,
+		commerceLayoutsPage,
+		commerceMiniCartPage,
+		commerceThemeMiniumCatalogPage,
+		page,
+		pendingOrdersPage,
+	}) => {
+		let account;
+		let channel;
+		let orderManagerUser;
+		let orderId;
+		let productName;
+		let site;
 
-	const account = await apiHelpers.headlessAdminUser.postAccount({
-		name: getRandomString(),
-		type: 'business',
-	});
+		await test.step('Create a Commerce Minium site', async () => {
+			const {channel: channelSetup, site: siteSetup} =
+				await miniumSetUp(apiHelpers);
 
-	const user =
-		await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
-			'demo.unprivileged@liferay.com'
-		);
-	const rolesResponse = await apiHelpers.headlessAdminUser.getAccountRoles(
-		account.id
-	);
-
-	const accountRoleOrderManager = rolesResponse?.items?.filter((role) => {
-		return role.name === 'Order Manager';
-	});
-
-	await apiHelpers.headlessAdminUser.assignAccountRoles(
-		account.externalReferenceCode,
-		accountRoleOrderManager[0].id,
-		user.emailAddress
-	);
-	await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
-		account.id,
-		['demo.unprivileged@liferay.com']
-	);
-	const siteRole =
-		await apiHelpers.headlessAdminUser.getRoleByName('Site Member');
-	await apiHelpers.headlessAdminUser.assignUserToSite(
-		siteRole.id,
-		site.id,
-		user.id
-	);
-
-	await commerceAdminChannelsPage.changeCommerceChannelBuyerOrderApprovalWorkflow(
-		'Single Approver (Version 1)',
-		channel.name
-	);
-
-	await (
-		await commerceAdminChannelDetailsPage.commerceChannelHealthChecksTableRowAction(
-			'Fix Issue',
-			'Commerce Cart'
-		)
-	).click();
-
-	const product = await apiHelpers.headlessCommerceAdminCatalog.getProducts(
-		new URLSearchParams({
-			filter: `name eq 'Abs Sensor'`,
-		})
-	);
-
-	const productId = product.items[0].productId;
-
-	const productSkus = await apiHelpers.headlessCommerceAdminCatalog
-		.getProduct(productId)
-		.then((product) => {
-			return product.skus;
+			channel = channelSetup;
+			site = siteSetup;
 		});
 
-	const sku = productSkus[0];
+		await test.step('Create a business account, a buyer user and an order manager user and assign them to the site', async () => {
+			account = await apiHelpers.headlessAdminUser.postAccount({
+				name: getRandomString(),
+				type: 'business',
+			});
 
-	const phoneNumber = '12345';
+			await configureBuyerUserForSite(
+				account,
+				apiHelpers,
+				site,
+				'demo.unprivileged@liferay.com'
+			);
 
-	const address = await apiHelpers.headlessCommerceAdminAccount.postAddress(
-		account.id,
-		{phoneNumber, regionISOCode: 'AL'}
-	);
+			const rolesResponse =
+				await apiHelpers.headlessAdminUser.getAccountRoles(account.id);
+			const accountRoleOrderManager = rolesResponse?.items?.filter(
+				(role) => {
+					return role.name === 'Order Manager';
+				}
+			);
 
-	await apiHelpers.headlessCommerceDeliveryCart.postCart(
-		{
-			accountId: account.id,
-			billingAddressId: address.id,
-			cartItems: [
-				{
-					options: '[]',
-					quantity: 1,
-					replacedSkuId: 0,
-					skuId: sku.id,
-				},
-			],
-			shippingAddressId: address.id,
-			shippingMethod: 'fixed',
-		},
-		channel.id
-	);
+			orderManagerUser =
+				await apiHelpers.headlessAdminUser.postUserAccount();
 
-	await page.goto(`/web/${site.name}`);
+			userData[orderManagerUser.alternateName] = {
+				name: orderManagerUser.givenName,
+				password: 'test',
+				surname: orderManagerUser.familyName,
+			};
 
-	await commerceMiniCartPage.miniCartButton.waitFor();
-	await commerceMiniCartPage.miniCartButton.click();
-	await commerceMiniCartPage.reviewOrderButton.waitFor();
-	await commerceMiniCartPage.reviewOrderButton.click();
-	await commerceMiniCartPage.submitButton.click();
+			await apiHelpers.headlessAdminUser.assignAccountRoles(
+				account.externalReferenceCode,
+				accountRoleOrderManager[0].id,
+				orderManagerUser.emailAddress
+			);
 
-	await expect(commerceMiniCartPage.submitButton).toBeHidden();
+			await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+				account.id,
+				[orderManagerUser.emailAddress]
+			);
 
-	await performLogout(page);
+			const siteRole =
+				await apiHelpers.headlessAdminUser.getRoleByName('Site Member');
+			await apiHelpers.headlessAdminUser.assignUserToSite(
+				siteRole.id,
+				site.id,
+				orderManagerUser.id
+			);
+		});
 
-	await performLogin(page, 'demo.unprivileged');
+		await test.step('Change commerce channel buyer order approval workflow and create an order', async () => {
+			await commerceAdminChannelsPage.changeCommerceChannelBuyerOrderApprovalWorkflow(
+				'Single Approver (Version 1)',
+				channel.name
+			);
 
-	await page.goto(`/web/${site.name}`);
+			const product = (
+				await apiHelpers.headlessCommerceAdminCatalog.getProducts(
+					new URLSearchParams({
+						filter: `name eq 'U-Joint'`,
+					})
+				)
+			).items[0];
 
-	await commerceLayoutsPage.pendingOrdersLink.click();
+			productName = product.name['en_US'];
+		});
 
-	await pendingOrdersPage.viewButton.click();
-	await pendingOrdersPage.approveButton.click();
-	await pendingOrdersPage.doneButton.click();
+		await test.step('As a Buyer submit the order', async () => {
+			await performLogout(page);
+			await performLoginViaApi({
+				page,
+				screenName: 'demo.unprivileged',
+			});
 
-	await expect(pendingOrdersPage.checkoutButton).toBeVisible();
-});
+			await page.goto(`/web/${site.name}`, {
+				waitUntil: 'networkidle',
+			});
+
+			await commerceThemeMiniumCatalogPage
+				.productCardAddToCartButton(productName)
+				.click();
+
+			await expect(commerceMiniCartPage.miniCartButton).toHaveClass(
+				'has-badge mini-cart-opener'
+			);
+
+			orderId = await commerceThemeMiniumCatalogPage.accountSelectorButton
+				.locator('.order-id')
+				.textContent();
+
+			apiHelpers.data.push({id: Number(orderId), type: 'order'});
+
+			await expect(
+				commerceThemeMiniumCatalogPage.accountSelectorOrderWorkflowStatus
+			).toContainText('Draft');
+
+			await commerceMiniCartPage.miniCartButton.click();
+
+			await expect(
+				commerceMiniCartPage.miniCartItem(productName)
+			).toBeVisible();
+
+			await commerceMiniCartPage.reviewOrderButton.click();
+
+			await expect(
+				await pendingOrdersPage.orderItemsTableRowLink(productName)
+			).toBeVisible();
+
+			await commerceMiniCartPage.submitButton.click();
+
+			await expect(
+				commerceThemeMiniumCatalogPage.accountSelectorOrderWorkflowStatus
+			).toContainText('Pending');
+		});
+
+		await test.step('As a Order Manager reject the order', async () => {
+			await performLogout(page);
+			await performLoginViaApi({
+				page,
+				screenName: orderManagerUser.alternateName,
+			});
+
+			await page.goto(`/web/${site.name}`, {
+				waitUntil: 'networkidle',
+			});
+
+			await commerceLayoutsPage.pendingOrdersLink.click();
+
+			await pendingOrdersPage.viewButton.click();
+
+			await expect(
+				await pendingOrdersPage.orderItemsTableRowLink(productName)
+			).toBeVisible();
+
+			await expect(pendingOrdersPage.saveButton).toBeVisible();
+			await expect(pendingOrdersPage.approveButton).toBeVisible();
+			await expect(pendingOrdersPage.rejectButton).toBeVisible();
+
+			await pendingOrdersPage.rejectButton.click();
+			await pendingOrdersPage.doneButton.click();
+
+			await expect(
+				commerceThemeMiniumCatalogPage.accountSelectorOrderWorkflowStatus
+			).toContainText('Pending');
+		});
+
+		await test.step('As a Buyer re-submit the order', async () => {
+			await performLogout(page);
+			await performLoginViaApi({
+				page,
+				screenName: 'demo.unprivileged',
+			});
+
+			await page.goto(`/web/${site.name}/pending-orders`, {
+				waitUntil: 'networkidle',
+			});
+
+			await pendingOrdersPage.viewButton.click();
+
+			await expect(
+				await pendingOrdersPage.orderItemsTableRowLink(productName)
+			).toBeVisible();
+
+			await commerceMiniCartPage.resubmitButton.click();
+			await pendingOrdersPage.doneButton.click();
+
+			await expect(
+				commerceThemeMiniumCatalogPage.accountSelectorOrderWorkflowStatus
+			).toContainText('Pending');
+		});
+
+		await test.step('As a Order Manager approve the order', async () => {
+			await performLogout(page);
+			await performLoginViaApi({
+				page,
+				screenName: orderManagerUser.alternateName,
+			});
+
+			await page.goto(`/web/${site.name}`, {
+				waitUntil: 'networkidle',
+			});
+
+			await commerceLayoutsPage.pendingOrdersLink.click();
+
+			await pendingOrdersPage.viewButton.click();
+
+			await expect(
+				await pendingOrdersPage.orderItemsTableRowLink(productName)
+			).toBeVisible();
+
+			await expect(pendingOrdersPage.saveButton).toBeVisible();
+			await expect(pendingOrdersPage.approveButton).toBeVisible();
+			await expect(pendingOrdersPage.rejectButton).toBeVisible();
+
+			await pendingOrdersPage.approveButton.click();
+			await pendingOrdersPage.doneButton.click();
+
+			await expect(
+				commerceThemeMiniumCatalogPage.accountSelectorOrderWorkflowStatus
+			).toContainText('Approved');
+		});
+	}
+);
 
 test(
 	'Can sort orders by create date',
@@ -1321,5 +1459,828 @@ test(
 				new Date(date2).getTime()
 			);
 		}).toPass();
+	}
+);
+
+test(
+	'Creating new orders with specific order rules and order types will trigger correct warnings',
+	{tag: '@LPD-71058'},
+	async ({
+		apiHelpers,
+		commerceAdminChannelsPage,
+		commerceLayoutsPage,
+		page,
+		pendingOrdersPage,
+		site,
+	}) => {
+		await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getFragmentDefinition({
+					id: getRandomString(),
+					key: 'COMMERCE_ACCOUNT_FRAGMENTS-account-selector',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_commerce_order_content_web_internal_portlet_CommerceOpenOrderContentPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const channel =
+			await apiHelpers.headlessCommerceAdminChannel.postChannel({
+				siteGroupId: site.id,
+			});
+
+		await commerceAdminChannelsPage.changeCommerceChannelSiteType(
+			channel.name,
+			'B2B'
+		);
+
+		const orderRuleOrderType1 =
+			await pendingOrdersPage.addOrderRuleOrderType(apiHelpers, 50);
+		const orderRuleOrderType2 =
+			await pendingOrdersPage.addOrderRuleOrderType(apiHelpers, 100);
+
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			name: getRandomString(),
+			type: 'business',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account.id,
+			['test@liferay.com']
+		);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await page.waitForLoadState('networkidle');
+
+		await commerceLayoutsPage.addOrderButton.click();
+		await commerceLayoutsPage.orderTypeModalInput.selectOption({
+			label: orderRuleOrderType1.orderType.name['en_US'],
+		});
+		await commerceLayoutsPage.orderTypeModalButton.click();
+
+		await expect(
+			await page.getByText('The minimum order amount is $ 50.00.')
+		).toBeVisible();
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await page.waitForLoadState('networkidle');
+
+		await commerceLayoutsPage.addOrderButton.click();
+		await commerceLayoutsPage.orderTypeModalInput.selectOption({
+			label: orderRuleOrderType2.orderType.name['en_US'],
+		});
+		await commerceLayoutsPage.orderTypeModalButton.click();
+
+		await expect(
+			await page.getByText('The minimum order amount is $ 100.00.')
+		).toBeVisible();
+	}
+);
+
+test(
+	'Request Quote in the mini cart should redirect to Orders page and allow quote processing',
+	{tag: ['@COMMERCE-11507', '@LPD-70003']},
+	async ({
+		apiHelpers,
+		commerceAdminChannelDetailsPage,
+		commerceAdminChannelsPage,
+		commerceAdminOrdersPage,
+		commerceCartSummaryPage,
+		commerceLayoutsPage,
+		commerceMiniCartPage,
+		displayPageTemplatesPage,
+		page,
+		pageEditorPage,
+		site,
+	}) => {
+		let account;
+		let buyerUser;
+		let cart;
+		let channel;
+		let operationsManagerUser;
+		let product;
+
+		await test.step('Create an account, channel and catalog', async () => {
+			account = await apiHelpers.headlessAdminUser.postAccount({
+				name: getRandomString(),
+				type: 'business',
+			});
+
+			buyerUser = await configureBuyerUserForSite(
+				account,
+				apiHelpers,
+				site,
+				'demo.unprivileged@liferay.com'
+			);
+
+			const companyId = await page.evaluate(() => {
+				return Liferay.ThemeDisplay.getCompanyId();
+			});
+			operationsManagerUser = await configureOperationsManagerUserForSite(
+				account,
+				apiHelpers,
+				companyId,
+				site,
+				[
+					{
+						actionIds: ['MANAGE_QUOTES'],
+						primaryKey: companyId,
+						resourceName: 'com.liferay.commerce.order',
+						scope: 1,
+					},
+				]
+			);
+
+			channel = await apiHelpers.headlessCommerceAdminChannel.postChannel(
+				{
+					siteGroupId: site.id,
+				}
+			);
+
+			await commerceAdminChannelsPage.changeCommerceChannelSiteType(
+				channel.name,
+				'B2B'
+			);
+
+			await commerceAdminChannelDetailsPage.allowRequestAQuote.click();
+
+			await commerceAdminChannelDetailsPage.saveButton.click();
+
+			const catalog =
+				await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
+					name: 'Catalog_' + getRandomString(),
+				});
+
+			product = await apiHelpers.headlessCommerceAdminCatalog.postProduct(
+				{
+					catalogId: catalog.id,
+					name: {en_US: 'Product1'},
+				}
+			);
+
+			const basePriceListId =
+				await apiHelpers.headlessCommerceAdminPricing.getBasePriceListId(
+					catalog.id
+				);
+
+			await apiHelpers.headlessCommerceAdminPricing.postPriceEntry({
+				price: 15,
+				priceListId: basePriceListId.items[0].id,
+				priceOnApplication: true,
+				skuId: product.skus[0].id,
+			});
+		});
+
+		await test.step('Setup Product and Order Details pages', async () => {
+			await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					getWidgetDefinition({
+						id: getRandomString(),
+						widgetName:
+							'com_liferay_commerce_product_content_web_internal_portlet_CPContentPortlet',
+					}),
+					getFragmentDefinition({
+						id: getRandomString(),
+						key: 'COMMERCE_CART_FRAGMENTS-mini-cart',
+					}),
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					getWidgetDefinition({
+						id: getRandomString(),
+						widgetName:
+							'com_liferay_commerce_checkout_web_internal_portlet_CommerceCheckoutPortlet',
+					}),
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await displayPageTemplatesPage.goto(site.friendlyUrlPath);
+
+			const displayPageTemplateName = getRandomString();
+
+			await displayPageTemplatesPage.createTemplate({
+				contentType: 'Order',
+				name: displayPageTemplateName,
+			});
+
+			await displayPageTemplatesPage.editTemplate(
+				displayPageTemplateName
+			);
+
+			await pageEditorPage.addFragment('Order', 'Order Actions');
+
+			await expect(
+				page.getByText(
+					'The order actions component will be shown here.'
+				)
+			).toBeVisible();
+
+			await pageEditorPage.addFragment('Order', 'Order Status Label');
+
+			await expect(
+				page.getByText(
+					'The order status label component will appear here.'
+				)
+			).toBeVisible();
+
+			await pageEditorPage.waitForChangesSaved();
+
+			await displayPageTemplatesPage.publishTemplate();
+			await displayPageTemplatesPage.clickMoreActions(
+				displayPageTemplateName,
+				'Mark as Default'
+			);
+
+			await expect(
+				commerceLayoutsPage.defaultDisplayPageTemplateIcon
+			).toBeVisible();
+		});
+
+		await test.step('As a Buyer, create a new quote from Order Details page', async () => {
+			await performLogout(page);
+			await performLoginViaApi({
+				page,
+				screenName: buyerUser.alternateName,
+			});
+
+			await page.goto(`/web/${site.name}/p/${product.name['en_US']}`, {
+				waitUntil: 'networkidle',
+			});
+
+			cart = await apiHelpers.headlessCommerceDeliveryCart.postCart(
+				{
+					accountId: account.id,
+					cartItems: [
+						{
+							quantity: 1,
+							skuId: product.skus[0].id,
+						},
+					],
+					currencyCode: 'USD',
+				},
+				channel.id
+			);
+
+			await page.reload();
+
+			await expect(commerceMiniCartPage.miniCartButton).toHaveClass(
+				'has-badge mini-cart-opener'
+			);
+
+			await commerceMiniCartPage.miniCartButton.click();
+			await commerceMiniCartPage.requestAQuoteButton.click();
+			await commerceCartSummaryPage.requestAQuoteButton.click();
+			await commerceCartSummaryPage.requestAQuoteModal.isVisible();
+
+			await expect(page.getByPlaceholder('Email Address')).toHaveValue(
+				buyerUser.emailAddress
+			);
+
+			await commerceCartSummaryPage.requestAQuoteModalSubmit.click();
+
+			await expect(
+				page.getByText('Quote Requested', {exact: true})
+			).toBeVisible();
+		});
+
+		await test.step('As an Operations Manager, process a quote', async () => {
+			await performLogout(page);
+			await performLoginViaApi({
+				page,
+				screenName: operationsManagerUser.alternateName,
+			});
+
+			await commerceAdminOrdersPage.goto();
+
+			const orderLink = await commerceAdminOrdersPage.tableRowLink({
+				colIndex: 1,
+				rowValue: cart.id,
+			});
+			await expect(orderLink).toBeVisible();
+			await orderLink.click();
+
+			await expect(
+				commerceAdminOrdersPage.quoteProcessedButton
+			).toBeVisible();
+
+			await commerceAdminOrdersPage.quoteProcessedButton.click();
+
+			const quoteStep = page.locator('.step-tracker .step:last-child');
+
+			expect(await quoteStep.textContent()).toEqual('Quote Processed');
+			await expect(quoteStep).toHaveClass('step completed');
+		});
+
+		try {
+			await test.step('As a Buyer, create a new order from the newly processed quote', async () => {
+				await performLogout(page);
+				await performLoginViaApi({
+					page,
+					screenName: buyerUser.alternateName,
+				});
+
+				await page.goto(`/web/${site.name}/order/${cart.id}`, {
+					waitUntil: 'networkidle',
+				});
+
+				await expect(
+					commerceLayoutsPage.orderActionsButton('Reorder')
+				).toBeVisible();
+				await commerceLayoutsPage.orderActionsButton('Reorder').click();
+
+				await expect(page).not.toHaveURL(`order/${cart.id}`);
+
+				await expect(
+					commerceLayoutsPage.orderActionsButton('Request a Quote')
+				).toBeVisible();
+			});
+		}
+		finally {
+			await performLogout(page);
+			await performLoginViaApi({page, screenName: 'test'});
+
+			const orders =
+				await apiHelpers.headlessCommerceAdminOrder.getOrdersPage();
+
+			if (orders && orders.items) {
+				for (const order of orders.items) {
+					apiHelpers.data.push({
+						id: order.id,
+						type: 'order',
+					});
+				}
+			}
+		}
+	}
+);
+
+test(
+	'User notification is sent when an order note is added',
+	{tag: ['@LPD-77313', '@LPD-77315']},
+	async ({
+		apiHelpers,
+		commerceAdminChannelsPage,
+		commerceLayoutsPage,
+		displayPageTemplatesPage,
+		page,
+		pageEditorPage,
+		site,
+		userPersonalBarPage,
+	}) => {
+		let orderId;
+		let orderNote;
+
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			name: getRandomString(),
+			type: 'business',
+		});
+
+		const buyerUser1 = await configureBuyerUserForSite(
+			account,
+			apiHelpers,
+			site,
+			'demo.unprivileged@liferay.com'
+		);
+
+		const user1 = await apiHelpers.headlessAdminUser.postUserAccount();
+		const user2 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		const buyerUser2 = await configureBuyerUserForSite(
+			account,
+			apiHelpers,
+			site,
+			user1.emailAddress
+		);
+
+		const orderManagerUser = await configureOrderManagerUserForSite(
+			account,
+			apiHelpers,
+			true,
+			site,
+			user2.emailAddress
+		);
+
+		const channel =
+			await apiHelpers.headlessCommerceAdminChannel.postChannel({
+				siteGroupId: site.id,
+			});
+
+		await commerceAdminChannelsPage.changeCommerceChannelSiteType(
+			channel.name,
+			'B2B'
+		);
+
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
+				name: 'Catalog_' + getRandomString(),
+			});
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+			});
+
+		const productSkus = await apiHelpers.headlessCommerceAdminCatalog
+			.getProduct(product.productId)
+			.then((product) => {
+				return product.skus;
+			});
+
+		const sku = productSkus[0];
+
+		await test.step('Create an object action using a user notification template', async () => {
+			const notificationTemplate =
+				await apiHelpers.notification.postNotificationTemplate({
+					editorType: 'richText',
+					name: 'Commerce Order Note Template',
+					recipientType: 'term',
+					recipients: [
+						{
+							term: '[%COMMERCEORDERNOTE_RECIPIENT_IDS%]',
+						},
+					],
+					subject: {
+						en_US: '[%COMMERCEORDERNOTE_ORDERID%]',
+					},
+					type: 'userNotification',
+				});
+
+			apiHelpers.data.push({
+				id: notificationTemplate.id,
+				type: 'notificationTemplate',
+			});
+
+			const objectActionAPIClient =
+				await apiHelpers.buildRestClient(ObjectActionAPI);
+
+			const {body: objectAction} =
+				await objectActionAPIClient.postObjectDefinitionByExternalReferenceCodeObjectAction(
+					'L_COMMERCE_ORDER_NOTE',
+					{
+						active: true,
+						label: {
+							en_US: 'commerceOrderNoteOnAfterAdd',
+						},
+						name: 'commerceOrderNoteOnAfterAdd',
+						objectActionExecutorKey: 'notification',
+						objectActionTriggerKey: 'onAfterAdd',
+						parameters: {
+							notificationTemplateId: notificationTemplate.id,
+							type: 'userNotification',
+						},
+					}
+				);
+
+			apiHelpers.data.push({
+				id: objectAction.id,
+				type: 'objectAction',
+			});
+		});
+
+		await test.step('Create an order display page template and a default layout', async () => {
+			await displayPageTemplatesPage.goto(site.friendlyUrlPath);
+
+			const displayPageTemplateName = getRandomString();
+
+			await displayPageTemplatesPage.createTemplate({
+				contentType: 'Order',
+				name: displayPageTemplateName,
+			});
+
+			await displayPageTemplatesPage.editTemplate(
+				displayPageTemplateName
+			);
+
+			await pageEditorPage.addFragment('Basic Components', 'Heading');
+			await pageEditorPage.waitForChangesSaved();
+
+			await displayPageTemplatesPage.publishTemplate();
+			await displayPageTemplatesPage.clickMoreActions(
+				displayPageTemplateName,
+				'Mark as Default'
+			);
+
+			await expect(
+				commerceLayoutsPage.defaultDisplayPageTemplateIcon
+			).toBeVisible();
+
+			await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					getWidgetDefinition({
+						id: getRandomString(),
+						widgetName:
+							'com_liferay_commerce_order_content_web_internal_portlet_CommerceOpenOrderContentPortlet',
+					}),
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+		});
+
+		await test.step('Create an order', async () => {
+			const address =
+				await apiHelpers.headlessCommerceAdminAccount.postAddress(
+					account.id,
+					{phoneNumber: '12345', regionISOCode: 'AL'}
+				);
+
+			const order = await apiHelpers.headlessCommerceAdminOrder.postOrder(
+				{
+					accountId: account.id,
+					billingAddressId: address.id,
+					channelId: channel.id,
+					orderItems: [
+						{
+							decimalQuantity: 10,
+							quantity: 2,
+							skuId: sku.id,
+						},
+					],
+					orderStatus: '0',
+					paymentStatus: '0',
+					shippingAddressId: address.id,
+				}
+			);
+
+			orderId = order.id;
+		});
+
+		await test.step('Add an order note', async () => {
+			orderNote =
+				await apiHelpers.headlessCommerceAdminOrder.postOrderIdOrderNote(
+					orderId,
+					{restricted: false}
+				);
+		});
+
+		await test.step('As a Buyer1, verify that the notification is delivered', async () => {
+			await performLogout(page);
+
+			await performLoginViaApi({
+				page,
+				screenName: buyerUser1.alternateName,
+			});
+
+			await userPersonalBarPage.notificationBadge.click();
+
+			await expect(page.getByText(orderId)).toHaveCount(1);
+		});
+
+		await test.step('As a Buyer2, verify that the notification is delivered', async () => {
+			userData[buyerUser2.alternateName] = {
+				name: buyerUser2.givenName,
+				password: 'test',
+				surname: buyerUser2.familyName,
+			};
+
+			await performLogout(page);
+
+			await performLoginViaApi({
+				page,
+				screenName: buyerUser2.alternateName,
+			});
+
+			await userPersonalBarPage.notificationBadge.click();
+
+			await expect(page.getByText(orderId)).toHaveCount(1);
+		});
+
+		await test.step('As a Buyer2, add an order with a note', async () => {
+			const cart = await apiHelpers.headlessCommerceDeliveryCart.postCart(
+				{
+					accountId: account.id,
+					cartItems: [
+						{
+							quantity: 1,
+							skuId: sku.id,
+						},
+					],
+				},
+				channel.id
+			);
+
+			orderId = cart.id;
+
+			orderNote =
+				await apiHelpers.headlessCommerceDeliveryCart.postCartIdCartComment(
+					{restricted: false},
+					cart.id
+				);
+		});
+
+		await test.step('As an Order Manager, verify that the notification is delivered', async () => {
+			userData[orderManagerUser.alternateName] = {
+				name: orderManagerUser.givenName,
+				password: 'test',
+				surname: orderManagerUser.familyName,
+			};
+
+			await performLogout(page);
+
+			await performLoginViaApi({
+				page,
+				screenName: orderManagerUser.alternateName,
+			});
+
+			await userPersonalBarPage.notificationBadge.click();
+
+			await expect(page.getByText(orderId)).toHaveCount(1);
+		});
+
+		await test.step('As an Order Administrator, click on the notification to be redirected to control panel', async () => {
+			await page.getByText(orderId).click();
+
+			await expect(page.getByText(orderNote.content)).toHaveCount(1);
+		});
+
+		await test.step('As an Order Manager, add a restricted note to the order created by Buyer2', async () => {
+			orderNote =
+				await apiHelpers.headlessCommerceAdminOrder.postOrderIdOrderNote(
+					orderId,
+					{restricted: true}
+				);
+		});
+
+		await test.step('As a Buyer1, verify that the notification for the restricted note is not delivered', async () => {
+			await performLogout(page);
+
+			await performLoginViaApi({
+				page,
+				screenName: buyerUser1.alternateName,
+			});
+
+			await userPersonalBarPage.notificationBadge.click();
+
+			await expect(page.getByText(orderId)).toHaveCount(0);
+		});
+
+		await test.step('As a Buyer2, verify that the notification for the restricted note is delivered', async () => {
+			userData[buyerUser2.alternateName] = {
+				name: buyerUser2.givenName,
+				password: 'test',
+				surname: buyerUser2.familyName,
+			};
+
+			await performLogout(page);
+
+			await performLoginViaApi({
+				page,
+				screenName: buyerUser2.alternateName,
+			});
+
+			await userPersonalBarPage.notificationBadge.click();
+
+			await expect(page.getByText(orderId)).toHaveCount(1);
+		});
+
+		await test.step('As a Buyer2, click on the notification to be redirected to the order display page', async () => {
+			await page.getByText(orderId).click();
+
+			await expect(page.getByText('Heading Example')).toBeVisible();
+		});
+	}
+);
+
+test(
+	'Price On Application Order cannot be checked out',
+	{tag: ['@LPD-80337']},
+	async ({
+		apiHelpers,
+		commerceAdminChannelsPage,
+		commerceLayoutsPage,
+		displayPageTemplatesPage,
+		page,
+		pageEditorPage,
+		site,
+	}) => {
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			type: 'person',
+		});
+
+		const channel =
+			await apiHelpers.headlessCommerceAdminChannel.postChannel({
+				siteGroupId: site.id,
+			});
+
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+		await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getFragmentDefinition({
+					id: getRandomString(),
+					key: 'com.liferay.commerce.fragment.internal.renderer.PendingAccountOrdersDataSetFragmentRenderer',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		await displayPageTemplatesPage.goto(site.friendlyUrlPath);
+
+		const displayPageTemplateName = getRandomString();
+
+		await displayPageTemplatesPage.createTemplate({
+			contentType: 'Order',
+			name: displayPageTemplateName,
+		});
+
+		await displayPageTemplatesPage.editTemplate(displayPageTemplateName);
+
+		await pageEditorPage.addFragment('Order', 'Order Actions');
+
+		await expect(
+			page.getByText('The order actions component will be shown here.')
+		).toBeVisible();
+
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+			});
+
+		const basePriceListId =
+			await apiHelpers.headlessCommerceAdminPricing.getBasePriceListId(
+				catalog.id
+			);
+
+		await apiHelpers.headlessCommerceAdminPricing.postPriceEntry({
+			price: 15,
+			priceListId: basePriceListId.items[0].id,
+			priceOnApplication: true,
+			skuId: product.skus[0].id,
+		});
+
+		const cart = await apiHelpers.headlessCommerceDeliveryCart.postCart(
+			{
+				accountId: account.id,
+				cartItems: [
+					{
+						quantity: 1,
+						skuId: product.skus[0].id,
+					},
+				],
+			},
+			channel.id
+		);
+
+		await pageEditorPage.waitForChangesSaved();
+
+		await displayPageTemplatesPage.publishTemplate();
+		await displayPageTemplatesPage.clickMoreActions(
+			displayPageTemplateName,
+			'Mark as Default'
+		);
+
+		await waitForAlert(page);
+
+		await expect(
+			commerceLayoutsPage.defaultDisplayPageTemplateIcon
+		).toBeVisible();
+
+		await commerceAdminChannelsPage.goto();
+		await (
+			await commerceAdminChannelsPage.channelsTableRowLink(channel.name)
+		).click();
+		await commerceAdminChannelsPage
+			.ordersTabToggle('Quick Checkout')
+			.click();
+		await commerceAdminChannelsPage.headerActionsSaveButton.click();
+
+		await waitForAlert(page);
+
+		await page.goto(
+			liferayConfig.environment.baseUrl +
+				`/web/${site.name}/order/${cart.id}`,
+			{waitUntil: 'networkidle'}
+		);
+
+		await expect(
+			commerceLayoutsPage.orderActionsButton('Checkout')
+		).toHaveCount(0);
+		await expect(
+			commerceLayoutsPage.orderActionsButton('Quick Checkout')
+		).toHaveCount(0);
+		await expect(
+			commerceLayoutsPage.orderActionsButton('Request a Quote')
+		).toHaveCount(1);
 	}
 );

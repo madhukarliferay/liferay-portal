@@ -34,10 +34,10 @@ import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.portlet.PortletRequest;
 
@@ -322,7 +322,9 @@ public class JournalArticleUtil {
 			article = journalArticleService.getArticle(
 				groupId, articleId, version);
 
-			if (article.isDraft() && (version == 1.0)) {
+			if (article.isDraft() && (version == 1.0) &&
+				(displayDateYear == 0)) {
+
 				Calendar calendar = CalendarFactoryUtil.getCalendar(
 					serviceContext.getTimeZone());
 

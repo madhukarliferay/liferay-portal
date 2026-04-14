@@ -121,47 +121,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last object entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByUuid_PrevAndNext(
-			long objectEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
 	 * Removes all the object entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last object entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByUuid_C_PrevAndNext(
-			long objectEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
 	 * Removes all the object entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -380,6 +295,51 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 	 * @return the number of matching object entries
 	 */
 	public int countByUuid_C(String uuid, long companyId);
+
+	/**
+	 * Returns the object entry where headObjectEntryId = &#63; or throws a <code>NoSuchObjectEntryException</code> if it could not be found.
+	 *
+	 * @param headObjectEntryId the head object entry ID
+	 * @return the matching object entry
+	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
+	 */
+	public ObjectEntry findByHeadObjectEntryId(long headObjectEntryId)
+		throws NoSuchObjectEntryException;
+
+	/**
+	 * Returns the object entry where headObjectEntryId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param headObjectEntryId the head object entry ID
+	 * @return the matching object entry, or <code>null</code> if a matching object entry could not be found
+	 */
+	public ObjectEntry fetchByHeadObjectEntryId(long headObjectEntryId);
+
+	/**
+	 * Returns the object entry where headObjectEntryId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param headObjectEntryId the head object entry ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching object entry, or <code>null</code> if a matching object entry could not be found
+	 */
+	public ObjectEntry fetchByHeadObjectEntryId(
+		long headObjectEntryId, boolean useFinderCache);
+
+	/**
+	 * Removes the object entry where headObjectEntryId = &#63; from the database.
+	 *
+	 * @param headObjectEntryId the head object entry ID
+	 * @return the object entry that was removed
+	 */
+	public ObjectEntry removeByHeadObjectEntryId(long headObjectEntryId)
+		throws NoSuchObjectEntryException;
+
+	/**
+	 * Returns the number of object entries where headObjectEntryId = &#63;.
+	 *
+	 * @param headObjectEntryId the head object entry ID
+	 * @return the number of matching object entries
+	 */
+	public int countByHeadObjectEntryId(long headObjectEntryId);
 
 	/**
 	 * Returns all the object entries where objectDefinitionId = &#63;.
@@ -468,47 +428,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 		long objectDefinitionId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last object entry in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByObjectDefinitionId_Last(
-			long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByObjectDefinitionId_Last(
-		long objectDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByObjectDefinitionId_PrevAndNext(
-			long objectEntryId, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
 
 	/**
 	 * Removes all the object entries where objectDefinitionId = &#63; from the database.
@@ -618,50 +537,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 		long groupId, long objectDefinitionId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByG_ODI_Last(
-			long groupId, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByG_ODI_Last(
-		long groupId, long objectDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where groupId = &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param groupId the group ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByG_ODI_PrevAndNext(
-			long objectEntryId, long groupId, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
 
 	/**
 	 * Removes all the object entries where groupId = &#63; and objectDefinitionId = &#63; from the database.
@@ -775,50 +650,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and objectEntryFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param objectEntryFolderId the object entry folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByG_OEFI_Last(
-			long groupId, long objectEntryFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and objectEntryFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param objectEntryFolderId the object entry folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByG_OEFI_Last(
-		long groupId, long objectEntryFolderId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where groupId = &#63; and objectEntryFolderId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param groupId the group ID
-	 * @param objectEntryFolderId the object entry folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByG_OEFI_PrevAndNext(
-			long objectEntryId, long groupId, long objectEntryFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
 	 * Removes all the object entries where groupId = &#63; and objectEntryFolderId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -928,50 +759,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 		long userId, long objectDefinitionId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last object entry in the ordered set where userId = &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByU_ODI_Last(
-			long userId, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where userId = &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByU_ODI_Last(
-		long userId, long objectDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where userId = &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param userId the user ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByU_ODI_PrevAndNext(
-			long objectEntryId, long userId, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
 
 	/**
 	 * Removes all the object entries where userId = &#63; and objectDefinitionId = &#63; from the database.
@@ -1085,50 +872,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last object entry in the ordered set where objectDefinitionId = &#63; and status &ne; &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByODI_NotS_Last(
-			long objectDefinitionId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where objectDefinitionId = &#63; and status &ne; &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByODI_NotS_Last(
-		long objectDefinitionId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where objectDefinitionId = &#63; and status &ne; &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param objectDefinitionId the object definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByODI_NotS_PrevAndNext(
-			long objectEntryId, long objectDefinitionId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
 	 * Removes all the object entries where objectDefinitionId = &#63; and status &ne; &#63; from the database.
 	 *
 	 * @param objectDefinitionId the object definition ID
@@ -1238,50 +981,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 		long rootObjectEntryId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last object entry in the ordered set where rootObjectEntryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param rootObjectEntryId the root object entry ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByROEI_NotS_Last(
-			long rootObjectEntryId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where rootObjectEntryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param rootObjectEntryId the root object entry ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByROEI_NotS_Last(
-		long rootObjectEntryId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where rootObjectEntryId = &#63; and status &ne; &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param rootObjectEntryId the root object entry ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByROEI_NotS_PrevAndNext(
-			long objectEntryId, long rootObjectEntryId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
 
 	/**
 	 * Removes all the object entries where rootObjectEntryId = &#63; and status &ne; &#63; from the database.
@@ -1404,54 +1103,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and companyId = &#63; and objectEntryFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param objectEntryFolderId the object entry folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByG_C_OEFI_Last(
-			long groupId, long companyId, long objectEntryFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and companyId = &#63; and objectEntryFolderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param objectEntryFolderId the object entry folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByG_C_OEFI_Last(
-		long groupId, long companyId, long objectEntryFolderId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where groupId = &#63; and companyId = &#63; and objectEntryFolderId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param objectEntryFolderId the object entry folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByG_C_OEFI_PrevAndNext(
-			long objectEntryId, long groupId, long companyId,
-			long objectEntryFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
 	 * Removes all the object entries where groupId = &#63; and companyId = &#63; and objectEntryFolderId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1571,54 +1222,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 		long groupId, long objectDefinitionId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and objectDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByG_ODI_S_Last(
-			long groupId, long objectDefinitionId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where groupId = &#63; and objectDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByG_ODI_S_Last(
-		long groupId, long objectDefinitionId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where groupId = &#63; and objectDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param groupId the group ID
-	 * @param objectDefinitionId the object definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByG_ODI_S_PrevAndNext(
-			long objectEntryId, long groupId, long objectDefinitionId,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
 
 	/**
 	 * Removes all the object entries where groupId = &#63; and objectDefinitionId = &#63; and status = &#63; from the database.
@@ -1743,54 +1346,6 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 		long userId, Date createDate, long objectDefinitionId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last object entry in the ordered set where userId = &#63; and createDate &gt; &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry
-	 * @throws NoSuchObjectEntryException if a matching object entry could not be found
-	 */
-	public ObjectEntry findByU_GtCD_ODI_Last(
-			long userId, Date createDate, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
-
-	/**
-	 * Returns the last object entry in the ordered set where userId = &#63; and createDate &gt; &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object entry, or <code>null</code> if a matching object entry could not be found
-	 */
-	public ObjectEntry fetchByU_GtCD_ODI_Last(
-		long userId, Date createDate, long objectDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the object entries before and after the current object entry in the ordered set where userId = &#63; and createDate &gt; &#63; and objectDefinitionId = &#63;.
-	 *
-	 * @param objectEntryId the primary key of the current object entry
-	 * @param userId the user ID
-	 * @param createDate the create date
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object entry
-	 * @throws NoSuchObjectEntryException if a object entry with the primary key could not be found
-	 */
-	public ObjectEntry[] findByU_GtCD_ODI_PrevAndNext(
-			long objectEntryId, long userId, Date createDate,
-			long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectEntry>
-				orderByComparator)
-		throws NoSuchObjectEntryException;
 
 	/**
 	 * Removes all the object entries where userId = &#63; and createDate &gt; &#63; and objectDefinitionId = &#63; from the database.
@@ -2003,3 +1558,4 @@ public interface ObjectEntryPersistence extends BasePersistence<ObjectEntry> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1558195424

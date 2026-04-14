@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletRenderResponse;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -240,6 +241,44 @@ public class LayoutSEOLinkManagerTest {
 				hrefLang.equals("x-default")) {
 
 				Assert.assertEquals(canonicalURL, layoutSEOLink.getHref());
+			}
+			else {
+				Assert.assertEquals(
+					_getExpectedAlternateURL(
+						LocaleUtil.fromLanguageId(hrefLang), StringPool.SLASH),
+					layoutSEOLink.getHref());
+			}
+		}
+	}
+
+	@Test
+	@TestInfo("LPD-77705")
+	public void testGetLocalizedLayoutSEOLinksWithEmptyCanonicalURLMap()
+		throws Exception {
+
+		_setUpForTestingLayoutLocalizedLayoutSEOLinks();
+
+		_layoutSEOEntryLocalService.updateLayoutSEOEntry(
+			TestPropsValues.getUserId(), _layout.getGroupId(), false,
+			_layout.getLayoutId(), true, Collections.emptyMap(),
+			ServiceContextTestUtil.getServiceContext(
+				_layout.getGroupId(), TestPropsValues.getUserId()));
+
+		Locale siteDefaultLocale = LocaleUtil.getSiteDefault();
+
+		String languageTag = siteDefaultLocale.toLanguageTag();
+
+		for (LayoutSEOLink layoutSEOLink :
+				_layoutSEOLinkManager.getLocalizedLayoutSEOLinks(
+					_layout, siteDefaultLocale, _canonicalURL,
+					_expectedFriendlyURLs.keySet())) {
+
+			String hrefLang = layoutSEOLink.getHrefLang();
+
+			if (Validator.isNull(hrefLang) || hrefLang.equals(languageTag) ||
+				hrefLang.equals("x-default")) {
+
+				Assert.assertEquals(_canonicalURL, layoutSEOLink.getHref());
 			}
 			else {
 				Assert.assertEquals(
@@ -507,7 +546,7 @@ public class LayoutSEOLinkManagerTest {
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				journalArticle.getDDMStructureId(), true,
+				journalArticle.getDDMStructureKey(), true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		ServiceContext serviceContext =
@@ -614,7 +653,10 @@ public class LayoutSEOLinkManagerTest {
 				RandomTestUtil.randomString(
 					LayoutFriendlyURLRandomizerBumper.INSTANCE))
 		).build();
+
+	@DeleteAfterTestRun
 	private Group _group;
+
 	private String _groupFriendlyURL;
 	private Layout _layout;
 

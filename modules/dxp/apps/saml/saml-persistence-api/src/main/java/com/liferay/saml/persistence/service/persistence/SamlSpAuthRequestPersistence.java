@@ -123,47 +123,6 @@ public interface SamlSpAuthRequestPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last saml sp auth request in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml sp auth request
-	 * @throws NoSuchSpAuthRequestException if a matching saml sp auth request could not be found
-	 */
-	public SamlSpAuthRequest findByLtCreateDate_Last(
-			Date createDate,
-			com.liferay.portal.kernel.util.OrderByComparator<SamlSpAuthRequest>
-				orderByComparator)
-		throws NoSuchSpAuthRequestException;
-
-	/**
-	 * Returns the last saml sp auth request in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml sp auth request, or <code>null</code> if a matching saml sp auth request could not be found
-	 */
-	public SamlSpAuthRequest fetchByLtCreateDate_Last(
-		Date createDate,
-		com.liferay.portal.kernel.util.OrderByComparator<SamlSpAuthRequest>
-			orderByComparator);
-
-	/**
-	 * Returns the saml sp auth requests before and after the current saml sp auth request in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param samlSpAuthnRequestId the primary key of the current saml sp auth request
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next saml sp auth request
-	 * @throws NoSuchSpAuthRequestException if a saml sp auth request with the primary key could not be found
-	 */
-	public SamlSpAuthRequest[] findByLtCreateDate_PrevAndNext(
-			long samlSpAuthnRequestId, Date createDate,
-			com.liferay.portal.kernel.util.OrderByComparator<SamlSpAuthRequest>
-				orderByComparator)
-		throws NoSuchSpAuthRequestException;
-
-	/**
 	 * Removes all the saml sp auth requests where createDate &lt; &#63; from the database.
 	 *
 	 * @param createDate the create date
@@ -355,3 +314,4 @@ public interface SamlSpAuthRequestPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1990024010

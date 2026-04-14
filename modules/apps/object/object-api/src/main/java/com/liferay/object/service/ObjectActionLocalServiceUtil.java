@@ -255,6 +255,12 @@ public class ObjectActionLocalServiceUtil {
 	}
 
 	public static ObjectAction fetchObjectAction(
+		long objectDefinitionId, String name) {
+
+		return getService().fetchObjectAction(objectDefinitionId, name);
+	}
+
+	public static ObjectAction fetchObjectAction(
 		String externalReferenceCode, long objectDefinitionId) {
 
 		return getService().fetchObjectAction(
@@ -451,3 +457,4 @@ public class ObjectActionLocalServiceUtil {
 			ObjectActionLocalServiceUtil.class, ObjectActionLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1137417248

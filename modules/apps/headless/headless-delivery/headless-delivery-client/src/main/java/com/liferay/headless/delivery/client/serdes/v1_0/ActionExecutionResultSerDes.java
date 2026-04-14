@@ -54,9 +54,7 @@ public class ActionExecutionResultSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(actionExecutionResult.getType());
-
 			sb.append("\"");
 		}
 
@@ -239,3 +237,4 @@ public class ActionExecutionResultSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:384431919

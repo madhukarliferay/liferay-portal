@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {ObjectDefinitionAPI} from '@liferay/object-admin-rest-client-js';
 import {Locator, Page, expect} from '@playwright/test';
 
-import {ApiHelpers} from '../../../../helpers/ApiHelpers';
+import {DataApiHelpers} from '../../../../helpers/ApiHelpers';
 import {clickAndExpectToBeHidden} from '../../../../utils/clickAndExpectToBeHidden';
 import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
+import dragAndDropElement from '../../../../utils/dragAndDropElement';
 import {getRandomInt} from '../../../../utils/getRandomInt';
 import getRandomString from '../../../../utils/getRandomString';
 import {PORTLET_URLS} from '../../../../utils/portletUrls';
@@ -19,8 +19,7 @@ export const FIELD_TYPES = [
 	'Long Text',
 	'Rich Text',
 	'Decimal',
-	'Single Select',
-	'Multiselect',
+	'Select from List',
 	'Numeric',
 	'Date',
 	'Date and Time',
@@ -37,36 +36,42 @@ type StructureType = 'content' | 'file';
 export class StructureBuilderPage {
 	readonly page: Page;
 
-	private readonly customizeExperienceButton: Locator;
+	readonly dataApiHelpers: DataApiHelpers;
+
+	private readonly clearAllSpacesButton: Locator;
+	private readonly customizeEditorButton: Locator;
 	private readonly labelInput: Locator;
 	private readonly nameInput: Locator;
-	private readonly spaceCheckbox: Locator;
 
 	readonly publishButton: Locator;
 	readonly saveButton: Locator;
+	readonly spaceCheckbox: Locator;
 	readonly spaceSelector: Locator;
 
-	constructor(page: Page) {
+	constructor(page: Page, dataApiHelpers: DataApiHelpers) {
 		this.page = page;
 
-		this.customizeExperienceButton = this.page.getByRole('button', {
-			name: 'Customize Experience',
+		this.dataApiHelpers = dataApiHelpers;
+
+		this.clearAllSpacesButton = this.page.getByLabel('Clear All');
+		this.customizeEditorButton = this.page.getByRole('button', {
+			name: 'Customize Editor',
 		});
-		this.labelInput = this.page.getByLabel('Structure Label');
-		this.nameInput = this.page.getByLabel('Structure Name');
+		this.labelInput = this.page.getByLabel('Content Structure Label');
+		this.nameInput = this.page.getByLabel('Content Structure Name');
 		this.publishButton = this.page.getByRole('button', {name: 'Publish'});
 		this.saveButton = this.page.getByRole('button', {name: 'Save'});
-		this.spaceCheckbox = this.page.getByRole('checkbox', {
-			name: 'Make this structure available in all spaces',
-		});
+		this.spaceCheckbox = this.page.getByLabel(
+			'Make this content structure'
+		);
 		this.spaceSelector = this.page.getByLabel('Spaces', {exact: true});
 	}
 
-	private async goto(props: {erc: string} | {type: StructureType}) {
+	private async goto(props: {id: number} | {type: StructureType}) {
 		let url = PORTLET_URLS.cmsStructureBuilder;
 
-		if ('erc' in props) {
-			url = url + `?objectDefinitionExternalReferenceCode=${props.erc}`;
+		if ('id' in props) {
+			url = url + `?objectDefinitionId=${props.id}`;
 		}
 		else if ('type' in props) {
 			const folderERC =
@@ -77,26 +82,40 @@ export class StructureBuilderPage {
 			url = url + `?objectFolderExternalReferenceCode=${folderERC}`;
 		}
 
-		await this.page.goto(url);
+		await expect(async () => {
+			await this.page.goto(url);
 
-		await this.page
-			.locator('.component-tbar')
-			.getByText('Publish')
-			.waitFor();
+			await this.page
+				.locator('.component-tbar')
+				.getByText('Publish')
+				.waitFor({timeout: 2000});
+		}).toPass();
 	}
 
-	async addField(type: FieldType) {
-		const hasFields = !(await this.page
-			.getByText('No Fields Yet')
-			.isVisible());
+	getTreeItem({
+		field,
+		parent = this.page,
+	}: {
+		field: Field;
+		parent?: Locator | Page;
+	}) {
+		return parent
+			.locator('.treeview-link', {hasText: field.label})
+			.nth(field.nth || 0);
+	}
 
+	async addField(type: FieldType, parent?: Field) {
 		let trigger: Locator;
 
-		if (hasFields) {
-			trigger = this.page.getByLabel('Add Field');
+		if (parent) {
+			await this.selectFields([parent]);
+
+			const treeItem = this.getTreeItem({field: parent});
+
+			trigger = treeItem.getByTitle('Add Field');
 		}
 		else {
-			trigger = this.page.getByText('Add Field');
+			trigger = this.page.getByTitle('Add Field').first();
 		}
 
 		await clickAndExpectToBeVisible({
@@ -123,25 +142,27 @@ export class StructureBuilderPage {
 		await clickAndExpectToBeVisible({
 			target: this.page.getByRole('menuitem', {
 				exact: true,
-				name: 'Referenced Structure',
+				name: 'Referenced Content Structure',
 			}),
 			trigger,
 		});
 
 		await clickAndExpectToBeVisible({
 			target: this.page.locator('.modal-title', {
-				hasText: 'Referenced Structure',
+				hasText: 'Referenced Content Structure',
 			}),
 			timeout: 2000,
 			trigger: this.page.getByRole('menuitem', {
 				exact: true,
-				name: 'Referenced Structure',
+				name: 'Referenced Content Structure',
 			}),
 		});
 
 		for (const name of names) {
 			await expect(async () => {
-				await this.page.getByLabel('Structures').click({timeout: 1000});
+				await this.page
+					.getByLabel('Content Structures')
+					.click({timeout: 1000});
 
 				await this.page
 					.getByRole('option', {name})
@@ -155,7 +176,7 @@ export class StructureBuilderPage {
 
 		await clickAndExpectToBeHidden({
 			target: this.page.locator('.modal-title', {
-				hasText: 'Referenced Structure',
+				hasText: 'Referenced Content Structure',
 			}),
 			trigger: this.page.locator('.modal-footer').getByText('Add'),
 		});
@@ -166,17 +187,23 @@ export class StructureBuilderPage {
 		label,
 		localizable,
 		mandatory,
+		maximumFileSize,
+		multiselection,
 		name,
 		picklist,
 		requestFile,
+		showFilesInLibrary,
 	}: {
 		erc?: string;
 		label?: string;
 		localizable?: boolean;
 		mandatory?: boolean;
+		maximumFileSize?: number;
+		multiselection?: boolean;
 		name?: string;
 		picklist?: string;
 		requestFile?: 'computer' | 'document-library';
+		showFilesInLibrary?: boolean;
 	}) {
 		if (erc !== undefined) {
 			const ercInput = this.page.getByLabel('ERC');
@@ -220,10 +247,23 @@ export class StructureBuilderPage {
 			await this.page.getByLabel('Localizable').click();
 		}
 
-		const mandatoryToggle = this.page.getByLabel('Mandatory');
+		const mandatoryToggle = this.page.getByRole('checkbox', {
+			name: 'Mandatory',
+		});
 
 		if (mandatory !== undefined && !(await mandatoryToggle.isChecked())) {
-			await this.page.getByLabel('Mandatory').click();
+			await mandatoryToggle.click();
+		}
+
+		const multiselectionToggle = this.page.getByRole('checkbox', {
+			name: 'Multiselection',
+		});
+
+		if (
+			multiselection !== undefined &&
+			!(await multiselectionToggle.isChecked())
+		) {
+			await multiselectionToggle.click();
 		}
 
 		if (requestFile !== undefined) {
@@ -233,10 +273,30 @@ export class StructureBuilderPage {
 					name:
 						requestFile === 'computer'
 							? 'Computer'
-							: 'Documents and Media',
+							: 'Item Selector',
 				}),
 				trigger: this.page.getByLabel('Request Files'),
 			});
+		}
+
+		if (maximumFileSize !== undefined) {
+			const maxFileSizeInput = this.page.getByLabel('Maximum File Size');
+
+			await maxFileSizeInput.fill(String(maximumFileSize));
+			await maxFileSizeInput.blur();
+		}
+
+		if (showFilesInLibrary !== undefined) {
+			const showFilesInLibraryToggle = this.page.getByRole('checkbox', {
+				name: 'Show Files in CMS Library',
+			});
+
+			if (
+				(await showFilesInLibraryToggle.isChecked()) !==
+				showFilesInLibrary
+			) {
+				await showFilesInLibraryToggle.click();
+			}
 		}
 	}
 
@@ -266,6 +326,19 @@ export class StructureBuilderPage {
 		}
 	}
 
+	async checkIsParent({child, parent}) {
+		const parentContainer = this.page.locator('.treeview-item', {
+			has: this.getTreeItem({field: parent}),
+		});
+
+		await expect(
+			this.getTreeItem({
+				field: child,
+				parent: parentContainer,
+			})
+		).toBeVisible();
+	}
+
 	async clickFieldAction(field: Field, action: string) {
 		await this.selectFields([field]);
 
@@ -274,7 +347,9 @@ export class StructureBuilderPage {
 			target: this.page.getByRole('menuitem', {
 				name: action,
 			}),
-			trigger: this.page.getByRole('button', {name: 'Field Options'}),
+			trigger: this.page
+				.getByRole('treeitem', {name: field.label})
+				.getByRole('button', {name: 'Field Options'}),
 		});
 	}
 
@@ -317,23 +392,30 @@ export class StructureBuilderPage {
 	}
 
 	async createStructureFromData({
+		autoDelete = true,
 		erc = getRandomString(),
 		label,
 		name = `StructureName${getRandomInt()}`,
 		page,
 		publish = true,
-		structureIds,
+		spaces,
 	}: {
+		autoDelete?: boolean;
 		erc?: string;
 		label: string;
 		name?: string;
 		page: StructureBuilderPage;
 		publish?: boolean;
-		structureIds?: string[];
+		spaces?: string[];
 	}) {
 		await page.goToCreateStructure();
 
-		await page.enableForAllSpaces();
+		if (!spaces) {
+			await page.enableForAllSpaces();
+		}
+		else {
+			await this.selectSpaces(spaces);
+		}
 
 		await page.changeStructureSettings({
 			erc,
@@ -341,23 +423,19 @@ export class StructureBuilderPage {
 			name,
 		});
 
-		const {externalReferenceCode, id} = await page.saveStructure();
+		const id = await page.saveStructure({autoDelete});
 
 		if (publish) {
 			await page.publishStructure();
 		}
 
-		if (structureIds) {
-			structureIds.push(id);
-		}
-
-		return externalReferenceCode;
+		return id;
 	}
 
-	async customizeExperience() {
+	async customizeEditor() {
 		await expect(async () => {
-			if (await this.customizeExperienceButton.isVisible()) {
-				await this.customizeExperienceButton.click({timeout: 2000});
+			if (await this.customizeEditorButton.isVisible()) {
+				await this.customizeEditorButton.click({timeout: 2000});
 			}
 
 			await expect(
@@ -366,26 +444,23 @@ export class StructureBuilderPage {
 				timeout: 3500,
 			});
 
-			await this.waitForExperienceCustomizerModal();
+			await this.waitForEditorCustomizerModal();
 		}).toPass();
 	}
 
-	async deleteFields(fields: Field[]) {
+	async deleteFields(
+		fields: Field[],
+		{confirm}: {confirm?: boolean} = {confirm: true}
+	) {
 
 		// Deleting one field
 
 		if (fields.length === 1) {
 			const [field] = fields;
 
-			const treeItems = this.page
-				.locator('.treeview-item')
-				.getByLabel(field.label, {exact: true});
+			const treeItem = this.getTreeItem({field});
 
-			await treeItems.waitFor({state: 'visible'});
-
-			const count = await treeItems.count();
-
-			const treeItem = treeItems.nth(field.nth || 0);
+			await treeItem.waitFor({state: 'visible'});
 
 			await this.selectFields([field]);
 
@@ -394,19 +469,11 @@ export class StructureBuilderPage {
 				target: this.page.getByRole('menuitem', {name: 'Delete'}),
 				trigger: treeItem.getByLabel('Field Options'),
 			});
-
-			await expect(treeItems).toHaveCount(count - 1);
 		}
 
 		// Deleting multiple fields
 
 		else {
-			const count = await this.page
-				.locator('.treeview-item')
-				.first()
-				.locator('.treeview-group > .treeview-item')
-				.count();
-
 			await this.selectFields(fields);
 
 			await clickAndExpectToBeVisible({
@@ -414,35 +481,67 @@ export class StructureBuilderPage {
 				target: this.page.getByRole('menuitem', {name: 'Delete'}),
 				trigger: this.page.getByLabel('Selection Options'),
 			});
+		}
 
-			await expect(
-				this.page
-					.locator('.treeview-item')
-					.first()
-					.locator('.treeview-group > .treeview-item')
-			).toHaveCount(count - fields.length);
+		// Wait some time in case deletion modal is shown
+
+		await this.page.waitForTimeout(2500);
+
+		const modal = this.page.locator('.modal-content', {
+			hasText: 'Delete Fields',
+		});
+
+		if ((await modal.isVisible()) && confirm) {
+			await clickAndExpectToBeHidden({
+				target: modal,
+				trigger: modal.getByText('Delete', {exact: true}),
+			});
 		}
 	}
 
-	async deleteStructure(id: number) {
-		const apiHelpers = new ApiHelpers(this.page);
+	async dragItem({
+		item,
+		target,
+		verify = true,
+	}: {
+		item: Field;
+		target: Field;
+		verify?: boolean;
+	}) {
+		const dragItem = this.getTreeItem({
+			field: item,
+		});
 
-		const APIClient = await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+		const targetItem = this.getTreeItem({
+			field: target,
+		});
 
-		const {
-			response: {status},
-		} = await APIClient.deleteObjectDefinition(id);
+		await dragAndDropElement({
+			dragTarget: dragItem,
+			dropTarget: targetItem,
+		});
 
-		expect(status).toBe(204);
+		if (verify) {
+			await this.checkIsParent({child: item, parent: target});
+		}
 	}
 
-	async editStructure(erc: string) {
-		await this.goto({erc});
+	async editStructure(id: number) {
+		await this.goto({id});
 	}
 
 	async enableForAllSpaces() {
+		if (
+			(await this.spaceCheckbox.isChecked()) &&
+			this.spaceSelector.isDisabled()
+		) {
+			return;
+		}
+
 		await expect(async () => {
-			await this.page.getByText('Structure Fields').click({timeout: 500});
+			await this.page
+				.getByText('Content Structure Fields')
+				.click({timeout: 500});
 
 			await this.spaceCheckbox.click({timeout: 500});
 
@@ -451,10 +550,7 @@ export class StructureBuilderPage {
 	}
 
 	async expandField(field: Field) {
-		const treeItem = this.page
-			.locator('.treeview-item')
-			.getByLabel(field.label, {exact: true})
-			.nth(field.nth || 0);
+		const treeItem = this.getTreeItem({field});
 
 		await expect(async () => {
 			await treeItem.locator('.component-expander').click({timeout: 500});
@@ -470,28 +566,42 @@ export class StructureBuilderPage {
 	}
 
 	async publishStructure() {
+		const url = new URL(this.page.url());
+
+		const objectDefinitionId = url.searchParams.get('objectDefinitionId');
+
 		const publish = async () => {
 			await this.publishButton.click();
 
 			await waitForAlert(this.page, 'published successfully', {
-				timeout: 5000,
+				timeout: 10000,
 			});
 		};
+
+		if (objectDefinitionId) {
+			await publish();
+
+			return Number(objectDefinitionId);
+		}
 
 		const [response] = await Promise.all([
 			this.page.waitForResponse(
 				(response) =>
 					response.url().includes('object-definitions') &&
 					response.status() === 200,
-				{timeout: 5000}
+				{timeout: 10000}
 			),
 			await publish(),
 		]);
 
-		return await response.json();
+		const {id} = await response.json();
+
+		return id;
 	}
 
-	async saveStructure() {
+	async saveStructure(
+		{autoDelete}: {autoDelete?: boolean} = {autoDelete: true}
+	) {
 		const save = async () => {
 			await this.saveButton.click();
 
@@ -503,20 +613,28 @@ export class StructureBuilderPage {
 				(response) =>
 					response.url().includes('object-definitions') &&
 					response.status() === 200,
-				{timeout: 5000}
+				{timeout: 10000}
 			),
 			await save(),
 		]);
 
-		return await response.json();
+		const {id} = await response.json();
+
+		// Add ids to ApiHelpers data so structures are cleaned after each test
+
+		if (autoDelete) {
+			this.dataApiHelpers.data.push({
+				id,
+				type: 'objectDefinition',
+			});
+		}
+
+		return id;
 	}
 
 	async selectFields(fields: Field[]) {
 		for (const [i, field] of fields.entries()) {
-			const treeItem = this.page
-				.locator('.treeview-item')
-				.getByLabel(field.label, {exact: true})
-				.nth(field.nth || 0);
+			const treeItem = this.getTreeItem({field});
 
 			await expect(async () => {
 				await treeItem.click({
@@ -536,6 +654,13 @@ export class StructureBuilderPage {
 	}
 
 	async selectSpaces(spaces: string[]) {
+		if (await this.spaceCheckbox.isChecked()) {
+			await this.spaceCheckbox.uncheck();
+		}
+		else if (await this.clearAllSpacesButton.isVisible()) {
+			await this.clearAllSpacesButton.click();
+		}
+
 		for (const space of spaces) {
 			await expect(async () => {
 				await this.spaceSelector.click({timeout: 1000});
@@ -551,15 +676,81 @@ export class StructureBuilderPage {
 		}
 	}
 
-	async waitForExperienceCustomizerModal() {
+	async selectStructure() {
+		const treeItem = this.page.locator('.treeview-link').first();
+
+		await expect(async () => {
+			await treeItem.click({
+				timeout: 500,
+			});
+
+			await expect(treeItem).toHaveClass(/active/, {timeout: 500});
+
+			await expect(
+				this.page.getByLabel('Content Structure Name')
+			).toBeVisible();
+		}).toPass();
+	}
+
+	async setWorkflows(workflows: {space: string; workflow: string}[]) {
+		for (const {space, workflow} of workflows) {
+			if (!space) {
+				await this.page
+					.getByLabel('Default Workflow')
+					.selectOption(workflow);
+			}
+			else {
+				const row = this.page.locator('tr', {hasText: space});
+
+				await row.getByLabel('Select Workflow').selectOption(workflow);
+			}
+		}
+	}
+
+	async switchLanguage(languageId: string) {
+		const trigger = this.page.getByLabel('Open Localizations');
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.locator('.dropdown-item', {hasText: languageId}),
+			trigger,
+		});
+
+		await expect(trigger).toHaveAttribute('title', languageId);
+	}
+
+	async switchTab(name: 'General' | 'Search' | 'Workflow') {
+		const target =
+			name === 'General'
+				? this.page.getByLabel('ERC')
+				: name === 'Search'
+					? this.page.getByText('Searchable')
+					: this.page.getByText(
+							'Set the default workflow for entries'
+						);
+
+		await clickAndExpectToBeVisible({
+			target,
+			trigger: this.page.getByRole('tab', {name}),
+		});
+	}
+
+	async waitForEditorCustomizerModal() {
 		await this.page.waitForTimeout(4000);
 
 		const gotItButton = this.page.getByText('Got It');
+		const tryItButton = this.page.getByText('Try It');
 
-		if (await gotItButton.isVisible()) {
+		const button = (await gotItButton.isVisible())
+			? gotItButton
+			: (await tryItButton.isVisible())
+				? tryItButton
+				: null;
+
+		if (button) {
 			await clickAndExpectToBeHidden({
-				target: gotItButton,
-				trigger: gotItButton,
+				target: button,
+				trigger: button,
 			});
 		}
 	}

@@ -208,52 +208,6 @@ public class DepotEntryUtil {
 	}
 
 	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry
-	 * @throws NoSuchEntryException if a matching depot entry could not be found
-	 */
-	public static DepotEntry findByUuid_Last(
-			String uuid, OrderByComparator<DepotEntry> orderByComparator)
-		throws com.liferay.depot.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry, or <code>null</code> if a matching depot entry could not be found
-	 */
-	public static DepotEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<DepotEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the depot entries before and after the current depot entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param depotEntryId the primary key of the current depot entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next depot entry
-	 * @throws NoSuchEntryException if a depot entry with the primary key could not be found
-	 */
-	public static DepotEntry[] findByUuid_PrevAndNext(
-			long depotEntryId, String uuid,
-			OrderByComparator<DepotEntry> orderByComparator)
-		throws com.liferay.depot.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			depotEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the depot entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -446,59 +400,6 @@ public class DepotEntryUtil {
 	}
 
 	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry
-	 * @throws NoSuchEntryException if a matching depot entry could not be found
-	 */
-	public static DepotEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<DepotEntry> orderByComparator)
-		throws com.liferay.depot.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry, or <code>null</code> if a matching depot entry could not be found
-	 */
-	public static DepotEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<DepotEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the depot entries before and after the current depot entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param depotEntryId the primary key of the current depot entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next depot entry
-	 * @throws NoSuchEntryException if a depot entry with the primary key could not be found
-	 */
-	public static DepotEntry[] findByUuid_C_PrevAndNext(
-			long depotEntryId, String uuid, long companyId,
-			OrderByComparator<DepotEntry> orderByComparator)
-		throws com.liferay.depot.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			depotEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the depot entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -575,6 +476,137 @@ public class DepotEntryUtil {
 	 */
 	public static int countByGroupId(long groupId) {
 		return getPersistence().countByGroupId(groupId);
+	}
+
+	/**
+	 * Returns all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @return the matching depot entries
+	 */
+	public static List<DepotEntry> findByC_T(long companyId, int type) {
+		return getPersistence().findByC_T(companyId, type);
+	}
+
+	/**
+	 * Returns a range of all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DepotEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param start the lower bound of the range of depot entries
+	 * @param end the upper bound of the range of depot entries (not inclusive)
+	 * @return the range of matching depot entries
+	 */
+	public static List<DepotEntry> findByC_T(
+		long companyId, int type, int start, int end) {
+
+		return getPersistence().findByC_T(companyId, type, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DepotEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param start the lower bound of the range of depot entries
+	 * @param end the upper bound of the range of depot entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching depot entries
+	 */
+	public static List<DepotEntry> findByC_T(
+		long companyId, int type, int start, int end,
+		OrderByComparator<DepotEntry> orderByComparator) {
+
+		return getPersistence().findByC_T(
+			companyId, type, start, end, orderByComparator);
+	}
+
+	/**
+	 * Returns an ordered range of all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DepotEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param start the lower bound of the range of depot entries
+	 * @param end the upper bound of the range of depot entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching depot entries
+	 */
+	public static List<DepotEntry> findByC_T(
+		long companyId, int type, int start, int end,
+		OrderByComparator<DepotEntry> orderByComparator,
+		boolean useFinderCache) {
+
+		return getPersistence().findByC_T(
+			companyId, type, start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first depot entry in the ordered set where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching depot entry
+	 * @throws NoSuchEntryException if a matching depot entry could not be found
+	 */
+	public static DepotEntry findByC_T_First(
+			long companyId, int type,
+			OrderByComparator<DepotEntry> orderByComparator)
+		throws com.liferay.depot.exception.NoSuchEntryException {
+
+		return getPersistence().findByC_T_First(
+			companyId, type, orderByComparator);
+	}
+
+	/**
+	 * Returns the first depot entry in the ordered set where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching depot entry, or <code>null</code> if a matching depot entry could not be found
+	 */
+	public static DepotEntry fetchByC_T_First(
+		long companyId, int type,
+		OrderByComparator<DepotEntry> orderByComparator) {
+
+		return getPersistence().fetchByC_T_First(
+			companyId, type, orderByComparator);
+	}
+
+	/**
+	 * Removes all the depot entries where companyId = &#63; and type = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 */
+	public static void removeByC_T(long companyId, int type) {
+		getPersistence().removeByC_T(companyId, type);
+	}
+
+	/**
+	 * Returns the number of depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @return the number of matching depot entries
+	 */
+	public static int countByC_T(long companyId, int type) {
+		return getPersistence().countByC_T(companyId, type);
 	}
 
 	/**
@@ -735,3 +767,4 @@ public class DepotEntryUtil {
 	private static volatile DepotEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1628066703

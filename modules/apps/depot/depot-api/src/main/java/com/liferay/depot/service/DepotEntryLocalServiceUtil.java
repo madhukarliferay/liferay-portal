@@ -261,6 +261,10 @@ public class DepotEntryLocalServiceUtil {
 		return getService().getDepotEntries(start, end);
 	}
 
+	public static List<DepotEntry> getDepotEntries(long companyId, int type) {
+		return getService().getDepotEntries(companyId, type);
+	}
+
 	/**
 	 * Returns all the depot entries matching the UUID and company.
 	 *
@@ -301,6 +305,10 @@ public class DepotEntryLocalServiceUtil {
 		return getService().getDepotEntriesCount();
 	}
 
+	public static int getDepotEntriesCount(long companyId, int type) {
+		return getService().getDepotEntriesCount(companyId, type);
+	}
+
 	/**
 	 * Returns the depot entry with the primary key.
 	 *
@@ -327,6 +335,23 @@ public class DepotEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getDepotEntryByUuidAndGroupId(uuid, groupId);
+	}
+
+	public static List<Long> getDepotEntryGroupIds(long companyId, int type) {
+		return getService().getDepotEntryGroupIds(companyId, type);
+	}
+
+	public static List<Long> getDepotEntryGroupIds(
+		long companyId, long userId, int type) {
+
+		return getService().getDepotEntryGroupIds(companyId, userId, type);
+	}
+
+	public static List<Long> getDepotEntryGroupIds(
+		long companyId, long userId, int type, boolean dynamicInheritanceOnly) {
+
+		return getService().getDepotEntryGroupIds(
+			companyId, userId, type, dynamicInheritanceOnly);
 	}
 
 	/**
@@ -438,3 +463,4 @@ public class DepotEntryLocalServiceUtil {
 			DepotEntryLocalServiceUtil.class, DepotEntryLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:239845251

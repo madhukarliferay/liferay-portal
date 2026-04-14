@@ -973,9 +973,7 @@ public class ObjectValidationRule implements Serializable {
 			sb.append("\"outputType\": ");
 
 			sb.append("\"");
-
 			sb.append(outputType);
-
 			sb.append("\"");
 		}
 
@@ -1147,3 +1145,4 @@ public class ObjectValidationRule implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-103213725

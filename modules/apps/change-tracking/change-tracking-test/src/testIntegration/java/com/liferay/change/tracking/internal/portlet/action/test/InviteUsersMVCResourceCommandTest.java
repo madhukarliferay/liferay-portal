@@ -10,6 +10,7 @@ import com.liferay.change.tracking.configuration.CTCollectionEmailConfiguration;
 import com.liferay.change.tracking.constants.CTPortletKeys;
 import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.model.User;
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.portlet.MockLiferayResourceRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayResourceResponse;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -33,7 +35,6 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.mail.MailMessage;
 import com.liferay.portal.test.mail.MailServiceTestUtil;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -41,6 +42,7 @@ import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import jakarta.portlet.PortletRequest;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -67,9 +69,16 @@ public class InviteUsersMVCResourceCommandTest {
 		_ctCollection = _ctCollectionLocalService.addCTCollection(
 			null, TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
 			0, RandomTestUtil.randomString(), null);
+
+		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
+			"AUTH_TOKEN_CHECK_ENABLED", false);
 	}
 
-	@FeatureFlag("LPD-11212")
+	@After
+	public void tearDown() throws Exception {
+		_safeCloseable.close();
+	}
+
 	@Test
 	public void testGetInviteUsersEmailNotificationBody() throws Exception {
 		_testGetInviteUsers(_ctCollection);
@@ -101,7 +110,6 @@ public class InviteUsersMVCResourceCommandTest {
 					"/>")));
 	}
 
-	@FeatureFlag("LPD-11212")
 	@Test
 	public void testGetInviteUsersWithCustomEmailFromAddressAndEmailFromName()
 		throws Exception {
@@ -134,7 +142,6 @@ public class InviteUsersMVCResourceCommandTest {
 		}
 	}
 
-	@FeatureFlag("LPD-11212")
 	@Test
 	public void testGetInviteUsersWithCustomInvitationEmailBodyAndInvitationEmailSubject()
 		throws Exception {
@@ -231,6 +238,8 @@ public class InviteUsersMVCResourceCommandTest {
 
 	@Inject
 	private static CTCollectionLocalService _ctCollectionLocalService;
+
+	private static SafeCloseable _safeCloseable;
 
 	@Inject
 	private CompanyLocalService _companyLocalService;

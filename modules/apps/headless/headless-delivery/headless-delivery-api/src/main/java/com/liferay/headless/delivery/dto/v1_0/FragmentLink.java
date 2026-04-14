@@ -298,9 +298,7 @@ public class FragmentLink implements Serializable {
 			sb.append("\"target\": ");
 
 			sb.append("\"");
-
 			sb.append(target);
-
 			sb.append("\"");
 		}
 
@@ -467,3 +465,4 @@ public class FragmentLink implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:27987392

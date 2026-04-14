@@ -7,7 +7,7 @@ import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 import MarketplaceButton from '../../../src/main/resources/META-INF/resources/js/components/marketplace/MarketplaceButton';
 import MarketplacePresentationModal from '../../../src/main/resources/META-INF/resources/js/components/marketplace/MarketplacePresentationModal';
@@ -42,7 +42,9 @@ jest.mock(
 );
 
 const mockProps = {
+	addFragmentCollectionURL: '/o/test/add_fragment_collection',
 	body: 'Test Body',
+	fragmentCollections: [{fragmentCollectionId: 1, name: 'Set Name'}],
 	fragmentPortletNamespace: 'testNamespace',
 	fragmentsImportURL: '/testImportURL',
 	heading: 'Test Heading',
@@ -147,7 +149,10 @@ describe('MarketplaceButton', () => {
 			expect(openModalComponent).toHaveBeenCalledWith({
 				ModalComponent: MarketplacePresentationModal,
 				modalComponentProps: {
+					addFragmentCollectionURL:
+						mockProps.addFragmentCollectionURL,
 					body: mockProps.body,
+					fragmentCollections: mockProps.fragmentCollections,
 					fragmentPortletNamespace:
 						mockProps.fragmentPortletNamespace,
 					fragmentsImportURL: mockProps.fragmentsImportURL,

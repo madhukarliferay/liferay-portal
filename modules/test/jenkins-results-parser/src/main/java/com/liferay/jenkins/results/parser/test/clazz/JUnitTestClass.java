@@ -9,7 +9,6 @@ import com.liferay.jenkins.results.parser.DownstreamBuildReport;
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.PortalGitWorkingDirectory;
 import com.liferay.jenkins.results.parser.TestClassReport;
-import com.liferay.jenkins.results.parser.TestReport;
 import com.liferay.jenkins.results.parser.test.clazz.group.BatchTestClassGroup;
 import com.liferay.jenkins.results.parser.test.clazz.group.JUnitBatchTestClassGroup;
 
@@ -43,49 +42,37 @@ public class JUnitTestClass extends BaseTestClass {
 
 		BatchTestClassGroup batchTestClassGroup = getBatchTestClassGroup();
 
-		for (DownstreamBuildReport cachedDownstreamBuildReport :
-				batchTestClassGroup.getCachedDownstreamBuildReports()) {
+		String testClassName = getTestClassName();
 
-			List<TestClassReport> cachedTestClassReports = new ArrayList<>();
+		List<TestClassReport> cachedTestClassReports = new ArrayList<>();
 
-			for (TestClassReport testClassReport :
-					cachedDownstreamBuildReport.getTestClassReports()) {
+		TestClassReport testClassReport =
+			batchTestClassGroup.getCachedTestClassReport(testClassName);
 
-				String testClassName = testClassReport.getTestClassName();
+		if (testClassReport != null) {
+			cachedTestClassReports.add(
+				batchTestClassGroup.getCachedTestClassReport(testClassName));
+		}
 
-				if (testClassName.equals(getTestClassName()) ||
-					testClassName.startsWith(getTestClassName() + "$")) {
+		cachedTestClassReports.addAll(
+			batchTestClassGroup.getCachedTestClassReportByPrefix(
+				testClassName + "$"));
 
-					cachedTestClassReports.add(testClassReport);
+		if ((cachedTestClassReports != null) &&
+			!cachedTestClassReports.isEmpty()) {
 
-					continue;
-				}
+			_cachedTestClassReports = cachedTestClassReports;
 
-				if (testClassName.equals("junit.framework.TestSuite")) {
-					for (TestReport testReport :
-							testClassReport.getTestReports()) {
+			for (TestClassReport cachedTestClassReport :
+					cachedTestClassReports) {
 
-						String testName = testReport.getTestName();
-
-						if (testName.equals(getTestClassName())) {
-							cachedTestClassReports.add(testClassReport);
-
-							break;
-						}
-					}
-				}
-			}
-
-			if ((cachedTestClassReports != null) &&
-				!cachedTestClassReports.isEmpty()) {
-
-				_cachedDownstreamBuildReport = cachedDownstreamBuildReport;
-				_cachedTestClassReports = cachedTestClassReports;
-
-				_cachedTestReportSearched = true;
+				_cachedDownstreamBuildReport =
+					cachedTestClassReport.getDownstreamBuildReport();
 
 				break;
 			}
+
+			_cachedTestReportSearched = true;
 		}
 
 		return _cachedTestClassReports;
@@ -109,14 +96,34 @@ public class JUnitTestClass extends BaseTestClass {
 		return jsonObject;
 	}
 
-	@Override
-	public long getSharedWeight() {
-		return getAverageTestTaskDuration();
-	}
+	public List<String> getTestClassFileMethodNames() {
+		List<String> testClassFileMethodNames = new ArrayList<>();
 
-	@Override
-	public String getSharedWeightName() {
-		return getTestTaskName();
+		Matcher matcher = _testClassFileNamePattern.matcher(
+			String.valueOf(getTestClassFile()));
+
+		if (!matcher.find()) {
+			return testClassFileMethodNames;
+		}
+
+		String testClassFileName = matcher.group("testClassFileName");
+
+		testClassFileName = testClassFileName.replace(".java", ".class");
+
+		List<String> testClassMethodNames = getTestClassMethodNames();
+
+		if ((testClassMethodNames == null) || testClassMethodNames.isEmpty()) {
+			testClassFileMethodNames.add(testClassFileName);
+
+			return testClassFileMethodNames;
+		}
+
+		for (String testClassMethodName : testClassMethodNames) {
+			testClassFileMethodNames.add(
+				testClassFileName + "#" + testClassMethodName);
+		}
+
+		return testClassFileMethodNames;
 	}
 
 	public List<String> getTestClassMethodNames() {
@@ -131,6 +138,23 @@ public class JUnitTestClass extends BaseTestClass {
 
 	public String getTestrayMainComponentName() {
 		return _testrayMainComponentName;
+	}
+
+	@Override
+	public String getTestTaskName() {
+		String taskName = _getTaskName();
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(taskName)) {
+			return super.getTestTaskName();
+		}
+
+		String testClassFilePath = JenkinsResultsParserUtil.getCanonicalPath(
+			getTestClassFile());
+
+		String testTaskName = testClassFilePath.replaceAll(
+			".*/modules(/.+)/src/" + taskName + "/.+", "$1");
+
+		return testTaskName.replaceAll("/", ":") + ":" + taskName;
 	}
 
 	@Override
@@ -428,6 +452,21 @@ public class JUnitTestClass extends BaseTestClass {
 			portalGitWorkingDirectory.getWorkingDirectory(), "modules");
 	}
 
+	private String _getTaskName() {
+		BatchTestClassGroup batchTestClassGroup = getBatchTestClassGroup();
+
+		String batchName = batchTestClassGroup.getBatchName();
+
+		if (batchName.startsWith("modules-integration")) {
+			return "testIntegration";
+		}
+		else if (batchName.startsWith("modules-unit")) {
+			return "test";
+		}
+
+		return null;
+	}
+
 	private void _initTestClassMethods(String fileContent) {
 		Matcher classHeaderMatcher = _classHeaderPattern.matcher(fileContent);
 
@@ -521,6 +560,8 @@ public class JUnitTestClass extends BaseTestClass {
 		JenkinsResultsParserUtil.combine(
 			"\\t(?<annotations>(@[\\s\\S]+?))public\\s+void\\s+",
 			"(?<methodName>[^\\(\\s]+)"));
+	private static final Pattern _testClassFileNamePattern = Pattern.compile(
+		".*/(?<testClassFileName>com/.*)");
 
 	private DownstreamBuildReport _cachedDownstreamBuildReport;
 	private List<TestClassReport> _cachedTestClassReports;

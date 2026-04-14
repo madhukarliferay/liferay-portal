@@ -70,6 +70,11 @@ public class MockContactsEngineClientImpl
 	}
 
 	@Override
+	public long getDXPUsersCount(FaroProject faroProject, String id) {
+		return contactsEngineClient.getDXPUsersCount(faroProject, id);
+	}
+
+	@Override
 	public List<String> getFieldNames(
 		FaroProject faroProject, String label, String ownerType,
 		Object values) {
@@ -174,6 +179,20 @@ public class MockContactsEngineClientImpl
 			});
 
 		return new Results<>(individuals, individuals.size());
+	}
+
+	@Override
+	public void insertBQProjects(List<FaroProject> faroProjects)
+		throws Exception {
+
+		contactsEngineClient.insertBQProjects(faroProjects);
+	}
+
+	@Override
+	public void updateBQProject(FaroProject faroProject, Date startDate)
+		throws Exception {
+
+		contactsEngineClient.updateBQProject(faroProject, startDate);
 	}
 
 	protected Results<Individual> getIndividuals(

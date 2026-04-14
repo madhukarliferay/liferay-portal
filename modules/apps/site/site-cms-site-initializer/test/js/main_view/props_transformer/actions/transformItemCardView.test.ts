@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
+import {OBJECT_ENTRY_FOLDER_CLASS_NAME} from '../../../../../src/main/resources/META-INF/resources/js/common/utils/constants';
 import {transformItemCardView} from '../../../../../src/main/resources/META-INF/resources/js/main_view/props_transformer/utils/transformViewsItemProps';
 
 jest.mock('@clayui/icon', () => (props: any) => ({
@@ -37,22 +38,21 @@ describe('transformItemCardView', () => {
 		'video': 'document-multimedia',
 	};
 	const mockObjectDefinitionCssClasses = {
-		L_BASIC_WEB_CONTENT: 'content-icon-basic-content',
+		L_CMS_BASIC_WEB_CONTENT: 'content-icon-basic-content',
 		default: 'content-icon-custom-structure',
 	};
 	const mockObjectDefinitionIcons = {
-		L_BASIC_WEB_CONTENT: 'forms',
+		L_CMS_BASIC_WEB_CONTENT: 'forms',
 		default: 'web-content',
 	};
 
 	it('See stickerProps has empty className and empty icon because the item is a folder', () => {
 		assertStickerProps(
-			'',
-			'',
+			'folder',
+			'folder',
 			transformItemCardView(
 				{
-					entryClassName:
-						'com.liferay.object.model.ObjectEntryFolder',
+					entryClassName: OBJECT_ENTRY_FOLDER_CLASS_NAME,
 				},
 				mockFileMimeTypeCssClasses,
 				mockFileMimeTypeIcons,
@@ -72,7 +72,8 @@ describe('transformItemCardView', () => {
 					embedded: {
 						systemProperties: {
 							objectDefinitionBrief: {
-								externalReferenceCode: 'L_BASIC_WEB_CONTENT',
+								externalReferenceCode:
+									'L_CMS_BASIC_WEB_CONTENT',
 							},
 						},
 					},
@@ -121,7 +122,7 @@ describe('transformItemCardView', () => {
 						},
 						systemProperties: {
 							objectDefinitionBrief: {
-								externalReferenceCode: 'L_BASIC_DOCUMENT',
+								externalReferenceCode: 'L_CMS_BASIC_DOCUMENT',
 							},
 						},
 					},
@@ -147,7 +148,7 @@ describe('transformItemCardView', () => {
 						},
 						systemProperties: {
 							objectDefinitionBrief: {
-								externalReferenceCode: 'L_BASIC_DOCUMENT',
+								externalReferenceCode: 'L_CMS_BASIC_DOCUMENT',
 							},
 						},
 					},
@@ -173,7 +174,7 @@ describe('transformItemCardView', () => {
 						},
 						systemProperties: {
 							objectDefinitionBrief: {
-								externalReferenceCode: 'L_BASIC_DOCUMENT',
+								externalReferenceCode: 'L_CMS_BASIC_DOCUMENT',
 							},
 						},
 					},
@@ -199,7 +200,7 @@ describe('transformItemCardView', () => {
 						},
 						systemProperties: {
 							objectDefinitionBrief: {
-								externalReferenceCode: 'L_BASIC_DOCUMENT',
+								externalReferenceCode: 'L_CMS_BASIC_DOCUMENT',
 							},
 						},
 					},
@@ -211,5 +212,155 @@ describe('transformItemCardView', () => {
 				baseMockProps
 			)
 		);
+	});
+
+	it('Shows Untitled Asset if title is not present', () => {
+		const cardView = transformItemCardView(
+			{
+				entryClassName: OBJECT_ENTRY_FOLDER_CLASS_NAME,
+			},
+			mockFileMimeTypeCssClasses,
+			mockFileMimeTypeIcons,
+			mockObjectDefinitionCssClasses,
+			mockObjectDefinitionIcons,
+			baseMockProps
+		);
+
+		expect(cardView.title).toBe('untitled-asset');
+	});
+
+	describe('External Video Thumbnail', () => {
+		it('External Video should show a thumbnail if it is a YouTube video (Standard URL)', () => {
+			const result = transformItemCardView(
+				{
+					embedded: {
+						systemProperties: {
+							objectDefinitionBrief: {
+								externalReferenceCode: 'L_CMS_EXTERNAL_VIDEO',
+							},
+						},
+						title: 'My Video',
+						videoURL: 'https://www.youtube.com/watch?v=IqCSx3omX4o',
+					},
+				},
+				mockFileMimeTypeCssClasses,
+				mockFileMimeTypeIcons,
+				mockObjectDefinitionCssClasses,
+				mockObjectDefinitionIcons,
+				baseMockProps
+			);
+
+			expect(result.imgProps).toEqual({
+				alt: 'My Video',
+				src: 'https://img.youtube.com/vi/IqCSx3omX4o/0.jpg',
+			});
+		});
+
+		it('External Video should show a thumbnail if it is a YouTube video (Short URL)', () => {
+			const result = transformItemCardView(
+				{
+					embedded: {
+						systemProperties: {
+							objectDefinitionBrief: {
+								externalReferenceCode: 'L_CMS_EXTERNAL_VIDEO',
+							},
+						},
+						title: 'My Video',
+						videoURL: 'https://youtu.be/IqCSx3omX4o',
+					},
+				},
+				mockFileMimeTypeCssClasses,
+				mockFileMimeTypeIcons,
+				mockObjectDefinitionCssClasses,
+				mockObjectDefinitionIcons,
+				baseMockProps
+			);
+
+			expect(result.imgProps).toEqual({
+				alt: 'My Video',
+				src: 'https://img.youtube.com/vi/IqCSx3omX4o/0.jpg',
+			});
+		});
+
+		it('External Video should show a video icon if it is not a YouTube video', () => {
+			const result = transformItemCardView(
+				{
+					embedded: {
+						systemProperties: {
+							objectDefinitionBrief: {
+								externalReferenceCode: 'L_CMS_EXTERNAL_VIDEO',
+							},
+						},
+						videoURL: 'https://vimeo.com/483035084',
+					},
+				},
+				mockFileMimeTypeCssClasses,
+				mockFileMimeTypeIcons,
+				mockObjectDefinitionCssClasses,
+				mockObjectDefinitionIcons,
+				baseMockProps
+			);
+
+			expect(result.symbol).toBe('video');
+		});
+	});
+
+	describe('File Thumbnail', () => {
+		it('shows a thumbnail with alternative text', () => {
+			const result = transformItemCardView(
+				{
+					embedded: {
+						file: {
+							alternativeText: 'My Alternative Text',
+							name: 'file.png',
+							thumbnailURL: '/path/to/thumbnail',
+						},
+						systemProperties: {
+							objectDefinitionBrief: {
+								externalReferenceCode: 'L_CMS_BASIC_DOCUMENT',
+							},
+						},
+					},
+				},
+				mockFileMimeTypeCssClasses,
+				mockFileMimeTypeIcons,
+				mockObjectDefinitionCssClasses,
+				mockObjectDefinitionIcons,
+				baseMockProps
+			);
+
+			expect(result.imgProps).toEqual({
+				alt: 'My Alternative Text',
+				src: '/path/to/thumbnail',
+			});
+		});
+
+		it('shows a thumbnail with name as alternative text if alternativeText is not present', () => {
+			const result = transformItemCardView(
+				{
+					embedded: {
+						file: {
+							name: 'file.png',
+							thumbnailURL: '/path/to/thumbnail',
+						},
+						systemProperties: {
+							objectDefinitionBrief: {
+								externalReferenceCode: 'L_CMS_BASIC_DOCUMENT',
+							},
+						},
+					},
+				},
+				mockFileMimeTypeCssClasses,
+				mockFileMimeTypeIcons,
+				mockObjectDefinitionCssClasses,
+				mockObjectDefinitionIcons,
+				baseMockProps
+			);
+
+			expect(result.imgProps).toEqual({
+				alt: 'file.png',
+				src: '/path/to/thumbnail',
+			});
+		});
 	});
 });

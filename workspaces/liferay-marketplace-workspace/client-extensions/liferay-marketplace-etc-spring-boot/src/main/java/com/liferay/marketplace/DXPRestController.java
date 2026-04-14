@@ -6,7 +6,6 @@
 package com.liferay.marketplace;
 
 import com.liferay.client.extension.util.spring.boot3.BaseRestController;
-import com.liferay.headless.commerce.admin.catalog.client.resource.v1_0.SkuResource;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.Order;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.OrderItem;
 import com.liferay.headless.commerce.admin.order.client.pagination.Page;
@@ -16,6 +15,7 @@ import com.liferay.marketplace.service.ConsoleService;
 import com.liferay.marketplace.service.MarketplaceService;
 import com.liferay.marketplace.util.MarketplaceUtil;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -82,9 +82,7 @@ public class DXPRestController extends BaseRestController {
 			return order;
 		}
 
-		SkuResource skuResource = _marketplaceService.getSkuResource();
-
-		Page<OrderItem> orderItemPage =
+		Page<OrderItem> orderItemsPage =
 			_marketplaceService.getOrderItemResource(
 			).getOrderIdOrderItemsPage(
 				order.getId(), Pagination.of(1, 10)
@@ -92,8 +90,8 @@ public class DXPRestController extends BaseRestController {
 
 		Map<String, String> productSpecificationsMap =
 			_marketplaceService.getProductSpecificationsMap(
-				skuResource.getSku(
-					orderItemPage.fetchFirstItem(
+				_marketplaceService.getSku(
+					orderItemsPage.fetchFirstItem(
 					).getSkuId()
 				).getProductId());
 
@@ -103,10 +101,12 @@ public class DXPRestController extends BaseRestController {
 			Map<String, String> customFields =
 				(Map<String, String>)order.getCustomFields();
 
+			Collection<OrderItem> orderItems = orderItemsPage.getItems();
+
 			customFields.put(
 				"cloud-provisioning",
 				MarketplaceUtil.createCloudProvisioningJSONArray(
-					orderItemPage
+					orderItems.toArray(new OrderItem[0])
 				).toString());
 
 			_marketplaceService.updateOrder(

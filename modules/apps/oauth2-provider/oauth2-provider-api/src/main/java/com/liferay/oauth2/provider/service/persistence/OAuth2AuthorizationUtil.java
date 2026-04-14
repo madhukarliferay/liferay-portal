@@ -216,55 +216,6 @@ public class OAuth2AuthorizationUtil {
 	}
 
 	/**
-	 * Returns the last o auth2 authorization in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization findByUserId_Last(
-			long userId,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization fetchByUserId_Last(
-		long userId, OrderByComparator<OAuth2Authorization> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where userId = &#63;.
-	 *
-	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
-	 */
-	public static OAuth2Authorization[] findByUserId_PrevAndNext(
-			long oAuth2AuthorizationId, long userId,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			oAuth2AuthorizationId, userId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the o auth2 authorizations where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -389,58 +340,6 @@ public class OAuth2AuthorizationUtil {
 
 		return getPersistence().fetchByOAuth2ApplicationId_First(
 			oAuth2ApplicationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where oAuth2ApplicationId = &#63;.
-	 *
-	 * @param oAuth2ApplicationId the o auth2 application ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization findByOAuth2ApplicationId_Last(
-			long oAuth2ApplicationId,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByOAuth2ApplicationId_Last(
-			oAuth2ApplicationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where oAuth2ApplicationId = &#63;.
-	 *
-	 * @param oAuth2ApplicationId the o auth2 application ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization fetchByOAuth2ApplicationId_Last(
-		long oAuth2ApplicationId,
-		OrderByComparator<OAuth2Authorization> orderByComparator) {
-
-		return getPersistence().fetchByOAuth2ApplicationId_Last(
-			oAuth2ApplicationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where oAuth2ApplicationId = &#63;.
-	 *
-	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
-	 * @param oAuth2ApplicationId the o auth2 application ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
-	 */
-	public static OAuth2Authorization[] findByOAuth2ApplicationId_PrevAndNext(
-			long oAuth2AuthorizationId, long oAuth2ApplicationId,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByOAuth2ApplicationId_PrevAndNext(
-			oAuth2AuthorizationId, oAuth2ApplicationId, orderByComparator);
 	}
 
 	/**
@@ -575,63 +474,6 @@ public class OAuth2AuthorizationUtil {
 
 		return getPersistence().fetchByC_ATCH_First(
 			companyId, accessTokenContentHash, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param accessTokenContentHash the access token content hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization findByC_ATCH_Last(
-			long companyId, long accessTokenContentHash,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByC_ATCH_Last(
-			companyId, accessTokenContentHash, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param accessTokenContentHash the access token content hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization fetchByC_ATCH_Last(
-		long companyId, long accessTokenContentHash,
-		OrderByComparator<OAuth2Authorization> orderByComparator) {
-
-		return getPersistence().fetchByC_ATCH_Last(
-			companyId, accessTokenContentHash, orderByComparator);
-	}
-
-	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where companyId = &#63; and accessTokenContentHash = &#63;.
-	 *
-	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
-	 * @param companyId the company ID
-	 * @param accessTokenContentHash the access token content hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
-	 */
-	public static OAuth2Authorization[] findByC_ATCH_PrevAndNext(
-			long oAuth2AuthorizationId, long companyId,
-			long accessTokenContentHash,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByC_ATCH_PrevAndNext(
-			oAuth2AuthorizationId, companyId, accessTokenContentHash,
-			orderByComparator);
 	}
 
 	/**
@@ -774,63 +616,6 @@ public class OAuth2AuthorizationUtil {
 
 		return getPersistence().fetchByC_RTCH_First(
 			companyId, refreshTokenContentHash, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param refreshTokenContentHash the refresh token content hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization findByC_RTCH_Last(
-			long companyId, long refreshTokenContentHash,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByC_RTCH_Last(
-			companyId, refreshTokenContentHash, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param refreshTokenContentHash the refresh token content hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization fetchByC_RTCH_Last(
-		long companyId, long refreshTokenContentHash,
-		OrderByComparator<OAuth2Authorization> orderByComparator) {
-
-		return getPersistence().fetchByC_RTCH_Last(
-			companyId, refreshTokenContentHash, orderByComparator);
-	}
-
-	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where companyId = &#63; and refreshTokenContentHash = &#63;.
-	 *
-	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
-	 * @param companyId the company ID
-	 * @param refreshTokenContentHash the refresh token content hash
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
-	 */
-	public static OAuth2Authorization[] findByC_RTCH_PrevAndNext(
-			long oAuth2AuthorizationId, long companyId,
-			long refreshTokenContentHash,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByC_RTCH_PrevAndNext(
-			oAuth2AuthorizationId, companyId, refreshTokenContentHash,
-			orderByComparator);
 	}
 
 	/**
@@ -985,68 +770,6 @@ public class OAuth2AuthorizationUtil {
 		return getPersistence().fetchByU_O_R_First(
 			userId, oAuth2ApplicationId, rememberDeviceContent,
 			orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param oAuth2ApplicationId the o auth2 application ID
-	 * @param rememberDeviceContent the remember device content
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization findByU_O_R_Last(
-			long userId, long oAuth2ApplicationId, String rememberDeviceContent,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByU_O_R_Last(
-			userId, oAuth2ApplicationId, rememberDeviceContent,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param oAuth2ApplicationId the o auth2 application ID
-	 * @param rememberDeviceContent the remember device content
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 authorization, or <code>null</code> if a matching o auth2 authorization could not be found
-	 */
-	public static OAuth2Authorization fetchByU_O_R_Last(
-		long userId, long oAuth2ApplicationId, String rememberDeviceContent,
-		OrderByComparator<OAuth2Authorization> orderByComparator) {
-
-		return getPersistence().fetchByU_O_R_Last(
-			userId, oAuth2ApplicationId, rememberDeviceContent,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the o auth2 authorizations before and after the current o auth2 authorization in the ordered set where userId = &#63; and oAuth2ApplicationId = &#63; and rememberDeviceContent = &#63;.
-	 *
-	 * @param oAuth2AuthorizationId the primary key of the current o auth2 authorization
-	 * @param userId the user ID
-	 * @param oAuth2ApplicationId the o auth2 application ID
-	 * @param rememberDeviceContent the remember device content
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next o auth2 authorization
-	 * @throws NoSuchOAuth2AuthorizationException if a o auth2 authorization with the primary key could not be found
-	 */
-	public static OAuth2Authorization[] findByU_O_R_PrevAndNext(
-			long oAuth2AuthorizationId, long userId, long oAuth2ApplicationId,
-			String rememberDeviceContent,
-			OrderByComparator<OAuth2Authorization> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2AuthorizationException {
-
-		return getPersistence().findByU_O_R_PrevAndNext(
-			oAuth2AuthorizationId, userId, oAuth2ApplicationId,
-			rememberDeviceContent, orderByComparator);
 	}
 
 	/**
@@ -1487,3 +1210,4 @@ public class OAuth2AuthorizationUtil {
 	private static volatile OAuth2AuthorizationPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1196178134

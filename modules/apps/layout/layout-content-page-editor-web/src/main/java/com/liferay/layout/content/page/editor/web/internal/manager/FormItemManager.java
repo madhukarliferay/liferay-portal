@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -679,9 +680,10 @@ public class FormItemManager {
 
 		FragmentEntryProcessorContext fragmentEntryProcessorContext =
 			new DefaultFragmentEntryProcessorContext(
-				httpServletRequest, httpServletResponse,
+				stepperFragmentEntryLink.getCompanyId(), httpServletRequest,
+				httpServletResponse, LocaleUtil.getMostRelevantLocale(),
 				FragmentEntryLinkConstants.EDIT,
-				LocaleUtil.getMostRelevantLocale());
+				stepperFragmentEntryLink.getGroupId());
 
 		String processedHTML =
 			_fragmentEntryProcessorRegistry.processFragmentEntryLinkHTML(
@@ -820,9 +822,11 @@ public class FormItemManager {
 
 		FragmentEntryLink fragmentEntryLink =
 			_fragmentEntryLinkService.addFragmentEntryLink(
-				null, layout.getGroupId(), 0,
-				fragmentEntry.getFragmentEntryId(), segmentsExperienceId,
-				layout.getPlid(), fragmentEntry.getCss(),
+				null, layout.getGroupId(), null,
+				fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					fragmentEntry.getGroupId(), layout.getGroupId()),
+				segmentsExperienceId, layout.getPlid(), fragmentEntry.getCss(),
 				fragmentEntry.getHtml(), fragmentEntry.getJs(),
 				fragmentEntry.getConfiguration(), null, StringPool.BLANK, 0,
 				fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(),
@@ -842,9 +846,10 @@ public class FormItemManager {
 
 		FragmentEntryProcessorContext fragmentEntryProcessorContext =
 			new DefaultFragmentEntryProcessorContext(
-				httpServletRequest, httpServletResponse,
+				fragmentEntryLink.getCompanyId(), httpServletRequest,
+				httpServletResponse, LocaleUtil.getMostRelevantLocale(),
 				FragmentEntryLinkConstants.EDIT,
-				LocaleUtil.getMostRelevantLocale());
+				fragmentEntryLink.getGroupId());
 
 		String processedHTML =
 			_fragmentEntryProcessorRegistry.processFragmentEntryLinkHTML(

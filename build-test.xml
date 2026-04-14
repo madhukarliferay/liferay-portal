@@ -601,7 +601,7 @@ passwords.encryption.algorithm=NONE</echo>
 								mysqldump \
 									--compact \
 									--databases ${database.schema.name} \
-									--default-character-set=utf8 \
+									--default-character-set=utf8mb4 \
 									${ignore_table_argument} \
 									--no-data \
 									--order-by-primary \
@@ -930,6 +930,7 @@ jdbc.default.connectionProperties=oracle.jdbc.ReadTimeout=0;oracle.net.CONNECT_T
 	</macrodef>
 
 	<macrodef name="get-browser-property">
+		<attribute default="" name="browser.version" />
 		<attribute name="property.name" />
 
 		<sequential>
@@ -942,7 +943,14 @@ jdbc.default.connectionProperties=oracle.jdbc.ReadTimeout=0;oracle.net.CONNECT_T
 
 			<beanshell>
 				<![CDATA[
+					String browserVersion = "@{browser.version}";
 					String propertyName = project.getProperty("property.name");
+
+					if (!browserVersion.isEmpty() && propertyName.equals("browser.version")) {
+						project.setProperty(propertyName, browserVersion);
+
+						return;
+					}
 
 					StringBuilder sb = new StringBuilder();
 
@@ -950,6 +958,12 @@ jdbc.default.connectionProperties=oracle.jdbc.ReadTimeout=0;oracle.net.CONNECT_T
 					sb.append(project.getProperty("browser.type"));
 					sb.append(".");
 					sb.append(propertyName.substring(8));
+
+					if (!browserVersion.isEmpty()) {
+						sb.append("[");
+						sb.append(browserVersion);
+						sb.append("]");
+					}
 
 					propertyValue = project.getProperty(sb.toString());
 
@@ -2434,6 +2448,36 @@ war.path=${app.server.portal.dir}/</echo>
 		</sequential>
 	</macrodef>
 
+	<macrodef name="is-cloud-ci-node">
+		<sequential>
+			<var name="is.cloud.ci.node" unset="true" />
+
+			<beanshell>
+				<![CDATA[
+					import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
+
+					project.setProperty("is.cloud.ci.node", String.valueOf(JenkinsResultsParserUtil.isCloudCINode()));
+				]]>
+			</beanshell>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="is-less-than">
+		<attribute name="arg1" />
+		<attribute name="arg2" />
+		<attribute name="property.name" />
+		<sequential>
+			<beanshell>
+                <![CDATA[
+                    Float float1 = Float.parseFloat("@{arg1}");
+                    Float float2 = Float.parseFloat("@{arg2}");
+
+                    project.setProperty("@{property.name}", String.valueOf(float1 < float2));
+                ]]>
+			</beanshell>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="poshi-execute">
 		<attribute default="portal-web/build-test.gradle" name="build.gradle.file" />
 		<attribute default="${basedir}" name="build.gradle.dir" />
@@ -2711,26 +2755,24 @@ war.path=${app.server.portal.dir}/</echo>
 	<macrodef name="prepare-aws-s3-configuration">
 		<sequential>
 			<echo file="${liferay.home}/osgi/configs/com.liferay.portal.store.s3.configuration.S3StoreConfiguration.config">
-ntlmProxyDomain=&quot;&quot;
-proxyAuthType=&quot;none&quot;
-httpClientMaxConnections=&quot;50&quot;
-secretKey=&quot;${aws.s3.secret.access.key}&quot;
-httpClientMaxErrorRetry=&quot;5&quot;
 accessKey=&quot;${aws.s3.access.key.id}&quot;
-connectionTimeout=&quot;10000&quot;
-multipartUploadThreshold=&quot;10485760&quot;
 bucketName=&quot;lfr-qa-poshi-test-${s3.bucket.id}&quot;
-minimumUploadPartSize=&quot;5242880&quot;
-proxyPassword=&quot;&quot;
-maxPoolSize=&quot;20&quot;
-proxyUsername=&quot;&quot;
-proxyPort=&quot;12345&quot;
-s3Region=&quot;us-west-1&quot;
-proxyHost=&quot;&quot;
-ntlmProxyWorkstation=&quot;&quot;
+connectionTimeout=&quot;10000&quot;
 corePoolSize=&quot;7&quot;
+httpClientMaxConnections=&quot;50&quot;
+httpClientMaxErrorRetry=&quot;5&quot;
+maxPoolSize=&quot;20&quot;
+minimumUploadPartSize=&quot;5242880&quot;
+multipartUploadThreshold=&quot;10485760&quot;
+proxyAuthType=&quot;none&quot;
+proxyHost=&quot;&quot;
+proxyPassword=&quot;&quot;
+proxyPort=&quot;12345&quot;
+proxyUsername=&quot;&quot;
+s3Region=&quot;us-west-1&quot;
+s3Endpoint=&quot;https://s3.us-west-1.amazonaws.com&quot;
 s3StorageClass=&quot;STANDARD&quot;
-s3Endpoint=&quot;s3.us-west-1.amazonaws.com&quot;</echo>
+secretKey=&quot;${aws.s3.secret.access.key}&quot;</echo>
 		</sequential>
 	</macrodef>
 
@@ -3092,23 +3134,11 @@ server.detector.server.id=tomcat</echo>
 				<elseif>
 					<equals arg1="${app.server.type}" arg2="weblogic" />
 					<then>
-						<if>
-							<equals arg1="${app.server.weblogic.version}" arg2="12.2.1" />
-							<then>
-								<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+						<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.weblogic.dir}
 extra.lib.dirs=wlserver/modules
 global.lib.dir=domains/liferay/lib
 portal.dir=domains/liferay/autodeploy/ROOT
 server.detector.server.id=weblogic</echo>
-							</then>
-							<else>
-								<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.weblogic.dir}
-extra.lib.dirs=oracle/wlserver/modules
-global.lib.dir=domains/liferay/lib
-portal.dir=/domains/liferay/autodeploy/ROOT
-server.detector.server.id=weblogic</echo>
-							</else>
-						</if>
 					</then>
 				</elseif>
 				<elseif>
@@ -3128,32 +3158,9 @@ server.detector.server.id=wildfly</echo>
 			<get-database-property property.name="database.url" />
 			<get-database-property property.name="database.username" />
 
-			<if>
-				<or>
-					<equals arg1="${database.type}" arg2="mariadb" />
-					<equals arg1="${database.type}" arg2="mysql" />
-				</or>
-				<then>
-					<property name="database.url.upgrade" value="${database.url}" />
-				</then>
-				<elseif>
-					<equals arg1="${database.type}" arg2="postgresql" />
-					<then>
-						<property name="database.url.upgrade" value="${database.url}?reWriteBatchedInserts=true" />
-					</then>
-				</elseif>
-				<elseif>
-					<equals arg1="${database.type}" arg2="sqlserver" />
-					<then>
-						<property name="database.url.upgrade" value="${database.url};useBulkCopyForBatchInsert=true" />
-					</then>
-				</elseif>
-				<else>
-					<property name="database.url.upgrade" value="${database.url}" />
-				</else>
-			</if>
+			<property name="database.url.upgrade" value="${database.url}" />
 
-			<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-database.properties">jdbc.default.driverClassName=${database.driver}
+			<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-ext.properties">jdbc.default.driverClassName=${database.driver}
 jdbc.default.url=${database.url.upgrade}
 jdbc.default.username=${database.username}
 jdbc.default.password=${database.password}</echo>
@@ -3176,11 +3183,24 @@ aes256Key=&quot;&quot;</echo>
 	<macrodef name="prepare-ibm-s3-configuration">
 		<sequential>
 			<echo file="${liferay.home}/osgi/configs/com.liferay.portal.store.s3.configuration.S3StoreConfiguration.config">
-bucketName=&quot;lfr-qa-poshi-test-${s3.bucket.id}&quot;
 accessKey=&quot;${ibm.s3.access.key.id}&quot;
-secretKey=&quot;${ibm.s3.secret.access.key}&quot;
+bucketName=&quot;lfr-qa-poshi-test-${s3.bucket.id}&quot;
+connectionTimeout=&quot;10000&quot;
+corePoolSize=&quot;7&quot;
+httpClientMaxConnections=&quot;50&quot;
+httpClientMaxErrorRetry=&quot;5&quot;
+maxPoolSize=&quot;20&quot;
+minimumUploadPartSize=&quot;5242880&quot;
+multipartUploadThreshold=&quot;10485760&quot;
+proxyAuthType=&quot;none&quot;
+proxyHost=&quot;&quot;
+proxyPassword=&quot;&quot;
+proxyPort=&quot;12345&quot;
+proxyUsername=&quot;&quot;
+s3Region=&quot;us-east&quot;
 s3Endpoint=&quot;https://s3.us-east.cloud-object-storage.appdomain.cloud&quot;
-s3Region=&quot;us-east&quot;</echo>
+s3StorageClass=&quot;STANDARD&quot;
+secretKey=&quot;${ibm.s3.secret.access.key}&quot;</echo>
 		</sequential>
 	</macrodef>
 
@@ -3351,7 +3371,7 @@ tenantId=&quot;${ms.exchange.tenant.id}&quot;</echo>
 
 	<macrodef name="prepare-portal-elasticsearch-osgi-configuration">
 		<sequential>
-			<echo file="${liferay.home}/osgi/configs/com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConfiguration.config">additionalConfigurations="http.host:\ _local_,_site_"${line.separator}logExceptionsOnly=B"false"${line.separator}sidecarShutdownTimeout=L"20000"${line.separator}sidecarHttpPort="AUTO"${line.separator}sidecarJVMOptions=["-Xms256m","-Xmx512m"]</echo>
+			<echo file="${liferay.home}/osgi/configs/com.liferay.portal.search.elasticsearch8.configuration.ElasticsearchConfiguration.config">additionalConfigurations="http.host:\ _local_,_site_"${line.separator}logExceptionsOnly=B"false"${line.separator}sidecarShutdownTimeout=L"20000"${line.separator}sidecarHttpPort="AUTO"${line.separator}sidecarJVMOptions=["-Xms256m","-Xmx512m"]</echo>
 		</sequential>
 	</macrodef>
 
@@ -5206,11 +5226,17 @@ tell application "Safari" to quit
 
 	<macrodef name="prepare-test-app-server-custom">
 		<sequential>
-			<ant antfile="build-dist.xml" inheritAll="false" target="unzip-${app.server.type}-custom" />
-
 			<if>
 				<equals arg1="${app.server.type}" arg2="weblogic" />
 				<then>
+					<local name="java.jdk.home" />
+
+					<get-java-jdk-home type="oracle" version="17" />
+
+					<ant antfile="build-dist.xml" inheritAll="false" target="unzip-${app.server.type}-custom">
+						<property name="weblogic.java.jdk.home" value="${java.jdk.home}" />
+					</ant>
+
 					<chmod
 						perm="a+x"
 					>
@@ -5279,6 +5305,9 @@ tell application "Safari" to quit
 
 					<delete file="${weblogic.fix.sh}" />
 				</then>
+				<else>
+					<ant antfile="build-dist.xml" inheritAll="false" target="unzip-${app.server.type}-custom" />
+				</else>
 			</if>
 		</sequential>
 	</macrodef>
@@ -5391,18 +5420,13 @@ tell application "Safari" to quit
 							app.server.type=weblogic
 						</app-server-properties-update>
 
-						<if>
-							<or>
-								<equals arg1="${app.server.weblogic.version.build}" arg2="12213" />
-								<equals arg1="${app.server.weblogic.version.build}" arg2="14110" />
-							</or>
-							<then>
-								<ant antfile="build-dist.xml" inheritAll="false" target="unzip-weblogic-custom" />
-							</then>
-							<else>
-								<ant antfile="build-dist.xml" inheritAll="false" target="unzip-weblogic" />
-							</else>
-						</if>
+						<local name="java.jdk.home" />
+
+						<get-java-jdk-home type="oracle" version="17" />
+
+						<ant antfile="build-dist.xml" inheritAll="false" target="unzip-weblogic-custom">
+							<property name="weblogic.java.jdk.home" value="${java.jdk.home}" />
+						</ant>
 
 						<antcall inheritAll="false" target="deploy" />
 
@@ -5557,12 +5581,12 @@ include-and-override=portal-liferay-online.properties</echo>
 						<equals arg1="${database.type}" arg2="mysql" />
 						<then>
 							<replace
-								file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-database.properties"
+								file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-ext.properties"
 								token="${database.mysql.driver}"
 								value="${database.mariadb.driver}"
 							/>
 							<replace
-								file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-database.properties"
+								file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-ext.properties"
 								token="jdbc:mysql:"
 								value="jdbc:mariadb:"
 							/>
@@ -5949,6 +5973,17 @@ ${custom.upgrade.properties}</echo>
 		</sequential>
 	</macrodef>
 
+	<macrodef name="pull-clamd-docker-container">
+		<attribute name="image" />
+
+		<sequential>
+			<exec executable="docker">
+				<arg value="pull" />
+				<arg value="@{image}" />
+			</exec>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="rebuild-database">
 		<attribute default="false" name="skip.delete.liferay.home" />
 
@@ -6043,6 +6078,21 @@ ${custom.upgrade.properties}</echo>
 												</echo>
 											</then>
 										</if>
+									</then>
+								</elseif>
+								<elseif>
+									<and>
+										<contains string="${database.version}" substring="11.8" />
+										<equals arg1="${database.type}" arg2="mariadb" />
+									</and>
+									<then>
+										<echo file="${create.sh.file.path}">
+											<![CDATA[
+												#!/bin/bash
+
+												mariadb --host=${database.host} --password=${database.password} --ssl-verify-server-cert=OFF --user=${database.username} < /tmp/create.sql
+											]]>
+										</echo>
 									</then>
 								</elseif>
 								<elseif>
@@ -6250,6 +6300,7 @@ ${custom.upgrade.properties}</echo>
 									<equals arg1="${database.type}" arg2="postgresql" />
 									<then>
 										<get-database-property property.name="database.host" />
+										<get-database-property property.name="database.password" />
 										<get-database-property property.name="database.username" />
 
 										<condition property="database.host" value="localhost">
@@ -6266,6 +6317,7 @@ ${custom.upgrade.properties}</echo>
 												<arg value="${database.host}" />
 												<arg value="-U" />
 												<arg value="${database.username}" />
+												<env key="PGPASSWORD" value="${database.password}" />
 											</exec>
 										</retry>
 									</then>
@@ -6348,6 +6400,7 @@ ${custom.upgrade.properties}</echo>
 					import com.liferay.jenkins.results.parser.test.clazz.group.BatchTestClassGroup;
 					import com.liferay.jenkins.results.parser.test.clazz.group.JUnitBatchTestClassGroup;
 					import com.liferay.jenkins.results.parser.test.clazz.group.NPMTestBatchTestClassGroup;
+					import com.liferay.jenkins.results.parser.test.clazz.group.PlaywrightBatchTestClassGroup;
 					import com.liferay.jenkins.results.parser.test.clazz.group.TestClassGroupFactory;
 
 					public Job.BuildProfile getBuildProfile() {
@@ -6439,7 +6492,7 @@ ${custom.upgrade.properties}</echo>
 
 						BatchTestClassGroup batchTestClassGroup = TestClassGroupFactory.newBatchTestClassGroup(project.getProperty("test.batch.name"), job);
 
-						if (batchTestClassGroup instanceof JUnitBatchTestClassGroup || batchTestClassGroup instanceof NPMTestBatchTestClassGroup) {
+						if (batchTestClassGroup instanceof JUnitBatchTestClassGroup || batchTestClassGroup instanceof NPMTestBatchTestClassGroup || batchTestClassGroup instanceof PlaywrightBatchTestClassGroup) {
 							batchTestClassGroup.writeTestCSVReportFile();
 						}
 					}
@@ -6780,6 +6833,160 @@ ${custom.upgrade.properties}</echo>
 					}
 				]]>
 			</beanshell>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="set-playwright-click-to-chat-properties">
+		<sequential>
+			<var name="env.click.to.chat.chatwoot.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_CHATWOOT_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.chatwoot.password" value="--env=CLICK_TO_CHAT_CHATWOOT_PASSWORD=${env.CLICK_TO_CHAT_CHATWOOT_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.chatwoot.password" />
+					<then>
+						<var name="env.click.to.chat.chatwoot.password" value="--env=CLICK_TO_CHAT_CHATWOOT_PASSWORD=${click.to.chat.chatwoot.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.crisp.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_CRISP_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.crisp.password" value="--env=CLICK_TO_CHAT_CRISP_PASSWORD=${env.CLICK_TO_CHAT_CRISP_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.crisp.password" />
+					<then>
+						<var name="env.click.to.chat.crisp.password" value="--env=CLICK_TO_CHAT_CRISP_PASSWORD=${click.to.chat.crisp.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.hubspot.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_HUBSPOT_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.hubspot.password" value="--env=CLICK_TO_CHAT_HUBSPOT_PASSWORD=${env.CLICK_TO_CHAT_HUBSPOT_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.hubspot.password" />
+					<then>
+						<var name="env.click.to.chat.hubspot.password" value="--env=CLICK_TO_CHAT_HUBSPOT_PASSWORD=${click.to.chat.hubspot.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.jivochat.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_JIVOCHAT_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.jivochat.password" value="--env=CLICK_TO_CHAT_JIVOCHAT_PASSWORD=${env.CLICK_TO_CHAT_JIVOCHAT_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.jivochat.password" />
+					<then>
+						<var name="env.click.to.chat.jivochat.password" value="--env=CLICK_TO_CHAT_JIVOCHAT_PASSWORD=${click.to.chat.jivochat.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.livechat.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_LIVECHAT_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.livechat.password" value="--env=CLICK_TO_CHAT_LIVECHAT_PASSWORD=${env.CLICK_TO_CHAT_LIVECHAT_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.livechat.password" />
+					<then>
+						<var name="env.click.to.chat.livechat.password" value="--env=CLICK_TO_CHAT_LIVECHAT_PASSWORD=${click.to.chat.livechat.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.liveperson.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_LIVEPERSON_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.liveperson.password" value="--env=CLICK_TO_CHAT_LIVEPERSON_PASSWORD=${env.CLICK_TO_CHAT_LIVEPERSON_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.liveperson.password" />
+					<then>
+						<var name="env.click.to.chat.liveperson.password" value="--env=CLICK_TO_CHAT_LIVEPERSON_PASSWORD=${click.to.chat.liveperson.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.smartsupp.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_SMARTSUPP_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.smartsupp.password" value="--env=CLICK_TO_CHAT_SMARTSUPP_PASSWORD=${env.CLICK_TO_CHAT_SMARTSUPP_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.smartsupp.password" />
+					<then>
+						<var name="env.click.to.chat.smartsupp.password" value="--env=CLICK_TO_CHAT_SMARTSUPP_PASSWORD=${click.to.chat.smartsupp.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.tawkto.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_TAWKTO_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.tawkto.password" value="--env=CLICK_TO_CHAT_TAWKTO_PASSWORD=${env.CLICK_TO_CHAT_TAWKTO_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.tawkto.password" />
+					<then>
+						<var name="env.click.to.chat.tawkto.password" value="--env=CLICK_TO_CHAT_TAWKTO_PASSWORD=${click.to.chat.tawkto.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.tidio.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_TIDIO_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.tidio.password" value="--env=CLICK_TO_CHAT_TIDIO_PASSWORD=${env.CLICK_TO_CHAT_TIDIO_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.tidio.password" />
+					<then>
+						<var name="env.click.to.chat.tidio.password" value="--env=CLICK_TO_CHAT_TIDIO_PASSWORD=${click.to.chat.tidio.password}" />
+					</then>
+				</elseif>
+			</if>
+
+			<var name="env.click.to.chat.zendesk.password" value="" />
+
+			<if>
+				<isset property="env.CLICK_TO_CHAT_ZENDESK_PASSWORD" />
+				<then>
+					<var name="env.click.to.chat.zendesk.password" value="--env=CLICK_TO_CHAT_ZENDESK_PASSWORD=${env.CLICK_TO_CHAT_ZENDESK_PASSWORD}" />
+				</then>
+				<elseif>
+					<isset property="click.to.chat.zendesk.password" />
+					<then>
+						<var name="env.click.to.chat.zendesk.password" value="--env=CLICK_TO_CHAT_ZENDESK_PASSWORD=${click.to.chat.zendesk.password}" />
+					</then>
+				</elseif>
+			</if>
 		</sequential>
 	</macrodef>
 
@@ -7159,7 +7366,7 @@ log.sanitizer.enabled=false</echo>
 					</then>
 				</elseif>
 				<else>
-					<var name="app.server.tomcat.version" value="10.1.43" />
+					<var name="app.server.tomcat.version" value="10.1.52" />
 				</else>
 			</if>
 
@@ -7268,7 +7475,7 @@ log.sanitizer.enabled=false</echo>
 						<elseif>
 							<contains string="${test.batch.name}" substring="remote-elasticsearch" />
 							<then>
-								<ant antfile="build-test-elasticsearch7.xml" target="start-elasticsearch" />
+								<ant antfile="build-test-elasticsearch8.xml" target="start-elasticsearch" />
 							</then>
 						</elseif>
 					</if>
@@ -7296,7 +7503,7 @@ log.sanitizer.enabled=false</echo>
 								<istrue value="${remote.elasticsearch.enabled}" />
 							</or>
 							<then>
-								<ant antfile="build-test-elasticsearch7.xml" target="start-elasticsearch" />
+								<ant antfile="build-test-elasticsearch8.xml" target="start-elasticsearch" />
 							</then>
 						</elseif>
 					</if>
@@ -7308,7 +7515,7 @@ log.sanitizer.enabled=false</echo>
 			<if>
 				<equals arg1="${delete.sidecar.bundle}" arg2="true" />
 				<then>
-					<delete dir="${liferay.home}/elasticsearch7" failonerror="false" />
+					<delete dir="${liferay.home}/elasticsearch8" failonerror="false" />
 				</then>
 			</if>
 		</sequential>
@@ -7559,6 +7766,7 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 		<attribute default="0" name="app.server.bundle.index" />
 		<attribute default="true" name="delete.liferay.home" />
 		<attribute default="" name="testable.portal.started.marker.file" />
+		<attribute default="false" name="skip.wait.server.startup" />
 
 		<sequential>
 			<lstopwatch action="start" name="start.app.server.@{app.server.bundle.index}" />
@@ -7566,6 +7774,7 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 			<start-app-server-cmd
 				app.server.bundle.index="@{app.server.bundle.index}"
 				delete.liferay.home="@{delete.liferay.home}"
+				skip.wait.server.startup="@{skip.wait.server.startup}"
 				test.docker.environment="${test.docker.environment}"
 				testable.portal.started.marker.file="@{testable.portal.started.marker.file}"
 			/>
@@ -7590,6 +7799,7 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 		<attribute default="0" name="app.server.bundle.index" />
 		<attribute default="true" name="delete.liferay.home" />
 		<attribute default="host" name="docker.network.name" />
+		<attribute default="false" name="skip.wait.server.startup" />
 		<attribute default="false" name="test.docker.environment" />
 		<attribute default="" name="testable.portal.started.marker.file" />
 
@@ -7656,7 +7866,12 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 					<get-operating-system-property property.name="operating.system.docker.image" />
 
 					<parallel>
-						<wait-for-app-server app.server.bin.dir="@{app.server.bin.dir}" app.server.bundle.index="@{app.server.bundle.index}" />
+						<if>
+							<equals arg1="@{skip.wait.server.startup}" arg2="false" />
+							<then>
+								<wait-for-app-server app.server.bin.dir="@{app.server.bin.dir}" app.server.bundle.index="@{app.server.bundle.index}" />
+							</then>
+						</if>
 
 						<daemons>
 							<if>
@@ -7713,10 +7928,12 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 
 	<macrodef name="start-docker-browser">
 		<sequential>
+			<get-testcase-property property.name="browser.chrome.version" />
 			<get-browser-property property.name="browser.docker.browser.options" />
-			<get-browser-property property.name="browser.docker.image" />
 			<get-browser-property property.name="browser.docker.run.options" />
 			<get-browser-property property.name="browser.host" />
+
+			<get-browser-property browser.version="${browser.chrome.version}" property.name="browser.docker.image" />
 
 			<propertyregex
 				input="${portal.dir}"
@@ -7763,6 +7980,7 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 				--add-host www.dog.com:127.0.0.1 \
 				--add-host www.easy.com:127.0.0.1 \
 				--add-host www.fox.com:127.0.0.1 \
+				--env=SE_NODE_SESSION_TIMEOUT=600 \
 				--mount type=bind,source=${host.git.dir}/${portal.dir.name},target=${portal.dir} \
 			</start-docker-container>
 
@@ -7813,6 +8031,8 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 			</condition>
 
 			<property name="docker.start.script" value="docker_start.sh" />
+
+			<echo>Starting Docker container for @{image} on host @{name} with run options: @{run.options}.</echo>
 
 			<if>
 				<or>
@@ -7894,7 +8114,7 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 					</not>
 				</or>
 				<then>
-					<fail>Unable to start docker container:
+					<fail>Unable to start Docker container:
 ${docker.start.error}</fail>
 				</then>
 			</if>
@@ -8015,6 +8235,15 @@ ${docker.start.error}</fail>
 					<equals arg1="${database.type}" arg2="db2" />
 					<then>
 						<property name="docker.database.wait.condition">[[ "$(/bin/su - db2inst1 -c '/opt/ibm/db2/V11.1/bin/db2 db2start')" =~ "SQL1026N" ]]</property>
+					</then>
+				</elseif>
+				<elseif>
+					<and>
+						<contains string="${database.version}" substring="11.8" />
+						<equals arg1="${database.type}" arg2="mariadb" />
+					</and>
+					<then>
+						<property name="docker.database.wait.condition">mariadb-admin ping > /dev/null 2>&amp;1</property>
 					</then>
 				</elseif>
 				<elseif>
@@ -8334,6 +8563,8 @@ ${docker.start.error}</fail>
 				</elseif>
 			</if>
 
+			<set-playwright-click-to-chat-properties />
+
 			<local name="env.portal.url.arg" />
 
 			<condition else="" property="env.portal.url.arg" value="--env=PORTAL_URL=http://${env.NODE_NAME}:8080">
@@ -8358,6 +8589,16 @@ ${docker.start.error}</fail>
 				--add-host www.easy.com:${ip.address} \
 				--add-host www.fox.com:${ip.address} \
 				${env.ci.arg} \
+				${env.click.to.chat.chatwoot.password} \
+				${env.click.to.chat.crisp.password} \
+				${env.click.to.chat.hubspot.password} \
+				${env.click.to.chat.jivochat.password} \
+				${env.click.to.chat.livechat.password} \
+				${env.click.to.chat.liveperson.password} \
+				${env.click.to.chat.smartsupp.password} \
+				${env.click.to.chat.tawkto.password} \
+				${env.click.to.chat.tidio.password} \
+				${env.click.to.chat.zendesk.password} \
 				${env.osb.asah.api.token} \
 				${env.osb.asah.backend.url} \
 				${env.osb.asah.batch.curator.url} \
@@ -8861,7 +9102,7 @@ ${docker.start.error}</fail>
 								<var name="elasticsearch.bundle.count" value="${elasticsearch.total.bundles}" />
 
 								<antelope:repeat count="${elasticsearch.total.bundles}">
-									<ant antfile="build-test-elasticsearch7.xml" target="stop-elasticsearch">
+									<ant antfile="build-test-elasticsearch8.xml" target="stop-elasticsearch">
 										<property name="elasticsearch.bundle.number" value="${elasticsearch.bundle.count}" />
 									</ant>
 
@@ -8875,14 +9116,14 @@ ${docker.start.error}</fail>
 								</antelope:repeat>
 							</then>
 							<else>
-								<ant antfile="build-test-elasticsearch7.xml" target="stop-elasticsearch" />
+								<ant antfile="build-test-elasticsearch8.xml" target="stop-elasticsearch" />
 							</else>
 						</if>
 
 						<if>
 							<socket port="5601" server="localhost" />
 							<then>
-								<ant antfile="build-test-elasticsearch7.xml" target="stop-kibana" />
+								<ant antfile="build-test-elasticsearch8.xml" target="stop-kibana" />
 							</then>
 						</if>
 					</then>
@@ -9632,14 +9873,17 @@ war.path=${app.server.portal.dir}/</echo>
 					<then>
 						<var name="database.index" value="1" />
 
-						<echo file="create.sql">drop database if exists lportal;
-create database lportal character set utf8;</echo>
+						<echo file="create.sql">
+drop database if exists lportal;
+
+create database lportal character set utf8mb4;</echo>
 
 						<antelope:repeat count="${databases.size}">
 							<echo append="true" file="create.sql">
 
 drop database if exists lportal${database.index};
-create database lportal${database.index} character set utf8;</echo>
+
+create database lportal${database.index} character set utf8mb4;</echo>
 
 							<math
 								datatype="int"
@@ -9660,12 +9904,14 @@ create database lportal${database.index} character set utf8;</echo>
 						<then>
 							<echo file="create.sql">
 drop database if exists lportal;
-create database lportal encoding = 'UNICODE';</echo>
+
+create database lportal encoding = 'UTF8';</echo>
 
 							<echo append="true" file="create.sql">
 
 drop database if exists lportal${databases.size};
-create database lportal${databases.size} encoding = 'UNICODE';</echo>
+
+create database lportal${databases.size} encoding = 'UTF8';</echo>
 						</then>
 					</elseif>
 					<else>
@@ -9721,12 +9967,12 @@ create database lportal${databases.size} encoding = 'UNICODE';</echo>
 					<isset property="configure.read.write.database" />
 					<then>
 						<echo append="true" file="create.sql">
-							<![CDATA[
-								create user 'read_only_user'@'%' identified BY 'password';
-								grant select ON *.* TO 'read_only_user'@'%';
-								flush privileges;
-							]]>
-						</echo>
+
+create user 'read_only_user'@'%' identified BY 'password';
+
+grant select ON *.* TO 'read_only_user'@'%';
+
+flush privileges;</echo>
 					</then>
 				</if>
 
@@ -9749,7 +9995,9 @@ create database lportal${databases.size} encoding = 'UNICODE';</echo>
 						>
 							<replacetoken>connect to lportal;</replacetoken>
 							<replacevalue>update db cfg for lportal using logprimary 2;
+
 update db cfg for lportal using logsecond 254;
+
 connect to lportal;</replacevalue>
 						</replace>
 						<replace
@@ -9765,8 +10013,11 @@ connect to lportal;</replacevalue>
 								<echo append="true" file="create.sql">
 
 disconnect lportal;
+
 create database lportal${databases.size} pagesize 32768 temporary tablespace managed by automatic storage;
+
 update db cfg for lportal${databases.size} using logprimary 2;
+
 update db cfg for lportal${databases.size} using logsecond 254;</echo>
 							</then>
 						</if>
@@ -9801,9 +10052,13 @@ update db cfg for lportal${databases.size} using logsecond 254;</echo>
 
 									<echo append="true" file="create.sql">
 	drop user lportal1 cascade;
+
 	create user lportal1 identified by lportal1;
+
 	grant connect,resource to lportal1;
+
 	grant unlimited tablespace to lportal1;
+
 	quit</echo>
 								</then>
 							</if>
@@ -9824,9 +10079,11 @@ go</replacetoken>
 go
 
 alter database lportal set allow_snapshot_isolation on;
+
 go
 
 alter database lportal set read_committed_snapshot on;
+
 go]]></replacevalue>
 								</replacefilter>
 							</replace>
@@ -9836,12 +10093,257 @@ go]]></replacevalue>
 								<then>
 									<echo append="true" file="create.sql">
 create database lportal${databases.size};
+
 go
 
 alter database lportal${databases.size} set allow_snapshot_isolation on;
+
 go
 
 alter database lportal${databases.size} set read_committed_snapshot on;
+
+go</echo>
+								</then>
+							</if>
+						</then>
+					</elseif>
+				</if>
+
+				<get-database-property property.name="database.schema" />
+
+				<if>
+					<not>
+						<equals arg1="${database.schema}" arg2="lportal" />
+					</not>
+					<then>
+						<replaceregexp
+							file="create.sql"
+							flags="g"
+							match="lportal"
+							replace="${database.schema}"
+						/>
+					</then>
+				</if>
+			</then>
+		</if>
+	</target>
+
+	<target name="build-sql-file-playwright">
+		<var name="databases.size" unset="true" />
+		<var name="databases.size" value="1" />
+
+		<if>
+			<not>
+				<equals arg1="${database.type}" arg2="hypersonic" />
+			</not>
+			<then>
+				<if>
+					<and>
+						<isset property="databases.size" />
+						<or>
+							<equals arg1="${database.type}" arg2="mysql" />
+							<equals arg1="${database.type}" arg2="mariadb" />
+						</or>
+					</and>
+					<then>
+						<var name="database.index" value="1" />
+
+						<antelope:repeat count="${databases.size}">
+							<echo append="true" file="create.sql">
+
+drop database if exists lportal${database.index};
+
+create database lportal${database.index} character set utf8mb4;</echo>
+
+							<math
+								datatype="int"
+								operand1="${database.index}"
+								operand2="1"
+								operation="+"
+								result="database.index"
+							/>
+						</antelope:repeat>
+
+						<var name="database.index" unset="true" />
+					</then>
+					<elseif>
+						<and>
+							<isset property="databases.size" />
+							<equals arg1="${database.type}" arg2="postgresql" />
+						</and>
+						<then>
+							<echo append="true" file="create.sql">
+
+drop database if exists lportal${databases.size};
+
+create database lportal${databases.size} encoding = 'UTF8';</echo>
+						</then>
+					</elseif>
+					<else>
+						<if>
+							<or>
+								<not>
+									<isset property="sql.dir" />
+								</not>
+								<not>
+									<isset property="sql.file" />
+								</not>
+							</or>
+							<then>
+								<property name="sql.dir" value="sql\create${database.create.suffix}\" />
+
+								<if>
+									<equals arg1="${database.type}" arg2="mariadb" />
+									<then>
+										<property name="sql.file" value="create${database.create.suffix}-mysql.sql" />
+									</then>
+									<elseif>
+										<equals arg1="${database.type}" arg2="sqlserver" />
+										<then>
+											<property name="sql.file" value="create${database.create.suffix}-sql-server.sql" />
+										</then>
+									</elseif>
+									<else>
+										<property name="sql.file" value="create${database.create.suffix}-${database.type}.sql" />
+									</else>
+								</if>
+							</then>
+						</if>
+
+						<copy
+							file="${sql.dir}${sql.file}"
+							tofile="create.sql"
+						/>
+					</else>
+				</if>
+
+				<get-database-property property.name="database.device.name" />
+
+				<if>
+					<equals arg1="${database.type}" arg2="db2" />
+					<then>
+						<get-database-property property.name="database.password" />
+						<get-database-property property.name="database.username" />
+
+						<replace
+							file="create.sql"
+						>
+							<replacetoken>drop database lportal;</replacetoken>
+							<replacevalue></replacevalue>
+						</replace>
+						<replace
+							file="create.sql"
+						>
+							<replacetoken>connect to lportal;</replacetoken>
+							<replacevalue>update db cfg for lportal using logprimary 2;
+
+update db cfg for lportal using logsecond 254;
+
+connect to lportal;</replacevalue>
+						</replace>
+						<replace
+							file="create.sql"
+						>
+							<replacetoken>create database lportal pagesize 8192;</replacetoken>
+							<replacevalue>create database lportal pagesize 32768 temporary tablespace managed by automatic storage;</replacevalue>
+						</replace>
+
+						<if>
+							<isset property="databases.size" />
+							<then>
+								<echo append="true" file="create.sql">
+
+disconnect lportal;
+
+create database lportal${databases.size} pagesize 32768 temporary tablespace managed by automatic storage;
+
+update db cfg for lportal${databases.size} using logprimary 2;
+
+update db cfg for lportal${databases.size} using logsecond 254;</echo>
+							</then>
+						</if>
+					</then>
+					<elseif>
+						<equals arg1="${database.type}" arg2="oracle" />
+						<then>
+							<replace
+								file="create.sql"
+							>
+								<replacetoken>grant connect,resource to &amp;1;</replacetoken>
+								<replacevalue>grant connect,resource to &amp;1;
+grant unlimited tablespace to &amp;1;</replacevalue>
+							</replace>
+
+							<if>
+								<isset property="databases.size" />
+								<then>
+									<replace
+										file="create.sql"
+									>
+										<replacetoken>grant connect,resource to &amp;1;
+grant unlimited tablespace to &amp;1;</replacetoken>
+										<replacevalue>grant all privileges to &amp;1;</replacevalue>
+									</replace>
+									<replace
+										file="create.sql"
+									>
+										<replacetoken>quit</replacetoken>
+										<replacevalue></replacevalue>
+									</replace>
+
+									<echo append="true" file="create.sql">
+
+drop user lportal1 cascade;
+
+create user lportal1 identified by lportal1;
+
+grant connect,resource to lportal1;
+
+grant unlimited tablespace to lportal1;
+
+quit</echo>
+								</then>
+							</if>
+						</then>
+					</elseif>
+					<elseif>
+						<equals arg1="${database.type}" arg2="sqlserver" />
+						<then>
+							<replace
+								file="create.sql"
+							>
+								<replacefilter>
+									<replacetoken>create database lportal;
+
+go</replacetoken>
+									<replacevalue><![CDATA[create database lportal;
+
+go
+
+alter database lportal set allow_snapshot_isolation on;
+
+go
+
+alter database lportal set read_committed_snapshot on;
+
+go]]></replacevalue>
+								</replacefilter>
+							</replace>
+
+							<if>
+								<isset property="databases.size" />
+								<then>
+									<echo append="true" file="create.sql">
+create database lportal${databases.size};
+
+go
+
+alter database lportal${databases.size} set allow_snapshot_isolation on;
+
+go
+
+alter database lportal${databases.size} set read_committed_snapshot on;
+
 go</echo>
 								</then>
 							</if>
@@ -10714,6 +11216,18 @@ org.apache.catalina.ha.session.level=INFO]]>
 
 	<target name="deploy-license-xml">
 		<if>
+			<matches pattern="https?://" string="${test.build.cmp.license.url}" />
+			<then>
+				<mkdir dir="${liferay.home}/deploy" />
+
+				<mirrors-get
+					dest="${liferay.home}/deploy/license-cmp.xml"
+					src="${test.build.cmp.license.url}"
+				/>
+			</then>
+		</if>
+
+		<if>
 			<matches pattern="https?://" string="${test.build.license.xml.zip.url}" />
 			<then>
 				<mkdir dir="${liferay.home}/deploy" />
@@ -11089,7 +11603,7 @@ org.apache.catalina.ha.session.level=INFO]]>
 
 	<target name="deploy-sql-zip">
 		<if>
-			<matches pattern="https?://" string="${test.sql.zip.url}" />
+			<matches pattern="(file|https?)://" string="${test.sql.zip.url}" />
 			<then>
 				<mirrors-get
 					dest="sql/release-sql.zip"
@@ -11877,6 +12391,8 @@ send_user $expect_out(buffer)]]></echo>
 						}
 						catch (Exception exception) {
 							exception.printStackTrace();
+
+							throw exception;
 						}
 					]]>
 				</beanshell>
@@ -12184,7 +12700,15 @@ ${update.properties}</echo>
 		<Logger level="${dialect.detector.log.level}" name="com.liferay.portal.spring.hibernate.DialectDetector" />
 		<Logger level="ERROR" name="com.zaxxer.hikari.pool.PoolBase" />
 		<Logger level="ERROR" name="org.apache.http.client.protocol.ResponseProcessCookies" />
+		<Logger level="OFF" name="org.hibernate.engine.jdbc.spi.SqlExceptionHelper" />
 		${log4j.logggers.root}
+	</Loggers>
+</Configuration>]]></echo>
+
+		<echo file="${liferay.home}/osgi/log4j/com.liferay.oauth2.provider.rest-log4j-ext.xml"><![CDATA[<?xml version="1.0"?>
+<Configuration strict="true">
+	<Loggers>
+		<Logger level="ERROR" name="com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDataProvider" />
 	</Loggers>
 </Configuration>]]></echo>
 
@@ -12203,12 +12727,12 @@ ${update.properties}</echo>
 	</Loggers>
 </Configuration>]]></echo>
 
-		<echo file="${liferay.home}/osgi/log4j/com.liferay.portal.search.elasticsearch7.impl-log4j-ext.xml"><![CDATA[<?xml version="1.0"?>
+		<echo file="${liferay.home}/osgi/log4j/com.liferay.portal.search.elasticsearch8.impl-log4j-ext.xml"><![CDATA[<?xml version="1.0"?>
 <Configuration strict="true">
 	<Loggers>
-		<Logger level="ERROR" name="com.liferay.portal.search.elasticsearch7.internal.ElasticsearchSearchEngine" />
-		<Logger level="INFO" name="com.liferay.portal.search.elasticsearch7.internal.index.IndexFactory" />
-		<Logger level="ERROR" name="com.liferay.portal.search.elasticsearch7.internal.sidecar.SidecarManager" />
+		<Logger level="ERROR" name="com.liferay.portal.search.elasticsearch8.internal.ElasticsearchSearchEngine" />
+		<Logger level="INFO" name="com.liferay.portal.search.elasticsearch8.internal.index.IndexFactory" />
+		<Logger level="ERROR" name="com.liferay.portal.search.elasticsearch8.internal.sidecar.SidecarManager" />
 	</Loggers>
 </Configuration>]]></echo>
 
@@ -12305,6 +12829,19 @@ ${update.properties}</echo>
 
 		<if>
 			<and>
+				<equals arg1="${portal.version}" arg2="6.1.30" />
+				<equals arg1="${database.type}" arg2="postgresql" />
+			</and>
+			<then>
+				<property name="database.url.parameters" value="?autosave=conservative&amp;reWriteBatchedInserts=true" />
+			</then>
+			<else>
+				<property name="database.url.parameters" value="" />
+			</else>
+		</if>
+
+		<if>
+			<and>
 				<isset property="portal.version" />
 				<or>
 					<equals arg1="database.partition.enabled" arg2="true" />
@@ -12333,7 +12870,7 @@ upgrade.database.dl.storage.check.disabled=true
 
 jdbc.default.jndi.name=
 jdbc.default.driverClassName=${database.driver}
-jdbc.default.url=${database.url}
+jdbc.default.url=${database.url}${database.url.parameters}
 jdbc.default.username=${database.username}
 jdbc.default.password=${database.password}
 
@@ -12352,8 +12889,6 @@ default.admin.password=${test.portal.default.admin.password}
 browser.launcher.url=
 setup.wizard.enabled=false
 initial.system.check.enabled=true
-mail.send.blacklist=
-mail.session.jndi.name=
 memory.scheduler.org.quartz.threadPool.threadCount=1
 persisted.scheduler.org.quartz.threadPool.threadCount=1
 virtual.hosts.default.site.name=
@@ -12371,6 +12906,11 @@ captcha.enforce.disabled=true
 		<echo file="${liferay.home}/osgi/configs/com.liferay.captcha.configuration.CaptchaConfiguration.config"><![CDATA[createAccountCaptchaEnabled="false"
 maxChallenges="-1"
 sendPasswordCaptchaEnabled="false"]]></echo>
+
+		<echo file="${liferay.home}/osgi/configs/com.liferay.mail.settings.configuration.MailSettingSystemConfiguration.config"><![CDATA[
+sendBlacklist=[]
+jndiName=""
+]]></echo>
 
 		<if>
 			<equals arg1="${database.type}" arg2="oracle" />
@@ -12592,6 +13132,19 @@ company.default.web.id=www.able.com</echo>
 		<if>
 			<equals arg1="${dl.store.antivirus.enabled}" arg2="true" />
 			<then>
+				<is-cloud-ci-node />
+
+				<if>
+					<equals arg1="${is.cloud.ci.node}" arg2="true" />
+					<then>
+						<property name="clamd.docker.image" value="clamav/clamav:stable" />
+						<pull-clamd-docker-container image="${clamd.docker.image}" />
+						<start-docker-container image="${clamd.docker.image}" name="clamd">\
+							--expose=3310 \
+						</start-docker-container>
+					</then>
+				</if>
+
 				<echo append="true" file="portal-impl/src/portal-ext.properties">
 dl.store.antivirus.enabled=true</echo>
 
@@ -12663,19 +13216,21 @@ jdbc.test.password=${database.password}</echo>
 			<equals arg1="${ms.exchange.enabled}" arg2="true" />
 
 			<then>
-				<echo append="true" file="portal-impl/src/portal-ext.properties">
-mail.session.mail=true
-mail.session.mail.pop3.host=outlook.office365.com
-mail.session.mail.pop3.port=995
-mail.session.mail.pop3.user=qa-exchange-pop-test@liferay0.onmicrosoft.com
-mail.session.mail.smtp.host=smtp.office365.com
-mail.session.mail.smtp.port=587
-mail.session.mail.smtp.user=qa-exchange-pop-test@liferay0.onmicrosoft.com
-mail.session.mail.store.protocol=pop3s
-
-pop.server.subdomain=
-pop.server.notifications.enabled=true
+				<echo append="true" file="${liferay.home}/osgi/configs/com.liferay.mail.settings.configuration.MailSettingCompanyConfiguration.config"><![CDATA[
+enablePOPServerNotifications=b"true"
+incomingPOPPort="995"
+incomingPOPServer="outlook.office365.com"
+outgoingSMTPPort="587"
+outgoingSMTPServer="smtp.office365.com"
+popUserName="qa-exchange-pop-test@liferay0.onmicrosoft.com"
+smtpUserName="qa-exchange-pop-test@liferay0.onmicrosoft.com"
+storeProtocol="pop3s"
+]]>
 				</echo>
+
+				<echo append="true" file="${liferay.home}/osgi/configs/com.liferay.mail.settings.configuration.MailSettingSystemConfiguration.config"><![CDATA[
+popServerSubdomain=""
+]]></echo>
 			</then>
 		</if>
 
@@ -12844,37 +13399,6 @@ portal.proxy.path=/${portal.proxy.path}</echo>
 			</then>
 		</if>
 
-		<get-testcase-property property.name="rewrite.batch.statements" />
-
-		<if>
-			<equals arg1="${rewrite.batch.statements}" arg2="true" />
-			<then>
-				<if>
-					<equals arg1="${database.type}" arg2="postgresql" />
-					<then>
-						<replace
-							file="portal-impl/src/portal-ext.properties"
-							token="${database.url}"
-							value="${database.url}?reWriteBatchedInserts=true"
-						/>
-					</then>
-					<elseif>
-						<equals arg1="${database.type}" arg2="sqlserver" />
-						<then>
-							<replace
-								file="portal-impl/src/portal-ext.properties"
-								token="${database.url}"
-								value="${database.url};useBulkCopyForBatchInsert=true"
-							/>
-						</then>
-					</elseif>
-					<else>
-						<property name="database.url" value="${database.url}" />
-					</else>
-				</if>
-			</then>
-		</if>
-
 		<get-testcase-property property.name="setup.wizard.enabled" />
 
 		<if>
@@ -12943,9 +13467,9 @@ include-and-override=${liferay.home}/portal-setup-wizard.properties</echo>
 		<if>
 			<isset property="test.smtp.server.enabled" />
 			<then>
-				<echo append="true" file="portal-impl/src/portal-ext.properties">
-
-mail.session.mail.smtp.port=25000</echo>
+				<echo append="true" file="${liferay.home}/osgi/configs/com.liferay.mail.settings.configuration.MailSettingCompanyConfiguration.config"><![CDATA[
+outgoingSMTPPort="25000"
+]]></echo>
 			</then>
 		</if>
 
@@ -12963,6 +13487,14 @@ feature.flag.LPD-11342=true</echo>
 
 		<echo append="true" file="portal-impl/src/portal-ext.properties">
 analytics.cloud.domain.allowed=*</echo>
+
+		<if>
+			<equals arg1="${functional.test.type}" arg2="poshi" />
+			<then>
+				<echo append="true" file="portal-impl/src/portal-ext.properties">
+feature.flag.LPD-36105=true</echo>
+			</then>
+		</if>
 
 		<apply-portal-ext-properties />
 	</target>
@@ -13922,6 +14454,7 @@ analytics.cloud.domain.allowed=*</echo>
 		</untar>
 
 		<antcall target="deploy-license-xml">
+			<param name="test.build.cmp.license.url" value="${test.cmp.license.url}" />
 			<param name="test.build.license.xml.zip.url" value="${test.license.xml.url}" />
 		</antcall>
 	</target>
@@ -14264,8 +14797,7 @@ analytics.cloud.domain.allowed=*</echo>
 	</target>
 
 	<target name="prepare-system-ext-properties">
-		<echo file="${app.server.classes.portal.dir}/system-ext.properties">jdbc.data.source.anti.time.drift=true
-log.sanitizer.enabled=false</echo>
+		<echo file="${app.server.classes.portal.dir}/system-ext.properties">log.sanitizer.enabled=false</echo>
 
 		<get-testcase-property property.name="custom.system.properties" />
 
@@ -14795,7 +15327,7 @@ ANT_OPTS=${env.ANT_OPTS}</echo>
 		<if>
 			<equals arg1="${app.server.type}" arg2="weblogic" />
 			<then>
-				<ant antfile="build-test-elasticsearch7.xml" target="get-sidecar-binaries" />
+				<ant antfile="build-test-elasticsearch8.xml" target="get-sidecar-binaries" />
 			</then>
 		</if>
 
@@ -14812,7 +15344,7 @@ ANT_OPTS=${env.ANT_OPTS}</echo>
 			tofile="${test.release.bundle.parent.dir}/bundles-original/data"
 		/>
 
-		<delete dir="${test.release.bundle.parent.dir}/bundles-original/data/elasticsearch7" />
+		<delete dir="${test.release.bundle.parent.dir}/bundles-original/data/elasticsearch8" />
 
 		<delete dir="${test.release.bundle.parent.dir}/bundles" />
 
@@ -14850,6 +15382,7 @@ ANT_OPTS=${env.ANT_OPTS}</echo>
 		<delete dir="${test.release.bundle.parent.dir}/bundles/osgi/state" />
 
 		<antcall target="deploy-license-xml">
+			<param name="test.build.cmp.license.url" value="${test.cmp.license.url}" />
 			<param name="test.build.license.xml.zip.url" value="${test.license.xml.url}" />
 		</antcall>
 
@@ -14863,7 +15396,7 @@ ANT_OPTS=${env.ANT_OPTS}</echo>
 					tofile="${test.release.bundle.parent.dir}/bundles/data"
 				/>
 
-				<delete dir="${test.release.bundle.parent.dir}/bundles/data/elasticsearch7" />
+				<delete dir="${test.release.bundle.parent.dir}/bundles/data/elasticsearch8" />
 
 				<delete dir="${test.release.bundle.parent.dir}/bundles-original" />
 			</then>
@@ -15001,6 +15534,26 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 		</trycatch>
 	</target>
 
+	<target depends="build-sql-file-playwright" name="rebuild-database-playwright">
+		<trycatch property="rebuild.database.error">
+			<try>
+				<retry retrycount="2">
+					<sequential>
+						<rebuild-database skip.delete.liferay.home="true" />
+					</sequential>
+				</retry>
+			</try>
+			<catch>
+				<echo>Failed to rebuild the database</echo>
+
+				<fail>${rebuild.database.error}</fail>
+			</catch>
+			<finally>
+				<delete file="create.sql" />
+			</finally>
+		</trycatch>
+	</target>
+
 	<target name="rebuild-legacy-database">
 		<if>
 			<not>
@@ -15026,6 +15579,8 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 					dest="${liferay.home}"
 					src="${liferay.home}/data-archive-portal-partition-large.zip"
 				/>
+
+				<delete file="${liferay.home}/data-archive-portal-partition-large.zip" />
 			</then>
 			<else>
 				<unzip
@@ -15042,7 +15597,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 				<contains string="${portal.version}" substring="u" />
 			</not>
 			<then>
-				<delete dir="${liferay.home}/data/elasticsearch7" />
+				<delete dir="${liferay.home}/data/elasticsearch8" />
 			</then>
 		</if>
 
@@ -15050,6 +15605,64 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 			<contains string="${portal.version}" substring="6.2" />
 			<then>
 				<delete dir="${liferay.home}/data/license" />
+			</then>
+		</if>
+
+		<local name="create.bare.mysql.sql.file" />
+
+		<if>
+			<or>
+				<equals arg1="${database.type}" arg2="mariadb" />
+				<equals arg1="${database.type}" arg2="mysql" />
+			</or>
+			<then>
+				<loadresource property="found.utf8mb3.line">
+					<concat>
+						<file file="${liferay.home}/${database.type}.sql" />
+						<filterchain>
+							<linecontainsregexp casesensitive="false">
+								<regexp pattern="DEFAULT CHARSET\s*=\s*utf8(mb3)?(?![mb4])" />
+							</linecontainsregexp>
+							<headfilter lines="1" />
+						</filterchain>
+					</concat>
+				</loadresource>
+
+				<if>
+					<isset property="found.utf8mb3.line" />
+					<then>
+						<copy
+							file="sql/create-bare/create-bare-mysql.sql"
+							overwrite="true"
+							tofile="sql/create-bare/create-bare-mysql-utf8mb3.sql"
+						>
+							<filterchain>
+								<tokenfilter>
+									<replaceregex flags="g" pattern="utf8mb4" replace="utf8mb3" />
+								</tokenfilter>
+							</filterchain>
+						</copy>
+						<property name="create.bare.mysql.sql.file" value="create-bare-mysql-utf8mb3.sql" />
+					</then>
+					<else>
+						<property name="create.bare.mysql.sql.file" value="create-bare-mysql.sql" />
+					</else>
+				</if>
+
+				<get-testcase-property property.name="database.partition.enabled" />
+
+				<if>
+					<equals arg1="${database.partition.enabled}" arg2="true" />
+					<then>
+						<replaceregexp
+							byline="true"
+							file="${liferay.home}/${database.type}.sql"
+							flags="gi"
+							match="create database[^`]*`([^`]+)`"
+							replace="drop database if exists `\1`;&#10;create database if not exists `\1`"
+						/>
+					</then>
+				</if>
 			</then>
 		</if>
 
@@ -15132,7 +15745,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<antcall target="rebuild-database">
 								<param name="database.type" value="${database.type}" />
 								<param name="sql.dir" value="sql/create-bare/" />
-								<param name="sql.file" value="create-bare-mysql.sql" />
+								<param name="sql.file" value="${create.bare.mysql.sql.file}" />
 							</antcall>
 
 							<echo file="${import.database.sh.file.path}">
@@ -15153,13 +15766,18 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<equals arg1="${database.type}" arg2="mysql" />
 						</and>
 						<then>
+							<is-less-than arg1="${database.version}" arg2="8.0" property.name="mysql.upgrade" />
+
 							<echo file="${import.database.sh.file.path}">
 								<![CDATA[
 									#!/bin/bash
 
 									mysql --password=${database.password} --user=${database.username} < /tmp/${database.type}.sql
 
-									mysql_upgrade --force --password=${database.password} --user=${database.username}
+									if [[ ${mysql.upgrade} == "true" ]]
+									then
+										mysql_upgrade --force --password=${database.password} --user=${database.username}
+									fi
 								]]>
 							</echo>
 
@@ -15173,8 +15791,10 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<antcall target="rebuild-database">
 								<param name="database.type" value="${database.type}" />
 								<param name="sql.dir" value="sql/create-bare/" />
-								<param name="sql.file" value="create-bare-mysql.sql" />
+								<param name="sql.file" value="${create.bare.mysql.sql.file}" />
 							</antcall>
+
+							<is-less-than arg1="${database.version}" arg2="8.0" property.name="mysql.upgrade" />
 
 							<echo file="${import.database.sh.file.path}">
 								<![CDATA[
@@ -15182,7 +15802,10 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 
 									mysql --database=${database.schema} --password=${database.password} --user=${database.username} < /tmp/${database.type}.sql
 
-									mysql_upgrade --force --password=${database.password} --user=${database.username}
+									if [[ ${mysql.upgrade} == "true" ]]
+									then
+										mysql_upgrade --force --password=${database.password} --user=${database.username}
+									fi
 								]]>
 							</echo>
 
@@ -15296,7 +15919,6 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 					</then>
 				</if>
 			</then>
-
 			<else>
 				<if>
 					<equals arg1="${database.type}" arg2="db2" />
@@ -15324,7 +15946,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<antcall target="rebuild-database">
 								<param name="database.type" value="${database.type}" />
 								<param name="sql.dir" value="sql/create-bare/" />
-								<param name="sql.file" value="create-bare-mysql.sql" />
+								<param name="sql.file" value="${create.bare.mysql.sql.file}" />
 							</antcall>
 
 							<get-database-property property.name="database.password" />
@@ -15344,7 +15966,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<antcall target="rebuild-database">
 								<param name="database.type" value="${database.type}" />
 								<param name="sql.dir" value="sql/create-bare/" />
-								<param name="sql.file" value="create-bare-mysql.sql" />
+								<param name="sql.file" value="${create.bare.mysql.sql.file}" />
 							</antcall>
 
 							<var name="arg.line" value="" />
@@ -15361,6 +15983,12 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 								<then>
 									<property name="mysql.host" value="127.0.0.1" />
 								</then>
+								<elseif>
+									<isset property="database.host" />
+									<then>
+										<property name="mysql.host" value="${database.host}" />
+									</then>
+								</elseif>
 								<else>
 									<property name="mysql.host" value="" />
 								</else>
@@ -15382,7 +16010,16 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 								</exec>
 							</retry>
 
-							<exec executable="mysql_upgrade" />
+							<get-database-property property.name="database.version" />
+
+							<is-less-than arg1="${database.version}" arg2="8.0" property.name="mysql.upgrade" />
+
+							<if>
+								<equals arg1="${mysql.upgrade}" arg2="true" />
+								<then>
+									<exec executable="mysql_upgrade" />
+								</then>
+							</if>
 
 							<get-testcase-property property.name="custom.mysql.sql.statement" />
 
@@ -15450,19 +16087,31 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 								<param name="sql.file" value="create-bare-${database.type}.sql" />
 							</antcall>
 
+							<get-database-property property.name="database.host" />
+							<get-database-property property.name="database.password" />
 							<get-database-property property.name="database.schema" />
 							<get-database-property property.name="database.username" />
+
+							<condition property="database.host" value="localhost">
+								<not>
+									<isset property="database.host" />
+								</not>
+							</condition>
 
 							<exec executable="${postgresql.executable}" failonerror="true">
 								<arg value="--dbname=${database.schema}" />
 								<arg value="--file=${liferay.home}/${database.type}.sql" />
+								<arg value="--host=${database.host}" />
 								<arg value="--username=${database.username}" />
+								<env key="PGPASSWORD" value="${database.password}" />
 							</exec>
 						</then>
 					</elseif>
 				</if>
 			</else>
 		</if>
+
+		<delete file="sql/create-bare/create-bare-mysql-utf8mb3.sql" quiet="true" />
 	</target>
 
 	<target name="record-git-commit-bottom-test-jsp">
@@ -16121,9 +16770,11 @@ jdbc.default.password=${database.mysql.password}</echo>
 
 				<echo append="true" file="${app.server.classes.portal.dir}/portal-ext.properties">
 
-module.framework.properties.blacklist.portal.profile.names=${blacklist.portal.profile.names}
+module.framework.properties.blacklist.portal.profile.names=${blacklist.portal.profile.names}</echo>
 
-mail.send.blacklist=</echo>
+				<echo file="${liferay.home}/osgi/configs/com.liferay.mail.settings.configuration.MailSettingSystemConfiguration.config"><![CDATA[
+sendBlacklist=[]
+]]></echo>
 
 				<delete failonerror="false" file="${app.server.classes.portal.dir}/system-ext.properties" />
 			</then>
@@ -16132,7 +16783,9 @@ mail.send.blacklist=</echo>
 
 				<antcall target="prepare-portal-properties" />
 
-				<antcall target="prepare-portal-ext-properties" />
+				<antcall target="prepare-portal-ext-properties">
+					<param name="functional.test.type" value="${functional.test.type}" />
+				</antcall>
 
 				<antcall target="prepare-portlet-ext-properties" />
 
@@ -16621,7 +17274,7 @@ mail.send.blacklist=</echo>
 		<if>
 			<isset property="browser.docker.image" />
 			<then>
-				<echo append="true" file="${liferay.home}/osgi/configs/com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConfiguration.config">${line.separator}additionalConfigurations="http.host:\ _local_,_site_"</echo>
+				<echo append="true" file="${liferay.home}/osgi/configs/com.liferay.portal.search.elasticsearch8.configuration.ElasticsearchConfiguration.config">${line.separator}additionalConfigurations="http.host:\ _local_,_site_"</echo>
 			</then>
 		</if>
 
@@ -16868,7 +17521,16 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.managemen
 			</then>
 		</if>
 
-		<antcall target="run-selenium-test" />
+		<get-testcase-property property.name="skip.run.selenium.test" />
+
+		<if>
+			<not>
+				<equals arg1="${skip.run.selenium.test}" arg2="true" />
+			</not>
+			<then>
+				<antcall target="run-selenium-test" />
+			</then>
+		</if>
 
 		<if>
 			<equals arg1="${analytics.cloud.enabled}" arg2="true" />
@@ -17083,8 +17745,18 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.managemen
 			</then>
 		</if>
 
+		<if>
+			<not>
+				<isset property="skip.wait.server.startup" />
+			</not>
+			<then>
+				<var name="skip.wait.server.startup" value="false" />
+			</then>
+		</if>
+
 		<start-app-server
 			app.server.bundle.index="${app.server.bundle.index}"
+			skip.wait.server.startup="${skip.wait.server.startup}"
 			testable.portal.started.marker.file="${testable.portal.started.marker.file}"
 		/>
 	</target>
@@ -17147,17 +17819,6 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.managemen
 				<stop-docker-os />
 
 				<start-docker-os />
-			</then>
-		</if>
-
-		<get-browser-property property.name="browser.docker.image" />
-
-		<if>
-			<isset property="browser.docker.image" />
-			<then>
-				<stop-docker-browser />
-
-				<start-docker-browser />
 			</then>
 		</if>
 
@@ -17334,6 +17995,22 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.managemen
 			</else>
 		</if>
 
+		<get-testcase-property property.name="database.upgrade.client.jvm.opts" />
+
+		<var name="database.upgrade.client.arg.line" value="" />
+
+		<if>
+			<and>
+				<isset property="database.upgrade.client.jvm.opts" />
+				<not>
+					<equals arg1="${database.upgrade.client.jvm.opts}" arg2="" trim="true" />
+				</not>
+			</and>
+			<then>
+				<var name="database.upgrade.client.arg.line" value="-jvm-opts=&quot;${database.upgrade.client.jvm.opts}&quot;" />
+			</then>
+		</if>
+
 		<trycatch property="upgrade.error">
 			<try>
 				<java
@@ -17345,6 +18022,8 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.managemen
 					timeout="${upgrade.client.timeout}"
 				>
 					<env key="JAVA_HOME" value="${java.jdk.home}" />
+
+					<arg line="${database.upgrade.client.arg.line}" />
 				</java>
 			</try>
 			<catch>
@@ -17365,9 +18044,14 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.managemen
 			<finally>
 				<lstopwatch action="total" name="upgrade-legacy-database" />
 
-				<print-docker-database-logs />
+				<if>
+					<isset property="database.docker.image" />
+					<then>
+						<print-docker-database-logs />
 
-				<print-docker-stats />
+						<print-docker-stats />
+					</then>
+				</if>
 			</finally>
 		</trycatch>
 	</target>

@@ -172,50 +172,6 @@ public interface PushNotificationsDevicePersistence
 			<PushNotificationsDevice> orderByComparator);
 
 	/**
-	 * Returns the last push notifications device in the ordered set where userId = &#63; and platform = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param platform the platform
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching push notifications device
-	 * @throws NoSuchDeviceException if a matching push notifications device could not be found
-	 */
-	public PushNotificationsDevice findByU_P_Last(
-			long userId, String platform,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PushNotificationsDevice> orderByComparator)
-		throws NoSuchDeviceException;
-
-	/**
-	 * Returns the last push notifications device in the ordered set where userId = &#63; and platform = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param platform the platform
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching push notifications device, or <code>null</code> if a matching push notifications device could not be found
-	 */
-	public PushNotificationsDevice fetchByU_P_Last(
-		long userId, String platform,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<PushNotificationsDevice> orderByComparator);
-
-	/**
-	 * Returns the push notifications devices before and after the current push notifications device in the ordered set where userId = &#63; and platform = &#63;.
-	 *
-	 * @param pushNotificationsDeviceId the primary key of the current push notifications device
-	 * @param userId the user ID
-	 * @param platform the platform
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next push notifications device
-	 * @throws NoSuchDeviceException if a push notifications device with the primary key could not be found
-	 */
-	public PushNotificationsDevice[] findByU_P_PrevAndNext(
-			long pushNotificationsDeviceId, long userId, String platform,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PushNotificationsDevice> orderByComparator)
-		throws NoSuchDeviceException;
-
-	/**
 	 * Returns all the push notifications devices where userId = any &#63; and platform = &#63;.
 	 *
 	 * <p>
@@ -436,3 +392,4 @@ public interface PushNotificationsDevicePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:689859858

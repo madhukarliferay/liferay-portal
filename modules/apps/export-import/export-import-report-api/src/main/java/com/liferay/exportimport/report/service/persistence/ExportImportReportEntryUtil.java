@@ -233,63 +233,6 @@ public class ExportImportReportEntryUtil {
 	}
 
 	/**
-	 * Returns the last export import report entry in the ordered set where companyId = &#63; and exportImportConfigurationId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param exportImportConfigurationId the export import configuration ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching export import report entry
-	 * @throws NoSuchExportImportReportEntryException if a matching export import report entry could not be found
-	 */
-	public static ExportImportReportEntry findByC_E_Last(
-			long companyId, long exportImportConfigurationId,
-			OrderByComparator<ExportImportReportEntry> orderByComparator)
-		throws com.liferay.exportimport.report.exception.
-			NoSuchExportImportReportEntryException {
-
-		return getPersistence().findByC_E_Last(
-			companyId, exportImportConfigurationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last export import report entry in the ordered set where companyId = &#63; and exportImportConfigurationId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param exportImportConfigurationId the export import configuration ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching export import report entry, or <code>null</code> if a matching export import report entry could not be found
-	 */
-	public static ExportImportReportEntry fetchByC_E_Last(
-		long companyId, long exportImportConfigurationId,
-		OrderByComparator<ExportImportReportEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_E_Last(
-			companyId, exportImportConfigurationId, orderByComparator);
-	}
-
-	/**
-	 * Returns the export import report entries before and after the current export import report entry in the ordered set where companyId = &#63; and exportImportConfigurationId = &#63;.
-	 *
-	 * @param exportImportReportEntryId the primary key of the current export import report entry
-	 * @param companyId the company ID
-	 * @param exportImportConfigurationId the export import configuration ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next export import report entry
-	 * @throws NoSuchExportImportReportEntryException if a export import report entry with the primary key could not be found
-	 */
-	public static ExportImportReportEntry[] findByC_E_PrevAndNext(
-			long exportImportReportEntryId, long companyId,
-			long exportImportConfigurationId,
-			OrderByComparator<ExportImportReportEntry> orderByComparator)
-		throws com.liferay.exportimport.report.exception.
-			NoSuchExportImportReportEntryException {
-
-		return getPersistence().findByC_E_PrevAndNext(
-			exportImportReportEntryId, companyId, exportImportConfigurationId,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the export import report entries where companyId = &#63; and exportImportConfigurationId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -313,6 +256,113 @@ public class ExportImportReportEntryUtil {
 
 		return getPersistence().countByC_E(
 			companyId, exportImportConfigurationId);
+	}
+
+	/**
+	 * Returns the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; or throws a <code>NoSuchExportImportReportEntryException</code> if it could not be found.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the matching export import report entry
+	 * @throws NoSuchExportImportReportEntryException if a matching export import report entry could not be found
+	 */
+	public static ExportImportReportEntry findByG_C_C_C_E_T(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId, long exportImportConfigurationId, int type)
+		throws com.liferay.exportimport.report.exception.
+			NoSuchExportImportReportEntryException {
+
+		return getPersistence().findByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
+	}
+
+	/**
+	 * Returns the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the matching export import report entry, or <code>null</code> if a matching export import report entry could not be found
+	 */
+	public static ExportImportReportEntry fetchByG_C_C_C_E_T(
+		long groupId, long companyId, String classExternalReferenceCode,
+		long classNameId, long exportImportConfigurationId, int type) {
+
+		return getPersistence().fetchByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
+	}
+
+	/**
+	 * Returns the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching export import report entry, or <code>null</code> if a matching export import report entry could not be found
+	 */
+	public static ExportImportReportEntry fetchByG_C_C_C_E_T(
+		long groupId, long companyId, String classExternalReferenceCode,
+		long classNameId, long exportImportConfigurationId, int type,
+		boolean useFinderCache) {
+
+		return getPersistence().fetchByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type, useFinderCache);
+	}
+
+	/**
+	 * Removes the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the export import report entry that was removed
+	 */
+	public static ExportImportReportEntry removeByG_C_C_C_E_T(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId, long exportImportConfigurationId, int type)
+		throws com.liferay.exportimport.report.exception.
+			NoSuchExportImportReportEntryException {
+
+		return getPersistence().removeByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
+	}
+
+	/**
+	 * Returns the number of export import report entries where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the number of matching export import report entries
+	 */
+	public static int countByG_C_C_C_E_T(
+		long groupId, long companyId, String classExternalReferenceCode,
+		long classNameId, long exportImportConfigurationId, int type) {
+
+		return getPersistence().countByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
 	}
 
 	/**
@@ -490,3 +540,4 @@ public class ExportImportReportEntryUtil {
 	private static volatile ExportImportReportEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-367329363

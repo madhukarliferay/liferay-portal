@@ -43,6 +43,17 @@ public class ObjectEntryFolderServiceUtil {
 			description, labelMap, name, serviceContext);
 	}
 
+	public static ObjectEntryFolder copyObjectEntryFolder(
+			long objectEntryFolderId, long parentObjectEntryFolderId,
+			boolean replace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().copyObjectEntryFolder(
+			objectEntryFolderId, parentObjectEntryFolderId, replace,
+			serviceContext);
+	}
+
 	public static ObjectEntryFolder deleteObjectEntryFolder(
 			long objectEntryFolderId)
 		throws PortalException {
@@ -107,6 +118,15 @@ public class ObjectEntryFolderServiceUtil {
 			groupId, companyId, parentObjectEntryFolderId);
 	}
 
+	public static ObjectEntryFolder getOrAddEmptyObjectEntryFolder(
+			String externalReferenceCode, long groupId, long companyId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().getOrAddEmptyObjectEntryFolder(
+			externalReferenceCode, groupId, companyId, serviceContext);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -116,38 +136,47 @@ public class ObjectEntryFolderServiceUtil {
 		return getService().getOSGiServiceIdentifier();
 	}
 
+	public static ObjectEntryFolder moveObjectEntryFolder(
+			long objectEntryFolderId, long parentObjectEntryFolderId,
+			boolean replace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().moveObjectEntryFolder(
+			objectEntryFolderId, parentObjectEntryFolderId, replace,
+			serviceContext);
+	}
+
 	public static ObjectEntryFolder moveObjectEntryFolderToTrash(
-			long userId, ObjectEntryFolder objectEntryFolder,
+			ObjectEntryFolder objectEntryFolder,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().moveObjectEntryFolderToTrash(
-			userId, objectEntryFolder, serviceContext);
+			objectEntryFolder, serviceContext);
 	}
 
 	public static ObjectEntryFolder restoreObjectEntryFolderFromTrash(
-			long userId, ObjectEntryFolder objectEntryFolder,
+			ObjectEntryFolder objectEntryFolder,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().restoreObjectEntryFolderFromTrash(
-			userId, objectEntryFolder, serviceContext);
+			objectEntryFolder, serviceContext);
 	}
 
 	public static void subscribeObjectEntryFolder(
-			long userId, long groupId, long objectEntryFolderId)
+			long groupId, long objectEntryFolderId)
 		throws PortalException {
 
-		getService().subscribeObjectEntryFolder(
-			userId, groupId, objectEntryFolderId);
+		getService().subscribeObjectEntryFolder(groupId, objectEntryFolderId);
 	}
 
 	public static void unsubscribeObjectEntryFolder(
-			long userId, long groupId, long objectEntryFolderId)
+			long groupId, long objectEntryFolderId)
 		throws PortalException {
 
-		getService().unsubscribeObjectEntryFolder(
-			userId, groupId, objectEntryFolderId);
+		getService().unsubscribeObjectEntryFolder(groupId, objectEntryFolderId);
 	}
 
 	public static ObjectEntryFolder updateObjectEntryFolder(
@@ -171,3 +200,4 @@ public class ObjectEntryFolderServiceUtil {
 			ObjectEntryFolderServiceUtil.class, ObjectEntryFolderService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1961010077

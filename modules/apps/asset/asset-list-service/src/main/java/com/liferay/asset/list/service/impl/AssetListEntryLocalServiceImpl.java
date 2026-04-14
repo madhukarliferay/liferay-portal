@@ -39,11 +39,11 @@ import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
@@ -131,7 +131,7 @@ public class AssetListEntryLocalServiceImpl
 						)
 				)));
 
-		for (long assetEntryId : SetUtil.fromArray(assetEntryIds)) {
+		for (long assetEntryId : ArrayUtil.unique(assetEntryIds)) {
 			if (selectedAssetEntryIds.contains(assetEntryId)) {
 				continue;
 			}
@@ -487,6 +487,21 @@ public class AssetListEntryLocalServiceImpl
 
 	@Override
 	public void updateAssetListEntryTypeSettings(
+			long companyId, long classNameId)
+		throws PortalException {
+
+		for (AssetListEntrySegmentsEntryRel assetListEntrySegmentsEntryRel :
+				_assetListEntrySegmentsEntryRelLocalService.
+					getAssetListEntrySegmentsEntryRelsByClassNameId(
+						companyId, classNameId)) {
+
+			_updateAssetListEntryTypeSettings(
+				assetListEntrySegmentsEntryRel, String.valueOf(classNameId));
+		}
+	}
+
+	@Override
+	public void updateAssetListEntryTypeSettings(
 			long assetListEntryId, long segmentsEntryId, String typeSettings)
 		throws PortalException {
 
@@ -581,11 +596,18 @@ public class AssetListEntryLocalServiceImpl
 		long defaultAssetClassTypeId = GetterUtil.getLong(
 			anyAssetClassTypeString, -1);
 
-		if (defaultAssetClassTypeId < 0) {
-			return StringPool.BLANK;
+		if (defaultAssetClassTypeId >= 0) {
+			return String.valueOf(defaultAssetClassTypeId);
 		}
 
-		return String.valueOf(defaultAssetClassTypeId);
+		String classTypeIdsString = unicodeProperties.getProperty(
+			"classTypeIds" + _getAssetRendererFactoryName(assetEntryType));
+
+		if (Validator.isNotNull(classTypeIdsString)) {
+			return classTypeIdsString;
+		}
+
+		return StringPool.BLANK;
 	}
 
 	private String _getAssetEntryType(String typeSettings) {
@@ -634,6 +656,17 @@ public class AssetListEntryLocalServiceImpl
 		int pos = className.lastIndexOf(StringPool.PERIOD);
 
 		return className.substring(pos + 1);
+	}
+
+	private String _getClassNameIds(
+		AssetListEntrySegmentsEntryRel assetListEntrySegmentsEntryRel,
+		String classNameId) {
+
+		return StringUtil.merge(
+			ArrayUtil.remove(
+				AssetRendererFactoryRegistryUtil.getClassNameIds(
+					assetListEntrySegmentsEntryRel.getCompanyId(), true),
+				GetterUtil.getLong(classNameId)));
 	}
 
 	private String _getManualAssetEntrySubtype(
@@ -780,6 +813,81 @@ public class AssetListEntryLocalServiceImpl
 		}
 
 		return false;
+	}
+
+	private void _updateAssetListEntryTypeSettings(
+			AssetListEntrySegmentsEntryRel assetListEntrySegmentsEntryRel,
+			String classNameId)
+		throws PortalException {
+
+		String typeSettings = assetListEntrySegmentsEntryRel.getTypeSettings();
+
+		if (Validator.isNull(typeSettings)) {
+			return;
+		}
+
+		UnicodeProperties unicodeProperties = UnicodePropertiesBuilder.load(
+			typeSettings
+		).build();
+
+		String[] classNameIds = StringUtil.split(
+			unicodeProperties.getProperty("classNameIds"));
+
+		if (!ArrayUtil.contains(classNameIds, classNameId)) {
+			return;
+		}
+
+		classNameIds = ArrayUtil.remove(classNameIds, classNameId);
+
+		String anyAssetTypeValue = GetterUtil.getString(
+			unicodeProperties.getProperty("anyAssetType"));
+
+		if (ArrayUtil.isNotEmpty(classNameIds)) {
+			if ((classNameIds.length == 1) &&
+				StringUtil.equalsIgnoreCase(
+					anyAssetTypeValue, Boolean.FALSE.toString())) {
+
+				unicodeProperties.setProperty("anyAssetType", classNameIds[0]);
+				unicodeProperties.setProperty(
+					"classNameIds",
+					_getClassNameIds(
+						assetListEntrySegmentsEntryRel, classNameId));
+
+				assetListEntryLocalService.updateAssetListEntryTypeSettings(
+					assetListEntrySegmentsEntryRel.getAssetListEntryId(),
+					assetListEntrySegmentsEntryRel.getSegmentsEntryId(),
+					unicodeProperties.toString());
+
+				return;
+			}
+
+			unicodeProperties.setProperty(
+				"classNameIds", StringUtil.merge(classNameIds));
+		}
+		else {
+			unicodeProperties.setProperty(
+				"anyAssetType", Boolean.TRUE.toString());
+			unicodeProperties.setProperty(
+				"classNameIds",
+				_getClassNameIds(assetListEntrySegmentsEntryRel, classNameId));
+
+			assetListEntryLocalService.updateAssetListEntryTypeSettings(
+				assetListEntrySegmentsEntryRel.getAssetListEntryId(),
+				assetListEntrySegmentsEntryRel.getSegmentsEntryId(),
+				unicodeProperties.toString());
+
+			return;
+		}
+
+		if (anyAssetTypeValue.equals(classNameId)) {
+			unicodeProperties.setProperty(
+				"anyAssetType", Boolean.TRUE.toString());
+		}
+
+		assetListEntryLocalService.updateAssetListEntryTypeSettings(
+			assetListEntrySegmentsEntryRel.getAssetListEntryId(),
+			assetListEntrySegmentsEntryRel.getSegmentsEntryId(),
+			unicodeProperties.toString());
 	}
 
 	private void _validateTitle(long groupId, String title)

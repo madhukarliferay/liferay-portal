@@ -6,6 +6,7 @@
 package com.liferay.jenkins.results.parser.testray;
 
 import com.liferay.jenkins.results.parser.BuildDatabase;
+import com.liferay.jenkins.results.parser.BuildReport;
 import com.liferay.jenkins.results.parser.ControllerBuildReport;
 import com.liferay.jenkins.results.parser.Dom4JUtil;
 import com.liferay.jenkins.results.parser.JenkinsMaster;
@@ -28,6 +29,7 @@ import com.liferay.jenkins.results.parser.Workspace;
 import com.liferay.jenkins.results.parser.WorkspaceGitRepository;
 import com.liferay.jenkins.results.parser.job.property.JobProperty;
 import com.liferay.jenkins.results.parser.job.property.JobPropertyFactory;
+import com.liferay.jenkins.results.parser.persistent.resource.PersistentResource;
 import com.liferay.jenkins.results.parser.test.clazz.TestClass;
 import com.liferay.jenkins.results.parser.test.clazz.TestClassMethod;
 import com.liferay.jenkins.results.parser.test.clazz.group.AxisTestClassGroup;
@@ -207,6 +209,34 @@ public class TestrayImporter {
 	public PullRequest getPullRequest() {
 		if (_pullRequests.isEmpty()) {
 			return null;
+		}
+
+		if (_pullRequests.size() == 1) {
+			return _pullRequests.get(0);
+		}
+
+		Map<String, String> buildParameters =
+			_topLevelBuildReport.getBuildParameters();
+
+		String githubReceiverUsername = buildParameters.get(
+			"GITHUB_RECEIVER_USERNAME");
+
+		String pullRequestNumber = buildParameters.get(
+			"GITHUB_PULL_REQUEST_NUMBER");
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(githubReceiverUsername) &&
+			!JenkinsResultsParserUtil.isNullOrEmpty(pullRequestNumber)) {
+
+			for (PullRequest pullRequest : _pullRequests) {
+				if (Objects.equals(
+						pullRequest.getReceiverUsername(),
+						githubReceiverUsername) &&
+					Objects.equals(
+						pullRequest.getNumber(), pullRequestNumber)) {
+
+					return pullRequest;
+				}
+			}
 		}
 
 		return _pullRequests.get(0);
@@ -948,11 +978,13 @@ public class TestrayImporter {
 				testBaseDir = axisTestClassGroup.getTestBaseDir();
 			}
 
-			TopLevelBuildTestrayCaseResult topLevelBuildTestrayCaseResult =
-				TestrayFactory.newTopLevelBuildTestrayCaseResult(
-					getTestrayBuild(testBaseDir), _topLevelBuildReport);
-
-			topLevelBuildTestrayCaseResult.recordTestrayCaseResult(job);
+			_recordAppServerTestrayCaseResult(
+				job, PersistentResource.Type.ASAH_BUNDLE, testBaseDir);
+			_recordAppServerTestrayCaseResult(
+				job, PersistentResource.Type.FARO_BUNDLE, testBaseDir);
+			_recordAppServerTestrayCaseResult(
+				job, PersistentResource.Type.PORTAL_BUNDLE, testBaseDir);
+			_recordTopLevelTestrayCaseResult(job, testBaseDir);
 
 			for (final AxisTestClassGroup axisTestClassGroup :
 					axisTestClassGroups) {
@@ -975,7 +1007,7 @@ public class TestrayImporter {
 			callables, _executorService, "recordTestrayCaseResults");
 
 		try {
-			parallelExecutor.execute(60L * 180L);
+			parallelExecutor.execute(60L * 300L);
 		}
 		catch (TimeoutException timeoutException) {
 			throw new RuntimeException(timeoutException);
@@ -1323,6 +1355,29 @@ public class TestrayImporter {
 		return "Liferay CI";
 	}
 
+	private void _recordAppServerTestrayCaseResult(
+		Job job, PersistentResource.Type persistentResourceType,
+		File testBaseDir) {
+
+		TestrayBuild testrayBuild = getTestrayBuild(testBaseDir);
+
+		AppServerBundleStandaloneBuildTestrayCaseResult
+			appServerBundleStandaloneBuildTestrayCaseResult =
+				new AppServerBundleStandaloneBuildTestrayCaseResult(
+					String.valueOf(persistentResourceType), testrayBuild,
+					_topLevelBuildReport);
+
+		BuildReport buildReport =
+			appServerBundleStandaloneBuildTestrayCaseResult.getBuildReport();
+
+		if (buildReport == null) {
+			return;
+		}
+
+		appServerBundleStandaloneBuildTestrayCaseResult.recordTestrayCaseResult(
+			job);
+	}
+
 	private void _recordAxisTestClassGroup(
 		AxisTestClassGroup axisTestClassGroup) {
 
@@ -1331,9 +1386,19 @@ public class TestrayImporter {
 		TestrayBuild testrayBuild = getTestrayBuild(
 			axisTestClassGroup.getTestBaseDir());
 
-		TestrayRun testrayRun = TestrayFactory.newTestrayRun(
-			testrayBuild, axisTestClassGroup.getBatchName(),
-			job.getJobPropertiesFiles());
+		TestrayRun testrayRun = null;
+
+		String testSuiteName = _topLevelBuildReport.getTestSuiteName();
+
+		if (axisTestClassGroup instanceof FunctionalAxisTestClassGroup) {
+			testrayRun = TestrayFactory.newTestrayRun(
+				testrayBuild, axisTestClassGroup, job.getJobPropertiesFiles());
+		}
+		else {
+			testrayRun = TestrayFactory.newTestrayRun(
+				testrayBuild, axisTestClassGroup.getBatchName(), testSuiteName,
+				job.getJobPropertiesFiles());
+		}
 
 		long start = JenkinsResultsParserUtil.getCurrentTimeMillis();
 
@@ -1382,10 +1447,12 @@ public class TestrayImporter {
 		propertiesMap.put(
 			"testray.total.cpu.use.time",
 			JenkinsResultsParserUtil.toDurationString(
-				_topLevelBuildReport.getTotalDuration()));
+				_topLevelBuildReport.getTotalActualDuration()));
 
 		_addPropertyElements(
 			rootElement.addElement("properties"), propertiesMap);
+
+		String[] warnings = null;
 
 		List<TestrayCaseResult> testrayCaseResults = new ArrayList<>();
 
@@ -1397,7 +1464,7 @@ public class TestrayImporter {
 			PortalLogBatchBuildTestrayCaseResult
 				portalLogBatchBuildTestrayCaseResult =
 					TestrayFactory.newPortalLogTestrayCaseResult(
-						testrayBuild, _topLevelBuildReport, axisTestClassGroup);
+						axisTestClassGroup, testrayBuild, _topLevelBuildReport);
 
 			if (!JenkinsResultsParserUtil.isNullOrEmpty(
 					portalLogBatchBuildTestrayCaseResult.getErrors())) {
@@ -1408,8 +1475,8 @@ public class TestrayImporter {
 			for (TestClass testClass : axisTestClassGroup.getTestClasses()) {
 				testrayCaseResults.add(
 					TestrayFactory.newBuildTestrayCaseResult(
-						testrayBuild, _topLevelBuildReport, axisTestClassGroup,
-						testClass));
+						axisTestClassGroup, testClass, testrayBuild,
+						_topLevelBuildReport));
 			}
 		}
 		else if (axisTestClassGroup instanceof PlaywrightAxisTestClassGroup) {
@@ -1419,15 +1486,15 @@ public class TestrayImporter {
 
 					testrayCaseResults.add(
 						TestrayFactory.newBuildTestrayCaseResult(
-							testrayBuild, _topLevelBuildReport,
-							axisTestClassGroup, testClass, testClassMethod));
+							axisTestClassGroup, testClass, testClassMethod,
+							testrayBuild, _topLevelBuildReport));
 				}
 			}
 		}
 		else {
 			testrayCaseResults.add(
 				TestrayFactory.newBuildTestrayCaseResult(
-					testrayBuild, _topLevelBuildReport, axisTestClassGroup));
+					axisTestClassGroup, testrayBuild, _topLevelBuildReport));
 		}
 
 		for (TestrayCaseResult testrayCaseResult : testrayCaseResults) {
@@ -1470,8 +1537,6 @@ public class TestrayImporter {
 			Element propertiesElement = testcaseElement.addElement(
 				"properties");
 
-			String testSuiteName = _topLevelBuildReport.getTestSuiteName();
-
 			if (testSuiteName.equals("upstream-dxp")) {
 				if (testrayCaseResult instanceof
 						JUnitBatchBuildTestrayCaseResult) {
@@ -1488,7 +1553,9 @@ public class TestrayImporter {
 
 			_addPropertyElements(propertiesElement, testcasePropertiesMap);
 
-			String[] warnings = testrayCaseResult.getWarnings();
+			if (warnings == null) {
+				warnings = testrayCaseResult.getWarnings();
+			}
 
 			if ((warnings != null) && (warnings.length > 0)) {
 				Element warningsPropertyElement = propertiesElement.addElement(
@@ -1562,6 +1629,15 @@ public class TestrayImporter {
 				" case results for ", axisTestClassGroup.getAxisName(), " in ",
 				JenkinsResultsParserUtil.toDurationString(
 					currentTimeMillis - start)));
+	}
+
+	private void _recordTopLevelTestrayCaseResult(Job job, File testBaseDir) {
+		TopLevelStandaloneBuildTestrayCaseResult
+			topLevelStandaloneBuildTestrayCaseResult =
+				TestrayFactory.newTopLevelStandaloneBuildTestrayCaseResult(
+					getTestrayBuild(testBaseDir), _topLevelBuildReport);
+
+		topLevelStandaloneBuildTestrayCaseResult.recordTestrayCaseResult(job);
 	}
 
 	private String _replaceEnvVars(String string, boolean truncate) {

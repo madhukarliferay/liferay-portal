@@ -121,47 +121,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last sharing entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByUuid_PrevAndNext(
-			long sharingEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the sharing entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last sharing entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByUuid_C_PrevAndNext(
-			long sharingEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the sharing entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last sharing entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByGroupId_PrevAndNext(
-			long sharingEntryId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the sharing entries where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -610,47 +484,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 		long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last sharing entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where userId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByUserId_PrevAndNext(
-			long sharingEntryId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
 
 	/**
 	 * Removes all the sharing entries where userId = &#63; from the database.
@@ -755,47 +588,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last sharing entry in the ordered set where toUserId = &#63;.
-	 *
-	 * @param toUserId the to user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByToUserId_Last(
-			long toUserId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where toUserId = &#63;.
-	 *
-	 * @param toUserId the to user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByToUserId_Last(
-		long toUserId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where toUserId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param toUserId the to user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByToUserId_PrevAndNext(
-			long sharingEntryId, long toUserId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the sharing entries where toUserId = &#63; from the database.
 	 *
 	 * @param toUserId the to user ID
@@ -897,47 +689,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 		Date expirationDate,
 		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last sharing entry in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByLtExpirationDate_Last(
-			Date expirationDate,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByLtExpirationDate_Last(
-		Date expirationDate,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByLtExpirationDate_PrevAndNext(
-			long sharingEntryId, Date expirationDate,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
 
 	/**
 	 * Removes all the sharing entries where expirationDate &lt; &#63; from the database.
@@ -1047,50 +798,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 		long companyId, long classNameId,
 		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last sharing entry in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByC_CN_Last(
-			long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByC_CN_Last(
-		long companyId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByC_CN_PrevAndNext(
-			long sharingEntryId, long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
 
 	/**
 	 * Removes all the sharing entries where companyId = &#63; and classNameId = &#63; from the database.
@@ -1204,50 +911,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last sharing entry in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByU_C_Last(
-			long userId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByU_C_Last(
-		long userId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByU_C_PrevAndNext(
-			long sharingEntryId, long userId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the sharing entries where userId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -1359,50 +1022,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 			orderByComparator);
 
 	/**
-	 * Returns the last sharing entry in the ordered set where toUserId = &#63; and classNameId = &#63;.
-	 *
-	 * @param toUserId the to user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByTU_C_Last(
-			long toUserId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where toUserId = &#63; and classNameId = &#63;.
-	 *
-	 * @param toUserId the to user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByTU_C_Last(
-		long toUserId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where toUserId = &#63; and classNameId = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param toUserId the to user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByTU_C_PrevAndNext(
-			long sharingEntryId, long toUserId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the sharing entries where toUserId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param toUserId the to user ID
@@ -1512,50 +1131,6 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 		long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last sharing entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry
-	 * @throws NoSuchEntryException if a matching sharing entry could not be found
-	 */
-	public SharingEntry findByC_C_Last(
-			long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last sharing entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sharing entry, or <code>null</code> if a matching sharing entry could not be found
-	 */
-	public SharingEntry fetchByC_C_Last(
-		long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the sharing entries before and after the current sharing entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param sharingEntryId the primary key of the current sharing entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sharing entry
-	 * @throws NoSuchEntryException if a sharing entry with the primary key could not be found
-	 */
-	public SharingEntry[] findByC_C_PrevAndNext(
-			long sharingEntryId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<SharingEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
 
 	/**
 	 * Removes all the sharing entries where classNameId = &#63; and classPK = &#63; from the database.
@@ -1811,3 +1386,4 @@ public interface SharingEntryPersistence extends BasePersistence<SharingEntry> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-132537797

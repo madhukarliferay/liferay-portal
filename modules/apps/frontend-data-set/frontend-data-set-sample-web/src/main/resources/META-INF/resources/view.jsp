@@ -30,6 +30,12 @@ String navigation = ParamUtil.getString(request, "navigation", "advanced");
 						});
 					add(
 						navigationItem -> {
+							navigationItem.setActive(navigation.equals("content-renderers"));
+							navigationItem.setHref(renderResponse.createRenderURL(), "navigation", "content-renderers");
+							navigationItem.setLabel("Content Renderers");
+						});
+					add(
+						navigationItem -> {
 							navigationItem.setActive(navigation.equals("controlled"));
 							navigationItem.setHref(renderResponse.createRenderURL(), "navigation", "controlled");
 							navigationItem.setLabel("Controlled");
@@ -39,6 +45,12 @@ String navigation = ParamUtil.getString(request, "navigation", "advanced");
 							navigationItem.setActive(navigation.equals("custom-internal-view"));
 							navigationItem.setHref(renderResponse.createRenderURL(), "navigation", "custom-internal-view");
 							navigationItem.setLabel("Custom Internal View");
+						});
+					add(
+						navigationItem -> {
+							navigationItem.setActive(navigation.equals("dynamic-actions"));
+							navigationItem.setHref(renderResponse.createRenderURL(), "navigation", "dynamic-actions");
+							navigationItem.setLabel("Dynamic Actions");
 						});
 					add(
 						navigationItem -> {
@@ -73,11 +85,17 @@ String navigation = ParamUtil.getString(request, "navigation", "advanced");
 		<c:when test='<%= navigation.equals("classic") %>'>
 			<liferay-util:include page="/partials/classic.jsp" servletContext="<%= application %>" />
 		</c:when>
+		<c:when test='<%= navigation.equals("content-renderers") %>'>
+			<liferay-util:include page="/partials/content_renderers.jsp" servletContext="<%= application %>" />
+		</c:when>
 		<c:when test='<%= navigation.equals("controlled") %>'>
 			<liferay-util:include page="/partials/controlled.jsp" servletContext="<%= application %>" />
 		</c:when>
 		<c:when test='<%= navigation.equals("custom-internal-view") %>'>
 			<liferay-util:include page="/partials/custom_internal_view.jsp" servletContext="<%= application %>" />
+		</c:when>
+		<c:when test='<%= navigation.equals("dynamic-actions") %>'>
+			<liferay-util:include page="/partials/dynamic_actions.jsp" servletContext="<%= application %>" />
 		</c:when>
 		<c:when test='<%= navigation.equals("empty") %>'>
 			<liferay-util:include page="/partials/empty.jsp" servletContext="<%= application %>" />

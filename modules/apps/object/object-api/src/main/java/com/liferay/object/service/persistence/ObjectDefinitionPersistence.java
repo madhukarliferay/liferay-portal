@@ -120,47 +120,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByUuid_PrevAndNext(
-			long objectDefinitionId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -200,21 +159,6 @@ public interface ObjectDefinitionPersistence
 		String uuid, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByUuid_PrevAndNext(
-			long objectDefinitionId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where uuid = &#63; from the database.
@@ -334,50 +278,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByUuid_C_PrevAndNext(
-			long objectDefinitionId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -421,22 +321,6 @@ public interface ObjectDefinitionPersistence
 		String uuid, long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByUuid_C_PrevAndNext(
-			long objectDefinitionId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where uuid = &#63; and companyId = &#63; from the database.
@@ -552,47 +436,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByCompanyId_PrevAndNext(
-			long objectDefinitionId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -633,21 +476,6 @@ public interface ObjectDefinitionPersistence
 		long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByCompanyId_PrevAndNext(
-			long objectDefinitionId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where companyId = &#63; from the database.
@@ -761,47 +589,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where objectFolderId = &#63;.
-	 *
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByObjectFolderId_Last(
-			long objectFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where objectFolderId = &#63;.
-	 *
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByObjectFolderId_Last(
-		long objectFolderId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where objectFolderId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByObjectFolderId_PrevAndNext(
-			long objectDefinitionId, long objectFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where objectFolderId = &#63;.
 	 *
 	 * @param objectFolderId the object folder ID
@@ -842,21 +629,6 @@ public interface ObjectDefinitionPersistence
 		long objectFolderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where objectFolderId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByObjectFolderId_PrevAndNext(
-			long objectDefinitionId, long objectFolderId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where objectFolderId = &#63; from the database.
@@ -970,47 +742,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where accountEntryRestricted = &#63;.
-	 *
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByAccountEntryRestricted_Last(
-			boolean accountEntryRestricted,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where accountEntryRestricted = &#63;.
-	 *
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByAccountEntryRestricted_Last(
-		boolean accountEntryRestricted,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where accountEntryRestricted = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByAccountEntryRestricted_PrevAndNext(
-			long objectDefinitionId, boolean accountEntryRestricted,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where accountEntryRestricted = &#63;.
 	 *
 	 * @param accountEntryRestricted the account entry restricted
@@ -1051,21 +782,6 @@ public interface ObjectDefinitionPersistence
 		boolean accountEntryRestricted, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where accountEntryRestricted = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByAccountEntryRestricted_PrevAndNext(
-			long objectDefinitionId, boolean accountEntryRestricted,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where accountEntryRestricted = &#63; from the database.
@@ -1224,47 +940,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where system = &#63;.
-	 *
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findBySystem_Last(
-			boolean system,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where system = &#63;.
-	 *
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchBySystem_Last(
-		boolean system,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findBySystem_PrevAndNext(
-			long objectDefinitionId, boolean system,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where system = &#63;.
 	 *
 	 * @param system the system
@@ -1304,21 +979,6 @@ public interface ObjectDefinitionPersistence
 		boolean system, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindBySystem_PrevAndNext(
-			long objectDefinitionId, boolean system,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where system = &#63; from the database.
@@ -1438,50 +1098,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByC_U_Last(
-			long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByC_U_Last(
-		long companyId, long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByC_U_PrevAndNext(
-			long objectDefinitionId, long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1525,22 +1141,6 @@ public interface ObjectDefinitionPersistence
 		long companyId, long userId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByC_U_PrevAndNext(
-			long objectDefinitionId, long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where companyId = &#63; and userId = &#63; from the database.
@@ -1763,50 +1363,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByC_S_Last(
-			long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByC_S_Last(
-		long companyId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByC_S_PrevAndNext(
-			long objectDefinitionId, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1850,22 +1406,6 @@ public interface ObjectDefinitionPersistence
 		long companyId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByC_S_PrevAndNext(
-			long objectDefinitionId, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where companyId = &#63; and status = &#63; from the database.
@@ -1988,50 +1528,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where system = &#63; and status = &#63;.
-	 *
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByS_S_Last(
-			boolean system, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where system = &#63; and status = &#63;.
-	 *
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByS_S_Last(
-		boolean system, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByS_S_PrevAndNext(
-			long objectDefinitionId, boolean system, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where system = &#63; and status = &#63;.
 	 *
 	 * @param system the system
@@ -2075,22 +1571,6 @@ public interface ObjectDefinitionPersistence
 		boolean system, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByS_S_PrevAndNext(
-			long objectDefinitionId, boolean system, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where system = &#63; and status = &#63; from the database.
@@ -2219,53 +1699,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByC_A_S_Last(
-			long companyId, boolean active, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByC_A_S_Last(
-		long companyId, boolean active, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByC_A_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and active = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2312,23 +1745,6 @@ public interface ObjectDefinitionPersistence
 		long companyId, boolean active, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByC_A_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where companyId = &#63; and active = &#63; and status = &#63; from the database.
@@ -2460,54 +1876,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByC_M_S_Last(
-			long companyId, boolean modifiable, boolean system,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByC_M_S_Last(
-		long companyId, boolean modifiable, boolean system,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByC_M_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean modifiable,
-			boolean system,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and modifiable = &#63; and system = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2554,24 +1922,6 @@ public interface ObjectDefinitionPersistence
 		long companyId, boolean modifiable, boolean system, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByC_M_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean modifiable,
-			boolean system,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where companyId = &#63; and modifiable = &#63; and system = &#63; from the database.
@@ -2714,57 +2064,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByC_A_S_S_Last(
-			long companyId, boolean active, boolean system, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByC_A_S_S_Last(
-		long companyId, boolean active, boolean system, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByC_A_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active,
-			boolean system, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2816,25 +2115,6 @@ public interface ObjectDefinitionPersistence
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByC_A_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active,
-			boolean system, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Removes all the object definitions where companyId = &#63; and active = &#63; and system = &#63; and status = &#63; from the database.
@@ -2999,66 +2279,6 @@ public interface ObjectDefinitionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public ObjectDefinition findByC_OFI_A_E_S_S_Last(
-			long companyId, long objectFolderId, boolean active,
-			boolean enableObjectEntryDraft, String scope, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public ObjectDefinition fetchByC_OFI_A_E_S_S_Last(
-		long companyId, long objectFolderId, boolean active,
-		boolean enableObjectEntryDraft, String scope, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] findByC_OFI_A_E_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, long objectFolderId,
-			boolean active, boolean enableObjectEntryDraft, String scope,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3119,28 +2339,6 @@ public interface ObjectDefinitionPersistence
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
 			orderByComparator);
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public ObjectDefinition[] filterFindByC_OFI_A_E_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, long objectFolderId,
-			boolean active, boolean enableObjectEntryDraft, String scope,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectDefinition>
-				orderByComparator)
-		throws NoSuchObjectDefinitionException;
 
 	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and objectFolderId = any &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
@@ -3545,3 +2743,4 @@ public interface ObjectDefinitionPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:688711485

@@ -6,6 +6,7 @@
 package com.liferay.headless.admin.site.internal.resource.v1_0;
 
 import com.liferay.headless.admin.site.dto.v1_0.WidgetPageWidgetInstance;
+import com.liferay.headless.admin.site.internal.dto.v1_0.util.DTOConverterContextUtil;
 import com.liferay.headless.admin.site.internal.resource.v1_0.util.GroupUtil;
 import com.liferay.headless.admin.site.internal.resource.v1_0.util.LayoutUtil;
 import com.liferay.headless.admin.site.resource.v1_0.WidgetPageWidgetInstanceResource;
@@ -21,8 +22,10 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
-import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 
 import java.util.Objects;
 
@@ -42,14 +45,16 @@ public class WidgetPageWidgetInstanceResourceImpl
 	extends BaseWidgetPageWidgetInstanceResourceImpl {
 
 	@Override
-	public void
-			deleteSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				String siteExternalReferenceCode,
-				String sitePageExternalReferenceCode,
-				String widgetInstanceExternalReferenceCode)
+	@Tags({@Tag(description = "[DEV]", name = "WidgetPageWidgetInstance")})
+	public void deleteSiteSitePageWidgetInstance(
+			String siteExternalReferenceCode,
+			String sitePageExternalReferenceCode,
+			String widgetInstanceExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
@@ -81,64 +86,21 @@ public class WidgetPageWidgetInstanceResourceImpl
 		layoutTypePortlet.removePortletId(
 			contextUser.getUserId(), widgetInstanceExternalReferenceCode);
 
-		_layoutLocalService.updateLayout(
+		_layoutLocalService.updateTypeSettings(
 			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
 			layout.getTypeSettings());
 	}
 
 	@Override
-	public Page<WidgetPageWidgetInstance>
-			getSiteSiteByExternalReferenceCodeSitePageWidgetInstancesPage(
-				String siteExternalReferenceCode,
-				String sitePageExternalReferenceCode)
+	public WidgetPageWidgetInstance getSiteSitePageWidgetInstance(
+			String siteExternalReferenceCode,
+			String sitePageExternalReferenceCode,
+			String widgetInstanceExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
-			throw new UnsupportedOperationException();
-		}
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
 
-		Layout layout = _layoutLocalService.fetchLayoutByExternalReferenceCode(
-			sitePageExternalReferenceCode,
-			GroupUtil.getGroupId(
-				false, contextCompany.getCompanyId(),
-				siteExternalReferenceCode));
-
-		if (layout == null) {
-			throw new UnsupportedOperationException();
-		}
-
-		LayoutType layoutType = layout.getLayoutType();
-
-		if (!(layoutType instanceof LayoutTypePortlet)) {
-			throw new UnsupportedOperationException();
-		}
-
-		LayoutTypePortlet layoutTypePortlet =
-			(LayoutTypePortlet)layout.getLayoutType();
-
-		DTOConverterContext dtoConverterContext =
-			new DefaultDTOConverterContext(
-				contextAcceptLanguage.isAcceptAllLanguages(), null,
-				_dtoConverterRegistry, contextHttpServletRequest,
-				layout.getPlid(), contextAcceptLanguage.getPreferredLocale(),
-				contextUriInfo, contextUser);
-
-		return Page.of(
-			transform(
-				layoutTypePortlet.getPortletIds(),
-				portletId -> _toWidgetPageWidgetInstance(
-					dtoConverterContext, layout, portletId)));
-	}
-
-	@Override
-	public WidgetPageWidgetInstance
-			getSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				String siteExternalReferenceCode,
-				String sitePageExternalReferenceCode,
-				String widgetInstanceExternalReferenceCode)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -172,14 +134,59 @@ public class WidgetPageWidgetInstanceResourceImpl
 	}
 
 	@Override
-	public WidgetPageWidgetInstance
-			postSiteSiteByExternalReferenceCodeSitePageWidgetInstance(
-				String siteExternalReferenceCode,
-				String sitePageExternalReferenceCode,
-				WidgetPageWidgetInstance widgetPageWidgetInstance)
+	public Page<WidgetPageWidgetInstance> getSiteSitePageWidgetInstancesPage(
+			String siteExternalReferenceCode,
+			String sitePageExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		Layout layout = _layoutLocalService.fetchLayoutByExternalReferenceCode(
+			sitePageExternalReferenceCode,
+			GroupUtil.getGroupId(
+				false, contextCompany.getCompanyId(),
+				siteExternalReferenceCode));
+
+		if (layout == null) {
+			throw new UnsupportedOperationException();
+		}
+
+		LayoutType layoutType = layout.getLayoutType();
+
+		if (!(layoutType instanceof LayoutTypePortlet)) {
+			throw new UnsupportedOperationException();
+		}
+
+		LayoutTypePortlet layoutTypePortlet =
+			(LayoutTypePortlet)layout.getLayoutType();
+
+		DTOConverterContext dtoConverterContext =
+			DTOConverterContextUtil.getDTOConverterContext(
+				contextAcceptLanguage, _dtoConverterRegistry,
+				contextHttpServletRequest, layout.getPlid(), contextUriInfo,
+				contextUser);
+
+		return Page.of(
+			transform(
+				layoutTypePortlet.getPortletIds(),
+				portletId -> _toWidgetPageWidgetInstance(
+					dtoConverterContext, layout, portletId)));
+	}
+
+	@Override
+	public WidgetPageWidgetInstance postSiteSitePageWidgetInstance(
+			String siteExternalReferenceCode,
+			String sitePageExternalReferenceCode,
+			WidgetPageWidgetInstance widgetPageWidgetInstance)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
@@ -209,15 +216,16 @@ public class WidgetPageWidgetInstanceResourceImpl
 	}
 
 	@Override
-	public WidgetPageWidgetInstance
-			putSiteSiteByExternalReferenceCodeWidgetInstanceWidgetInstanceExternalReferenceCode(
-				String siteExternalReferenceCode,
-				String sitePageExternalReferenceCode,
-				String widgetInstanceExternalReferenceCode,
-				WidgetPageWidgetInstance widgetPageWidgetInstance)
+	public WidgetPageWidgetInstance putSiteSitePageWidgetInstance(
+			String siteExternalReferenceCode,
+			String sitePageExternalReferenceCode,
+			String widgetInstanceExternalReferenceCode,
+			WidgetPageWidgetInstance widgetPageWidgetInstance)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35443")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-74328")) {
+
 			throw new UnsupportedOperationException();
 		}
 
@@ -263,7 +271,7 @@ public class WidgetPageWidgetInstanceResourceImpl
 				widgetPageWidgetInstance.getPosition());
 		}
 
-		layout = _layoutLocalService.updateLayout(
+		layout = _layoutLocalService.updateTypeSettings(
 			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
 			layout.getTypeSettings());
 
@@ -287,7 +295,7 @@ public class WidgetPageWidgetInstanceResourceImpl
 					layout.getPlid(), " by user ", contextUser.getUserId()));
 		}
 
-		layout = _layoutLocalService.updateLayout(
+		layout = _layoutLocalService.updateTypeSettings(
 			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
 			layout.getTypeSettings());
 
@@ -309,15 +317,12 @@ public class WidgetPageWidgetInstanceResourceImpl
 			Layout layout, String portletId)
 		throws Exception {
 
-		DTOConverterContext dtoConverterContext =
-			new DefaultDTOConverterContext(
-				contextAcceptLanguage.isAcceptAllLanguages(), null,
-				_dtoConverterRegistry, contextHttpServletRequest,
-				layout.getPlid(), contextAcceptLanguage.getPreferredLocale(),
-				contextUriInfo, contextUser);
-
 		return _toWidgetPageWidgetInstance(
-			dtoConverterContext, layout, portletId);
+			DTOConverterContextUtil.getDTOConverterContext(
+				contextAcceptLanguage, _dtoConverterRegistry,
+				contextHttpServletRequest, layout.getPlid(), contextUriInfo,
+				contextUser),
+			layout, portletId);
 	}
 
 	@Reference

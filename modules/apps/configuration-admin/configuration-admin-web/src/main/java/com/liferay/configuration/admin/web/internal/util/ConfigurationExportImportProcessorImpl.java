@@ -52,6 +52,15 @@ public class ConfigurationExportImportProcessorImpl
 				continue;
 			}
 
+			Object groupInternalIdentifier = properties.get(
+				ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey());
+
+			if (scope.equals(ExtendedObjectClassDefinition.Scope.COMPANY) &&
+				(groupInternalIdentifier != null)) {
+
+				continue;
+			}
+
 			Serializable portableIdentifier = _getPortableIdentifier(
 				scope, (Serializable)internalIdentifier);
 
@@ -108,11 +117,38 @@ public class ConfigurationExportImportProcessorImpl
 
 				properties.put(scope.getPropertyKey(), internalIdentifier);
 
+				if (scope.equals(ExtendedObjectClassDefinition.Scope.GROUP)) {
+					Group group = _getGroup((String)portableIdentifier);
+
+					properties.put(
+						ExtendedObjectClassDefinition.Scope.COMPANY.
+							getPropertyKey(),
+						group.getCompanyId());
+				}
+
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	private Group _getGroup(String portableIdentifier) throws PortalException {
+		String[] parts = StringUtil.split(portableIdentifier, _SEPARATOR);
+
+		String webId = parts[0];
+
+		long companyId = GetterUtil.getLong(
+			_getInternalIdentifier(
+				ExtendedObjectClassDefinition.Scope.COMPANY, webId));
+
+		if (companyId == 0L) {
+			return null;
+		}
+
+		String groupKey = parts[1];
+
+		return _groupLocalService.getGroup(companyId, groupKey);
 	}
 
 	private Serializable _getInternalIdentifier(
@@ -131,22 +167,11 @@ public class ConfigurationExportImportProcessorImpl
 			return null;
 		}
 
-		String[] parts = StringUtil.split(
-			(String)portableIdentifier, _SEPARATOR);
+		Group group = _getGroup((String)portableIdentifier);
 
-		String webId = parts[0];
-
-		long companyId = GetterUtil.getLong(
-			_getInternalIdentifier(
-				ExtendedObjectClassDefinition.Scope.COMPANY, webId));
-
-		if (companyId == 0L) {
+		if (group == null) {
 			return null;
 		}
-
-		String groupKey = parts[1];
-
-		Group group = _groupLocalService.getGroup(companyId, groupKey);
 
 		return group.getGroupId();
 	}
@@ -156,7 +181,8 @@ public class ConfigurationExportImportProcessorImpl
 		throws PortalException {
 
 		if (scope.equals(ExtendedObjectClassDefinition.Scope.COMPANY)) {
-			Company company = _companyLocalService.getCompany((long)scopePK);
+			Company company = _companyLocalService.getCompany(
+				GetterUtil.getLong(scopePK));
 
 			return company.getWebId();
 		}
@@ -165,7 +191,7 @@ public class ConfigurationExportImportProcessorImpl
 			return null;
 		}
 
-		Group group = _groupLocalService.getGroup((long)scopePK);
+		Group group = _groupLocalService.getGroup(GetterUtil.getLong(scopePK));
 
 		return StringBundler.concat(
 			_getPortableIdentifier(

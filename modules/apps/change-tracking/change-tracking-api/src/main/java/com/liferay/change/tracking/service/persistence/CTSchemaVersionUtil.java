@@ -215,57 +215,6 @@ public class CTSchemaVersionUtil {
 	}
 
 	/**
-	 * Returns the last ct schema version in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct schema version
-	 * @throws NoSuchSchemaVersionException if a matching ct schema version could not be found
-	 */
-	public static CTSchemaVersion findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<CTSchemaVersion> orderByComparator)
-		throws com.liferay.change.tracking.exception.
-			NoSuchSchemaVersionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ct schema version in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct schema version, or <code>null</code> if a matching ct schema version could not be found
-	 */
-	public static CTSchemaVersion fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CTSchemaVersion> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ct schema versions before and after the current ct schema version in the ordered set where companyId = &#63;.
-	 *
-	 * @param schemaVersionId the primary key of the current ct schema version
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct schema version
-	 * @throws NoSuchSchemaVersionException if a ct schema version with the primary key could not be found
-	 */
-	public static CTSchemaVersion[] findByCompanyId_PrevAndNext(
-			long schemaVersionId, long companyId,
-			OrderByComparator<CTSchemaVersion> orderByComparator)
-		throws com.liferay.change.tracking.exception.
-			NoSuchSchemaVersionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			schemaVersionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ct schema versions where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -446,3 +395,4 @@ public class CTSchemaVersionUtil {
 	private static volatile CTSchemaVersionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-906683979

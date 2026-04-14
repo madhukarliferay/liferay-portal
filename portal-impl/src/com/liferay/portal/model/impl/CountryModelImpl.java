@@ -120,6 +120,9 @@ public class CountryModelImpl
 
 	public static final String ORDER_BY_SQL = " ORDER BY Country.name ASC";
 
+	public static final String ORDER_BY_SQL_INLINE_DISTINCT =
+		" ORDER BY country.name ASC";
+
 	public static final String DATA_SOURCE = "liferayDataSource";
 
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
@@ -178,25 +181,37 @@ public class CountryModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long NAME_COLUMN_BITMASK = 32L;
+	public static final long COUNTRYID_COLUMN_BITMASK = 32L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long NUMBER_COLUMN_BITMASK = 64L;
+	public static final long GROUPFILTERENABLED_COLUMN_BITMASK = 64L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long SHIPPINGALLOWED_COLUMN_BITMASK = 128L;
+	public static final long NAME_COLUMN_BITMASK = 128L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long UUID_COLUMN_BITMASK = 256L;
+	public static final long NUMBER_COLUMN_BITMASK = 256L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long SHIPPINGALLOWED_COLUMN_BITMASK = 512L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 1024L;
 
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
 		com.liferay.portal.kernel.util.PropsUtil.get(
@@ -582,6 +597,16 @@ public class CountryModelImpl
 		_countryId = countryId;
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public long getOriginalCountryId() {
+		return GetterUtil.getLong(
+			this.<Long>getColumnOriginalValue("countryId"));
+	}
+
 	@JSON
 	@Override
 	public long getCompanyId() {
@@ -833,6 +858,16 @@ public class CountryModelImpl
 		}
 
 		_groupFilterEnabled = groupFilterEnabled;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public boolean getOriginalGroupFilterEnabled() {
+		return GetterUtil.getBoolean(
+			this.<Boolean>getColumnOriginalValue("groupFilterEnabled"));
 	}
 
 	@JSON
@@ -1557,3 +1592,4 @@ public class CountryModelImpl
 	private Country _escapedModel;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:2070484933

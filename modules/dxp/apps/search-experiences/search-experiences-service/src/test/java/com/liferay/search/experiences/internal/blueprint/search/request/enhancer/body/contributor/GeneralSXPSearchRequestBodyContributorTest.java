@@ -7,6 +7,7 @@ package com.liferay.search.experiences.internal.blueprint.search.request.enhance
 
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.search.internal.asset.AssetSubtypeIdentifierBuilderImpl;
+import com.liferay.portal.search.internal.filter.ComplexQueryPartBuilderFactoryImpl;
 import com.liferay.portal.search.internal.searcher.SearchRequestBuilderFactoryImpl;
 import com.liferay.portal.search.searcher.SearchRequest;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
@@ -89,7 +90,8 @@ public class GeneralSXPSearchRequestBodyContributorTest {
 		GeneralSXPSearchRequestBodyContributor
 			generalSXPSearchRequestBodyContributor =
 				new GeneralSXPSearchRequestBodyContributor(
-					new AssetSubtypeIdentifierBuilderImpl());
+					new AssetSubtypeIdentifierBuilderImpl(),
+					new ComplexQueryPartBuilderFactoryImpl());
 
 		SearchRequestBuilder searchRequestBuilder = _setUpSearchRequestBuilder(
 			searchContextConsumer);

@@ -114,6 +114,66 @@ public class SamlIdpSsoSessionUtil {
 	}
 
 	/**
+	 * Returns the saml idp sso session where userId = &#63; or throws a <code>NoSuchIdpSsoSessionException</code> if it could not be found.
+	 *
+	 * @param userId the user ID
+	 * @return the matching saml idp sso session
+	 * @throws NoSuchIdpSsoSessionException if a matching saml idp sso session could not be found
+	 */
+	public static SamlIdpSsoSession findByUserId(long userId)
+		throws com.liferay.saml.persistence.exception.
+			NoSuchIdpSsoSessionException {
+
+		return getPersistence().findByUserId(userId);
+	}
+
+	/**
+	 * Returns the saml idp sso session where userId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @return the matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
+	 */
+	public static SamlIdpSsoSession fetchByUserId(long userId) {
+		return getPersistence().fetchByUserId(userId);
+	}
+
+	/**
+	 * Returns the saml idp sso session where userId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param userId the user ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
+	 */
+	public static SamlIdpSsoSession fetchByUserId(
+		long userId, boolean useFinderCache) {
+
+		return getPersistence().fetchByUserId(userId, useFinderCache);
+	}
+
+	/**
+	 * Removes the saml idp sso session where userId = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @return the saml idp sso session that was removed
+	 */
+	public static SamlIdpSsoSession removeByUserId(long userId)
+		throws com.liferay.saml.persistence.exception.
+			NoSuchIdpSsoSessionException {
+
+		return getPersistence().removeByUserId(userId);
+	}
+
+	/**
+	 * Returns the number of saml idp sso sessions where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @return the number of matching saml idp sso sessions
+	 */
+	public static int countByUserId(long userId) {
+		return getPersistence().countByUserId(userId);
+	}
+
+	/**
 	 * Returns all the saml idp sso sessions where createDate &lt; &#63;.
 	 *
 	 * @param createDate the create date
@@ -216,58 +276,6 @@ public class SamlIdpSsoSessionUtil {
 
 		return getPersistence().fetchByLtCreateDate_First(
 			createDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the last saml idp sso session in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml idp sso session
-	 * @throws NoSuchIdpSsoSessionException if a matching saml idp sso session could not be found
-	 */
-	public static SamlIdpSsoSession findByLtCreateDate_Last(
-			Date createDate,
-			OrderByComparator<SamlIdpSsoSession> orderByComparator)
-		throws com.liferay.saml.persistence.exception.
-			NoSuchIdpSsoSessionException {
-
-		return getPersistence().findByLtCreateDate_Last(
-			createDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the last saml idp sso session in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml idp sso session, or <code>null</code> if a matching saml idp sso session could not be found
-	 */
-	public static SamlIdpSsoSession fetchByLtCreateDate_Last(
-		Date createDate,
-		OrderByComparator<SamlIdpSsoSession> orderByComparator) {
-
-		return getPersistence().fetchByLtCreateDate_Last(
-			createDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the saml idp sso sessions before and after the current saml idp sso session in the ordered set where createDate &lt; &#63;.
-	 *
-	 * @param samlIdpSsoSessionId the primary key of the current saml idp sso session
-	 * @param createDate the create date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next saml idp sso session
-	 * @throws NoSuchIdpSsoSessionException if a saml idp sso session with the primary key could not be found
-	 */
-	public static SamlIdpSsoSession[] findByLtCreateDate_PrevAndNext(
-			long samlIdpSsoSessionId, Date createDate,
-			OrderByComparator<SamlIdpSsoSession> orderByComparator)
-		throws com.liferay.saml.persistence.exception.
-			NoSuchIdpSsoSessionException {
-
-		return getPersistence().findByLtCreateDate_PrevAndNext(
-			samlIdpSsoSessionId, createDate, orderByComparator);
 	}
 
 	/**
@@ -526,3 +534,4 @@ public class SamlIdpSsoSessionUtil {
 	private static volatile SamlIdpSsoSessionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1249263404

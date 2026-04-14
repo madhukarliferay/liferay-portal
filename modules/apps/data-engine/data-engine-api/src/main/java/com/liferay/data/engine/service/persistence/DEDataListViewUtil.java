@@ -210,52 +210,6 @@ public class DEDataListViewUtil {
 	}
 
 	/**
-	 * Returns the last de data list view in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view
-	 * @throws NoSuchDataListViewException if a matching de data list view could not be found
-	 */
-	public static DEDataListView findByUuid_Last(
-			String uuid, OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last de data list view in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view, or <code>null</code> if a matching de data list view could not be found
-	 */
-	public static DEDataListView fetchByUuid_Last(
-		String uuid, OrderByComparator<DEDataListView> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the de data list views before and after the current de data list view in the ordered set where uuid = &#63;.
-	 *
-	 * @param deDataListViewId the primary key of the current de data list view
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next de data list view
-	 * @throws NoSuchDataListViewException if a de data list view with the primary key could not be found
-	 */
-	public static DEDataListView[] findByUuid_PrevAndNext(
-			long deDataListViewId, String uuid,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			deDataListViewId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the de data list views where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -450,59 +404,6 @@ public class DEDataListViewUtil {
 	}
 
 	/**
-	 * Returns the last de data list view in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view
-	 * @throws NoSuchDataListViewException if a matching de data list view could not be found
-	 */
-	public static DEDataListView findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last de data list view in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view, or <code>null</code> if a matching de data list view could not be found
-	 */
-	public static DEDataListView fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<DEDataListView> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the de data list views before and after the current de data list view in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param deDataListViewId the primary key of the current de data list view
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next de data list view
-	 * @throws NoSuchDataListViewException if a de data list view with the primary key could not be found
-	 */
-	public static DEDataListView[] findByUuid_C_PrevAndNext(
-			long deDataListViewId, String uuid, long companyId,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			deDataListViewId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the de data list views where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -628,56 +529,6 @@ public class DEDataListViewUtil {
 
 		return getPersistence().fetchByDDMStructureId_First(
 			ddmStructureId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last de data list view in the ordered set where ddmStructureId = &#63;.
-	 *
-	 * @param ddmStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view
-	 * @throws NoSuchDataListViewException if a matching de data list view could not be found
-	 */
-	public static DEDataListView findByDDMStructureId_Last(
-			long ddmStructureId,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByDDMStructureId_Last(
-			ddmStructureId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last de data list view in the ordered set where ddmStructureId = &#63;.
-	 *
-	 * @param ddmStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view, or <code>null</code> if a matching de data list view could not be found
-	 */
-	public static DEDataListView fetchByDDMStructureId_Last(
-		long ddmStructureId,
-		OrderByComparator<DEDataListView> orderByComparator) {
-
-		return getPersistence().fetchByDDMStructureId_Last(
-			ddmStructureId, orderByComparator);
-	}
-
-	/**
-	 * Returns the de data list views before and after the current de data list view in the ordered set where ddmStructureId = &#63;.
-	 *
-	 * @param deDataListViewId the primary key of the current de data list view
-	 * @param ddmStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next de data list view
-	 * @throws NoSuchDataListViewException if a de data list view with the primary key could not be found
-	 */
-	public static DEDataListView[] findByDDMStructureId_PrevAndNext(
-			long deDataListViewId, long ddmStructureId,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByDDMStructureId_PrevAndNext(
-			deDataListViewId, ddmStructureId, orderByComparator);
 	}
 
 	/**
@@ -818,64 +669,6 @@ public class DEDataListViewUtil {
 
 		return getPersistence().fetchByG_C_DDMSI_First(
 			groupId, companyId, ddmStructureId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last de data list view in the ordered set where groupId = &#63; and companyId = &#63; and ddmStructureId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param ddmStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view
-	 * @throws NoSuchDataListViewException if a matching de data list view could not be found
-	 */
-	public static DEDataListView findByG_C_DDMSI_Last(
-			long groupId, long companyId, long ddmStructureId,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByG_C_DDMSI_Last(
-			groupId, companyId, ddmStructureId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last de data list view in the ordered set where groupId = &#63; and companyId = &#63; and ddmStructureId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param ddmStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching de data list view, or <code>null</code> if a matching de data list view could not be found
-	 */
-	public static DEDataListView fetchByG_C_DDMSI_Last(
-		long groupId, long companyId, long ddmStructureId,
-		OrderByComparator<DEDataListView> orderByComparator) {
-
-		return getPersistence().fetchByG_C_DDMSI_Last(
-			groupId, companyId, ddmStructureId, orderByComparator);
-	}
-
-	/**
-	 * Returns the de data list views before and after the current de data list view in the ordered set where groupId = &#63; and companyId = &#63; and ddmStructureId = &#63;.
-	 *
-	 * @param deDataListViewId the primary key of the current de data list view
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param ddmStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next de data list view
-	 * @throws NoSuchDataListViewException if a de data list view with the primary key could not be found
-	 */
-	public static DEDataListView[] findByG_C_DDMSI_PrevAndNext(
-			long deDataListViewId, long groupId, long companyId,
-			long ddmStructureId,
-			OrderByComparator<DEDataListView> orderByComparator)
-		throws com.liferay.data.engine.exception.NoSuchDataListViewException {
-
-		return getPersistence().findByG_C_DDMSI_PrevAndNext(
-			deDataListViewId, groupId, companyId, ddmStructureId,
-			orderByComparator);
 	}
 
 	/**
@@ -1065,3 +858,4 @@ public class DEDataListViewUtil {
 	private static volatile DEDataListViewPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:626202340

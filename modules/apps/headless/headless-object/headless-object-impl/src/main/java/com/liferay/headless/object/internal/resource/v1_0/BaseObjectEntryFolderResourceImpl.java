@@ -5,6 +5,7 @@
 
 package com.liferay.headless.object.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.object.dto.v1_0.ObjectEntryFolder;
 import com.liferay.headless.object.resource.v1_0.ObjectEntryFolderResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -324,27 +325,27 @@ public abstract class BaseObjectEntryFolderResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(objectEntryFolderId);
+		Long resourceId = getPermissionCheckerResourceId(objectEntryFolderId);
 		String resourceName = getPermissionCheckerResourceName(
 			objectEntryFolderId);
-		Long resourceId = getPermissionCheckerResourceId(objectEntryFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(objectEntryFolderId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getObjectEntryFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getObjectEntryFolderPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putObjectEntryFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putObjectEntryFolderPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -492,7 +493,7 @@ public abstract class BaseObjectEntryFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "scope": ___, "status": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Updates only the fields received in the request body, leaving any other fields untouched."
@@ -564,6 +565,10 @@ public abstract class BaseObjectEntryFolderResourceImpl
 				objectEntryFolder.getPermissions());
 		}
 
+		if (objectEntryFolder.getScope() != null) {
+			existingObjectEntryFolder.setScope(objectEntryFolder.getScope());
+		}
+
 		if (objectEntryFolder.getTitle() != null) {
 			existingObjectEntryFolder.setTitle(objectEntryFolder.getTitle());
 		}
@@ -582,7 +587,7 @@ public abstract class BaseObjectEntryFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-object/v1.0/scopes/{scopeKey}/object-entry-folder/by-external-reference-code/{externalReferenceCode}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-object/v1.0/scopes/{scopeKey}/object-entry-folder/by-external-reference-code/{externalReferenceCode}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "scope": ___, "status": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -663,6 +668,10 @@ public abstract class BaseObjectEntryFolderResourceImpl
 				objectEntryFolder.getPermissions());
 		}
 
+		if (objectEntryFolder.getScope() != null) {
+			existingObjectEntryFolder.setScope(objectEntryFolder.getScope());
+		}
+
 		if (objectEntryFolder.getTitle() != null) {
 			existingObjectEntryFolder.setTitle(objectEntryFolder.getTitle());
 		}
@@ -681,7 +690,177 @@ public abstract class BaseObjectEntryFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-object/v1.0/scopes/{scopeKey}/object-entry-folders' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/copy'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "objectEntryFolderId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "parentObjectEntryFolderId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "ObjectEntryFolder")
+		}
+	)
+	@jakarta.ws.rs.Path(
+		"/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/copy"
+	)
+	@jakarta.ws.rs.POST
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public ObjectEntryFolder postObjectEntryFolderByParentObjectEntryFolderCopy(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("objectEntryFolderId")
+			Long objectEntryFolderId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("parentObjectEntryFolderId")
+			Long parentObjectEntryFolderId)
+		throws Exception {
+
+		return new ObjectEntryFolder();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/copy-replace'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "objectEntryFolderId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "parentObjectEntryFolderId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "ObjectEntryFolder")
+		}
+	)
+	@jakarta.ws.rs.Path(
+		"/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/copy-replace"
+	)
+	@jakarta.ws.rs.POST
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public ObjectEntryFolder
+			postObjectEntryFolderByParentObjectEntryFolderCopyReplace(
+				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+				@jakarta.validation.constraints.NotNull
+				@jakarta.ws.rs.PathParam("objectEntryFolderId")
+				Long objectEntryFolderId,
+				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+				@jakarta.validation.constraints.NotNull
+				@jakarta.ws.rs.PathParam("parentObjectEntryFolderId")
+				Long parentObjectEntryFolderId)
+		throws Exception {
+
+		return new ObjectEntryFolder();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/move'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "objectEntryFolderId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "parentObjectEntryFolderId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "ObjectEntryFolder")
+		}
+	)
+	@jakarta.ws.rs.Path(
+		"/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/move"
+	)
+	@jakarta.ws.rs.POST
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public ObjectEntryFolder postObjectEntryFolderByParentObjectEntryFolderMove(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("objectEntryFolderId")
+			Long objectEntryFolderId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("parentObjectEntryFolderId")
+			Long parentObjectEntryFolderId)
+		throws Exception {
+
+		return new ObjectEntryFolder();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/move-replace'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "objectEntryFolderId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "parentObjectEntryFolderId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "ObjectEntryFolder")
+		}
+	)
+	@jakarta.ws.rs.Path(
+		"/object-entry-folders/{objectEntryFolderId}/by-parent-object-entry-folder-id/{parentObjectEntryFolderId}/move-replace"
+	)
+	@jakarta.ws.rs.POST
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public ObjectEntryFolder
+			postObjectEntryFolderByParentObjectEntryFolderMoveReplace(
+				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+				@jakarta.validation.constraints.NotNull
+				@jakarta.ws.rs.PathParam("objectEntryFolderId")
+				Long objectEntryFolderId,
+				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+				@jakarta.validation.constraints.NotNull
+				@jakarta.ws.rs.PathParam("parentObjectEntryFolderId")
+				Long parentObjectEntryFolderId)
+		throws Exception {
+
+		return new ObjectEntryFolder();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-object/v1.0/scopes/{scopeKey}/object-entry-folders' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "scope": ___, "status": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -844,7 +1023,7 @@ public abstract class BaseObjectEntryFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-object/v1.0/object-entry-folders/{objectEntryFolderId}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "scope": ___, "status": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -976,13 +1155,13 @@ public abstract class BaseObjectEntryFolderResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(objectEntryFolderId);
+		Long resourceId = getPermissionCheckerResourceId(objectEntryFolderId);
 		String resourceName = getPermissionCheckerResourceName(
 			objectEntryFolderId);
-		Long resourceId = getPermissionCheckerResourceId(objectEntryFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(objectEntryFolderId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1018,23 +1197,22 @@ public abstract class BaseObjectEntryFolderResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(objectEntryFolderId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getObjectEntryFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getObjectEntryFolderPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putObjectEntryFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putObjectEntryFolderPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1042,7 +1220,7 @@ public abstract class BaseObjectEntryFolderResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/headless-object/v1.0/scopes/{scopeKey}/object-entry-folder/by-external-reference-code/{externalReferenceCode}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/headless-object/v1.0/scopes/{scopeKey}/object-entry-folder/by-external-reference-code/{externalReferenceCode}' -d $'{"description": ___, "externalReferenceCode": ___, "label": ___, "label_i18n": ___, "parentObjectEntryFolderExternalReferenceCode": ___, "parentObjectEntryFolderId": ___, "permissions": ___, "scope": ___, "status": ___, "title": ___, "viewableBy": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -1176,6 +1354,15 @@ public abstract class BaseObjectEntryFolderResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1394,6 +1581,9 @@ public abstract class BaseObjectEntryFolderResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1965,3 +2155,4 @@ public abstract class BaseObjectEntryFolderResourceImpl
 		LogFactoryUtil.getLog(BaseObjectEntryFolderResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-83758135

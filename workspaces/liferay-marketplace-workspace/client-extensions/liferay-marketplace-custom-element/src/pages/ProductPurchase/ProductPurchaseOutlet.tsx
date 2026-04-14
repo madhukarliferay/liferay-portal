@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import classNames from 'classnames';
-import {useState} from 'react';
+import ClayAlert from '@clayui/alert';
+import ClayIcon from '@clayui/icon';
+import {useSelector} from '@xstate/store/react';
+import {ReactNode, useEffect, useMemo, useState} from 'react';
 import {
 	Outlet,
 	useLocation,
@@ -14,16 +16,19 @@ import {
 
 import Loading from '../../components/Loading';
 import ProductPurchase from '../../components/ProductPurchase';
+import {MarketplaceDeliveryProduct} from '../../entity/MarketplaceDeliveryProduct';
 import {SolutionTypes} from '../../enums/Product';
 import useProductPurchaseCart from '../../hooks/useProductPurchaseCart';
 import i18n from '../../i18n';
 import {Liferay} from '../../liferay/liferay';
+import marketplaceOAuth2 from '../../services/oauth/Marketplace';
 import {scrollToMiddleOfPage} from '../../utils/browser';
 import ProductPurchasePrice from './ProductPurchasePrice';
 import {productTypeRoutes} from './ProductPurchaseRouter';
 import useAccounts from './hooks/useAccounts';
 import ProductPurchaseService from './services/ProductPurchase';
 import ProductPurchaseApp from './services/ProductPurchaseApp';
+import {productPurchaseStore} from './store/AppPurchaseStore';
 
 type ProductPurchaseOutletProps = {
 	product: DeliveryProduct;
@@ -41,14 +46,19 @@ export type ProductPurchaseOutletContext = {
 		nextStep: () => void;
 		previousStep: () => void;
 	};
+	form: Record<string, unknown>;
 	handlePurchase: (
 		ProductPurchase: ProductPurchaseService | typeof ProductPurchaseService,
 		cart?: Cart | undefined,
 		cartOptions?: any
 	) => Promise<void>;
+	isSingleAccount: boolean;
+	marketplaceDeliveryProduct: MarketplaceDeliveryProduct;
 	product: DeliveryProduct;
 	productPurchaseCart: ReturnType<typeof useProductPurchaseCart>;
 	productTypeRoute: ProductPurchaseOutletProps['productTypeRoute'];
+	setAlert: React.Dispatch<ReactNode>;
+	setForm: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 	solutionTypeSpecificationValue: SolutionTypes;
 } & Omit<ReturnType<typeof useAccounts>, 'myUserAccount'>;
 
@@ -57,8 +67,11 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 	productTypeRoute,
 	solutionTypeSpecificationValue,
 }) => {
+	const [alert, setAlert] = useState('');
+	const [form, setForm] = useState<Record<string, unknown>>({});
 	const [isSubmitting, setSubmitting] = useState(false);
 	const {accounts, selectedAccount, setSelectedAccount} = useAccounts();
+
 	const {pathname} = useLocation();
 	const navigate = useNavigate();
 
@@ -70,6 +83,15 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 
 		ProductPurchaseApp.getOrderTypeExternalReferenceCode(product)
 	);
+
+	const licenseType = useSelector(
+		productPurchaseStore,
+		(state) => state.context.licenseType
+	);
+
+	const marketplaceDeliveryProduct = useMemo(() => {
+		return new MarketplaceDeliveryProduct(product);
+	}, [product]);
 
 	const {metadata, routes = []} = productTypeRoute || {};
 
@@ -112,6 +134,14 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 
 			const link = await _productPurchase.getNextStepsLink(order);
 
+			const orderId = order?.id || cart?.id;
+
+			if (licenseType === 'PAID') {
+				await marketplaceOAuth2
+					.taxCalculate(orderId)
+					.catch(console.error);
+			}
+
 			if (link.startsWith('http')) {
 				return sendRedirect(link);
 			}
@@ -130,9 +160,13 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 		setSubmitting(false);
 	};
 
-	const displaySteps = metadata?.isNavigationStepVisible
-		? metadata.isNavigationStepVisible(product)
-		: true;
+	const {
+		showAccountSelected = true,
+		showSteps = true,
+		tinyStepsDisplay,
+	} = metadata;
+
+	const isSingleAccount = accounts.length === 1;
 
 	const context = {
 		accounts,
@@ -140,14 +174,29 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 			nextStep: () => stepNavigate(1),
 			previousStep: () => stepNavigate(-1),
 		},
+		form,
 		handlePurchase,
+		isSingleAccount,
+		marketplaceDeliveryProduct,
 		product,
 		productPurchaseCart,
+		productTypeRoute,
 		routes: steps,
 		selectedAccount,
+		setAlert,
+		setForm,
 		setSelectedAccount,
 		solutionTypeSpecificationValue,
 	};
+
+	useEffect(() => {
+		if (selectedAccount?.taxId) {
+			productPurchaseStore.send({
+				taxId: selectedAccount.taxId,
+				type: 'setAccountTaxId',
+			});
+		}
+	}, [selectedAccount?.taxId]);
 
 	return (
 		<ProductPurchase className="my-7">
@@ -163,16 +212,38 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 				rightNode={
 					metadata.useCart ? (
 						<ProductPurchasePrice
-							activeStepIndex={activeStepIndex}
 							product={product}
+							productPurchaseCart={productPurchaseCart}
 						/>
 					) : null
 				}
 			>
-				<ProductPurchase.HeaderAccount account={selectedAccount} />
+				{marketplaceDeliveryProduct.isPerpetualLicense && (
+					<div className="mt-2 text-black-50">
+						<ClayIcon
+							className="mr-1"
+							color="#2E5AAC"
+							symbol="exclamation-full"
+						/>{' '}
+						<small>
+							A perpetual license never expires. Support is not
+							included.
+						</small>
+					</div>
+				)}
+
+				{showAccountSelected && (
+					<ProductPurchase.HeaderAccount account={selectedAccount} />
+				)}
 			</ProductPurchase.Header>
 
-			{displaySteps && (
+			{alert && (
+				<ClayAlert className="mt-4" displayType="info">
+					{alert}
+				</ClayAlert>
+			)}
+
+			{showSteps && !tinyStepsDisplay && (
 				<ProductPurchase.Steps
 					className="mt-5 px-8"
 					onClickIndicator={(step) => navigate(step.key)}
@@ -180,9 +251,13 @@ const ProductPurchaseOutlet: React.FC<ProductPurchaseOutletProps> = ({
 				/>
 			)}
 
-			<ProductPurchase.Body
-				className={classNames({'mt-7': accounts.length === 1})}
-			>
+			<ProductPurchase.Body className="mt-4">
+				{showSteps && tinyStepsDisplay && (
+					<ProductPurchase.CircleSteps
+						className="my-6"
+						steps={steps}
+					/>
+				)}
 				<Outlet context={context} />
 			</ProductPurchase.Body>
 		</ProductPurchase>

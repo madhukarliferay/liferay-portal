@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.cache.CacheField;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.util.DateUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Date;
@@ -25,6 +26,28 @@ import java.util.Map;
  * @author Eudaldo Alonso
  */
 public class FragmentEntryLinkImpl extends FragmentEntryLinkBaseImpl {
+
+	@Override
+	public FragmentEntry fetchFragmentEntry() {
+		if ((_fragmentEntry == null) &&
+			Validator.isNotNull(getFragmentEntryERC())) {
+
+			Long groupId = ScopeUtil.getItemGroupId(
+				getCompanyId(), getFragmentEntryScopeERC(), getGroupId());
+
+			if (groupId != null) {
+				_fragmentEntry =
+					FragmentEntryLocalServiceUtil.
+						fetchFragmentEntryByExternalReferenceCode(
+							getFragmentEntryERC(), groupId);
+
+				fragmentEntryUpdateEntityCacheBiConsumer.accept(
+					this, _fragmentEntry);
+			}
+		}
+
+		return _fragmentEntry;
+	}
 
 	@Override
 	public JSONObject getConfigurationJSONObject() {
@@ -64,9 +87,7 @@ public class FragmentEntryLinkImpl extends FragmentEntryLinkBaseImpl {
 
 	@Override
 	public boolean isCacheable() {
-		FragmentEntry fragmentEntry =
-			FragmentEntryLocalServiceUtil.fetchFragmentEntry(
-				getFragmentEntryId());
+		FragmentEntry fragmentEntry = fetchFragmentEntry();
 
 		if (fragmentEntry != null) {
 			return fragmentEntry.isCacheable();
@@ -95,9 +116,11 @@ public class FragmentEntryLinkImpl extends FragmentEntryLinkBaseImpl {
 
 	@Override
 	public boolean isLatestVersion() throws PortalException {
-		FragmentEntry fragmentEntry =
-			FragmentEntryLocalServiceUtil.getFragmentEntry(
-				getFragmentEntryId());
+		FragmentEntry fragmentEntry = fetchFragmentEntry();
+
+		if (fragmentEntry == null) {
+			return false;
+		}
 
 		Date fragmentEntryModifiedDate = fragmentEntry.getModifiedDate();
 
@@ -112,14 +135,8 @@ public class FragmentEntryLinkImpl extends FragmentEntryLinkBaseImpl {
 	}
 
 	@Override
-	public boolean isSystem() throws PortalException {
-		if (getFragmentEntryId() == 0) {
-			return false;
-		}
-
-		FragmentEntry fragmentEntry =
-			FragmentEntryLocalServiceUtil.fetchFragmentEntry(
-				getFragmentEntryId());
+	public boolean isSystem() {
+		FragmentEntry fragmentEntry = fetchFragmentEntry();
 
 		if (fragmentEntry == null) {
 			return false;
@@ -203,5 +220,8 @@ public class FragmentEntryLinkImpl extends FragmentEntryLinkBaseImpl {
 
 	@CacheField(permanent = true, propagateToInterface = true)
 	private transient JSONObject _editableValuesJSONObject;
+
+	@CacheField(permanent = true, propagateToInterface = true)
+	private transient FragmentEntry _fragmentEntry;
 
 }

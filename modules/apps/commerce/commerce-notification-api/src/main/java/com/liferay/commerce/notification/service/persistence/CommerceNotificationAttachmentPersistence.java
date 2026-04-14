@@ -123,47 +123,6 @@ public interface CommerceNotificationAttachmentPersistence
 			<CommerceNotificationAttachment> orderByComparator);
 
 	/**
-	 * Returns the last commerce notification attachment in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce notification attachment
-	 * @throws NoSuchNotificationAttachmentException if a matching commerce notification attachment could not be found
-	 */
-	public CommerceNotificationAttachment findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceNotificationAttachment> orderByComparator)
-		throws NoSuchNotificationAttachmentException;
-
-	/**
-	 * Returns the last commerce notification attachment in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce notification attachment, or <code>null</code> if a matching commerce notification attachment could not be found
-	 */
-	public CommerceNotificationAttachment fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceNotificationAttachment> orderByComparator);
-
-	/**
-	 * Returns the commerce notification attachments before and after the current commerce notification attachment in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceNotificationAttachmentId the primary key of the current commerce notification attachment
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce notification attachment
-	 * @throws NoSuchNotificationAttachmentException if a commerce notification attachment with the primary key could not be found
-	 */
-	public CommerceNotificationAttachment[] findByUuid_PrevAndNext(
-			long commerceNotificationAttachmentId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceNotificationAttachment> orderByComparator)
-		throws NoSuchNotificationAttachmentException;
-
-	/**
 	 * Removes all the commerce notification attachments where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -326,50 +285,6 @@ public interface CommerceNotificationAttachmentPersistence
 			<CommerceNotificationAttachment> orderByComparator);
 
 	/**
-	 * Returns the last commerce notification attachment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce notification attachment
-	 * @throws NoSuchNotificationAttachmentException if a matching commerce notification attachment could not be found
-	 */
-	public CommerceNotificationAttachment findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceNotificationAttachment> orderByComparator)
-		throws NoSuchNotificationAttachmentException;
-
-	/**
-	 * Returns the last commerce notification attachment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce notification attachment, or <code>null</code> if a matching commerce notification attachment could not be found
-	 */
-	public CommerceNotificationAttachment fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceNotificationAttachment> orderByComparator);
-
-	/**
-	 * Returns the commerce notification attachments before and after the current commerce notification attachment in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceNotificationAttachmentId the primary key of the current commerce notification attachment
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce notification attachment
-	 * @throws NoSuchNotificationAttachmentException if a commerce notification attachment with the primary key could not be found
-	 */
-	public CommerceNotificationAttachment[] findByUuid_C_PrevAndNext(
-			long commerceNotificationAttachmentId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceNotificationAttachment> orderByComparator)
-		throws NoSuchNotificationAttachmentException;
-
-	/**
 	 * Removes all the commerce notification attachments where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -479,51 +394,6 @@ public interface CommerceNotificationAttachmentPersistence
 			long commerceNotificationQueueEntryId,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<CommerceNotificationAttachment> orderByComparator);
-
-	/**
-	 * Returns the last commerce notification attachment in the ordered set where commerceNotificationQueueEntryId = &#63;.
-	 *
-	 * @param commerceNotificationQueueEntryId the commerce notification queue entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce notification attachment
-	 * @throws NoSuchNotificationAttachmentException if a matching commerce notification attachment could not be found
-	 */
-	public CommerceNotificationAttachment
-			findByCommerceNotificationQueueEntryId_Last(
-				long commerceNotificationQueueEntryId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CommerceNotificationAttachment> orderByComparator)
-		throws NoSuchNotificationAttachmentException;
-
-	/**
-	 * Returns the last commerce notification attachment in the ordered set where commerceNotificationQueueEntryId = &#63;.
-	 *
-	 * @param commerceNotificationQueueEntryId the commerce notification queue entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce notification attachment, or <code>null</code> if a matching commerce notification attachment could not be found
-	 */
-	public CommerceNotificationAttachment
-		fetchByCommerceNotificationQueueEntryId_Last(
-			long commerceNotificationQueueEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceNotificationAttachment> orderByComparator);
-
-	/**
-	 * Returns the commerce notification attachments before and after the current commerce notification attachment in the ordered set where commerceNotificationQueueEntryId = &#63;.
-	 *
-	 * @param commerceNotificationAttachmentId the primary key of the current commerce notification attachment
-	 * @param commerceNotificationQueueEntryId the commerce notification queue entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce notification attachment
-	 * @throws NoSuchNotificationAttachmentException if a commerce notification attachment with the primary key could not be found
-	 */
-	public CommerceNotificationAttachment[]
-			findByCommerceNotificationQueueEntryId_PrevAndNext(
-				long commerceNotificationAttachmentId,
-				long commerceNotificationQueueEntryId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CommerceNotificationAttachment> orderByComparator)
-		throws NoSuchNotificationAttachmentException;
 
 	/**
 	 * Removes all the commerce notification attachments where commerceNotificationQueueEntryId = &#63; from the database.
@@ -672,3 +542,4 @@ public interface CommerceNotificationAttachmentPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1457179

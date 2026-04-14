@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
@@ -45,11 +44,11 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ProxyFactory;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.theme.ThemeDisplayFactory;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletContext;
@@ -156,7 +155,6 @@ public class LayoutServiceContextHelperImpl
 				ServletContextPool.get(_portal.getServletContextName())
 			).build();
 
-			_originalCompanyId = CompanyThreadLocal.getCompanyId();
 			_originalPermissionChecker =
 				PermissionThreadLocal.getPermissionChecker();
 			_originalName = PrincipalThreadLocal.getName();
@@ -256,7 +254,6 @@ public class LayoutServiceContextHelperImpl
 
 		@Override
 		public void close() {
-			CompanyThreadLocal.setCompanyId(_originalCompanyId);
 			PermissionThreadLocal.setPermissionChecker(
 				_originalPermissionChecker);
 			PrincipalThreadLocal.setName(_originalName, false);
@@ -322,7 +319,11 @@ public class LayoutServiceContextHelperImpl
 					}
 
 					public String getRequestURI() {
-						return StringPool.BLANK;
+						return StringPool.SLASH;
+					}
+
+					public String getScheme() {
+						return "http";
 					}
 
 					public ServletContext getServletContext() {
@@ -397,6 +398,8 @@ public class LayoutServiceContextHelperImpl
 				}
 
 				themeDisplay.setPlid(_layout.getPlid());
+				themeDisplay.setSiteDefaultLocale(
+					_portal.getSiteDefaultLocale(_group.getGroupId()));
 			}
 			else {
 				Locale locale = _portal.getSiteDefaultLocale(
@@ -404,12 +407,13 @@ public class LayoutServiceContextHelperImpl
 
 				themeDisplay.setLanguageId(LocaleUtil.toLanguageId(locale));
 				themeDisplay.setLocale(locale);
+				themeDisplay.setSiteDefaultLocale(locale);
 			}
 
 			themeDisplay.setPermissionChecker(permissionChecker);
 			themeDisplay.setPortalDomain(company.getVirtualHostname());
 
-			boolean secure = _isHttpsEnabled();
+			boolean secure = _isSecure();
 
 			int portalServerPort = _portal.getPortalServerPort(secure);
 
@@ -428,7 +432,7 @@ public class LayoutServiceContextHelperImpl
 			return themeDisplay;
 		}
 
-		private boolean _isHttpsEnabled() {
+		private boolean _isSecure() {
 			if (Objects.equals(
 					Http.HTTPS,
 					PropsUtil.get(PropsKeys.PORTAL_INSTANCE_PROTOCOL)) ||
@@ -451,8 +455,6 @@ public class LayoutServiceContextHelperImpl
 		}
 
 		private void _setCompanyServiceContext() throws PortalException {
-			CompanyThreadLocal.setCompanyId(_company.getCompanyId());
-
 			PermissionThreadLocal.setPermissionChecker(_permissionChecker);
 
 			PrincipalThreadLocal.setName(_user.getUserId(), false);
@@ -539,10 +541,6 @@ public class LayoutServiceContextHelperImpl
 						return StringPool.BLANK;
 					}
 
-					public String[] getValueNames() {
-						return new String[0];
-					}
-
 					public boolean isNew() {
 						return true;
 					}
@@ -555,7 +553,6 @@ public class LayoutServiceContextHelperImpl
 				ProxyFactory.newDummyInstance(HttpSession.class));
 
 		private final Layout _layout;
-		private final long _originalCompanyId;
 		private final HttpServletRequest _originalHttpServletRequest;
 		private final Map<String, Object>
 			_originalHttpServletRequestAttributesMap;

@@ -100,7 +100,8 @@ public class EditSegmentsExperimentStatusMVCActionCommandTest {
 
 		SegmentsExperience variantSegmentsExperience =
 			SegmentsTestUtil.addSegmentsExperience(
-				segmentsEntry.getSegmentsEntryId(), layout.getPlid(),
+				segmentsEntry.getExternalReferenceCode(), null,
+				layout.getPlid(),
 				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		_segmentsExperimentRelLocalService.addSegmentsExperimentRel(

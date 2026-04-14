@@ -22,6 +22,7 @@ import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.service.DDMStructureVersionLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalServiceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
@@ -38,9 +39,9 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,9 +58,23 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 	@Override
 	public DDMForm createFullHierarchyDDMForm() throws PortalException {
-		DDMForm fullHierarchyDDMForm = getDDMForm();
+		return createFullHierarchyDDMForm(true);
+	}
+
+	@Override
+	public DDMForm createFullHierarchyDDMForm(boolean copy)
+		throws PortalException {
+
+		DDMForm fullHierarchyDDMForm = _getDDMForm(
+			ddmFormUpdateEntityCacheBiConsumer);
 
 		DDMStructure parentDDMStructure = getParentDDMStructure();
+
+		if ((parentDDMStructure == null) && !copy) {
+			return fullHierarchyDDMForm;
+		}
+
+		fullHierarchyDDMForm = new DDMForm(fullHierarchyDDMForm);
 
 		if (parentDDMStructure != null) {
 			DDMForm ancestorsDDMForm =
@@ -132,14 +147,38 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 	@Override
 	public DDMForm getDDMForm() {
-		return new DDMForm(_getDDMForm(ddmFormUpdateEntityCacheBiConsumer));
+		return getDDMForm(true);
+	}
+
+	@Override
+	public DDMForm getDDMForm(boolean copy) {
+		DDMForm ddmForm = _getDDMForm(ddmFormUpdateEntityCacheBiConsumer);
+
+		if (copy) {
+			ddmForm = new DDMForm(ddmForm);
+		}
+
+		return ddmForm;
 	}
 
 	@Override
 	public DDMFormField getDDMFormField(String fieldName)
 		throws PortalException {
 
-		return new DDMFormField(_getDDMFormField(fieldName));
+		return getDDMFormField(fieldName, true);
+	}
+
+	@Override
+	public DDMFormField getDDMFormField(String fieldName, boolean copy)
+		throws PortalException {
+
+		DDMFormField ddmFormField = _getDDMFormField(fieldName);
+
+		if (copy) {
+			ddmFormField = new DDMFormField(ddmFormField);
+		}
+
+		return ddmFormField;
 	}
 
 	@Override
@@ -204,9 +243,37 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 	@Override
 	public String getDefaultLanguageId() {
-		DDMForm ddmForm = _getDDMForm(ddmFormUpdateEntityCacheBiConsumer);
+		DDMForm ddmForm = _ddmForm;
 
-		return LocaleUtil.toLanguageId(ddmForm.getDefaultLocale());
+		if (ddmForm != null) {
+			return LocaleUtil.toLanguageId(ddmForm.getDefaultLocale());
+		}
+
+		String defintion = getDefinition();
+
+		int index = defintion.indexOf("\"defaultLanguageId\"");
+
+		if (index == -1) {
+			return LocaleUtil.toLanguageId(LocaleUtil.getDefault());
+		}
+
+		index += 19;
+
+		int start = defintion.indexOf(CharPool.QUOTE, index);
+
+		if (start == -1) {
+			return LocaleUtil.toLanguageId(LocaleUtil.getDefault());
+		}
+
+		start++;
+
+		int end = defintion.indexOf(CharPool.QUOTE, start);
+
+		if (end == -1) {
+			return LocaleUtil.toLanguageId(LocaleUtil.getDefault());
+		}
+
+		return defintion.substring(start, end);
 	}
 
 	@Override
@@ -297,8 +364,13 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 	@Override
 	public DDMForm getFullHierarchyDDMForm() {
+		return getFullHierarchyDDMForm(true);
+	}
+
+	@Override
+	public DDMForm getFullHierarchyDDMForm(boolean copy) {
 		try {
-			return createFullHierarchyDDMForm();
+			return createFullHierarchyDDMForm(copy);
 		}
 		catch (Exception exception) {
 			_log.error(exception);

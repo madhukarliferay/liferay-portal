@@ -5,11 +5,11 @@
 
 package com.liferay.portal.xmlrpc;
 
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
@@ -19,12 +19,12 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.xml.StAXReaderUtil;
 import com.liferay.portal.kernel.xmlrpc.Response;
 import com.liferay.portal.kernel.xmlrpc.XmlRpcException;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 

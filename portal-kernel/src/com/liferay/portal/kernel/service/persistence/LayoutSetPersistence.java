@@ -120,47 +120,6 @@ public interface LayoutSetPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last layout set in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set
-	 * @throws NoSuchLayoutSetException if a matching layout set could not be found
-	 */
-	public LayoutSet findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
-
-	/**
-	 * Returns the last layout set in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set, or <code>null</code> if a matching layout set could not be found
-	 */
-	public LayoutSet fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-			orderByComparator);
-
-	/**
-	 * Returns the layout sets before and after the current layout set in the ordered set where groupId = &#63;.
-	 *
-	 * @param layoutSetId the primary key of the current layout set
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout set
-	 * @throws NoSuchLayoutSetException if a layout set with the primary key could not be found
-	 */
-	public LayoutSet[] findByGroupId_PrevAndNext(
-			long layoutSetId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
-
-	/**
 	 * Removes all the layout sets where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -262,47 +221,6 @@ public interface LayoutSetPersistence
 		String layoutSetPrototypeUuid,
 		com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
 			orderByComparator);
-
-	/**
-	 * Returns the last layout set in the ordered set where layoutSetPrototypeUuid = &#63;.
-	 *
-	 * @param layoutSetPrototypeUuid the layout set prototype uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set
-	 * @throws NoSuchLayoutSetException if a matching layout set could not be found
-	 */
-	public LayoutSet findByLayoutSetPrototypeUuid_Last(
-			String layoutSetPrototypeUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
-
-	/**
-	 * Returns the last layout set in the ordered set where layoutSetPrototypeUuid = &#63;.
-	 *
-	 * @param layoutSetPrototypeUuid the layout set prototype uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set, or <code>null</code> if a matching layout set could not be found
-	 */
-	public LayoutSet fetchByLayoutSetPrototypeUuid_Last(
-		String layoutSetPrototypeUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-			orderByComparator);
-
-	/**
-	 * Returns the layout sets before and after the current layout set in the ordered set where layoutSetPrototypeUuid = &#63;.
-	 *
-	 * @param layoutSetId the primary key of the current layout set
-	 * @param layoutSetPrototypeUuid the layout set prototype uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout set
-	 * @throws NoSuchLayoutSetException if a layout set with the primary key could not be found
-	 */
-	public LayoutSet[] findByLayoutSetPrototypeUuid_PrevAndNext(
-			long layoutSetId, String layoutSetPrototypeUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
 
 	/**
 	 * Removes all the layout sets where layoutSetPrototypeUuid = &#63; from the database.
@@ -464,50 +382,6 @@ public interface LayoutSetPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last layout set in the ordered set where companyId = &#63; and layoutSetPrototypeUuid = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param layoutSetPrototypeUuid the layout set prototype uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set
-	 * @throws NoSuchLayoutSetException if a matching layout set could not be found
-	 */
-	public LayoutSet findByC_L_Last(
-			long companyId, String layoutSetPrototypeUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
-
-	/**
-	 * Returns the last layout set in the ordered set where companyId = &#63; and layoutSetPrototypeUuid = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param layoutSetPrototypeUuid the layout set prototype uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set, or <code>null</code> if a matching layout set could not be found
-	 */
-	public LayoutSet fetchByC_L_Last(
-		long companyId, String layoutSetPrototypeUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-			orderByComparator);
-
-	/**
-	 * Returns the layout sets before and after the current layout set in the ordered set where companyId = &#63; and layoutSetPrototypeUuid = &#63;.
-	 *
-	 * @param layoutSetId the primary key of the current layout set
-	 * @param companyId the company ID
-	 * @param layoutSetPrototypeUuid the layout set prototype uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout set
-	 * @throws NoSuchLayoutSetException if a layout set with the primary key could not be found
-	 */
-	public LayoutSet[] findByC_L_PrevAndNext(
-			long layoutSetId, long companyId, String layoutSetPrototypeUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
-
-	/**
 	 * Removes all the layout sets where companyId = &#63; and layoutSetPrototypeUuid = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -617,50 +491,6 @@ public interface LayoutSetPersistence
 		boolean privateLayout, long logoId,
 		com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
 			orderByComparator);
-
-	/**
-	 * Returns the last layout set in the ordered set where privateLayout = &#63; and logoId = &#63;.
-	 *
-	 * @param privateLayout the private layout
-	 * @param logoId the logo ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set
-	 * @throws NoSuchLayoutSetException if a matching layout set could not be found
-	 */
-	public LayoutSet findByP_L_Last(
-			boolean privateLayout, long logoId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
-
-	/**
-	 * Returns the last layout set in the ordered set where privateLayout = &#63; and logoId = &#63;.
-	 *
-	 * @param privateLayout the private layout
-	 * @param logoId the logo ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout set, or <code>null</code> if a matching layout set could not be found
-	 */
-	public LayoutSet fetchByP_L_Last(
-		boolean privateLayout, long logoId,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-			orderByComparator);
-
-	/**
-	 * Returns the layout sets before and after the current layout set in the ordered set where privateLayout = &#63; and logoId = &#63;.
-	 *
-	 * @param layoutSetId the primary key of the current layout set
-	 * @param privateLayout the private layout
-	 * @param logoId the logo ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout set
-	 * @throws NoSuchLayoutSetException if a layout set with the primary key could not be found
-	 */
-	public LayoutSet[] findByP_L_PrevAndNext(
-			long layoutSetId, boolean privateLayout, long logoId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSet>
-				orderByComparator)
-		throws NoSuchLayoutSetException;
 
 	/**
 	 * Removes all the layout sets where privateLayout = &#63; and logoId = &#63; from the database.
@@ -799,3 +629,4 @@ public interface LayoutSetPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1267963494

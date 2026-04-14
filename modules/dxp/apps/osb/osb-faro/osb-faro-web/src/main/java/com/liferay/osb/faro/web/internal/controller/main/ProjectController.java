@@ -27,6 +27,7 @@ import com.liferay.osb.faro.provisioning.client.constants.CorpProjectConstants;
 import com.liferay.osb.faro.provisioning.client.constants.ProductConstants;
 import com.liferay.osb.faro.provisioning.client.model.OSBAccountEntry;
 import com.liferay.osb.faro.provisioning.client.model.OSBOfferingEntry;
+import com.liferay.osb.faro.provisioning.client.model.display.main.FaroSubscriptionDisplay;
 import com.liferay.osb.faro.service.FaroNotificationLocalService;
 import com.liferay.osb.faro.service.FaroProjectEmailDomainLocalService;
 import com.liferay.osb.faro.service.FaroProjectLocalService;
@@ -44,7 +45,6 @@ import com.liferay.osb.faro.web.internal.model.display.contacts.ProjectDisplay;
 import com.liferay.osb.faro.web.internal.model.display.contacts.ProjectUsageMetricDisplay;
 import com.liferay.osb.faro.web.internal.model.display.contacts.TimeZoneDisplay;
 import com.liferay.osb.faro.web.internal.model.display.contacts.UsageMetric;
-import com.liferay.osb.faro.web.internal.model.display.main.FaroSubscriptionDisplay;
 import com.liferay.osb.faro.web.internal.param.FaroParam;
 import com.liferay.osb.faro.web.internal.util.JSONUtil;
 import com.liferay.osb.faro.web.internal.util.TimeZoneUtil;
@@ -222,6 +222,61 @@ public class ProjectController extends BaseFaroController {
 		return update(
 			friendlyURL, groupId, emailAddressDomainsFaroParam,
 			incidentReportEmailAddressesFaroParam, name, timeZoneId);
+	}
+
+	@Path("/consume-product")
+	@POST
+	@RolesAllowed(RoleConstants.SITE_ADMINISTRATOR)
+	public void consumeProduct(@QueryParam("groupId") Long groupId)
+		throws Exception {
+
+		List<FaroProject> faroProjects = new ArrayList<>();
+
+		if (groupId != null) {
+			faroProjects.add(
+				faroProjectLocalService.getFaroProjectByGroupId(groupId));
+		}
+		else {
+			faroProjects.addAll(
+				faroProjectLocalService.getFaroProjects(
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS));
+		}
+
+		for (FaroProject faroProject : faroProjects) {
+			if (Validator.isNull(faroProject.getCorpProjectUuid()) ||
+				Objects.equals(
+					faroProject.getCorpProjectUuid(),
+					FaroPropsValues.FARO_PROJECT_ID)) {
+
+				continue;
+			}
+
+			try {
+				if (_provisioningClient.isProductConsumed(
+						faroProject.getCorpProjectUuid())) {
+
+					if (_log.isInfoEnabled()) {
+						_log.info(
+							"Faro project" + faroProject.getFaroProjectId() +
+								" was already consumed");
+					}
+
+					continue;
+				}
+
+				_provisioningClient.addProductConsumption(
+					faroProject.getCorpProjectUuid(), faroProject.getGroupId());
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						"Faro project " + faroProject.getFaroProjectId() +
+							" was consumed successfully");
+				}
+			}
+			catch (Exception exception) {
+				_log.error(exception);
+			}
+		}
 	}
 
 	@Path("/provisioned")
@@ -407,24 +462,32 @@ public class ProjectController extends BaseFaroController {
 			@PathParam("projectId") String projectId)
 		throws Exception {
 
-		Map<String, Object> properties = new HashMap<>();
-
 		FaroProject faroProject =
-			faroProjectLocalService.fetchFaroProjectByWeDeployKey(
+			faroProjectLocalService.getFaroProjectByWeDeployKey(
 				projectId + ".lfr.cloud");
 
-		if (faroProject == null) {
-			return properties;
-		}
-
-		properties.put(
+		return HashMapBuilder.<String, Object>put(
 			"liferayAnalyticsEndpointURL",
-			EngineServiceURLUtil.getPublisherExternalURL(faroProject));
-		properties.put(
+			EngineServiceURLUtil.getPublisherExternalURL(faroProject)
+		).put(
 			"liferayAnalyticsFaroBackendURL",
-			EngineServiceURLUtil.getBackendExternalURL(faroProject));
+			EngineServiceURLUtil.getBackendExternalURL(faroProject)
+		).build();
+	}
 
-		return properties;
+	@GET
+	@Path("/{groupId}/feature-usages")
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public List<?> getFeatureUsages(@PathParam("groupId") long groupId)
+		throws Exception {
+
+		FaroProject faroProject =
+			faroProjectLocalService.getFaroProjectByGroupId(groupId);
+
+		return contactsEngineClient.get(
+			faroProject, Collections.emptyMap(),
+			"/projects/" + faroProject.getProjectId() + "/feature-usages",
+			Collections.emptyMap(), List.class);
 	}
 
 	@GET
@@ -654,6 +717,66 @@ public class ProjectController extends BaseFaroController {
 		}
 	}
 
+	@Path("/populate-bq-projects")
+	@POST
+	@RolesAllowed(RoleConstants.SITE_ADMINISTRATOR)
+	public void populateBQProjects() throws Exception {
+		ExecutorService executorService =
+			_portalExecutorManager.getPortalExecutor(
+				ProjectController.class.getName());
+
+		executorService.submit(
+			new CompanyInheritableThreadLocalCallable<>(
+				() -> {
+					Map<String, List<FaroProject>> faroProjectsMap =
+						new HashMap<>();
+
+					for (FaroProject faroProject :
+							faroProjectLocalService.getFaroProjects(
+								QueryUtil.ALL_POS, QueryUtil.ALL_POS)) {
+
+						faroProjectsMap.putIfAbsent(
+							faroProject.getServerLocation(),
+							new ArrayList<FaroProject>());
+
+						List<FaroProject> faroProjects = faroProjectsMap.get(
+							faroProject.getServerLocation());
+
+						faroProjects.add(faroProject);
+					}
+
+					for (Map.Entry<String, List<FaroProject>> faroProjects :
+							faroProjectsMap.entrySet()) {
+
+						try {
+							if (_log.isInfoEnabled()) {
+								_log.info(
+									"Populating BigQuery projects in " +
+										faroProjects.getKey());
+							}
+
+							contactsEngineClient.insertBQProjects(
+								faroProjects.getValue());
+
+							if (_log.isInfoEnabled()) {
+								_log.info(
+									"BigQuery projects were populated in " +
+										faroProjects.getKey() +
+											" successfully");
+							}
+						}
+						catch (Exception exception) {
+							_log.error(
+								"Unable to populate BigQuery projects in " +
+									faroProjects.getKey(),
+								exception);
+						}
+					}
+
+					return null;
+				}));
+	}
+
 	@DELETE
 	@Path("/usage/reset")
 	@RolesAllowed(RoleConstants.SITE_ADMINISTRATOR)
@@ -827,7 +950,7 @@ public class ProjectController extends BaseFaroController {
 
 				if (trial) {
 					osbOfferingEntry.setProductEntryId(
-						ProductConstants.BASIC_PRODUCT_ENTRY_ID);
+						ProductConstants.DATA_PLATFORM_PRODUCT_ENTRY_ID);
 				}
 				else {
 					osbOfferingEntry.setProductEntryId(
@@ -851,7 +974,7 @@ public class ProjectController extends BaseFaroController {
 					OSBOfferingEntry osbOfferingEntry = new OSBOfferingEntry();
 
 					osbOfferingEntry.setProductEntryId(
-						ProductConstants.BASIC_PRODUCT_ENTRY_ID);
+						ProductConstants.DATA_PLATFORM_PRODUCT_ENTRY_ID);
 
 					osbOfferingEntry.setQuantity(1);
 					osbOfferingEntry.setStartDate(
@@ -932,6 +1055,11 @@ public class ProjectController extends BaseFaroController {
 			contactsEngineClient.addProject(faroProject) + ".lfr.cloud";
 
 		faroProject.setWeDeployKey(weDeployKey);
+
+		if (!Objects.equals(corpProjectUuid, FaroPropsValues.FARO_PROJECT_ID)) {
+			_provisioningClient.addProductConsumption(
+				corpProjectUuid, faroProject.getGroupId());
+		}
 
 		return _faroProjectLocalService.updateFaroProject(faroProject);
 	}

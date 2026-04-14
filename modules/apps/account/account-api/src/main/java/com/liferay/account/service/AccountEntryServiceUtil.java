@@ -134,7 +134,7 @@ public class AccountEntryServiceUtil {
 
 	public static AccountEntry getOrAddEmptyAccountEntry(
 			String externalReferenceCode, String name, String type)
-		throws Exception {
+		throws PortalException {
 
 		return getService().getOrAddEmptyAccountEntry(
 			externalReferenceCode, name, type);
@@ -227,3 +227,4 @@ public class AccountEntryServiceUtil {
 			AccountEntryServiceUtil.class, AccountEntryService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1492291587

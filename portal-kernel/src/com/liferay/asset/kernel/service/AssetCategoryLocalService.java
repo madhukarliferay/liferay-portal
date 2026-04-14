@@ -424,6 +424,13 @@ public interface AssetCategoryLocalService
 			String externalReferenceCode, long userId, long groupId)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetCategory getOrAddEmptyCategoryWithAncestors(
+			String externalReferenceCode, long userId, long groupId,
+			String parentCategoryExternalReferenceCode,
+			String vocabularyExternalReferenceCode)
+		throws PortalException;
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -522,10 +529,10 @@ public interface AssetCategoryLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public AssetCategory updateCategory(
-			long userId, long categoryId, long parentCategoryId,
-			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
-			long vocabularyId, String[] categoryProperties,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long userId, long categoryId,
+			long parentCategoryId, Map<Locale, String> titleMap,
+			Map<Locale, String> descriptionMap, long vocabularyId,
+			String[] categoryProperties, ServiceContext serviceContext)
 		throws PortalException;
 
 	@Override
@@ -544,3 +551,4 @@ public interface AssetCategoryLocalService
 		throws E;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1635495098

@@ -49,7 +49,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Petteri Karttunen
  */
-@FeatureFlag("LPD-53981")
+@FeatureFlag("LPD-17564")
 @RunWith(Arquillian.class)
 public class ObjectEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 
@@ -103,6 +103,24 @@ public class ObjectEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 			ServiceContextTestUtil.getServiceContext(group.getGroupId()));
 
 		_testAddDeletionSystemEvent(group.getGroupId(), (ObjectEntry)baseModel);
+	}
+
+	@Override
+	@Test
+	public void testMoveBaseModelToTrash() throws Exception {
+		super.testMoveBaseModelToTrash();
+
+		BaseModel<?> baseModel1 = addBaseModel(
+			group,
+			ServiceContextTestUtil.getServiceContext(group.getGroupId()));
+
+		moveBaseModelToTrash((Long)baseModel1.getPrimaryKeyObj());
+
+		TrashHandler trashHandler = TrashHandlerRegistryUtil.getTrashHandler(
+			getBaseModelClassName());
+
+		Assert.assertTrue(
+			trashHandler.isInTrash((Long)baseModel1.getPrimaryKeyObj()));
 	}
 
 	@Override

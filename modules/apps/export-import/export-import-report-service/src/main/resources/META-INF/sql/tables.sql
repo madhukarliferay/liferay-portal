@@ -9,12 +9,10 @@ create table ExportImportReportEntry (
 	classNameId LONG,
 	classPK LONG,
 	exportImportConfigurationId LONG,
-	error TEXT null,
+	errorMessage TEXT null,
 	errorStacktrace TEXT null,
-	modelName VARCHAR(75) null,
+	modelNameLanguageKey VARCHAR(255) null,
 	origin INTEGER,
-	scope VARCHAR(75) null,
-	scopeKey VARCHAR(75) null,
 	type_ INTEGER,
 	status INTEGER
 );

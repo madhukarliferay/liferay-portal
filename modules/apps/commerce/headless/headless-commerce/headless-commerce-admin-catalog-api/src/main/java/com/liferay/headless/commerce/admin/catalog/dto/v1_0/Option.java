@@ -786,9 +786,7 @@ public class Option implements Serializable {
 			sb.append("\"fieldType\": ");
 
 			sb.append("\"");
-
 			sb.append(fieldType);
-
 			sb.append("\"");
 		}
 
@@ -1032,3 +1030,4 @@ public class Option implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1884843365

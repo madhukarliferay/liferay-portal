@@ -233,9 +233,7 @@ public class GeneralConfig implements Serializable {
 			sb.append("\"applicationDecorator\": ");
 
 			sb.append("\"");
-
 			sb.append(applicationDecorator);
-
 			sb.append("\"");
 		}
 
@@ -402,3 +400,4 @@ public class GeneralConfig implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1046368940

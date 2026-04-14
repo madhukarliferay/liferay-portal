@@ -70,6 +70,27 @@ public class WorkflowInstance implements Cloneable, Serializable {
 
 	protected Boolean completed;
 
+	public Map<String, ?> getContext() {
+		return context;
+	}
+
+	public void setContext(Map<String, ?> context) {
+		this.context = context;
+	}
+
+	public void setContext(
+		UnsafeSupplier<Map<String, ?>, Exception> contextUnsafeSupplier) {
+
+		try {
+			context = contextUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Map<String, ?> context;
+
 	public String[] getCurrentNodeNames() {
 		return currentNodeNames;
 	}
@@ -251,3 +272,4 @@ public class WorkflowInstance implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1756589128

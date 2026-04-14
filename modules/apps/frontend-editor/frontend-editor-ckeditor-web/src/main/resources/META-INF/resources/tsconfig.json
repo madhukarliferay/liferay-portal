@@ -1,5 +1,5 @@
 {
-	"@generated": "3be9adbdb5dc992a859fb999383c4ec15cafb625",
+	"@generated": "194ba5d6ecab42c1e134c08950a6ee76bde2f3b5",
 	"@readonly": "** AUTO-GENERATED: DO NOT EDIT **",
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
@@ -11,8 +11,17 @@
 		"module": "es2022",
 		"moduleResolution": "node",
 		"paths": {
+			"@liferay/ai-hub-cell-js-components-web": [
+				"../../../../../../../ai-hub-cell/ai-hub-cell-js-components-web/src/main/resources/META-INF/resources/js/index.ts"
+			],
 			"@liferay/cookies-banner-web": [
 				"../../../../../../../cookies/cookies-banner-web/src/main/resources/META-INF/resources/js/index.d.ts"
+			],
+			"@liferay/frontend-data-set-web": [
+				"../../../../../../../frontend-data-set/frontend-data-set-web/src/main/resources/META-INF/resources/index.ts"
+			],
+			"@liferay/frontend-js-item-selector-web": [
+				"../../../../../../../frontend-js/frontend-js-item-selector-web/src/main/resources/META-INF/resources/index.ts"
 			],
 			"@liferay/frontend-js-state-web": [
 				"../../../../../../../frontend-js/frontend-js-state-web/src/main/resources/META-INF/resources/main/index.ts"
@@ -47,7 +56,16 @@
 	],
 	"references": [
 		{
+			"path": "../../../../../../../ai-hub-cell/ai-hub-cell-js-components-web/src/main/resources/META-INF/resources/tsconfig.json"
+		},
+		{
 			"path": "../../../../../../../cookies/cookies-banner-web/src/main/resources/META-INF/resources/tsconfig.json"
+		},
+		{
+			"path": "../../../../../../../frontend-data-set/frontend-data-set-web/src/main/resources/META-INF/resources/tsconfig.json"
+		},
+		{
+			"path": "../../../../../../../frontend-js/frontend-js-item-selector-web/src/main/resources/META-INF/resources/tsconfig.json"
 		},
 		{
 			"path": "../../../../../../../frontend-js/frontend-js-state-web/src/main/resources/META-INF/resources/tsconfig.json"

@@ -20,6 +20,7 @@ export const test = mergeTests(
 	dataMigrationCenterPagesTest,
 	featureFlagsTest({
 		'COMMERCE-8087': {enabled: true},
+		'LPD-36105': {enabled: true},
 	}),
 	loginTest()
 );
@@ -355,6 +356,7 @@ test('can export as JSON with all field types mapped', async ({
 				name: 'Test Test',
 			},
 			customAttachment: {
+				alternativeText: expect.any(String),
 				externalReferenceCode: expect.any(String),
 				id: expect.any(Number),
 				link: {

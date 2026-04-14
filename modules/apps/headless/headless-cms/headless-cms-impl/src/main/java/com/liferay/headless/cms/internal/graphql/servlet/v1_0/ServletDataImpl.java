@@ -7,8 +7,10 @@ package com.liferay.headless.cms.internal.graphql.servlet.v1_0;
 
 import com.liferay.headless.cms.internal.graphql.mutation.v1_0.Mutation;
 import com.liferay.headless.cms.internal.graphql.query.v1_0.Query;
-import com.liferay.headless.cms.internal.resource.v1_0.BulkActionResourceImpl;
-import com.liferay.headless.cms.resource.v1_0.BulkActionResource;
+import com.liferay.headless.cms.internal.resource.v1_0.AssetPermissionActionResourceImpl;
+import com.liferay.headless.cms.internal.resource.v1_0.AssetUsageResourceImpl;
+import com.liferay.headless.cms.resource.v1_0.AssetPermissionActionResource;
+import com.liferay.headless.cms.resource.v1_0.AssetUsageResource;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.vulcan.graphql.servlet.ServletData;
 
@@ -34,8 +36,11 @@ public class ServletDataImpl implements ServletData {
 
 	@Activate
 	public void activate(BundleContext bundleContext) {
-		Mutation.setBulkActionResourceComponentServiceObjects(
-			_bulkActionResourceComponentServiceObjects);
+		Mutation.setAssetPermissionActionResourceComponentServiceObjects(
+			_assetPermissionActionResourceComponentServiceObjects);
+
+		Query.setAssetUsageResourceComponentServiceObjects(
+			_assetUsageResourceComponentServiceObjects);
 	}
 
 	public String getApplicationName() {
@@ -73,14 +78,26 @@ public class ServletDataImpl implements ServletData {
 			new HashMap<String, ObjectValuePair<Class<?>, String>>() {
 				{
 					put(
-						"mutation#createBulkAction",
+						"mutation#createAssetPermission",
 						new ObjectValuePair<>(
-							BulkActionResourceImpl.class, "postBulkAction"));
+							AssetPermissionActionResourceImpl.class,
+							"postAssetPermission"));
+
+					put(
+						"query#assetUsagesAsset",
+						new ObjectValuePair<>(
+							AssetUsageResourceImpl.class,
+							"getAssetUsagesAssetPage"));
 				}
 			};
 
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
-	private ComponentServiceObjects<BulkActionResource>
-		_bulkActionResourceComponentServiceObjects;
+	private ComponentServiceObjects<AssetPermissionActionResource>
+		_assetPermissionActionResourceComponentServiceObjects;
+
+	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
+	private ComponentServiceObjects<AssetUsageResource>
+		_assetUsageResourceComponentServiceObjects;
 
 }
+// LIFERAY-REST-BUILDER-HASH:388259338

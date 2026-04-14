@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -66,8 +67,10 @@ public class DeleteFragmentCompositionsAndFragmentEntriesMVCActionCommandTest {
 		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			StringPool.BLANK, fragmentEntry.getCss(),
 			fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), layout, null,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), layout.getGroupId()),
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), layout, null,
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				layout.getPlid()),
 			fragmentEntry.getType());

@@ -856,24 +856,23 @@ public class CTCollectionLocalServiceImpl
 			DataSource dataSource = ctPersistence.getDataSource();
 
 			try (Connection connection = dataSource.getConnection();
+
 				PreparedStatement preparedStatement =
 					connection.prepareStatement(
 						StringBundler.concat(
-							"select count(*) from ",
+							"select count(*) as count from ",
 							ctPersistence.getTableName(),
-							" where ctCollectionId = ", ctCollectionId,
-							" and status not in (",
+							" where ctCollectionId = ? and status not in (",
 							StringUtil.merge(
 								_getStatuses(
 									ctCollectionId, ctPersistence, entry),
 								StringPool.COMMA),
-							")"));
-				ResultSet resultSet = preparedStatement.executeQuery()) {
+							")"))) {
 
-				if (resultSet.next()) {
-					int count = resultSet.getInt(1);
+				preparedStatement.setLong(1, ctCollectionId);
 
-					if (count > 0) {
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					if (resultSet.next() && (resultSet.getLong("count") > 0)) {
 						return true;
 					}
 				}
@@ -916,7 +915,7 @@ public class CTCollectionLocalServiceImpl
 		CTCollection fromCTCollection =
 			ctCollectionPersistence.findByPrimaryKey(fromCTCollectionId);
 
-		if ((fromCTCollection.getStatus() != WorkflowConstants.STATUS_DRAFT) &&
+		if (!fromCTCollection.isInProgress() &&
 			(fromCTCollection.getStatus() !=
 				WorkflowConstants.STATUS_EXPIRED) &&
 			(fromCTCollection.getStatus() !=
@@ -1033,16 +1032,6 @@ public class CTCollectionLocalServiceImpl
 			null, undoCTCollection.getCompanyId(), userId,
 			undoCTCollection.getCtRemoteId(), name, description);
 
-		CTPreferences ctPreferences =
-			_ctPreferencesLocalService.getCTPreferences(
-				undoCTCollection.getCompanyId(), userId);
-
-		ctPreferences.setCtCollectionId(newCTCollection.getCtCollectionId());
-		ctPreferences.setPreviousCtCollectionId(
-			CTConstants.CT_COLLECTION_ID_PRODUCTION);
-
-		_ctPreferencesPersistence.update(ctPreferences);
-
 		List<CTEntry> publishedCTEntries =
 			_ctEntryPersistence.findByCtCollectionId(
 				undoCTCollection.getCtCollectionId());
@@ -1102,8 +1091,7 @@ public class CTCollectionLocalServiceImpl
 
 			ctEntry.setChangeType(changeType);
 
-			ctServiceCopier.addCTEntry(
-				_ctEntryLocalService.updateCTEntry(ctEntry));
+			ctServiceCopier.addCTEntry(_ctEntryPersistence.update(ctEntry));
 		}
 
 		try {
@@ -1138,6 +1126,16 @@ public class CTCollectionLocalServiceImpl
 		}
 
 		_ctServiceRegistry.onAfterCopy(undoCTCollection, newCTCollection);
+
+		CTPreferences ctPreferences =
+			_ctPreferencesLocalService.getCTPreferences(
+				undoCTCollection.getCompanyId(), userId);
+
+		ctPreferences.setCtCollectionId(newCTCollection.getCtCollectionId());
+		ctPreferences.setPreviousCtCollectionId(
+			CTConstants.CT_COLLECTION_ID_PRODUCTION);
+
+		_ctPreferencesPersistence.update(ctPreferences);
 
 		return newCTCollection;
 	}
@@ -1351,18 +1349,10 @@ public class CTCollectionLocalServiceImpl
 
 			long classNameId = enclosureEntry.getKey();
 
-			Set<Long> classPKs = enclosureEntry.getValue();
-
-			List<CTEntry> ctEntries = new ArrayList<>(classPKs.size());
-
-			for (long classPK : classPKs) {
-				CTEntry ctEntry = _ctEntryPersistence.fetchByC_MCNI_MCPK(
-					ctCollection.getCtCollectionId(), classNameId, classPK);
-
-				if (ctEntry != null) {
-					ctEntries.add(ctEntry);
-				}
-			}
+			List<CTEntry> ctEntries = TransformUtil.transform(
+				enclosureEntry.getValue(),
+				classPK -> _ctEntryPersistence.fetchByC_MCNI_MCPK(
+					ctCollection.getCtCollectionId(), classNameId, classPK));
 
 			if (ctEntries.isEmpty()) {
 				continue;
@@ -1450,7 +1440,7 @@ public class CTCollectionLocalServiceImpl
 
 			ctEntry.setCtCollectionId(toCTCollectionId);
 
-			_ctEntryLocalService.updateCTEntry(ctEntry);
+			_ctEntryPersistence.update(ctEntry);
 		}
 
 		CTPersistence<?> ctPersistence = ctService.getCTPersistence();

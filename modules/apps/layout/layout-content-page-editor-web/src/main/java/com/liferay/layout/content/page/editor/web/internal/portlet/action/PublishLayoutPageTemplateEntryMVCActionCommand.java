@@ -12,10 +12,14 @@ import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeCon
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
+import com.liferay.portal.kernel.license.util.LicenseManagerUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.servlet.MultiSessionMessages;
 import com.liferay.portal.kernel.servlet.SessionMessages;
@@ -113,10 +117,16 @@ public class PublishLayoutPageTemplateEntryMVCActionCommand
 			Layout draftLayout, Layout layout, long userId)
 		throws Exception {
 
+		Group group = _groupLocalService.getGroup(layout.getGroupId());
+
+		if (group.isCMS()) {
+			LicenseManagerUtil.checkFreeTier();
+		}
+
 		UnicodeProperties previousLayouTypeSettingsUnicodeProperties =
 			layout.getTypeSettingsProperties();
 
-		_layoutLocalService.copyLayoutContent(draftLayout, layout);
+		_layoutService.copyLayoutContent(draftLayout, layout);
 
 		LayoutStructureUtil.deleteMarkedForDeletionItems(
 			draftLayout.getGroupId(), draftLayout.getPlid(), userId);
@@ -152,14 +162,17 @@ public class PublishLayoutPageTemplateEntryMVCActionCommand
 
 		layout = _layoutLocalService.updateLayout(layout);
 
-		_layoutLocalService.updateLayout(
-			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
+		_layoutLocalService.updateTypeSettings(
+			layout,
 			_copySEOTypeSettingsUnicodeProperties(
 				previousLayouTypeSettingsUnicodeProperties,
 				layout.getTypeSettingsProperties()));
 
 		return layoutPageTemplateEntry;
 	}
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -170,6 +183,9 @@ public class PublishLayoutPageTemplateEntryMVCActionCommand
 
 	@Reference
 	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
+
+	@Reference
+	private LayoutService _layoutService;
 
 	@Reference
 	private Portal _portal;

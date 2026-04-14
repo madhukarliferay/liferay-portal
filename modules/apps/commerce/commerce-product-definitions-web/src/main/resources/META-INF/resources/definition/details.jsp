@@ -50,6 +50,7 @@ if ((cpDefinition != null) && (cpDefinition.getExpirationDate() != null)) {
 	<liferay-ui:error exception="<%= CPDefinitionNameDefaultLanguageException.class %>" message="please-enter-the-product-name-for-the-default-language" />
 	<liferay-ui:error exception="<%= FriendlyURLLengthException.class %>" message="the-friendly-url-is-too-long" />
 	<liferay-ui:error exception="<%= NoSuchCatalogException.class %>" message="please-select-a-valid-catalog" />
+	<liferay-ui:error exception="<%= SanitizerException.class %>" message="you-have-entered-invalid-data" />
 
 	<div class="row">
 		<div class="col-8">
@@ -209,7 +210,6 @@ if ((cpDefinition != null) && (cpDefinition.getExpirationDate() != null)) {
 						dataProviderKey="<%= CommerceProductFDSNames.PRODUCT_DEFINITION_SPECIFICATIONS %>"
 						formName="fm"
 						id="<%= CommerceProductFDSNames.PRODUCT_DEFINITION_SPECIFICATIONS %>"
-						itemsPerPage="<%= 10 %>"
 						selectedItemsKey="cpdefinitionSpecificationOptionValueId"
 						showManagementBar="<%= true %>"
 						showSearch="<%= true %>"

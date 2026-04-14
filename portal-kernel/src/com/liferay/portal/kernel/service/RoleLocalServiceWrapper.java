@@ -563,7 +563,7 @@ public class RoleLocalServiceWrapper
 	public Role getOrAddEmptyRole(
 			String externalReferenceCode, long companyId, long userId,
 			String className, long classPK, String name, int type)
-		throws Exception {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _roleLocalService.getOrAddEmptyRole(
 			externalReferenceCode, companyId, userId, className, classPK, name,
@@ -1448,3 +1448,4 @@ public class RoleLocalServiceWrapper
 	private RoleLocalService _roleLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-175854219

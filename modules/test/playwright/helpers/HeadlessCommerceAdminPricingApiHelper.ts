@@ -62,6 +62,7 @@ class TPriceEntry {
 	priceEntryId?: number;
 	priceFormatted?: string;
 	priceListId: number;
+	priceOnApplication?: boolean;
 }
 
 class TPriceList {
@@ -69,6 +70,7 @@ class TPriceList {
 	currencyCode: string;
 	id?: number;
 	name: string;
+	priority?: number;
 	type: string;
 }
 

@@ -267,6 +267,10 @@ public interface FragmentEntryLocalService
 		String externalReferenceCode, long groupId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FragmentEntry fetchFragmentEntryByExternalReferenceCode(
+		String externalReferenceCode, long groupId, boolean head);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public FragmentEntry fetchFragmentEntryByUuidAndGroupId(
 		String uuid, long groupId);
 
@@ -377,6 +381,16 @@ public interface FragmentEntryLocalService
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public FragmentEntry getFragmentEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId, boolean head)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public FragmentEntry getFragmentEntryByUuidAndGroupId(
 			String uuid, long groupId)
 		throws PortalException;
@@ -417,6 +431,9 @@ public interface FragmentEntryLocalService
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<FragmentEntryVersion> getVersions(FragmentEntry fragmentEntry);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public boolean hasExportableFragmentEntries(long fragmentCollectionId);
 
 	public FragmentEntry moveFragmentEntry(
 			long fragmentEntryId, long fragmentCollectionId)
@@ -491,3 +508,4 @@ public interface FragmentEntryLocalService
 		throws E;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:882194460

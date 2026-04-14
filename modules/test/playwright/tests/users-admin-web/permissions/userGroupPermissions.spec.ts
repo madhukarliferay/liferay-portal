@@ -6,21 +6,21 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {rolesPagesTest} from '../../../fixtures/rolesPagesTest';
 import {userGroupsPageTest} from '../../../fixtures/userGroupsPageTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 import getRandomString from '../../../utils/getRandomString';
-import {
-	performLoginViaApi,
-	performLogout,
-	userData,
-} from '../../../utils/performLogin';
+import {performUserSwitch, userData} from '../../../utils/performLogin';
 import {waitForAlert} from '../../../utils/waitForAlert';
 
 export const test = mergeTests(
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	isolatedSiteTest,
 	loginTest(),
 	rolesPagesTest,
@@ -134,14 +134,12 @@ test(
 			roleType: 'regular',
 		});
 
-		await rolesPage.goto();
-		await rolesPage.assignRoleToUserGroup(role.name, userGroup.name);
+		await expect(async () => {
+			await rolesPage.goto();
+			await rolesPage.assignRoleToUserGroup(role.name, userGroup.name);
+		}).toPass();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user1.alternateName,
-		});
+		await performUserSwitch(page, user1.alternateName);
 
 		const blog = await apiHelpers.headlessDelivery.postBlog(site.id);
 
@@ -151,11 +149,7 @@ test(
 			usersAndOrganizationsPage.noPermissionMessage
 		).toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user2.alternateName,
-		});
+		await performUserSwitch(page, user2.alternateName);
 
 		await usersAndOrganizationsPage.goToOrganizationsWithLimitedAccess();
 
@@ -172,11 +166,7 @@ test(
 
 		await expect(blogsPage.blogTitle(blog.headline)).toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user3.alternateName,
-		});
+		await performUserSwitch(page, user3.alternateName);
 
 		await usersAndOrganizationsPage.goToOrganizationsWithLimitedAccess();
 
@@ -247,11 +237,7 @@ test(
 		await rolesPage.goto();
 		await rolesPage.assignRoleToUserGroup(role.name, userGroup.name);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user.alternateName,
-		});
+		await performUserSwitch(page, user.alternateName);
 
 		await userGroupsPage.goToWithLimitedAccess();
 
@@ -259,11 +245,7 @@ test(
 			await userGroupsPage.userGroupsTableRowActions(userGroup.name)
 		).not.toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: 'test',
-		});
+		await performUserSwitch(page, 'test');
 
 		const group = await apiHelpers.jsonWebServicesGroup.getGroupByKey(
 			companyId,
@@ -284,11 +266,7 @@ test(
 			String(role.id)
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user.alternateName,
-		});
+		await performUserSwitch(page, user.alternateName);
 
 		await userGroupsPage.goToWithLimitedAccess();
 
@@ -369,21 +347,13 @@ test(
 			guestGroup.groupId
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user1.alternateName,
-		});
+		await performUserSwitch(page, user1.alternateName);
 
 		await blogsPage.goto(guestGroup.friendlyURL);
 
 		await expect(blogsPage.blogTitle(blog.headline)).toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user2.alternateName,
-		});
+		await performUserSwitch(page, user2.alternateName);
 
 		await blogsPage.goto(guestGroup.friendlyURL);
 
@@ -478,22 +448,14 @@ test(
 			user2.id
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user1.alternateName,
-		});
+		await performUserSwitch(page, user1.alternateName);
 
 		await userGroupsPage.goToWithLimitedAccess();
 
 		await expect(userGroupsPage.noUserGroupsMessage).toBeVisible();
 		await expect(userGroupsPage.newUserGroupButton).not.toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user2.alternateName,
-		});
+		await performUserSwitch(page, user2.alternateName);
 
 		await userGroupsPage.goToWithLimitedAccess();
 
@@ -574,11 +536,7 @@ test(
 			user.id
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user.alternateName,
-		});
+		await performUserSwitch(page, user.alternateName);
 
 		await userGroupsPage.goToWithLimitedAccess();
 
@@ -614,8 +572,13 @@ test(
 		await siteMembershipsPage.goto(site.friendlyUrlPath);
 
 		await siteMembershipsPage.userGroupsLink.click();
-		await siteMembershipsPage.newUserGroupButton.click();
-		await siteMembershipsPage.assignUserGroupTable.changeView('Table');
+
+		await expect(async () => {
+			await siteMembershipsPage.newUserGroupButton.click();
+
+			await siteMembershipsPage.assignUserGroupTable.changeView('Table');
+		}).toPass();
+
 		await (
 			await siteMembershipsPage.assignUserGroupTable.rowCheckbox(
 				userGroup.name
@@ -625,21 +588,13 @@ test(
 
 		await waitForAlert(page);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user.alternateName,
-		});
+		await performUserSwitch(page, user.alternateName);
 
 		await siteMembershipsPage.goto(site.friendlyUrlPath);
 
 		await expect(siteMembershipsPage.noPermissionMessage).toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: 'test',
-		});
+		await performUserSwitch(page, 'test');
 
 		await siteMembershipsPage.goto(site.friendlyUrlPath);
 		await siteMembershipsPage.userGroupsLink.click();
@@ -665,11 +620,7 @@ test(
 
 		await waitForAlert(page);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: user.alternateName,
-		});
+		await performUserSwitch(page, user.alternateName);
 
 		await siteMembershipsPage.goto(site.friendlyUrlPath);
 

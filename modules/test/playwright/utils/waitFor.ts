@@ -48,20 +48,36 @@ export enum EFDSVisualizationMode {
 }
 
 export async function waitForFDS({
+	container = '',
+	empty = false,
 	page,
 	visualizationMode = EFDSVisualizationMode.TABLE,
 }: {
+	container?: string;
+	empty?: boolean;
 	page: Page;
 	visualizationMode?: EFDSVisualizationMode;
 }) {
+	if (empty) {
+		await page.locator('.fds .c-empty-state').waitFor({state: 'visible'});
+
+		return;
+	}
+
 	if (visualizationMode === EFDSVisualizationMode.CARDS) {
-		await page.locator('.fds .cards-container').waitFor({state: 'visible'});
+		await page
+			.locator(`${container} .fds .cards-container`)
+			.waitFor({state: 'visible'});
 	}
 	else if (visualizationMode === EFDSVisualizationMode.LIST) {
-		await page.locator('.fds .list-sheet').waitFor({state: 'visible'});
+		await page
+			.locator(`${container} .fds .list-sheet`)
+			.waitFor({state: 'visible'});
 	}
 	else if (visualizationMode === EFDSVisualizationMode.TABLE) {
-		await page.locator('.fds .table').waitFor({state: 'visible'});
+		await page
+			.locator(`${container} .fds .table`)
+			.waitFor({state: 'visible'});
 	}
 }
 

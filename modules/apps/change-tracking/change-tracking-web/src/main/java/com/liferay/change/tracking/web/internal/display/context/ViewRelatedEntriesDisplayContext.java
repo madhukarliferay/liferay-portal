@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -221,7 +222,11 @@ public class ViewRelatedEntriesDisplayContext {
 
 		List<CTCollection> ctCollections =
 			_ctCollectionLocalService.getCTCollections(
-				_themeDisplay.getCompanyId(), WorkflowConstants.STATUS_DRAFT,
+				_themeDisplay.getCompanyId(),
+				new int[] {
+					WorkflowConstants.STATUS_DRAFT,
+					WorkflowConstants.STATUS_INCOMPLETE
+				},
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		selectOptions.add(
@@ -237,7 +242,7 @@ public class ViewRelatedEntriesDisplayContext {
 
 				selectOptions.add(
 					new SelectOption(
-						ctCollection.getName(),
+						HtmlUtil.escape(ctCollection.getName()),
 						String.valueOf(ctCollection.getCtCollectionId())));
 			}
 		}

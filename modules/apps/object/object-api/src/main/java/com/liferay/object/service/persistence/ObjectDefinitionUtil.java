@@ -210,52 +210,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByUuid_Last(
-			String uuid, OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByUuid_Last(
-		String uuid, OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByUuid_PrevAndNext(
-			long objectDefinitionId, String uuid,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			objectDefinitionId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -302,24 +256,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByUuid_PrevAndNext(
-			long objectDefinitionId, String uuid,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			objectDefinitionId, uuid, orderByComparator);
 	}
 
 	/**
@@ -464,59 +400,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByUuid_C_PrevAndNext(
-			long objectDefinitionId, String uuid, long companyId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			objectDefinitionId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -568,25 +451,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByUuid_C_PrevAndNext(
-			long objectDefinitionId, String uuid, long companyId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			objectDefinitionId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -725,55 +589,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByCompanyId_Last(
-		long companyId, OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByCompanyId_PrevAndNext(
-			long objectDefinitionId, long companyId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			objectDefinitionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -820,24 +635,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByCompanyId_PrevAndNext(
-			long objectDefinitionId, long companyId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			objectDefinitionId, companyId, orderByComparator);
 	}
 
 	/**
@@ -977,56 +774,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where objectFolderId = &#63;.
-	 *
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByObjectFolderId_Last(
-			long objectFolderId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByObjectFolderId_Last(
-			objectFolderId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where objectFolderId = &#63;.
-	 *
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByObjectFolderId_Last(
-		long objectFolderId,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByObjectFolderId_Last(
-			objectFolderId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where objectFolderId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByObjectFolderId_PrevAndNext(
-			long objectDefinitionId, long objectFolderId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByObjectFolderId_PrevAndNext(
-			objectDefinitionId, objectFolderId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where objectFolderId = &#63;.
 	 *
 	 * @param objectFolderId the object folder ID
@@ -1076,24 +823,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByObjectFolderId(
 			objectFolderId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where objectFolderId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param objectFolderId the object folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByObjectFolderId_PrevAndNext(
-			long objectDefinitionId, long objectFolderId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByObjectFolderId_PrevAndNext(
-			objectDefinitionId, objectFolderId, orderByComparator);
 	}
 
 	/**
@@ -1235,56 +964,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where accountEntryRestricted = &#63;.
-	 *
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByAccountEntryRestricted_Last(
-			boolean accountEntryRestricted,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByAccountEntryRestricted_Last(
-			accountEntryRestricted, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where accountEntryRestricted = &#63;.
-	 *
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByAccountEntryRestricted_Last(
-		boolean accountEntryRestricted,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByAccountEntryRestricted_Last(
-			accountEntryRestricted, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where accountEntryRestricted = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByAccountEntryRestricted_PrevAndNext(
-			long objectDefinitionId, boolean accountEntryRestricted,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByAccountEntryRestricted_PrevAndNext(
-			objectDefinitionId, accountEntryRestricted, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where accountEntryRestricted = &#63;.
 	 *
 	 * @param accountEntryRestricted the account entry restricted
@@ -1335,25 +1014,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByAccountEntryRestricted(
 			accountEntryRestricted, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where accountEntryRestricted = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param accountEntryRestricted the account entry restricted
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[]
-			filterFindByAccountEntryRestricted_PrevAndNext(
-				long objectDefinitionId, boolean accountEntryRestricted,
-				OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByAccountEntryRestricted_PrevAndNext(
-			objectDefinitionId, accountEntryRestricted, orderByComparator);
 	}
 
 	/**
@@ -1553,53 +1213,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where system = &#63;.
-	 *
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findBySystem_Last(
-			boolean system,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findBySystem_Last(system, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where system = &#63;.
-	 *
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchBySystem_Last(
-		boolean system, OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchBySystem_Last(system, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findBySystem_PrevAndNext(
-			long objectDefinitionId, boolean system,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findBySystem_PrevAndNext(
-			objectDefinitionId, system, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where system = &#63;.
 	 *
 	 * @param system the system
@@ -1646,24 +1259,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindBySystem(
 			system, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindBySystem_PrevAndNext(
-			long objectDefinitionId, boolean system,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindBySystem_PrevAndNext(
-			objectDefinitionId, system, orderByComparator);
 	}
 
 	/**
@@ -1808,59 +1403,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByC_U_PrevAndNext(
-			long objectDefinitionId, long companyId, long userId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_U_PrevAndNext(
-			objectDefinitionId, companyId, userId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1912,25 +1454,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByC_U(
 			companyId, userId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByC_U_PrevAndNext(
-			long objectDefinitionId, long companyId, long userId,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByC_U_PrevAndNext(
-			objectDefinitionId, companyId, userId, orderByComparator);
 	}
 
 	/**
@@ -2205,59 +1728,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByC_S_Last(
-			long companyId, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_S_Last(
-			companyId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByC_S_Last(
-		long companyId, int status,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_S_Last(
-			companyId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByC_S_PrevAndNext(
-			long objectDefinitionId, long companyId, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_S_PrevAndNext(
-			objectDefinitionId, companyId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2309,25 +1779,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByC_S(
 			companyId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByC_S_PrevAndNext(
-			long objectDefinitionId, long companyId, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByC_S_PrevAndNext(
-			objectDefinitionId, companyId, status, orderByComparator);
 	}
 
 	/**
@@ -2473,59 +1924,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where system = &#63; and status = &#63;.
-	 *
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByS_S_Last(
-			boolean system, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByS_S_Last(
-			system, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where system = &#63; and status = &#63;.
-	 *
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByS_S_Last(
-		boolean system, int status,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByS_S_Last(
-			system, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByS_S_PrevAndNext(
-			long objectDefinitionId, boolean system, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByS_S_PrevAndNext(
-			objectDefinitionId, system, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where system = &#63; and status = &#63;.
 	 *
 	 * @param system the system
@@ -2577,25 +1975,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByS_S(
 			system, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByS_S_PrevAndNext(
-			long objectDefinitionId, boolean system, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByS_S_PrevAndNext(
-			objectDefinitionId, system, status, orderByComparator);
 	}
 
 	/**
@@ -2751,62 +2130,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByC_A_S_Last(
-			long companyId, boolean active, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_A_S_Last(
-			companyId, active, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByC_A_S_Last(
-		long companyId, boolean active, int status,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_A_S_Last(
-			companyId, active, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByC_A_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_A_S_PrevAndNext(
-			objectDefinitionId, companyId, active, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and active = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2862,26 +2185,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByC_A_S(
 			companyId, active, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and active = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByC_A_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByC_A_S_PrevAndNext(
-			objectDefinitionId, companyId, active, status, orderByComparator);
 	}
 
 	/**
@@ -3045,64 +2348,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByC_M_S_Last(
-			long companyId, boolean modifiable, boolean system,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_M_S_Last(
-			companyId, modifiable, system, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByC_M_S_Last(
-		long companyId, boolean modifiable, boolean system,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_M_S_Last(
-			companyId, modifiable, system, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByC_M_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean modifiable,
-			boolean system,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_M_S_PrevAndNext(
-			objectDefinitionId, companyId, modifiable, system,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and modifiable = &#63; and system = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3160,28 +2405,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByC_M_S(
 			companyId, modifiable, system, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and modifiable = &#63; and system = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param modifiable the modifiable
-	 * @param system the system
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByC_M_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean modifiable,
-			boolean system,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByC_M_S_PrevAndNext(
-			objectDefinitionId, companyId, modifiable, system,
-			orderByComparator);
 	}
 
 	/**
@@ -3355,67 +2578,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByC_A_S_S_Last(
-			long companyId, boolean active, boolean system, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_A_S_S_Last(
-			companyId, active, system, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByC_A_S_S_Last(
-		long companyId, boolean active, boolean system, int status,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_A_S_S_Last(
-			companyId, active, system, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByC_A_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active,
-			boolean system, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_A_S_S_PrevAndNext(
-			objectDefinitionId, companyId, active, system, status,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3476,29 +2638,6 @@ public class ObjectDefinitionUtil {
 
 		return getPersistence().filterFindByC_A_S_S(
 			companyId, active, system, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and active = &#63; and system = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param system the system
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByC_A_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, boolean active,
-			boolean system, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByC_A_S_S_PrevAndNext(
-			objectDefinitionId, companyId, active, system, status,
-			orderByComparator);
 	}
 
 	/**
@@ -3699,77 +2838,6 @@ public class ObjectDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition
-	 * @throws NoSuchObjectDefinitionException if a matching object definition could not be found
-	 */
-	public static ObjectDefinition findByC_OFI_A_E_S_S_Last(
-			long companyId, long objectFolderId, boolean active,
-			boolean enableObjectEntryDraft, String scope, int status,
-			OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_OFI_A_E_S_S_Last(
-			companyId, objectFolderId, active, enableObjectEntryDraft, scope,
-			status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object definition in the ordered set where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition, or <code>null</code> if a matching object definition could not be found
-	 */
-	public static ObjectDefinition fetchByC_OFI_A_E_S_S_Last(
-		long companyId, long objectFolderId, boolean active,
-		boolean enableObjectEntryDraft, String scope, int status,
-		OrderByComparator<ObjectDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_OFI_A_E_S_S_Last(
-			companyId, objectFolderId, active, enableObjectEntryDraft, scope,
-			status, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] findByC_OFI_A_E_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, long objectFolderId,
-			boolean active, boolean enableObjectEntryDraft, String scope,
-			int status, OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().findByC_OFI_A_E_S_S_PrevAndNext(
-			objectDefinitionId, companyId, objectFolderId, active,
-			enableObjectEntryDraft, scope, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the object definitions that the user has permission to view where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -3842,31 +2910,6 @@ public class ObjectDefinitionUtil {
 		return getPersistence().filterFindByC_OFI_A_E_S_S(
 			companyId, objectFolderId, active, enableObjectEntryDraft, scope,
 			status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the object definitions before and after the current object definition in the ordered set of object definitions that the user has permission to view where companyId = &#63; and objectFolderId = &#63; and active = &#63; and enableObjectEntryDraft = &#63; and scope = &#63; and status = &#63;.
-	 *
-	 * @param objectDefinitionId the primary key of the current object definition
-	 * @param companyId the company ID
-	 * @param objectFolderId the object folder ID
-	 * @param active the active
-	 * @param enableObjectEntryDraft the enable object entry draft
-	 * @param scope the scope
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition
-	 * @throws NoSuchObjectDefinitionException if a object definition with the primary key could not be found
-	 */
-	public static ObjectDefinition[] filterFindByC_OFI_A_E_S_S_PrevAndNext(
-			long objectDefinitionId, long companyId, long objectFolderId,
-			boolean active, boolean enableObjectEntryDraft, String scope,
-			int status, OrderByComparator<ObjectDefinition> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectDefinitionException {
-
-		return getPersistence().filterFindByC_OFI_A_E_S_S_PrevAndNext(
-			objectDefinitionId, companyId, objectFolderId, active,
-			enableObjectEntryDraft, scope, status, orderByComparator);
 	}
 
 	/**
@@ -4384,3 +3427,4 @@ public class ObjectDefinitionUtil {
 	private static volatile ObjectDefinitionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-858162154

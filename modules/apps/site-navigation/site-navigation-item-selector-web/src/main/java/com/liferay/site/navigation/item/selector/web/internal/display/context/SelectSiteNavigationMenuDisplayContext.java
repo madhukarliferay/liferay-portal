@@ -6,6 +6,7 @@
 package com.liferay.site.navigation.item.selector.web.internal.display.context;
 
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -15,6 +16,7 @@ import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.taglib.ui.BreadcrumbEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -24,6 +26,7 @@ import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.site.navigation.constants.SiteNavigationConstants;
 import com.liferay.site.navigation.item.selector.SiteNavigationMenuItemSelectorReturnType;
@@ -74,9 +77,7 @@ public class SelectSiteNavigationMenuDisplayContext {
 	public List<BreadcrumbEntry> getBreadcrumbEntries() {
 		return BreadcrumbEntryListBuilder.add(
 			breadcrumbEntry -> {
-				String backURL = ParamUtil.getString(
-					_httpServletRequest, "backURL",
-					PortalUtil.getCurrentURL(_httpServletRequest));
+				String backURL = _getBackURL();
 
 				breadcrumbEntry.setBrowsable(backURL != null);
 
@@ -169,6 +170,23 @@ public class SelectSiteNavigationMenuDisplayContext {
 		return portletURL.toString();
 	}
 
+	public String getSiteNavigationMenuExternalReferenceCode() {
+		if (_siteNavigationMenuExternalReferenceCode != null) {
+			return _siteNavigationMenuExternalReferenceCode;
+		}
+
+		SiteNavigationMenu siteNavigationMenu =
+			SiteNavigationMenuLocalServiceUtil.fetchSiteNavigationMenu(
+				getSiteNavigationMenuId());
+
+		if (siteNavigationMenu != null) {
+			_siteNavigationMenuExternalReferenceCode =
+				siteNavigationMenu.getExternalReferenceCode();
+		}
+
+		return _siteNavigationMenuExternalReferenceCode;
+	}
+
 	public long getSiteNavigationMenuId() {
 		if (_siteNavigationMenuId != null) {
 			return _siteNavigationMenuId;
@@ -196,6 +214,36 @@ public class SelectSiteNavigationMenuDisplayContext {
 			() -> siteNavigationMenuItems, siteNavigationMenuItems.size());
 
 		return searchContainer;
+	}
+
+	public String getSiteNavigationMenuScopeExternalReferenceCode()
+		throws PortalException {
+
+		if (_siteNavigationMenuScopeExternalReferenceCode != null) {
+			return _siteNavigationMenuScopeExternalReferenceCode;
+		}
+
+		String siteNavigationMenuScopeExternalReferenceCode = StringPool.BLANK;
+
+		SiteNavigationMenu siteNavigationMenu =
+			SiteNavigationMenuLocalServiceUtil.fetchSiteNavigationMenu(
+				getSiteNavigationMenuId());
+
+		if ((siteNavigationMenu != null) &&
+			(siteNavigationMenu.getGroupId() !=
+				_themeDisplay.getScopeGroupId())) {
+
+			Group group = GroupLocalServiceUtil.getGroup(
+				siteNavigationMenu.getGroupId());
+
+			siteNavigationMenuScopeExternalReferenceCode =
+				group.getExternalReferenceCode();
+		}
+
+		_siteNavigationMenuScopeExternalReferenceCode =
+			siteNavigationMenuScopeExternalReferenceCode;
+
+		return _siteNavigationMenuScopeExternalReferenceCode;
 	}
 
 	public SearchContainer<SiteNavigationMenu>
@@ -302,6 +350,24 @@ public class SelectSiteNavigationMenuDisplayContext {
 		).build();
 	}
 
+	private String _getBackURL() {
+		if (_backURL != null) {
+			return _backURL;
+		}
+
+		String backURL = PortalUtil.escapeRedirect(
+			ParamUtil.getString(_httpServletRequest, "backURL"));
+
+		if (Validator.isNotNull(backURL)) {
+			_backURL = backURL;
+		}
+		else {
+			_backURL = PortalUtil.getCurrentURL(_httpServletRequest);
+		}
+
+		return _backURL;
+	}
+
 	private PortletURL _getBasePortletURL(long siteNavigationMenuId)
 		throws PortletException {
 
@@ -314,9 +380,7 @@ public class SelectSiteNavigationMenuDisplayContext {
 				_portletURL,
 				PortalUtil.getLiferayPortletResponse(portletResponse))
 		).setBackURL(
-			ParamUtil.getString(
-				_httpServletRequest, "backURL",
-				PortalUtil.getCurrentURL(_httpServletRequest))
+			_getBackURL()
 		).setParameter(
 			"siteNavigationMenuId", siteNavigationMenuId
 		).buildPortletURL();
@@ -530,14 +594,17 @@ public class SelectSiteNavigationMenuDisplayContext {
 			_getPagesHierarchySiteNavigationMenu());
 	}
 
+	private String _backURL;
 	private final HttpServletRequest _httpServletRequest;
 	private final String _itemSelectedEventName;
 	private Long _parentSiteNavigationMenuItemId;
 	private final PortletURL _portletURL;
 	private Boolean _privateLayout;
+	private String _siteNavigationMenuExternalReferenceCode;
 	private Long _siteNavigationMenuId;
 	private final SiteNavigationMenuItemTypeRegistry
 		_siteNavigationMenuItemTypeRegistry;
+	private String _siteNavigationMenuScopeExternalReferenceCode;
 	private final ThemeDisplay _themeDisplay;
 
 }

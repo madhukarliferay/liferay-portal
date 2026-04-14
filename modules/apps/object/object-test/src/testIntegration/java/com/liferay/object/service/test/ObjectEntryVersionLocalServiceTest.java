@@ -19,8 +19,9 @@ import com.liferay.object.related.models.test.util.ObjectEntryTestUtil;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectEntryVersionLocalService;
+import com.liferay.object.util.comparator.ObjectEntryVersionVersionComparator;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -32,7 +33,6 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkService;
@@ -64,13 +64,13 @@ import java.sql.Date;
 
 import java.time.LocalDate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -99,8 +99,8 @@ public class ObjectEntryVersionLocalServiceTest {
 	public static void setUpClass() throws Exception {
 		_objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, null, false, false, true, false,
-				true, false, false, true, null,
+				null, TestPropsValues.getUserId(), 0, null, true, false, true,
+				false, true, true, false, false, true, null,
 				RandomTestUtil.randomLocaleStringMap(),
 				"A" + StringUtil.randomString(), null, null,
 				RandomTestUtil.randomLocaleStringMap(), true,
@@ -113,7 +113,8 @@ public class ObjectEntryVersionLocalServiceTest {
 						RandomTestUtil.randomLocaleStringMap()
 					).name(
 						"textObjectFieldName"
-					).build()));
+					).build()),
+				Collections.emptyList(), new ServiceContext());
 
 		_objectDefinition =
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
@@ -123,22 +124,6 @@ public class ObjectEntryVersionLocalServiceTest {
 		_workflowDefinition =
 			_workflowDefinitionManager.liberalGetLatestWorkflowDefinition(
 				TestPropsValues.getCompanyId(), "Single Approver");
-
-		_configurationProvider.saveCompanyConfiguration(
-			ObjectEntryVersionConfiguration.class,
-			TestPropsValues.getCompanyId(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"maximumRetentionPeriod", 1
-			).put(
-				"maximumVersionsPerEntry", 3
-			).build());
-	}
-
-	@AfterClass
-	public static void tearDownClass() throws Exception {
-		_configurationProvider.deleteCompanyConfiguration(
-			ObjectEntryVersionConfiguration.class,
-			TestPropsValues.getCompanyId());
 	}
 
 	@Test
@@ -163,6 +148,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue2"
 			).build(),
@@ -190,75 +176,72 @@ public class ObjectEntryVersionLocalServiceTest {
 	public void testAddObjectEntryVersionWithMaximumVersionsPerEntryLimit()
 		throws Exception {
 
-		ObjectEntryVersionConfiguration objectEntryVersionConfiguration =
-			_configurationProvider.getCompanyConfiguration(
-				ObjectEntryVersionConfiguration.class,
-				CompanyThreadLocal.getCompanyId());
-
-		Assert.assertEquals(
-			3, objectEntryVersionConfiguration.maximumVersionsPerEntry());
-
 		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
 			0, _objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build());
 
-		_updateLatestObjectEntryVersion(_getPastDate(3), objectEntry);
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_getCompanyConfigurationTemporarySwapper(0, 3)) {
 
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"textObjectFieldName", RandomTestUtil.randomString()
-			).build(),
-			ServiceContextTestUtil.getServiceContext());
+			_updateLatestObjectEntryVersion(_getPastDate(3), objectEntry);
 
-		_updateLatestObjectEntryVersion(_getPastDate(2), objectEntry);
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"textObjectFieldName", RandomTestUtil.randomString()
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
 
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"textObjectFieldName", RandomTestUtil.randomString()
-			).build(),
-			ServiceContextTestUtil.getServiceContext());
+			_updateLatestObjectEntryVersion(_getPastDate(2), objectEntry);
 
-		Assert.assertEquals(
-			3,
-			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
-				objectEntry.getObjectEntryId()));
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"textObjectFieldName", RandomTestUtil.randomString()
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
 
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"textObjectFieldName", RandomTestUtil.randomString()
-			).build(),
-			ServiceContextTestUtil.getServiceContext());
+			Assert.assertEquals(
+				3,
+				_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+					objectEntry.getObjectEntryId()));
 
-		Assert.assertEquals(
-			3,
-			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
-				objectEntry.getObjectEntryId()));
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"textObjectFieldName", RandomTestUtil.randomString()
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
 
-		_configurationProvider.saveCompanyConfiguration(
-			ObjectEntryVersionConfiguration.class,
-			TestPropsValues.getCompanyId(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"maximumRetentionPeriod", 1
-			).put(
-				"maximumVersionsPerEntry", 4
-			).build());
+			Assert.assertEquals(
+				3,
+				_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+					objectEntry.getObjectEntryId()));
+		}
 
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"textObjectFieldName", RandomTestUtil.randomString()
-			).build(),
-			ServiceContextTestUtil.getServiceContext());
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_getCompanyConfigurationTemporarySwapper(0, 4)) {
 
-		Assert.assertEquals(
-			4,
-			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
-				objectEntry.getObjectEntryId()));
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"textObjectFieldName", RandomTestUtil.randomString()
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				4,
+				_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+					objectEntry.getObjectEntryId()));
+		}
 	}
 
 	@Test
@@ -305,6 +288,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue2"
 			).build(),
@@ -329,6 +313,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue3"
 			).build(),
@@ -353,6 +338,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue4"
 			).build(),
@@ -435,6 +421,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue2"
 			).build(),
@@ -456,7 +443,7 @@ public class ObjectEntryVersionLocalServiceTest {
 		// Complete pending object entry's workflow instance
 
 		List<WorkflowTask> workflowTasks =
-			_workflowTaskManager.getWorkflowTasksByUserRoles(
+			_workflowTaskManager.getWorkflowTasksBySubmittingUser(
 				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
 				false, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
@@ -492,6 +479,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue3"
 			).build(),
@@ -527,13 +515,11 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue4"
 			).build(),
 			serviceContext);
-
-		_workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
-			workflowDefinitionLink);
 
 		Assert.assertTrue(objectEntry.isPending());
 		Assert.assertEquals(2, objectEntry.getVersion());
@@ -558,6 +544,9 @@ public class ObjectEntryVersionLocalServiceTest {
 		_objectDefinition =
 			_objectDefinitionLocalService.updateObjectDefinition(
 				_objectDefinition);
+
+		_workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
+			workflowDefinitionLink);
 	}
 
 	@Test
@@ -594,6 +583,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue2"
 			).build(),
@@ -627,14 +617,6 @@ public class ObjectEntryVersionLocalServiceTest {
 	public void testCheckObjectEntryVersionsWithMaximumRetentionPeriod()
 		throws Exception {
 
-		ObjectEntryVersionConfiguration objectEntryVersionConfiguration =
-			_configurationProvider.getCompanyConfiguration(
-				ObjectEntryVersionConfiguration.class,
-				CompanyThreadLocal.getCompanyId());
-
-		Assert.assertEquals(
-			1, objectEntryVersionConfiguration.maximumRetentionPeriod());
-
 		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
 			0, _objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
@@ -645,6 +627,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build(),
@@ -654,6 +637,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build(),
@@ -666,8 +650,26 @@ public class ObjectEntryVersionLocalServiceTest {
 			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
 				objectEntry.getObjectEntryId()));
 
-		_objectEntryVersionLocalService.checkObjectEntryVersions(
-			objectEntry.getCompanyId());
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_getCompanyConfigurationTemporarySwapper(0, 0)) {
+
+			_objectEntryVersionLocalService.checkObjectEntryVersions(
+				objectEntry.getCompanyId());
+		}
+
+		Assert.assertEquals(
+			3,
+			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+				objectEntry.getObjectEntryId()));
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_getCompanyConfigurationTemporarySwapper(1, 0)) {
+
+			_objectEntryVersionLocalService.checkObjectEntryVersions(
+				objectEntry.getCompanyId());
+		}
 
 		Assert.assertEquals(
 			1,
@@ -698,6 +700,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build(),
@@ -741,6 +744,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build(),
@@ -769,6 +773,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue2"
 			).build(),
@@ -794,6 +799,55 @@ public class ObjectEntryVersionLocalServiceTest {
 	}
 
 	@Test
+	public void testGetObjectEntryVersions() throws Exception {
+		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
+			0, _objectDefinition.getObjectDefinitionId(),
+			HashMapBuilder.<String, Serializable>put(
+				"textObjectFieldName", "textObjectFieldValue1"
+			).build());
+
+		List<ObjectEntryVersion> expectedObjectEntryVersions =
+			_createObjectEntryVersions(10, objectEntry);
+
+		_assertEquals(
+			expectedObjectEntryVersions.subList(0, 1),
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId()));
+
+		_updateObjectEntry(9, objectEntry, 2);
+
+		_assertEquals(
+			expectedObjectEntryVersions,
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId()));
+		_assertEquals(
+			expectedObjectEntryVersions.subList(0, 5),
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId(), 0, 5));
+		_assertEquals(
+			expectedObjectEntryVersions.subList(5, 10),
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId(), 5, 10));
+		_assertEquals(
+			Collections.emptyList(),
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId(), 10, 11));
+		_assertEquals(
+			expectedObjectEntryVersions,
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId(), 0, 10,
+				ObjectEntryVersionVersionComparator.getInstance(true)));
+
+		Collections.reverse(expectedObjectEntryVersions);
+
+		_assertEquals(
+			expectedObjectEntryVersions,
+			_objectEntryVersionLocalService.getObjectEntryVersions(
+				objectEntry.getObjectEntryId(), 0, 10,
+				ObjectEntryVersionVersionComparator.getInstance(false)));
+	}
+
+	@Test
 	public void testIsLatestObjectEntryVersion() throws Exception {
 		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
 			0, _objectDefinition.getObjectDefinitionId(),
@@ -808,6 +862,7 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", "textObjectFieldValue2"
 			).build(),
@@ -903,6 +958,38 @@ public class ObjectEntryVersionLocalServiceTest {
 		return objectEntryVersion;
 	}
 
+	private List<ObjectEntryVersion> _createObjectEntryVersions(
+		int count, ObjectEntry objectEntry) {
+
+		List<ObjectEntryVersion> objectEntryVersions = new ArrayList<>(count);
+
+		for (int i = 1; i <= count; i++) {
+			objectEntryVersions.add(
+				_createObjectEntryVersion(
+					objectEntry.getExternalReferenceCode(),
+					JSONUtil.put(
+						"textObjectFieldName", "textObjectFieldValue" + i),
+					WorkflowConstants.STATUS_APPROVED, i));
+		}
+
+		return objectEntryVersions;
+	}
+
+	private CompanyConfigurationTemporarySwapper
+			_getCompanyConfigurationTemporarySwapper(
+				int maximumRetentionPeriod, int maximumVersionsPerEntry)
+		throws Exception {
+
+		return new CompanyConfigurationTemporarySwapper(
+			TestPropsValues.getCompanyId(),
+			ObjectEntryVersionConfiguration.class.getName(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"maximumRetentionPeriod", maximumRetentionPeriod
+			).put(
+				"maximumVersionsPerEntry", maximumVersionsPerEntry
+			).build());
+	}
+
 	private Date _getPastDate(int months) {
 		return Date.valueOf(
 			LocalDate.now(
@@ -917,78 +1004,39 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		// Add object entry as published with display date in the future
 
-		ObjectEntryVersionConfiguration
-			originalObjectEntryVersionConfiguration =
-				_configurationProvider.getCompanyConfiguration(
-					ObjectEntryVersionConfiguration.class,
-					CompanyThreadLocal.getCompanyId());
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_getCompanyConfigurationTemporarySwapper(0, 4)) {
 
-		_configurationProvider.saveCompanyConfiguration(
-			ObjectEntryVersionConfiguration.class,
-			TestPropsValues.getCompanyId(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"maximumRetentionPeriod", 1
-			).put(
-				"maximumVersionsPerEntry", 4
-			).build());
+			_objectDefinition.setEnableObjectEntryDraft(enableObjectEntryDraft);
+			_objectDefinition.setEnableObjectEntrySchedule(true);
 
-		_objectDefinition.setEnableObjectEntryDraft(enableObjectEntryDraft);
-		_objectDefinition.setEnableObjectEntrySchedule(true);
+			_objectDefinition =
+				_objectDefinitionLocalService.updateObjectDefinition(
+					_objectDefinition);
 
-		_objectDefinition =
-			_objectDefinitionLocalService.updateObjectDefinition(
-				_objectDefinition);
+			ServiceContext serviceContext =
+				ServiceContextTestUtil.getServiceContext();
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext();
+			serviceContext.setWorkflowAction(WorkflowConstants.ACTION_PUBLISH);
 
-		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_PUBLISH);
+			ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+				0, TestPropsValues.getUserId(),
+				_objectDefinition.getObjectDefinitionId(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null,
+				HashMapBuilder.<String, Serializable>put(
+					"displayDate",
+					new Date(
+						System.currentTimeMillis() + TimeUnit.DAY.toMillis(1))
+				).put(
+					"textObjectFieldName", "textObjectFieldValue1"
+				).build(),
+				serviceContext);
 
-		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
-			0, TestPropsValues.getUserId(),
-			_objectDefinition.getObjectDefinitionId(),
-			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
-			null,
-			HashMapBuilder.<String, Serializable>put(
-				"displayDate",
-				new Date(System.currentTimeMillis() + TimeUnit.DAY.toMillis(1))
-			).put(
-				"textObjectFieldName", "textObjectFieldValue1"
-			).build(),
-			serviceContext);
-
-		Assert.assertTrue(objectEntry.isScheduled());
-		Assert.assertEquals(1, objectEntry.getVersion());
-
-		_assertEquals(
-			Arrays.asList(
-				_createObjectEntryVersion(
-					objectEntry.getExternalReferenceCode(),
-					JSONUtil.put(
-						"textObjectFieldName", "textObjectFieldValue1"),
-					WorkflowConstants.STATUS_SCHEDULED, 1)),
-			_objectEntryVersionLocalService.getObjectEntryVersions(
-				objectEntry.getObjectEntryId()));
-
-		// Update object entry with display date in the future
-
-		serviceContext.setWorkflowAction(workflowAction);
-
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"displayDate",
-				new Date(System.currentTimeMillis() + TimeUnit.DAY.toMillis(1))
-			).put(
-				"textObjectFieldName", "textObjectFieldValue2"
-			).build(),
-			serviceContext);
-
-		Assert.assertEquals(2, objectEntry.getVersion());
-
-		if (workflowAction == WorkflowConstants.ACTION_PUBLISH) {
-			Assert.assertEquals(
-				WorkflowConstants.STATUS_SCHEDULED, objectEntry.getStatus());
+			Assert.assertTrue(objectEntry.isScheduled());
+			Assert.assertEquals(1, objectEntry.getVersion());
 
 			_assertEquals(
 				Arrays.asList(
@@ -996,165 +1044,192 @@ public class ObjectEntryVersionLocalServiceTest {
 						objectEntry.getExternalReferenceCode(),
 						JSONUtil.put(
 							"textObjectFieldName", "textObjectFieldValue1"),
-						WorkflowConstants.STATUS_SCHEDULED, 1),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue2"),
-						WorkflowConstants.STATUS_SCHEDULED, 2)),
+						WorkflowConstants.STATUS_SCHEDULED, 1)),
 				_objectEntryVersionLocalService.getObjectEntryVersions(
 					objectEntry.getObjectEntryId()));
-		}
-		else {
+
+			// Update object entry with display date in the future
+
+			serviceContext.setWorkflowAction(workflowAction);
+
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"displayDate",
+					new Date(
+						System.currentTimeMillis() + TimeUnit.DAY.toMillis(1))
+				).put(
+					"textObjectFieldName", "textObjectFieldValue2"
+				).build(),
+				serviceContext);
+
+			Assert.assertEquals(2, objectEntry.getVersion());
+
+			if (workflowAction == WorkflowConstants.ACTION_PUBLISH) {
+				Assert.assertEquals(
+					WorkflowConstants.STATUS_SCHEDULED,
+					objectEntry.getStatus());
+
+				_assertEquals(
+					Arrays.asList(
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue1"),
+							WorkflowConstants.STATUS_SCHEDULED, 1),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue2"),
+							WorkflowConstants.STATUS_SCHEDULED, 2)),
+					_objectEntryVersionLocalService.getObjectEntryVersions(
+						objectEntry.getObjectEntryId()));
+			}
+			else {
+				Assert.assertEquals(status, objectEntry.getStatus());
+
+				_assertEquals(
+					Arrays.asList(
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue1"),
+							WorkflowConstants.STATUS_SCHEDULED, 1),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue2"),
+							WorkflowConstants.STATUS_DRAFT, 2)),
+					_objectEntryVersionLocalService.getObjectEntryVersions(
+						objectEntry.getObjectEntryId()));
+			}
+
+			// Update object entry with display date in the past
+
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"displayDate",
+					new Date(
+						System.currentTimeMillis() - TimeUnit.DAY.toMillis(1))
+				).put(
+					"textObjectFieldName", "textObjectFieldValue3"
+				).build(),
+				serviceContext);
+
 			Assert.assertEquals(status, objectEntry.getStatus());
 
-			_assertEquals(
-				Arrays.asList(
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue1"),
-						WorkflowConstants.STATUS_SCHEDULED, 1),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue2"),
-						WorkflowConstants.STATUS_DRAFT, 2)),
-				_objectEntryVersionLocalService.getObjectEntryVersions(
-					objectEntry.getObjectEntryId()));
+			if (workflowAction == WorkflowConstants.ACTION_PUBLISH) {
+				Assert.assertEquals(3, objectEntry.getVersion());
+
+				_assertEquals(
+					Arrays.asList(
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue1"),
+							WorkflowConstants.STATUS_SCHEDULED, 1),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue2"),
+							WorkflowConstants.STATUS_SCHEDULED, 2),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue3"),
+							WorkflowConstants.STATUS_APPROVED, 3)),
+					_objectEntryVersionLocalService.getObjectEntryVersions(
+						objectEntry.getObjectEntryId()));
+			}
+			else {
+				Assert.assertEquals(2, objectEntry.getVersion());
+
+				_assertEquals(
+					Arrays.asList(
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue1"),
+							WorkflowConstants.STATUS_SCHEDULED, 1),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue3"),
+							WorkflowConstants.STATUS_DRAFT, 2)),
+					_objectEntryVersionLocalService.getObjectEntryVersions(
+						objectEntry.getObjectEntryId()));
+			}
+
+			// Update object entry with null display date
+
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"textObjectFieldName", "textObjectFieldValue4"
+				).build(),
+				serviceContext);
+
+			Assert.assertEquals(status, objectEntry.getStatus());
+
+			if (workflowAction == WorkflowConstants.ACTION_PUBLISH) {
+				Assert.assertEquals(4, objectEntry.getVersion());
+
+				_assertEquals(
+					Arrays.asList(
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue1"),
+							WorkflowConstants.STATUS_SCHEDULED, 1),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue2"),
+							WorkflowConstants.STATUS_SCHEDULED, 2),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue3"),
+							WorkflowConstants.STATUS_APPROVED, 3),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue4"),
+							WorkflowConstants.STATUS_APPROVED, 4)),
+					_objectEntryVersionLocalService.getObjectEntryVersions(
+						objectEntry.getObjectEntryId()));
+			}
+			else {
+				Assert.assertEquals(2, objectEntry.getVersion());
+
+				_assertEquals(
+					Arrays.asList(
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue1"),
+							WorkflowConstants.STATUS_SCHEDULED, 1),
+						_createObjectEntryVersion(
+							objectEntry.getExternalReferenceCode(),
+							JSONUtil.put(
+								"textObjectFieldName", "textObjectFieldValue4"),
+							WorkflowConstants.STATUS_DRAFT, 2)),
+					_objectEntryVersionLocalService.getObjectEntryVersions(
+						objectEntry.getObjectEntryId()));
+			}
 		}
+		finally {
+			_objectDefinition.setEnableObjectEntryDraft(false);
+			_objectDefinition.setEnableObjectEntrySchedule(false);
 
-		// Update object entry with display date in the past
-
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"displayDate",
-				new Date(System.currentTimeMillis() - TimeUnit.DAY.toMillis(1))
-			).put(
-				"textObjectFieldName", "textObjectFieldValue3"
-			).build(),
-			serviceContext);
-
-		Assert.assertEquals(status, objectEntry.getStatus());
-
-		if (workflowAction == WorkflowConstants.ACTION_PUBLISH) {
-			Assert.assertEquals(3, objectEntry.getVersion());
-
-			_assertEquals(
-				Arrays.asList(
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue1"),
-						WorkflowConstants.STATUS_SCHEDULED, 1),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue2"),
-						WorkflowConstants.STATUS_SCHEDULED, 2),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue3"),
-						WorkflowConstants.STATUS_APPROVED, 3)),
-				_objectEntryVersionLocalService.getObjectEntryVersions(
-					objectEntry.getObjectEntryId()));
+			_objectDefinition =
+				_objectDefinitionLocalService.updateObjectDefinition(
+					_objectDefinition);
 		}
-		else {
-			Assert.assertEquals(2, objectEntry.getVersion());
-
-			_assertEquals(
-				Arrays.asList(
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue1"),
-						WorkflowConstants.STATUS_SCHEDULED, 1),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue3"),
-						WorkflowConstants.STATUS_DRAFT, 2)),
-				_objectEntryVersionLocalService.getObjectEntryVersions(
-					objectEntry.getObjectEntryId()));
-		}
-
-		// Update object entry with null display date
-
-		objectEntry = _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-			HashMapBuilder.<String, Serializable>put(
-				"textObjectFieldName", "textObjectFieldValue4"
-			).build(),
-			serviceContext);
-
-		Assert.assertEquals(status, objectEntry.getStatus());
-
-		if (workflowAction == WorkflowConstants.ACTION_PUBLISH) {
-			Assert.assertEquals(4, objectEntry.getVersion());
-
-			_assertEquals(
-				Arrays.asList(
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue1"),
-						WorkflowConstants.STATUS_SCHEDULED, 1),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue2"),
-						WorkflowConstants.STATUS_SCHEDULED, 2),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue3"),
-						WorkflowConstants.STATUS_APPROVED, 3),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue4"),
-						WorkflowConstants.STATUS_APPROVED, 4)),
-				_objectEntryVersionLocalService.getObjectEntryVersions(
-					objectEntry.getObjectEntryId()));
-		}
-		else {
-			Assert.assertEquals(2, objectEntry.getVersion());
-
-			_assertEquals(
-				Arrays.asList(
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue1"),
-						WorkflowConstants.STATUS_SCHEDULED, 1),
-					_createObjectEntryVersion(
-						objectEntry.getExternalReferenceCode(),
-						JSONUtil.put(
-							"textObjectFieldName", "textObjectFieldValue4"),
-						WorkflowConstants.STATUS_DRAFT, 2)),
-				_objectEntryVersionLocalService.getObjectEntryVersions(
-					objectEntry.getObjectEntryId()));
-		}
-
-		_configurationProvider.saveCompanyConfiguration(
-			ObjectEntryVersionConfiguration.class,
-			TestPropsValues.getCompanyId(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"maximumRetentionPeriod", 1
-			).put(
-				"maximumVersionsPerEntry",
-				originalObjectEntryVersionConfiguration.
-					maximumVersionsPerEntry()
-			).build());
-
-		_objectDefinition.setEnableObjectEntryDraft(false);
-		_objectDefinition.setEnableObjectEntrySchedule(false);
-
-		_objectDefinition =
-			_objectDefinitionLocalService.updateObjectDefinition(
-				_objectDefinition);
 	}
 
 	private void _updateLatestObjectEntryVersion(
@@ -1171,8 +1246,20 @@ public class ObjectEntryVersionLocalServiceTest {
 			objectEntryVersion);
 	}
 
-	@Inject
-	private static ConfigurationProvider _configurationProvider;
+	private void _updateObjectEntry(
+			int count, ObjectEntry objectEntry, int start)
+		throws Exception {
+
+		for (int i = start; i < (start + count); i++) {
+			_objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"textObjectFieldName", "textObjectFieldValue" + i
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+		}
+	}
 
 	private static ObjectDefinition _objectDefinition;
 

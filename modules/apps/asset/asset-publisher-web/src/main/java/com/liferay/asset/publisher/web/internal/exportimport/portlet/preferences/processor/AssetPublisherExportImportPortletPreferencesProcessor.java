@@ -23,7 +23,6 @@ import com.liferay.asset.publisher.web.internal.constants.AssetPublisherSelectio
 import com.liferay.asset.publisher.web.internal.display.context.AssetPublisherDisplayContext;
 import com.liferay.asset.publisher.web.internal.helper.AssetPublisherWebHelper;
 import com.liferay.asset.publisher.web.internal.util.AssetPublisherUtil;
-import com.liferay.asset.publisher.web.internal.util.FF_LPD_39304_CompanyTemporarySwapper;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
@@ -42,7 +41,7 @@ import com.liferay.exportimport.portlet.preferences.processor.Capability;
 import com.liferay.exportimport.portlet.preferences.processor.ExportImportPortletPreferencesProcessor;
 import com.liferay.exportimport.portlet.preferences.processor.base.BaseExportImportPortletPreferencesProcessor;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -86,7 +85,6 @@ import jakarta.portlet.PortletPreferences;
 
 import java.io.Serializable;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -480,17 +478,10 @@ public class AssetPublisherExportImportPortletPreferencesProcessor
 		Layout layout = layoutLocalService.getLayout(
 			portletDataContext.getPlid());
 
-		String selectionStyle = StringPool.BLANK;
-
-		try (SafeCloseable safeCloseable =
-				FF_LPD_39304_CompanyTemporarySwapper.
-					setCompanyIdWithSafeCloseable(layout.getCompanyId())) {
-
-			selectionStyle = portletPreferences.getValue(
-				"selectionStyle",
-				AssetPublisherSelectionStyleConfigurationUtil.
-					defaultSelectionStyle());
-		}
+		String selectionStyle = portletPreferences.getValue(
+			"selectionStyle",
+			AssetPublisherSelectionStyleConfigurationUtil.
+				defaultSelectionStyle());
 
 		if (selectionStyle.equals(
 				AssetPublisherSelectionStyleConstants.TYPE_DYNAMIC)) {
@@ -584,17 +575,12 @@ public class AssetPublisherExportImportPortletPreferencesProcessor
 			assetPublisherHelper.getAssetEntryQuery(
 				portletPreferences, groupId, layout, null, null);
 
-		try (SafeCloseable safeCloseable =
-				FF_LPD_39304_CompanyTemporarySwapper.
-					setCompanyIdWithSafeCloseable(companyId)) {
-
-			assetEntryQuery.setClassNameIds(
-				assetPublisherHelper.getClassNameIds(
-					portletPreferences,
-					AssetRendererFactoryRegistryUtil.getClassNameIds(
-						companyId, true)));
-			assetEntryQuery.setEnablePermissions(false);
-		}
+		assetEntryQuery.setClassNameIds(
+			assetPublisherHelper.getClassNameIds(
+				portletPreferences,
+				AssetRendererFactoryRegistryUtil.getClassNameIds(
+					companyId, true)));
+		assetEntryQuery.setEnablePermissions(false);
 
 		int end = _assetPublisherWebConfiguration.dynamicExportLimit();
 
@@ -1417,78 +1403,80 @@ public class AssetPublisherExportImportPortletPreferencesProcessor
 
 		Layout layout = layoutLocalService.getLayout(plid);
 
-		List<String> newValues = new ArrayList<>(oldValues.length);
+		List<String> newValues = TransformUtil.transformToList(
+			oldValues,
+			oldValue -> {
+				String newValue = oldValue;
 
-		for (String oldValue : oldValues) {
-			String newValue = oldValue;
-
-			if (Objects.equals(oldValue, "[$COMPANY_GROUP_SCOPE_ID$]")) {
-				oldValue = String.valueOf(companyGroupId);
-			}
-
-			if (Validator.isNumber(oldValue)) {
-				long groupId = Long.valueOf(oldValue);
-
-				if (groupIds.containsKey(groupId)) {
-					groupId = groupIds.get(groupId);
+				if (Objects.equals(oldValue, "[$COMPANY_GROUP_SCOPE_ID$]")) {
+					oldValue = String.valueOf(companyGroupId);
 				}
 
-				Group group = groupLocalService.fetchGroup(groupId);
+				if (Validator.isNumber(oldValue)) {
+					long groupId = Long.valueOf(oldValue);
 
-				if (group == null) {
+					if (groupIds.containsKey(groupId)) {
+						groupId = groupIds.get(groupId);
+					}
+
+					Group group = groupLocalService.fetchGroup(groupId);
+
+					if (group == null) {
+						if (_log.isInfoEnabled()) {
+							_log.info(
+								StringBundler.concat(
+									"Ignoring group ", newValue, " because it ",
+									"cannot be converted to scope"));
+						}
+
+						return null;
+					}
+
+					newValue = assetPublisherHelper.getScopeId(
+						group, portletDataContext.getScopeGroupId());
+				}
+
+				try {
+					if (!assetPublisherWebHelper.isScopeIdSelectable(
+							PermissionThreadLocal.getPermissionChecker(),
+							newValue, companyGroupId, layout, false)) {
+
+						return null;
+					}
+
+					return newValue;
+				}
+				catch (NoSuchGroupException noSuchGroupException) {
 					if (_log.isInfoEnabled()) {
 						_log.info(
 							StringBundler.concat(
-								"Ignoring group ", newValue, " because it ",
-								"cannot be converted to scope"));
+								"Ignoring scope ", newValue, " because the ",
+								"referenced group was not found"),
+							noSuchGroupException);
 					}
-
-					continue;
+				}
+				catch (NoSuchLayoutException noSuchLayoutException) {
+					if (_log.isInfoEnabled()) {
+						_log.info(
+							StringBundler.concat(
+								"Ignoring scope ", newValue, " because the ",
+								"referenced layout was not found"),
+							noSuchLayoutException);
+					}
+				}
+				catch (PrincipalException principalException) {
+					if (_log.isInfoEnabled()) {
+						_log.info(
+							StringBundler.concat(
+								"Ignoring scope ", newValue, " because the ",
+								"referenced parent group no longer allows ",
+								"sharing content with child sites"),
+							principalException);
+					}
 				}
 
-				newValue = assetPublisherHelper.getScopeId(
-					group, portletDataContext.getScopeGroupId());
-			}
-
-			try {
-				if (!assetPublisherWebHelper.isScopeIdSelectable(
-						PermissionThreadLocal.getPermissionChecker(), newValue,
-						companyGroupId, layout, false)) {
-
-					continue;
-				}
-
-				newValues.add(newValue);
-			}
-			catch (NoSuchGroupException noSuchGroupException) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						StringBundler.concat(
-							"Ignoring scope ", newValue, " because the ",
-							"referenced group was not found"),
-						noSuchGroupException);
-				}
-			}
-			catch (NoSuchLayoutException noSuchLayoutException) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						StringBundler.concat(
-							"Ignoring scope ", newValue, " because the ",
-							"referenced layout was not found"),
-						noSuchLayoutException);
-				}
-			}
-			catch (PrincipalException principalException) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						StringBundler.concat(
-							"Ignoring scope ", newValue, " because the ",
-							"referenced parent group no longer allows sharing ",
-							"content with child sites"),
-						principalException);
-				}
-			}
-		}
+				return null;
+			});
 
 		portletPreferences.setValues(key, newValues.toArray(new String[0]));
 	}

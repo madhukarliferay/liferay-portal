@@ -105,9 +105,7 @@ public class PageElementSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(pageElement.getType());
-
 			sb.append("\"");
 		}
 
@@ -311,3 +309,4 @@ public class PageElementSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1455108409

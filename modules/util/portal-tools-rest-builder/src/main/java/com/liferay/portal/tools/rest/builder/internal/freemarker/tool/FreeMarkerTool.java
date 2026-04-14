@@ -49,8 +49,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,6 +65,18 @@ public class FreeMarkerTool {
 
 	public static FreeMarkerTool getInstance() {
 		return _freeMarkerTool;
+	}
+
+	public static String getPropertyType(
+		ConfigYAML configYAML, OpenAPIYAML openAPIYAML, Schema propertySchema,
+		String propertySchemaName) {
+
+		Map<String, String> javaDataTypeMap =
+			OpenAPIParserUtil.getJavaDataTypeMap(configYAML, openAPIYAML);
+
+		return DTOOpenAPIParser.getPropertyType(
+			configYAML, javaDataTypeMap, openAPIYAML, propertySchema,
+			propertySchemaName);
 	}
 
 	public boolean containsJavaMethodSignature(
@@ -381,6 +393,24 @@ public class FreeMarkerTool {
 		return StringUtil.toUpperCase(fieldName);
 	}
 
+	public String getExternalReferenceCodeParameterName(
+		JavaMethodSignature javaMethodSignature, String schemaName) {
+
+		for (JavaMethodParameter javaMethodParameter :
+				javaMethodSignature.getJavaMethodParameters()) {
+
+			String parameterName = javaMethodParameter.getParameterName();
+
+			if (isExternalReferenceCodeParameterName(
+					parameterName, schemaName)) {
+
+				return parameterName;
+			}
+		}
+
+		return null;
+	}
+
 	public String getGraphQLArguments(
 		List<JavaMethodParameter> javaMethodParameters, String schemaVarName) {
 
@@ -553,7 +583,7 @@ public class FreeMarkerTool {
 		Map<String, Schema> schemas = getSchemas(openAPIYAML);
 
 		Map<String, JavaMethodSignature> javaMethodSignatureMap =
-			new HashMap<>();
+			new LinkedHashMap<>();
 
 		for (JavaMethodSignature javaMethodSignature : javaMethodSignatures) {
 			List<JavaMethodParameter> javaMethodParameters =
@@ -934,7 +964,7 @@ public class FreeMarkerTool {
 		Components components = openAPIYAML.getComponents();
 
 		if (components == null) {
-			return new HashMap<>();
+			return new TreeMap<>();
 		}
 
 		return new TreeMap<>(components.getSchemas());
@@ -1040,16 +1070,8 @@ public class FreeMarkerTool {
 	public boolean hasPathParameter(
 		JavaMethodSignature javaMethodSignature, String parameterName) {
 
-		List<JavaMethodParameter> javaMethodParameters =
-			javaMethodSignature.getPathJavaMethodParameters();
-
-		for (JavaMethodParameter javaMethodParameter : javaMethodParameters) {
-			if (parameterName.equals(javaMethodParameter.getParameterName())) {
-				return true;
-			}
-		}
-
-		return false;
+		return ResourceOpenAPIParser.hasPathParameter(
+			javaMethodSignature, parameterName);
 	}
 
 	public boolean hasPostSchemaJavaMethodSignature(
@@ -1140,6 +1162,24 @@ public class FreeMarkerTool {
 
 		return DTOOpenAPIParser.isSchemaProperty(
 			configYAML, propertyName, schema, schemas);
+	}
+
+	public boolean isExternalReferenceCodeExclusiveMethod(
+		String httpMethod, JavaMethodSignature javaMethodSignature) {
+
+		return StringUtil.equals(
+			StringBundler.concat(
+				httpMethod,
+				GetterUtil.getString(javaMethodSignature.getParentSchemaName()),
+				GetterUtil.getString(javaMethodSignature.getSchemaName())),
+			javaMethodSignature.getMethodName());
+	}
+
+	public boolean isExternalReferenceCodeMethod(
+		String httpMethod, JavaMethodSignature javaMethodSignature) {
+
+		return ResourceOpenAPIParser.isExternalReferenceCodeMethod(
+			httpMethod, javaMethodSignature);
 	}
 
 	public boolean isExternalReferenceCodeParameter(

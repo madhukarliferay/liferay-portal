@@ -118,47 +118,6 @@ public interface UserIdMapperPersistence extends BasePersistence<UserIdMapper> {
 			orderByComparator);
 
 	/**
-	 * Returns the last user ID mapper in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching user ID mapper
-	 * @throws NoSuchUserIdMapperException if a matching user ID mapper could not be found
-	 */
-	public UserIdMapper findByUserId_Last(
-			long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<UserIdMapper>
-				orderByComparator)
-		throws NoSuchUserIdMapperException;
-
-	/**
-	 * Returns the last user ID mapper in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching user ID mapper, or <code>null</code> if a matching user ID mapper could not be found
-	 */
-	public UserIdMapper fetchByUserId_Last(
-		long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<UserIdMapper>
-			orderByComparator);
-
-	/**
-	 * Returns the user ID mappers before and after the current user ID mapper in the ordered set where userId = &#63;.
-	 *
-	 * @param userIdMapperId the primary key of the current user ID mapper
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next user ID mapper
-	 * @throws NoSuchUserIdMapperException if a user ID mapper with the primary key could not be found
-	 */
-	public UserIdMapper[] findByUserId_PrevAndNext(
-			long userIdMapperId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<UserIdMapper>
-				orderByComparator)
-		throws NoSuchUserIdMapperException;
-
-	/**
 	 * Removes all the user ID mappers where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -394,3 +353,4 @@ public interface UserIdMapperPersistence extends BasePersistence<UserIdMapper> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1384636523

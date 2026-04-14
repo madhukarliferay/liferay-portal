@@ -282,62 +282,6 @@ public class TicketUtil {
 	}
 
 	/**
-	 * Returns the last ticket in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ticket
-	 * @throws NoSuchTicketException if a matching ticket could not be found
-	 */
-	public static Ticket findByC_C_C_Last(
-			long companyId, long classNameId, long classPK,
-			OrderByComparator<Ticket> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchTicketException {
-
-		return getPersistence().findByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ticket in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ticket, or <code>null</code> if a matching ticket could not be found
-	 */
-	public static Ticket fetchByC_C_C_Last(
-		long companyId, long classNameId, long classPK,
-		OrderByComparator<Ticket> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the tickets before and after the current ticket in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param ticketId the primary key of the current ticket
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ticket
-	 * @throws NoSuchTicketException if a ticket with the primary key could not be found
-	 */
-	public static Ticket[] findByC_C_C_PrevAndNext(
-			long ticketId, long companyId, long classNameId, long classPK,
-			OrderByComparator<Ticket> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchTicketException {
-
-		return getPersistence().findByC_C_C_PrevAndNext(
-			ticketId, companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
 	 * Removes all the tickets where companyId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -481,62 +425,6 @@ public class TicketUtil {
 
 		return getPersistence().fetchByC_C_T_First(
 			classNameId, classPK, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ticket in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ticket
-	 * @throws NoSuchTicketException if a matching ticket could not be found
-	 */
-	public static Ticket findByC_C_T_Last(
-			long classNameId, long classPK, int type,
-			OrderByComparator<Ticket> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchTicketException {
-
-		return getPersistence().findByC_C_T_Last(
-			classNameId, classPK, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ticket in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ticket, or <code>null</code> if a matching ticket could not be found
-	 */
-	public static Ticket fetchByC_C_T_Last(
-		long classNameId, long classPK, int type,
-		OrderByComparator<Ticket> orderByComparator) {
-
-		return getPersistence().fetchByC_C_T_Last(
-			classNameId, classPK, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the tickets before and after the current ticket in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63;.
-	 *
-	 * @param ticketId the primary key of the current ticket
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ticket
-	 * @throws NoSuchTicketException if a ticket with the primary key could not be found
-	 */
-	public static Ticket[] findByC_C_T_PrevAndNext(
-			long ticketId, long classNameId, long classPK, int type,
-			OrderByComparator<Ticket> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchTicketException {
-
-		return getPersistence().findByC_C_T_PrevAndNext(
-			ticketId, classNameId, classPK, type, orderByComparator);
 	}
 
 	/**
@@ -689,65 +577,6 @@ public class TicketUtil {
 
 		return getPersistence().fetchByC_C_C_T_First(
 			companyId, classNameId, classPK, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ticket in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ticket
-	 * @throws NoSuchTicketException if a matching ticket could not be found
-	 */
-	public static Ticket findByC_C_C_T_Last(
-			long companyId, long classNameId, long classPK, int type,
-			OrderByComparator<Ticket> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchTicketException {
-
-		return getPersistence().findByC_C_C_T_Last(
-			companyId, classNameId, classPK, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ticket in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ticket, or <code>null</code> if a matching ticket could not be found
-	 */
-	public static Ticket fetchByC_C_C_T_Last(
-		long companyId, long classNameId, long classPK, int type,
-		OrderByComparator<Ticket> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_T_Last(
-			companyId, classNameId, classPK, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the tickets before and after the current ticket in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63; and type = &#63;.
-	 *
-	 * @param ticketId the primary key of the current ticket
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ticket
-	 * @throws NoSuchTicketException if a ticket with the primary key could not be found
-	 */
-	public static Ticket[] findByC_C_C_T_PrevAndNext(
-			long ticketId, long companyId, long classNameId, long classPK,
-			int type, OrderByComparator<Ticket> orderByComparator)
-		throws com.liferay.portal.kernel.exception.NoSuchTicketException {
-
-		return getPersistence().findByC_C_C_T_PrevAndNext(
-			ticketId, companyId, classNameId, classPK, type, orderByComparator);
 	}
 
 	/**
@@ -938,3 +767,4 @@ public class TicketUtil {
 	private static volatile TicketPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:653577400

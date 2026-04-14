@@ -15,7 +15,7 @@ import ListView, {ListViewProps} from '../../../components/ListView';
 import {ManagementToolbarProps} from '../../../components/ListView/components/ManagementToolbar';
 import Page from '../../../components/Page';
 import {
-	OrderTypes,
+	OrderCustomFields,
 	orderTypeLabel,
 	orderWorkflowDisplayType,
 	paymentWorkflowDisplayType,
@@ -153,7 +153,7 @@ export function AdministratorOrdersListView({
 							<span>
 								{
 									orderTypeLabel[
-										orderTypeExternalReferenceCode as keyof typeof OrderTypes
+										orderTypeExternalReferenceCode as keyof typeof orderTypeLabel
 									]
 								}
 							</span>
@@ -200,7 +200,9 @@ export function AdministratorOrdersListView({
 						name: i18n.translate('customer-project'),
 						render: (customFields) => {
 							const projects = safeJSONParse(
-								customFields!['koroneiki-project'],
+								customFields![
+									OrderCustomFields.KORONEIKI_PROJECT
+								],
 								[]
 							);
 
@@ -229,7 +231,10 @@ export function AdministratorOrdersListView({
 						id: 'createDate',
 						name: i18n.translate('created-at'),
 						render: (createDate) => (
-							<span className="ml-2 text-capitalize text-nowrap">
+							<span
+								className="ml-2 text-capitalize text-nowrap"
+								title={createDate}
+							>
 								{formatDistance(
 									new Date(createDate ?? ''),
 									Date.now(),
@@ -282,7 +287,6 @@ export default function Orders() {
 					{infoCard.map((card, index) => (
 						<InfoCard
 							{...card}
-							expanded
 							key={index}
 							symbol="shopping-cart"
 							title={card.title}
@@ -291,7 +295,6 @@ export default function Orders() {
 					))}
 				</div>
 			</div>
-
 			<Page
 				pageRendererProps={{className: 'border py-2'}}
 				title={i18n.translate('orders')}

@@ -35,6 +35,7 @@ public class CPDefinitionLinkUpgradeProcess extends UpgradeProcess {
 	protected void doUpgrade() throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from CPDefinitionLink");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
@@ -69,11 +70,14 @@ public class CPDefinitionLinkUpgradeProcess extends UpgradeProcess {
 	private long _getCPDefinitionId(long cProductId) throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select publishedCPDefinitionId from CProduct where " +
-					"CProductId = " + cProductId);
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"CProductId = ?")) {
 
-			if (resultSet.next()) {
-				return resultSet.getLong(1);
+			preparedStatement.setLong(1, cProductId);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong("publishedCPDefinitionId");
+				}
 			}
 		}
 
@@ -83,14 +87,18 @@ public class CPDefinitionLinkUpgradeProcess extends UpgradeProcess {
 	private String _getDefaultLanguageId(long cpDefinitionId) throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select defaultLanguageId from CPDefinition where " +
-					"CPDefinitionId = " + cpDefinitionId);
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"CPDefinitionId = ?")) {
 
-			if (resultSet.next()) {
-				String defaultLanguageId = resultSet.getString(1);
+			preparedStatement.setLong(1, cpDefinitionId);
 
-				if (defaultLanguageId != null) {
-					return defaultLanguageId;
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					String defaultLanguageId = resultSet.getString(
+						"defaultLanguageId");
+
+					if (defaultLanguageId != null) {
+						return defaultLanguageId;
+					}
 				}
 			}
 		}
@@ -103,20 +111,24 @@ public class CPDefinitionLinkUpgradeProcess extends UpgradeProcess {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from CPDefinitionLocalization where CPDefinitionId " +
-					"= " + cpDefinitionId);
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"= ?")) {
 
-			Map<String, String> languageIdToNameMap = new HashMap<>();
+			preparedStatement.setLong(1, cpDefinitionId);
 
-			if (resultSet.next()) {
-				languageIdToNameMap.put(
-					resultSet.getString("languageId"),
-					GetterUtil.getString(resultSet.getString("description")));
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Map<String, String> languageIdToNameMap = new HashMap<>();
+
+				if (resultSet.next()) {
+					languageIdToNameMap.put(
+						resultSet.getString("languageId"),
+						GetterUtil.getString(
+							resultSet.getString("description")));
+				}
+
+				return LocalizationUtil.getXml(
+					languageIdToNameMap, _getDefaultLanguageId(cpDefinitionId),
+					"Description");
 			}
-
-			return LocalizationUtil.getXml(
-				languageIdToNameMap, _getDefaultLanguageId(cpDefinitionId),
-				"Description");
 		}
 	}
 
@@ -125,20 +137,23 @@ public class CPDefinitionLinkUpgradeProcess extends UpgradeProcess {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from CPDefinitionLocalization where CPDefinitionId " +
-					"= " + cpDefinitionId);
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"= ?")) {
 
-			Map<String, String> languageIdToNameMap = new HashMap<>();
+			preparedStatement.setLong(1, cpDefinitionId);
 
-			if (resultSet.next()) {
-				languageIdToNameMap.put(
-					resultSet.getString("languageId"),
-					GetterUtil.getString(resultSet.getString("name")));
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Map<String, String> languageIdToNameMap = new HashMap<>();
+
+				if (resultSet.next()) {
+					languageIdToNameMap.put(
+						resultSet.getString("languageId"),
+						GetterUtil.getString(resultSet.getString("name")));
+				}
+
+				return LocalizationUtil.getXml(
+					languageIdToNameMap, _getDefaultLanguageId(cpDefinitionId),
+					"Name");
 			}
-
-			return LocalizationUtil.getXml(
-				languageIdToNameMap, _getDefaultLanguageId(cpDefinitionId),
-				"Name");
 		}
 	}
 

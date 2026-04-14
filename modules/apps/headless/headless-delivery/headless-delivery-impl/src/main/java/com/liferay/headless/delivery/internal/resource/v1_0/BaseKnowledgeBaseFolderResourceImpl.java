@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.KnowledgeBaseFolder;
 import com.liferay.headless.delivery.resource.v1_0.KnowledgeBaseFolderResource;
@@ -377,27 +378,27 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(knowledgeBaseFolderId);
+		Long resourceId = getPermissionCheckerResourceId(knowledgeBaseFolderId);
 		String resourceName = getPermissionCheckerResourceName(
 			knowledgeBaseFolderId);
-		Long resourceId = getPermissionCheckerResourceId(knowledgeBaseFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(knowledgeBaseFolderId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getKnowledgeBaseFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getKnowledgeBaseFolderPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putKnowledgeBaseFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putKnowledgeBaseFolderPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -520,15 +521,15 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteKnowledgeBaseFolderPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteKnowledgeBaseFolderPermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteKnowledgeBaseFolderPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteKnowledgeBaseFolderPermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -996,13 +997,13 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(knowledgeBaseFolderId);
+		Long resourceId = getPermissionCheckerResourceId(knowledgeBaseFolderId);
 		String resourceName = getPermissionCheckerResourceName(
 			knowledgeBaseFolderId);
-		Long resourceId = getPermissionCheckerResourceId(knowledgeBaseFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(knowledgeBaseFolderId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1038,23 +1039,22 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(knowledgeBaseFolderId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getKnowledgeBaseFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getKnowledgeBaseFolderPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putKnowledgeBaseFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putKnowledgeBaseFolderPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1186,15 +1186,15 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteKnowledgeBaseFolderPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteKnowledgeBaseFolderPermissionsPage", null,
+					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteKnowledgeBaseFolderPermissionsPage", portletName,
-					siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteKnowledgeBaseFolderPermissionsPage", null,
+					portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -1319,9 +1319,37 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 
 		UnsafeFunction<KnowledgeBaseFolder, KnowledgeBaseFolder, Exception>
 			knowledgeBaseFolderUnsafeFunction = knowledgeBaseFolder -> {
-				deleteKnowledgeBaseFolder(knowledgeBaseFolder.getId());
+				if (knowledgeBaseFolder.getId() != null) {
+					try {
+						deleteKnowledgeBaseFolder(knowledgeBaseFolder.getId());
 
-				return knowledgeBaseFolder;
+						return knowledgeBaseFolder;
+					}
+					catch (Exception exception) {
+						if (knowledgeBaseFolder.getExternalReferenceCode() !=
+								null) {
+
+							if (parameters.containsKey("siteId")) {
+								deleteSiteKnowledgeBaseFolderByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									knowledgeBaseFolder.
+										getExternalReferenceCode());
+
+								return knowledgeBaseFolder;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteKnowledgeBaseFolderByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						knowledgeBaseFolder.getExternalReferenceCode());
+
+					return knowledgeBaseFolder;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -1400,6 +1428,15 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1620,6 +1657,9 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2192,3 +2232,4 @@ public abstract class BaseKnowledgeBaseFolderResourceImpl
 		LogFactoryUtil.getLog(BaseKnowledgeBaseFolderResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1030503509

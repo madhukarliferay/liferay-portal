@@ -120,47 +120,6 @@ public interface NotificationRecipientSettingPersistence
 			<NotificationRecipientSetting> orderByComparator);
 
 	/**
-	 * Returns the last notification recipient setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification recipient setting
-	 * @throws NoSuchNotificationRecipientSettingException if a matching notification recipient setting could not be found
-	 */
-	public NotificationRecipientSetting findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationRecipientSetting> orderByComparator)
-		throws NoSuchNotificationRecipientSettingException;
-
-	/**
-	 * Returns the last notification recipient setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification recipient setting, or <code>null</code> if a matching notification recipient setting could not be found
-	 */
-	public NotificationRecipientSetting fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<NotificationRecipientSetting> orderByComparator);
-
-	/**
-	 * Returns the notification recipient settings before and after the current notification recipient setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param notificationRecipientSettingId the primary key of the current notification recipient setting
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification recipient setting
-	 * @throws NoSuchNotificationRecipientSettingException if a notification recipient setting with the primary key could not be found
-	 */
-	public NotificationRecipientSetting[] findByUuid_PrevAndNext(
-			long notificationRecipientSettingId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationRecipientSetting> orderByComparator)
-		throws NoSuchNotificationRecipientSettingException;
-
-	/**
 	 * Removes all the notification recipient settings where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface NotificationRecipientSettingPersistence
 			<NotificationRecipientSetting> orderByComparator);
 
 	/**
-	 * Returns the last notification recipient setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification recipient setting
-	 * @throws NoSuchNotificationRecipientSettingException if a matching notification recipient setting could not be found
-	 */
-	public NotificationRecipientSetting findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationRecipientSetting> orderByComparator)
-		throws NoSuchNotificationRecipientSettingException;
-
-	/**
-	 * Returns the last notification recipient setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification recipient setting, or <code>null</code> if a matching notification recipient setting could not be found
-	 */
-	public NotificationRecipientSetting fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<NotificationRecipientSetting> orderByComparator);
-
-	/**
-	 * Returns the notification recipient settings before and after the current notification recipient setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param notificationRecipientSettingId the primary key of the current notification recipient setting
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification recipient setting
-	 * @throws NoSuchNotificationRecipientSettingException if a notification recipient setting with the primary key could not be found
-	 */
-	public NotificationRecipientSetting[] findByUuid_C_PrevAndNext(
-			long notificationRecipientSettingId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationRecipientSetting> orderByComparator)
-		throws NoSuchNotificationRecipientSettingException;
-
-	/**
 	 * Removes all the notification recipient settings where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -420,49 +335,6 @@ public interface NotificationRecipientSettingPersistence
 		long notificationRecipientId,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<NotificationRecipientSetting> orderByComparator);
-
-	/**
-	 * Returns the last notification recipient setting in the ordered set where notificationRecipientId = &#63;.
-	 *
-	 * @param notificationRecipientId the notification recipient ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification recipient setting
-	 * @throws NoSuchNotificationRecipientSettingException if a matching notification recipient setting could not be found
-	 */
-	public NotificationRecipientSetting findByNotificationRecipientId_Last(
-			long notificationRecipientId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationRecipientSetting> orderByComparator)
-		throws NoSuchNotificationRecipientSettingException;
-
-	/**
-	 * Returns the last notification recipient setting in the ordered set where notificationRecipientId = &#63;.
-	 *
-	 * @param notificationRecipientId the notification recipient ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification recipient setting, or <code>null</code> if a matching notification recipient setting could not be found
-	 */
-	public NotificationRecipientSetting fetchByNotificationRecipientId_Last(
-		long notificationRecipientId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<NotificationRecipientSetting> orderByComparator);
-
-	/**
-	 * Returns the notification recipient settings before and after the current notification recipient setting in the ordered set where notificationRecipientId = &#63;.
-	 *
-	 * @param notificationRecipientSettingId the primary key of the current notification recipient setting
-	 * @param notificationRecipientId the notification recipient ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification recipient setting
-	 * @throws NoSuchNotificationRecipientSettingException if a notification recipient setting with the primary key could not be found
-	 */
-	public NotificationRecipientSetting[]
-			findByNotificationRecipientId_PrevAndNext(
-				long notificationRecipientSettingId,
-				long notificationRecipientId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<NotificationRecipientSetting> orderByComparator)
-		throws NoSuchNotificationRecipientSettingException;
 
 	/**
 	 * Removes all the notification recipient settings where notificationRecipientId = &#63; from the database.
@@ -662,3 +534,4 @@ public interface NotificationRecipientSettingPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-715190249

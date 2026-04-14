@@ -221,58 +221,6 @@ public class PasswordPolicyRelUtil {
 	}
 
 	/**
-	 * Returns the last password policy rel in the ordered set where passwordPolicyId = &#63;.
-	 *
-	 * @param passwordPolicyId the password policy ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching password policy rel
-	 * @throws NoSuchPasswordPolicyRelException if a matching password policy rel could not be found
-	 */
-	public static PasswordPolicyRel findByPasswordPolicyId_Last(
-			long passwordPolicyId,
-			OrderByComparator<PasswordPolicyRel> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchPasswordPolicyRelException {
-
-		return getPersistence().findByPasswordPolicyId_Last(
-			passwordPolicyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last password policy rel in the ordered set where passwordPolicyId = &#63;.
-	 *
-	 * @param passwordPolicyId the password policy ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching password policy rel, or <code>null</code> if a matching password policy rel could not be found
-	 */
-	public static PasswordPolicyRel fetchByPasswordPolicyId_Last(
-		long passwordPolicyId,
-		OrderByComparator<PasswordPolicyRel> orderByComparator) {
-
-		return getPersistence().fetchByPasswordPolicyId_Last(
-			passwordPolicyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the password policy rels before and after the current password policy rel in the ordered set where passwordPolicyId = &#63;.
-	 *
-	 * @param passwordPolicyRelId the primary key of the current password policy rel
-	 * @param passwordPolicyId the password policy ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next password policy rel
-	 * @throws NoSuchPasswordPolicyRelException if a password policy rel with the primary key could not be found
-	 */
-	public static PasswordPolicyRel[] findByPasswordPolicyId_PrevAndNext(
-			long passwordPolicyRelId, long passwordPolicyId,
-			OrderByComparator<PasswordPolicyRel> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchPasswordPolicyRelException {
-
-		return getPersistence().findByPasswordPolicyId_PrevAndNext(
-			passwordPolicyRelId, passwordPolicyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the password policy rels where passwordPolicyId = &#63; from the database.
 	 *
 	 * @param passwordPolicyId the password policy ID
@@ -525,3 +473,4 @@ public class PasswordPolicyRelUtil {
 	private static volatile PasswordPolicyRelPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1802821431

@@ -120,47 +120,6 @@ public interface BatchEngineImportTaskPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last batch engine import task in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task
-	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
-	 * Returns the last batch engine import task in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
-			orderByComparator);
-
-	/**
-	 * Returns the batch engine import tasks before and after the current batch engine import task in the ordered set where uuid = &#63;.
-	 *
-	 * @param batchEngineImportTaskId the primary key of the current batch engine import task
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch engine import task
-	 * @throws NoSuchImportTaskException if a batch engine import task with the primary key could not be found
-	 */
-	public BatchEngineImportTask[] findByUuid_PrevAndNext(
-			long batchEngineImportTaskId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
 	 * Removes all the batch engine import tasks where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface BatchEngineImportTaskPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last batch engine import task in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task
-	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
-	 * Returns the last batch engine import task in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
-			orderByComparator);
-
-	/**
-	 * Returns the batch engine import tasks before and after the current batch engine import task in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param batchEngineImportTaskId the primary key of the current batch engine import task
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch engine import task
-	 * @throws NoSuchImportTaskException if a batch engine import task with the primary key could not be found
-	 */
-	public BatchEngineImportTask[] findByUuid_C_PrevAndNext(
-			long batchEngineImportTaskId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
 	 * Removes all the batch engine import tasks where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -419,47 +334,6 @@ public interface BatchEngineImportTaskPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last batch engine import task in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task
-	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
-	 * Returns the last batch engine import task in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
-			orderByComparator);
-
-	/**
-	 * Returns the batch engine import tasks before and after the current batch engine import task in the ordered set where companyId = &#63;.
-	 *
-	 * @param batchEngineImportTaskId the primary key of the current batch engine import task
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch engine import task
-	 * @throws NoSuchImportTaskException if a batch engine import task with the primary key could not be found
-	 */
-	public BatchEngineImportTask[] findByCompanyId_PrevAndNext(
-			long batchEngineImportTaskId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
 	 * Removes all the batch engine import tasks where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -561,47 +435,6 @@ public interface BatchEngineImportTaskPersistence
 		String executeStatus,
 		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
 			orderByComparator);
-
-	/**
-	 * Returns the last batch engine import task in the ordered set where executeStatus = &#63;.
-	 *
-	 * @param executeStatus the execute status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task
-	 * @throws NoSuchImportTaskException if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask findByExecuteStatus_Last(
-			String executeStatus,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
-
-	/**
-	 * Returns the last batch engine import task in the ordered set where executeStatus = &#63;.
-	 *
-	 * @param executeStatus the execute status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch engine import task, or <code>null</code> if a matching batch engine import task could not be found
-	 */
-	public BatchEngineImportTask fetchByExecuteStatus_Last(
-		String executeStatus,
-		com.liferay.portal.kernel.util.OrderByComparator<BatchEngineImportTask>
-			orderByComparator);
-
-	/**
-	 * Returns the batch engine import tasks before and after the current batch engine import task in the ordered set where executeStatus = &#63;.
-	 *
-	 * @param batchEngineImportTaskId the primary key of the current batch engine import task
-	 * @param executeStatus the execute status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch engine import task
-	 * @throws NoSuchImportTaskException if a batch engine import task with the primary key could not be found
-	 */
-	public BatchEngineImportTask[] findByExecuteStatus_PrevAndNext(
-			long batchEngineImportTaskId, String executeStatus,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<BatchEngineImportTask> orderByComparator)
-		throws NoSuchImportTaskException;
 
 	/**
 	 * Removes all the batch engine import tasks where executeStatus = &#63; from the database.
@@ -795,3 +628,4 @@ public interface BatchEngineImportTaskPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1493423320

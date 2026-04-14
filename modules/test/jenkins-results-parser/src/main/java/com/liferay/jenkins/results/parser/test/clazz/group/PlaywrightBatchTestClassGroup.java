@@ -179,12 +179,9 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 		playwrightJobProperties.removeAll(Collections.singleton(null));
 
 		for (JobProperty jobProperty : playwrightJobProperties) {
-			Collections.addAll(
-				_projectNames,
-				jobProperty.getValue(
-				).split(
-					","
-				));
+			String jobPropertyValue = jobProperty.getValue();
+
+			Collections.addAll(_projectNames, jobPropertyValue.split(","));
 		}
 
 		JobProperty excludesJobProperty =
@@ -284,11 +281,6 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 	}
 
 	protected File getPlaywrightBaseDir() {
-		PortalTestClassJob portalTestClassJob = (PortalTestClassJob)getJob();
-
-		PortalGitWorkingDirectory portalGitWorkingDirectory =
-			portalTestClassJob.getPortalGitWorkingDirectory();
-
 		return new File(
 			portalGitWorkingDirectory.getWorkingDirectory(),
 			"modules/test/playwright");
@@ -397,43 +389,36 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 						playwrightSegmentTestClassGroup.addAxisTestClassGroup(
 							axisTestClassGroup);
 
-						synchronized (_loadedProjectNames) {
-							if (!_loadedProjectNames.contains(projectName) &&
-								(axisCount > 1)) {
+						if (axisCount > 1) {
+							StringBuilder sb = new StringBuilder();
 
-								_loadedProjectNames.add(projectName);
+							sb.append("npx playwright test --project=");
+							sb.append(projectName);
+							sb.append(" --shard=");
+							sb.append(axisIndex + 1);
+							sb.append("/");
+							sb.append(axisCount);
+							sb.append(" --list");
 
-								StringBuilder sb = new StringBuilder();
+							String result = _callNPMCommand(
+								getPlaywrightBaseDir(), sb.toString());
 
-								sb.append("npx playwright test --project=");
-								sb.append(projectName);
-								sb.append(" --shard=");
-								sb.append(axisIndex + 1);
-								sb.append("/");
-								sb.append(axisCount);
-								sb.append(" --list");
-
-								String result = _callNPMCommand(
-									getPlaywrightBaseDir(), sb.toString());
-
-								for (TestClass testClass : testClasses) {
-									if (result.contains(testClass.getName())) {
-										axisTestClassGroup.addTestClass(
-											testClass);
-									}
-								}
-							}
-							else {
-								for (TestClass testClass : testClasses) {
+							for (TestClass testClass : testClasses) {
+								if (result.contains(testClass.getName())) {
 									axisTestClassGroup.addTestClass(testClass);
 								}
 							}
-
-							addAxisTestClassGroup(axisTestClassGroup);
-
-							playwrightSegmentTestClassGroup.setSlaveLabel(
-								axisTestClassGroup.getSlaveLabel());
 						}
+						else {
+							for (TestClass testClass : testClasses) {
+								axisTestClassGroup.addTestClass(testClass);
+							}
+						}
+
+						addAxisTestClassGroup(axisTestClassGroup);
+
+						playwrightSegmentTestClassGroup.setBaseSlaveLabel(
+							axisTestClassGroup.getBaseSlaveLabel());
 					}
 				}
 
@@ -538,6 +523,16 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 		return sb.toString();
 	}
 
+	private File _getModulesDir() {
+		PortalTestClassJob portalTestClassJob = (PortalTestClassJob)getJob();
+
+		PortalGitWorkingDirectory portalGitWorkingDirectory =
+			portalTestClassJob.getPortalGitWorkingDirectory();
+
+		return new File(
+			portalGitWorkingDirectory.getWorkingDirectory(), "modules");
+	}
+
 	private JobProperty _getPlaywrightProjectsIncludesJobProperty() {
 		JobProperty playwrightProjectsIncludesJobProperty = getJobProperty(
 			"playwright.test.project", testSuiteName, batchName);
@@ -607,7 +602,9 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 			for (int j = 0; j < specsJSONArray.length(); j++) {
 				JSONObject specJSONObject = specsJSONArray.getJSONObject(j);
 
-				if (!title.equals(file)) {
+				if (!title.equals(file) &&
+					!JenkinsResultsParserUtil.isNullOrEmpty(title)) {
+
 					specJSONObject.put("subSuite", title);
 				}
 
@@ -763,6 +760,46 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 		return testClasses;
 	}
 
+	private boolean _isPlaywrightInYarnWorkspace() throws IOException {
+		File packageJSONFile = new File(_getModulesDir(), "package.json");
+
+		if (!packageJSONFile.exists()) {
+			return false;
+		}
+
+		String packageJSON = JenkinsResultsParserUtil.read(packageJSONFile);
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(packageJSON)) {
+			return false;
+		}
+
+		JSONObject packageJSONObject = new JSONObject(packageJSON);
+
+		JSONObject workspacesJSONObject = packageJSONObject.optJSONObject(
+			"workspaces");
+
+		if (workspacesJSONObject == null) {
+			return false;
+		}
+
+		JSONArray packagesJSONArray = workspacesJSONObject.optJSONArray(
+			"packages");
+
+		if (packagesJSONArray == null) {
+			return false;
+		}
+
+		for (int i = 0; i < packagesJSONArray.length(); i++) {
+			if (Objects.equals(
+					packagesJSONArray.optString(i), "test/playwright")) {
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private void _loadPlaywrightJSONObjects() {
 		synchronized (_playwrightJSONObjectsLoaded) {
 			if (_playwrightJSONObjectsLoaded.get()) {
@@ -781,13 +818,20 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 			}
 
 			try {
-				_callNPMCommand(playwrightBaseDir, "npm install");
+				if (!_isPlaywrightInYarnWorkspace()) {
+					_callNPMCommand(playwrightBaseDir, "npm install");
+				}
 
 				String result = _callNPMCommand(
 					playwrightBaseDir,
 					"npm run playwright test -- --list --reporter=json");
 
 				int index = result.indexOf("\n{");
+
+				if (index == -1) {
+					throw new RuntimeException(
+						"Invalid NPM command output: " + result);
+				}
 
 				result = result.substring(index);
 
@@ -872,20 +916,33 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 	}
 
 	private void _sendNotification(String message) {
+		String topLevelBuildURL = System.getenv("TOP_LEVEL_BUILD_URL");
+
+		if (!topLevelBuildURL.contains("(release)") &&
+			!topLevelBuildURL.contains(
+				"test-portal-acceptance-upstream-dxp(master)") &&
+			!topLevelBuildURL.contains(
+				"test-portal-testsuite-upstream(master)")) {
+
+			return;
+		}
+
 		StringBuilder sb = new StringBuilder();
 
 		sb.append(message);
-		sb.append(" <@U04GTH03Q>, <@U01EV0V1Y6N>\n");
 
-		sb.append(System.getenv("TOP_LEVEL_BUILD_URL"));
+		if (topLevelBuildURL.contains("(release)")) {
+			sb.append(" <@U04HF3T8M>");
+		}
+
+		sb.append(" <@U01EV0V1Y6N>\n");
+		sb.append(topLevelBuildURL);
 
 		NotificationUtil.sendSlackNotification(
 			sb.toString(), "#ci-notifications", ":playwright:",
 			"Playwright batch creation failure", "Liferay Playwright");
 	}
 
-	private static final Set<String> _loadedProjectNames =
-		Collections.synchronizedSet(new HashSet<>());
 	private static final Pattern _playwrightFileNamePattern = Pattern.compile(
 		"tests/(?<filePath>(?<projectName>.+)/[^/]*.spec.ts)");
 	private static JSONObject _playwrightJSONObject;

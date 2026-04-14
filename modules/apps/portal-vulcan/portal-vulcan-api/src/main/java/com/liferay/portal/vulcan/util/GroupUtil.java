@@ -7,10 +7,13 @@ package com.liferay.portal.vulcan.util;
 
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+
+import java.io.Serializable;
+
+import java.util.Map;
 
 /**
  * @author Javier Gamarra
@@ -48,6 +51,10 @@ public class GroupUtil {
 
 		if (group == null) {
 			group = groupLocalService.fetchGroup(GetterUtil.getLong(siteKey));
+
+			if ((group != null) && (group.getCompanyId() != companyId)) {
+				group = null;
+			}
 		}
 
 		if (group == null) {
@@ -57,6 +64,22 @@ public class GroupUtil {
 
 		if (_checkGroup(group)) {
 			return group.getGroupId();
+		}
+
+		return null;
+	}
+
+	public static String getScopeKey(Map<String, Serializable> parameters) {
+		if (parameters.containsKey("scopeKey")) {
+			return String.valueOf(parameters.get("scopeKey"));
+		}
+
+		if (parameters.containsKey("siteExternalReferenceCode")) {
+			return String.valueOf(parameters.get("siteExternalReferenceCode"));
+		}
+
+		if (parameters.containsKey("siteId")) {
+			return String.valueOf(parameters.get("siteId"));
 		}
 
 		return null;
@@ -81,7 +104,8 @@ public class GroupUtil {
 	private static boolean _checkGroup(Group group) {
 		if ((group != null) &&
 			(_isDepotOrSite(group) || _isDepotOrSite(group.getLiveGroup()) ||
-			 group.isCMS() || group.isUserGroup())) {
+			 group.isCMS() || group.isLayoutSetPrototype() ||
+			 group.isUserGroup())) {
 
 			return true;
 		}
@@ -112,10 +136,6 @@ public class GroupUtil {
 			if (depotEntryGroup != null) {
 				return depotEntryGroup;
 			}
-		}
-
-		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-17564")) {
-			return null;
 		}
 
 		return groupLocalService.fetchGroup(assetLibraryId);

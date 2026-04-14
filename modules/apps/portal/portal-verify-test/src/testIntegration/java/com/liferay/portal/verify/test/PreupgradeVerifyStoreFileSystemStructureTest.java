@@ -6,6 +6,7 @@
 package com.liferay.portal.verify.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -21,12 +22,12 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.verify.PreupgradeVerifyStoreFileSystemStructure;
 import com.liferay.portal.verify.VerifyProcess;
 import com.liferay.portal.verify.test.util.BaseVerifyProcessTestCase;
@@ -36,7 +37,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -173,49 +177,43 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 			_ROOT_DIR_FILE_SYSTEM_STORE + "/" +
 				PortalInstancePool.getCompanyIds()[0]);
 
-		File file = _touch(
+		File file1 = _touch(
 			_mkdirs(_ROOT_DIR_FILE_SYSTEM_STORE),
 			PortalInstancePool.getCompanyIds()[0]);
 
-		_testVerify(false, file + " is not a directory", null);
+		_testVerify(false, file1 + " is not a directory", null);
 
-		file = _touch(
+		File file2 = _touch(
 			_mkdirs(_ROOT_DIR_FILE_SYSTEM_STORE, _companyId, _repositoryId),
 			RandomTestUtil.randomString());
 
-		_testVerify(
-			false, null,
-			"Unexpected file " + file + " in file system structure");
-
-		file = _touch(
+		File file3 = _touch(
 			_mkdirs(_ROOT_DIR_FILE_SYSTEM_STORE, _companyId),
 			RandomTestUtil.randomString());
 
-		_testVerify(
-			false, null,
-			"Unexpected file " + file + " in file system structure");
-
-		file = _touch(
+		File file4 = _touch(
 			_mkdirs(
 				_ROOT_DIR_FILE_SYSTEM_STORE, _companyId, _repositoryId, "100"),
 			RandomTestUtil.randomString());
 
-		_testVerify(
-			false, null,
-			"Unexpected file " + file + " not matching version label pattern");
-
-		file = _mkdirs(
+		File file5 = _mkdirs(
 			_ROOT_DIR_FILE_SYSTEM_STORE, _companyId, _repositoryId, "100.txt");
 
 		_testVerify(
 			false, null,
-			StringBundler.concat(
-				"Unexpected file name directory ", file,
-				" with extension in file system structure"));
+			"Unexpected file " + file2 + " in file system structure",
+			"Unexpected file " + file3 + " in file system structure",
+			"Unexpected file " + file4 + " not matching version label pattern",
+			"Unexpected file name directory " + file5 +
+				" with extension in file system structure");
 
-		_mkdirs(
-			_ROOT_DIR_FILE_SYSTEM_STORE, _companyId, _repositoryId, "100",
-			"1.0");
+		_testVerify(false, null, null);
+
+		_touch(
+			_mkdirs(
+				_ROOT_DIR_FILE_SYSTEM_STORE, _companyId, _repositoryId, "100"),
+			DLFileEntryConstants.PRIVATE_WORKING_COPY_VERSION +
+				StringPool.TILDE + String.valueOf(UUID.randomUUID()));
 
 		_testVerify(false, null, null);
 	}
@@ -226,21 +224,27 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 	}
 
 	private void _assertLogCapture(
-		String expectedLogEntryMessage, LogCapture logCapture) {
+		LogCapture logCapture, Set<String> expectedMessages) {
 
 		List<LogEntry> logEntries = logCapture.getLogEntries();
 
-		if (expectedLogEntryMessage == null) {
+		if (expectedMessages == null) {
 			Assert.assertEquals(logEntries.toString(), 0, logEntries.size());
 
 			return;
 		}
 
-		Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+		Assert.assertEquals(
+			logEntries.toString(), expectedMessages.size(), logEntries.size());
 
-		LogEntry logEntry = logEntries.get(0);
+		Set<String> verifyMessages = new HashSet<>();
 
-		Assert.assertEquals(expectedLogEntryMessage, logEntry.getMessage());
+		for (LogEntry entry : logEntries) {
+			verifyMessages.add(entry.getMessage());
+		}
+
+		Assert.assertEquals(
+			verifyMessages.toString(), expectedMessages, verifyMessages);
 	}
 
 	private File _mkdirs(Object... objects) {
@@ -260,7 +264,7 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 
 	private void _testVerify(
 			boolean advancedFileSystemStore, String expectedExceptionMessage,
-			String expectedLogEntryMessage)
+			String... expectedLogEntryMessages)
 		throws Exception {
 
 		String dlStoreImpl = ReflectionTestUtil.getAndSetFieldValue(
@@ -272,13 +276,19 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 			PreupgradeVerifyStoreFileSystemStructure.class.getName(),
 			LoggerTestUtil.ERROR);
 
+		Set<String> expectedMessages = new HashSet<>();
+
+		if (expectedLogEntryMessages != null) {
+			expectedMessages.addAll(Set.of(expectedLogEntryMessages));
+		}
+
 		try {
 			testVerify();
 
-			_assertLogCapture(expectedLogEntryMessage, logCapture);
+			_assertLogCapture(logCapture, expectedMessages);
 
 			if ((expectedExceptionMessage != null) ||
-				(expectedLogEntryMessage != null)) {
+				(expectedLogEntryMessages != null)) {
 
 				Assert.fail();
 			}
@@ -291,13 +301,15 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 					advancedFileSystemStore ?
 						_ROOT_DIR_ADVANCED_FILE_SYSTEM_STORE :
 							_ROOT_DIR_FILE_SYSTEM_STORE,
-					" is invalid");
+					StringPool.SLASH, _companyId, " is invalid");
 			}
 
 			Assert.assertEquals(
 				expectedExceptionMessage, exception.getMessage());
 
-			_assertLogCapture(expectedLogEntryMessage, logCapture);
+			expectedMessages.add(expectedExceptionMessage);
+
+			_assertLogCapture(logCapture, expectedMessages);
 		}
 		finally {
 			logCapture.close();

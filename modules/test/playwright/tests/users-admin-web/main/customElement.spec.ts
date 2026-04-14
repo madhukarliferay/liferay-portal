@@ -5,26 +5,31 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {loginTest} from '../../../fixtures/loginTest';
+import {getRandomInt} from '../../../utils/getRandomInt';
 import {editCustomElementPageTest} from '../../client-extension-web/main/fixtures/editCustomElementPageTest';
 import {WaitAction} from '../../client-extension-web/main/pages/EditClientExtensionsPage';
 import {componentsPageTest} from '../../configuration-admin-web/main/fixtures/ComponentsPageTest';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
 	componentsPageTest,
 	editCustomElementPageTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
+	globalMenuPagesTest,
 	loginTest()
 );
 
 test('LPD-39537 - Check that the name field of custom elements does not allow stored XSS injections', async ({
-	applicationsMenuPage,
 	componentsPage,
 	editCustomElementPage,
+	globalMenuPage,
 	page,
 }) => {
-	const NAME = '<svg onload=alert(XSS injection)>';
+	const NAME = `<svg onload=alert(XSS injection ${getRandomInt()})>`;
 
 	await editCustomElementPage.goto();
 
@@ -36,7 +41,7 @@ test('LPD-39537 - Check that the name field of custom elements does not allow st
 
 	await editCustomElementPage.publish(WaitAction.SUCCESS);
 
-	await applicationsMenuPage.goToComponents();
+	await globalMenuPage.goToControlPanel('Components');
 
 	await expect(componentsPage.helpLink).toBeVisible();
 

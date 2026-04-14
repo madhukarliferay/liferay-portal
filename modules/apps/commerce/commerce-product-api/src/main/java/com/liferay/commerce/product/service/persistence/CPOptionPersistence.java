@@ -120,47 +120,6 @@ public interface CPOptionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option
-	 * @throws NoSuchCPOptionException if a matching cp option could not be found
-	 */
-	public CPOption findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
-
-	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option, or <code>null</code> if a matching cp option could not be found
-	 */
-	public CPOption fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-			orderByComparator);
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public CPOption[] findByUuid_PrevAndNext(
-			long CPOptionId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
-
-	/**
 	 * Returns all the cp options that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -200,21 +159,6 @@ public interface CPOptionPersistence
 		String uuid, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CPOption>
 			orderByComparator);
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set of cp options that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public CPOption[] filterFindByUuid_PrevAndNext(
-			long CPOptionId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
 
 	/**
 	 * Removes all the cp options where uuid = &#63; from the database.
@@ -333,50 +277,6 @@ public interface CPOptionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option
-	 * @throws NoSuchCPOptionException if a matching cp option could not be found
-	 */
-	public CPOption findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
-
-	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option, or <code>null</code> if a matching cp option could not be found
-	 */
-	public CPOption fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-			orderByComparator);
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public CPOption[] findByUuid_C_PrevAndNext(
-			long CPOptionId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
-
-	/**
 	 * Returns all the cp options that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -420,22 +320,6 @@ public interface CPOptionPersistence
 		String uuid, long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CPOption>
 			orderByComparator);
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set of cp options that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public CPOption[] filterFindByUuid_C_PrevAndNext(
-			long CPOptionId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
 
 	/**
 	 * Removes all the cp options where uuid = &#63; and companyId = &#63; from the database.
@@ -551,47 +435,6 @@ public interface CPOptionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp option in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option
-	 * @throws NoSuchCPOptionException if a matching cp option could not be found
-	 */
-	public CPOption findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
-
-	/**
-	 * Returns the last cp option in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option, or <code>null</code> if a matching cp option could not be found
-	 */
-	public CPOption fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-			orderByComparator);
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public CPOption[] findByCompanyId_PrevAndNext(
-			long CPOptionId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
-
-	/**
 	 * Returns all the cp options that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -631,21 +474,6 @@ public interface CPOptionPersistence
 		long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CPOption>
 			orderByComparator);
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set of cp options that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public CPOption[] filterFindByCompanyId_PrevAndNext(
-			long CPOptionId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPOption>
-				orderByComparator)
-		throws NoSuchCPOptionException;
 
 	/**
 	 * Removes all the cp options where companyId = &#63; from the database.
@@ -890,3 +718,4 @@ public interface CPOptionPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1572764679

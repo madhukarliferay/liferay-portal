@@ -161,6 +161,13 @@ public interface AssetCategoryService extends BaseService {
 			String externalReferenceCode, long groupId)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AssetCategory getOrAddEmptyCategoryWithAncestors(
+			String externalReferenceCode, long groupId,
+			String parentCategoryExternalReferenceCode,
+			String vocabularyExternalReferenceCode)
+		throws PortalException;
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -280,10 +287,11 @@ public interface AssetCategoryService extends BaseService {
 		throws PortalException;
 
 	public AssetCategory updateCategory(
-			long categoryId, long parentCategoryId,
-			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
-			long vocabularyId, String[] categoryProperties,
-			ServiceContext serviceContext)
+			String externalReferenceCode, long categoryId,
+			long parentCategoryId, Map<Locale, String> titleMap,
+			Map<Locale, String> descriptionMap, long vocabularyId,
+			String[] categoryProperties, ServiceContext serviceContext)
 		throws PortalException;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1982578244

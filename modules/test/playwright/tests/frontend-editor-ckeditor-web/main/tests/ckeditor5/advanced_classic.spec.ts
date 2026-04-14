@@ -6,31 +6,18 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {featureFlagsTest} from '../../../../../fixtures/featureFlagsTest';
-import {isolatedSiteTest} from '../../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../../fixtures/loginTest';
-import {waitForEditor} from '../../../../../utils/waitFor';
-import {ckeditorSamplePageTest} from '../../fixtures/ckeditorSamplePageTest';
-import {classicPageTest} from './fixtures/classicPageTest';
+import getRandomString from '../../../../../utils/getRandomString';
+import {advancedClassicPageTest} from '../../../../frontend-editor-ckeditor-sample-web/fixtures/ckeditor5/classicPageTest';
 
 export const test = mergeTests(
-	ckeditorSamplePageTest,
-	classicPageTest,
+	advancedClassicPageTest,
 	featureFlagsTest({
 		'LPD-11235': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
-	isolatedSiteTest,
 	loginTest()
 );
-
-test.beforeEach(async ({ckeditorSamplePage, page, site}) => {
-	await ckeditorSamplePage.createAndGotoSitePage({site});
-
-	await ckeditorSamplePage.selectTab('CKEditor 5');
-	await ckeditorSamplePage.selectTab('Advanced Classic');
-
-	await waitForEditor({page});
-});
 
 test(
 	'Editor configuration is applied',
@@ -83,6 +70,12 @@ test(
 				await classicPage.toolbar.buttonLabels.allInnerTexts();
 
 			expect(controls).toEqual(advancedPresetControls);
+		});
+
+		await test.step('Toolbar buttons have Clay icons', async () => {
+			await expect(
+				classicPage.toolbar.container.locator('svg use[href*="/clay/"]')
+			).toHaveCount(23);
 		});
 	}
 );
@@ -151,6 +144,73 @@ test(
 
 		await expect(
 			classicPage.editable.locator('img[src*="moon-png"]')
+		).toBeVisible();
+	}
+);
+
+test(
+	'Can add a hyperlink to existing text',
+	{tag: '@LPS-110663'},
+	async ({classicPage, page}) => {
+		await test.step('Type some text in the editor', async () => {
+			await classicPage.editable.fill(getRandomString());
+		});
+
+		await test.step('Select text and add hyperlink', async () => {
+			await classicPage.editable.selectText();
+
+			await classicPage.toolbar.container
+				.getByRole('button', {name: 'Link'})
+				.click();
+
+			const urlInput = page.getByLabel('Link URL');
+
+			await expect(urlInput).toBeVisible({timeout: 3000});
+
+			await urlInput.fill('https://www.liferay.com');
+
+			await page.getByLabel('Insert', {exact: true}).click();
+		});
+
+		await expect(
+			classicPage.editable.locator('a[href*="https://www.liferay.com"]')
+		).toBeVisible();
+	}
+);
+
+test(
+	'Select image by modal URL input',
+	{tag: '@LPD-11235'},
+	async ({classicPage}) => {
+		await classicPage.toolbar.container
+			.getByRole('button', {name: 'Image'})
+			.click();
+
+		const itemSelectorFrame = classicPage.itemSelectorFrame;
+
+		itemSelectorFrame.getByRole('link', {name: 'URL'}).click();
+
+		const imageURLInput = itemSelectorFrame.getByLabel('URL', {
+			exact: true,
+		});
+
+		await expect(imageURLInput).toBeEnabled();
+
+		const addButton = itemSelectorFrame.getByRole('button', {
+			exact: true,
+			name: 'Add',
+		});
+
+		await expect(addButton).toBeDisabled();
+
+		await imageURLInput.fill('/documents/d/guest/tree-png');
+
+		await expect(addButton).toBeEnabled();
+
+		await addButton.click();
+
+		await expect(
+			classicPage.editable.locator('img[src*="tree-png"]')
 		).toBeVisible();
 	}
 );
@@ -232,5 +292,92 @@ test(
 		await expect(AICreatorButton).toBeEnabled();
 		await expect(imageButton).toBeEnabled();
 		await expect(videoButton).toBeEnabled();
+	}
+);
+
+test(
+	'Can view HTML in source mode formatted in wysiwyg view',
+	{tag: '@LRQA-67229'},
+	async ({classicPage}) => {
+		const sourceButton = classicPage.toolbar.container.getByRole('button', {
+			name: 'Source',
+		});
+
+		await sourceButton.click();
+
+		await classicPage.sourceEditable.fill(
+			'<h2>Heading Two</h2><p>Paragraph with <i>italic</i> text.</p>'
+		);
+
+		await sourceButton.click();
+
+		await expect(classicPage.editable.locator('h2')).toContainText(
+			'Heading Two'
+		);
+
+		await expect(classicPage.editable.locator('i')).toContainText('italic');
+	}
+);
+
+test(
+	'Pasting HTML content works',
+	{tag: '@LPD-65963'},
+	async ({classicPage, context}) => {
+		const newPage = await context.newPage();
+
+		await newPage.goto(
+			'http://www.standards-schmandards.com/exhibits/wysiwyg/sampledoc.htm'
+		);
+
+		await newPage.locator('body').focus();
+		await newPage.locator('html').press('ControlOrMeta+a');
+		await newPage.locator('html').press('ControlOrMeta+c');
+
+		await classicPage.editable.focus();
+		await classicPage.editable.press('ControlOrMeta+a');
+		await classicPage.editable.press('ControlOrMeta+v');
+
+		await expect(
+			classicPage.editable.getByRole('img', {
+				name: 'A beautiful redheaded man',
+			})
+		).toBeVisible();
+
+		await expect(
+			classicPage.editable.getByRole('figure', {
+				name: 'Top banana importers 1998 (',
+			})
+		).toBeVisible();
+	}
+);
+
+test(
+	'Form input value correctly syncs with the editor value',
+	{tag: '@LPD-71706'},
+	async ({classicPage, page}) => {
+		const hiddenInput = page.locator(
+			'input[name*="advancedClassicEditor"]'
+		);
+
+		await test.step('Check that the initial value is set', async () => {
+			await expect(hiddenInput).toHaveValue(
+				/Lorem ipsum dolor sit amet, consectetur adipiscing elit/
+			);
+		});
+
+		await test.step('Check that after making changes, the value is updated', async () => {
+			await classicPage.editable.focus();
+			await classicPage.editable.pressSequentially('New content');
+
+			await expect(hiddenInput).toHaveValue(/New content/);
+		});
+
+		await test.step('Check that after clearing the editor, the value is updated', async () => {
+			await classicPage.editable.focus();
+			await classicPage.editable.press('ControlOrMeta+a');
+			await classicPage.editable.press('Backspace');
+
+			await expect(hiddenInput).toHaveValue('');
+		});
 	}
 );

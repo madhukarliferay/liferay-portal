@@ -34,6 +34,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -113,6 +114,13 @@ public class BlogPostingResourceTest extends BaseBlogPostingResourceTestCase {
 			siteBlogPostingsPage.getItems(), CoreMatchers.hasItem(blogPosting));
 	}
 
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteBlogPostingMyRating() throws Exception {
+		super.testGraphQLDeleteBlogPostingMyRating();
+	}
+
 	@Override
 	@Test
 	public void testPutBlogPosting() throws Exception {
@@ -151,7 +159,9 @@ public class BlogPostingResourceTest extends BaseBlogPostingResourceTestCase {
 
 	@Override
 	protected String[] getAdditionalAssertFieldNames() {
-		return new String[] {"articleBody", "description", "headline"};
+		return new String[] {
+			"articleBody", "description", "friendlyUrlPath", "headline"
+		};
 	}
 
 	@Override

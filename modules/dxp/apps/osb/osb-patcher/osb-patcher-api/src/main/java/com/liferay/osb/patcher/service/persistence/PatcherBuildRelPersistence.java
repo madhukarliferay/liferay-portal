@@ -121,47 +121,6 @@ public interface PatcherBuildRelPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last patcher build rel in the ordered set where childPatcherBuildId = &#63;.
-	 *
-	 * @param childPatcherBuildId the child patcher build ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher build rel
-	 * @throws NoSuchPatcherBuildRelException if a matching patcher build rel could not be found
-	 */
-	public PatcherBuildRel findByChildPatcherBuildId_Last(
-			long childPatcherBuildId,
-			com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
-				orderByComparator)
-		throws NoSuchPatcherBuildRelException;
-
-	/**
-	 * Returns the last patcher build rel in the ordered set where childPatcherBuildId = &#63;.
-	 *
-	 * @param childPatcherBuildId the child patcher build ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher build rel, or <code>null</code> if a matching patcher build rel could not be found
-	 */
-	public PatcherBuildRel fetchByChildPatcherBuildId_Last(
-		long childPatcherBuildId,
-		com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
-			orderByComparator);
-
-	/**
-	 * Returns the patcher build rels before and after the current patcher build rel in the ordered set where childPatcherBuildId = &#63;.
-	 *
-	 * @param patcherBuildRelId the primary key of the current patcher build rel
-	 * @param childPatcherBuildId the child patcher build ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher build rel
-	 * @throws NoSuchPatcherBuildRelException if a patcher build rel with the primary key could not be found
-	 */
-	public PatcherBuildRel[] findByChildPatcherBuildId_PrevAndNext(
-			long patcherBuildRelId, long childPatcherBuildId,
-			com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
-				orderByComparator)
-		throws NoSuchPatcherBuildRelException;
-
-	/**
 	 * Removes all the patcher build rels where childPatcherBuildId = &#63; from the database.
 	 *
 	 * @param childPatcherBuildId the child patcher build ID
@@ -263,47 +222,6 @@ public interface PatcherBuildRelPersistence
 		long parentPatcherBuildId,
 		com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
 			orderByComparator);
-
-	/**
-	 * Returns the last patcher build rel in the ordered set where parentPatcherBuildId = &#63;.
-	 *
-	 * @param parentPatcherBuildId the parent patcher build ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher build rel
-	 * @throws NoSuchPatcherBuildRelException if a matching patcher build rel could not be found
-	 */
-	public PatcherBuildRel findByParentPatcherBuildId_Last(
-			long parentPatcherBuildId,
-			com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
-				orderByComparator)
-		throws NoSuchPatcherBuildRelException;
-
-	/**
-	 * Returns the last patcher build rel in the ordered set where parentPatcherBuildId = &#63;.
-	 *
-	 * @param parentPatcherBuildId the parent patcher build ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher build rel, or <code>null</code> if a matching patcher build rel could not be found
-	 */
-	public PatcherBuildRel fetchByParentPatcherBuildId_Last(
-		long parentPatcherBuildId,
-		com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
-			orderByComparator);
-
-	/**
-	 * Returns the patcher build rels before and after the current patcher build rel in the ordered set where parentPatcherBuildId = &#63;.
-	 *
-	 * @param patcherBuildRelId the primary key of the current patcher build rel
-	 * @param parentPatcherBuildId the parent patcher build ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher build rel
-	 * @throws NoSuchPatcherBuildRelException if a patcher build rel with the primary key could not be found
-	 */
-	public PatcherBuildRel[] findByParentPatcherBuildId_PrevAndNext(
-			long patcherBuildRelId, long parentPatcherBuildId,
-			com.liferay.portal.kernel.util.OrderByComparator<PatcherBuildRel>
-				orderByComparator)
-		throws NoSuchPatcherBuildRelException;
 
 	/**
 	 * Removes all the patcher build rels where parentPatcherBuildId = &#63; from the database.
@@ -441,3 +359,4 @@ public interface PatcherBuildRelPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1332570254

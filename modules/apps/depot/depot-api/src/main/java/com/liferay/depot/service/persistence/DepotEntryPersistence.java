@@ -121,47 +121,6 @@ public interface DepotEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry
-	 * @throws NoSuchEntryException if a matching depot entry could not be found
-	 */
-	public DepotEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry, or <code>null</code> if a matching depot entry could not be found
-	 */
-	public DepotEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the depot entries before and after the current depot entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param depotEntryId the primary key of the current depot entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next depot entry
-	 * @throws NoSuchEntryException if a depot entry with the primary key could not be found
-	 */
-	public DepotEntry[] findByUuid_PrevAndNext(
-			long depotEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the depot entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -320,50 +279,6 @@ public interface DepotEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry
-	 * @throws NoSuchEntryException if a matching depot entry could not be found
-	 */
-	public DepotEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last depot entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching depot entry, or <code>null</code> if a matching depot entry could not be found
-	 */
-	public DepotEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the depot entries before and after the current depot entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param depotEntryId the primary key of the current depot entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next depot entry
-	 * @throws NoSuchEntryException if a depot entry with the primary key could not be found
-	 */
-	public DepotEntry[] findByUuid_C_PrevAndNext(
-			long depotEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the depot entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -421,6 +336,116 @@ public interface DepotEntryPersistence
 	 * @return the number of matching depot entries
 	 */
 	public int countByGroupId(long groupId);
+
+	/**
+	 * Returns all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @return the matching depot entries
+	 */
+	public java.util.List<DepotEntry> findByC_T(long companyId, int type);
+
+	/**
+	 * Returns a range of all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DepotEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param start the lower bound of the range of depot entries
+	 * @param end the upper bound of the range of depot entries (not inclusive)
+	 * @return the range of matching depot entries
+	 */
+	public java.util.List<DepotEntry> findByC_T(
+		long companyId, int type, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DepotEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param start the lower bound of the range of depot entries
+	 * @param end the upper bound of the range of depot entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching depot entries
+	 */
+	public java.util.List<DepotEntry> findByC_T(
+		long companyId, int type, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>DepotEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param start the lower bound of the range of depot entries
+	 * @param end the upper bound of the range of depot entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching depot entries
+	 */
+	public java.util.List<DepotEntry> findByC_T(
+		long companyId, int type, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first depot entry in the ordered set where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching depot entry
+	 * @throws NoSuchEntryException if a matching depot entry could not be found
+	 */
+	public DepotEntry findByC_T_First(
+			long companyId, int type,
+			com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
+				orderByComparator)
+		throws NoSuchEntryException;
+
+	/**
+	 * Returns the first depot entry in the ordered set where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching depot entry, or <code>null</code> if a matching depot entry could not be found
+	 */
+	public DepotEntry fetchByC_T_First(
+		long companyId, int type,
+		com.liferay.portal.kernel.util.OrderByComparator<DepotEntry>
+			orderByComparator);
+
+	/**
+	 * Removes all the depot entries where companyId = &#63; and type = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 */
+	public void removeByC_T(long companyId, int type);
+
+	/**
+	 * Returns the number of depot entries where companyId = &#63; and type = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param type the type
+	 * @return the number of matching depot entries
+	 */
+	public int countByC_T(long companyId, int type);
 
 	/**
 	 * Caches the depot entry in the entity cache if it is enabled.
@@ -542,3 +567,4 @@ public interface DepotEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:974231851

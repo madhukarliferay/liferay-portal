@@ -109,6 +109,8 @@ public class OpenAPIResourceImpl {
 
 			add(ScopedTestEntityResourceImpl.class);
 
+			add(SharedInternalModelBatchTestEntityResourceImpl.class);
+
 			add(SiteTestEntityResourceImpl.class);
 
 			add(SortResourceImpl.class);
@@ -122,3 +124,4 @@ public class OpenAPIResourceImpl {
 	};
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1347375589

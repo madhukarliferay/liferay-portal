@@ -21,11 +21,13 @@ import com.liferay.portal.kernel.dao.orm.FinderPath;
 import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
@@ -323,233 +325,160 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 	}
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63;.
+	 * Returns all the commerce availability estimates that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a matching commerce availability estimate could not be found
+	 * @return the matching commerce availability estimates that the user has permission to view
 	 */
 	@Override
-	public CommerceAvailabilityEstimate findByUuid_Last(
-			String uuid,
-			OrderByComparator<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException {
-
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-			fetchByUuid_Last(uuid, orderByComparator);
-
-		if (commerceAvailabilityEstimate != null) {
-			return commerceAvailabilityEstimate;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchAvailabilityEstimateException(sb.toString());
+	public List<CommerceAvailabilityEstimate> filterFindByUuid(String uuid) {
+		return filterFindByUuid(
+			uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63;.
+	 * Returns a range of all the commerce availability estimates that the user has permission to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate, or <code>null</code> if a matching commerce availability estimate could not be found
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @return the range of matching commerce availability estimates that the user has permission to view
 	 */
 	@Override
-	public CommerceAvailabilityEstimate fetchByUuid_Last(
-		String uuid,
+	public List<CommerceAvailabilityEstimate> filterFindByUuid(
+		String uuid, int start, int end) {
+
+		return filterFindByUuid(uuid, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the commerce availability estimates that the user has permissions to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching commerce availability estimates that the user has permission to view
+	 */
+	@Override
+	public List<CommerceAvailabilityEstimate> filterFindByUuid(
+		String uuid, int start, int end,
 		OrderByComparator<CommerceAvailabilityEstimate> orderByComparator) {
 
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByUuid(uuid, start, end, orderByComparator);
 		}
 
-		List<CommerceAvailabilityEstimate> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
 
-		if (!list.isEmpty()) {
-			return list.get(0);
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the commerce availability estimates before and after the current commerce availability estimate in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceAvailabilityEstimateId the primary key of the current commerce availability estimate
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a commerce availability estimate with the primary key could not be found
-	 */
-	@Override
-	public CommerceAvailabilityEstimate[] findByUuid_PrevAndNext(
-			long commerceAvailabilityEstimateId, String uuid,
-			OrderByComparator<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException {
 
 		uuid = Objects.toString(uuid, "");
 
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-			findByPrimaryKey(commerceAvailabilityEstimateId);
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
+		}
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(
+					CommerceAvailabilityEstimateModelImpl.
+						ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CommerceAvailabilityEstimateModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CommerceAvailabilityEstimate.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			CommerceAvailabilityEstimate[] array =
-				new CommerceAvailabilityEstimateImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByUuid_PrevAndNext(
-				session, commerceAvailabilityEstimate, uuid, orderByComparator,
-				true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS,
+					CommerceAvailabilityEstimateImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE,
+					CommerceAvailabilityEstimateImpl.class);
+			}
 
-			array[1] = commerceAvailabilityEstimate;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByUuid_PrevAndNext(
-				session, commerceAvailabilityEstimate, uuid, orderByComparator,
-				false);
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
 
-			return array;
+			return (List<CommerceAvailabilityEstimate>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected CommerceAvailabilityEstimate getByUuid_PrevAndNext(
-		Session session,
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate, String uuid,
-		OrderByComparator<CommerceAvailabilityEstimate> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CommerceAvailabilityEstimateModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						commerceAvailabilityEstimate)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CommerceAvailabilityEstimate> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -629,11 +558,88 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 		return count.intValue();
 	}
 
+	/**
+	 * Returns the number of commerce availability estimates that the user has permission to view where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @return the number of matching commerce availability estimates that the user has permission to view
+	 */
+	@Override
+	public int filterCountByUuid(String uuid) {
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CommerceAvailabilityEstimate> commerceAvailabilityEstimates =
+				findByUuid(uuid);
+
+			commerceAvailabilityEstimates = InlineSQLHelperUtil.filter(
+				commerceAvailabilityEstimates);
+
+			return commerceAvailabilityEstimates.size();
+		}
+
+		uuid = Objects.toString(uuid, "");
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_COMMERCEAVAILABILITYESTIMATE_WHERE);
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CommerceAvailabilityEstimate.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_UUID_UUID_2 =
 		"commerceAvailabilityEstimate.uuid = ?";
 
 	private static final String _FINDER_COLUMN_UUID_UUID_3 =
 		"(commerceAvailabilityEstimate.uuid IS NULL OR commerceAvailabilityEstimate.uuid = '')";
+
+	private static final String _FINDER_COLUMN_UUID_UUID_2_SQL =
+		"commerceAvailabilityEstimate.uuid_ = ?";
+
+	private static final String _FINDER_COLUMN_UUID_UUID_3_SQL =
+		"(commerceAvailabilityEstimate.uuid_ IS NULL OR commerceAvailabilityEstimate.uuid_ = '')";
 
 	private FinderPath _finderPathWithPaginationFindByUuid_C;
 	private FinderPath _finderPathWithoutPaginationFindByUuid_C;
@@ -892,244 +898,169 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 	}
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns all the commerce availability estimates that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a matching commerce availability estimate could not be found
+	 * @return the matching commerce availability estimates that the user has permission to view
 	 */
 	@Override
-	public CommerceAvailabilityEstimate findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException {
+	public List<CommerceAvailabilityEstimate> filterFindByUuid_C(
+		String uuid, long companyId) {
 
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-			fetchByUuid_C_Last(uuid, companyId, orderByComparator);
-
-		if (commerceAvailabilityEstimate != null) {
-			return commerceAvailabilityEstimate;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchAvailabilityEstimateException(sb.toString());
+		return filterFindByUuid_C(
+			uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns a range of all the commerce availability estimates that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate, or <code>null</code> if a matching commerce availability estimate could not be found
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @return the range of matching commerce availability estimates that the user has permission to view
 	 */
 	@Override
-	public CommerceAvailabilityEstimate fetchByUuid_C_Last(
-		String uuid, long companyId,
+	public List<CommerceAvailabilityEstimate> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end) {
+
+		return filterFindByUuid_C(uuid, companyId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the commerce availability estimates that the user has permissions to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching commerce availability estimates that the user has permission to view
+	 */
+	@Override
+	public List<CommerceAvailabilityEstimate> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end,
 		OrderByComparator<CommerceAvailabilityEstimate> orderByComparator) {
 
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
 		}
 
-		List<CommerceAvailabilityEstimate> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
 
-		if (!list.isEmpty()) {
-			return list.get(0);
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the commerce availability estimates before and after the current commerce availability estimate in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceAvailabilityEstimateId the primary key of the current commerce availability estimate
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a commerce availability estimate with the primary key could not be found
-	 */
-	@Override
-	public CommerceAvailabilityEstimate[] findByUuid_C_PrevAndNext(
-			long commerceAvailabilityEstimateId, String uuid, long companyId,
-			OrderByComparator<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException {
 
 		uuid = Objects.toString(uuid, "");
 
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-			findByPrimaryKey(commerceAvailabilityEstimateId);
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				4 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(5);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
+		}
+
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(
+					CommerceAvailabilityEstimateModelImpl.
+						ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CommerceAvailabilityEstimateModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CommerceAvailabilityEstimate.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			CommerceAvailabilityEstimate[] array =
-				new CommerceAvailabilityEstimateImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByUuid_C_PrevAndNext(
-				session, commerceAvailabilityEstimate, uuid, companyId,
-				orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS,
+					CommerceAvailabilityEstimateImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE,
+					CommerceAvailabilityEstimateImpl.class);
+			}
 
-			array[1] = commerceAvailabilityEstimate;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByUuid_C_PrevAndNext(
-				session, commerceAvailabilityEstimate, uuid, companyId,
-				orderByComparator, false);
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
 
-			return array;
+			queryPos.add(companyId);
+
+			return (List<CommerceAvailabilityEstimate>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected CommerceAvailabilityEstimate getByUuid_C_PrevAndNext(
-		Session session,
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate, String uuid,
-		long companyId,
-		OrderByComparator<CommerceAvailabilityEstimate> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CommerceAvailabilityEstimateModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						commerceAvailabilityEstimate)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CommerceAvailabilityEstimate> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -1217,11 +1148,93 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 		return count.intValue();
 	}
 
+	/**
+	 * Returns the number of commerce availability estimates that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @return the number of matching commerce availability estimates that the user has permission to view
+	 */
+	@Override
+	public int filterCountByUuid_C(String uuid, long companyId) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CommerceAvailabilityEstimate> commerceAvailabilityEstimates =
+				findByUuid_C(uuid, companyId);
+
+			commerceAvailabilityEstimates = InlineSQLHelperUtil.filter(
+				commerceAvailabilityEstimates);
+
+			return commerceAvailabilityEstimates.size();
+		}
+
+		uuid = Objects.toString(uuid, "");
+
+		StringBundler sb = new StringBundler(3);
+
+		sb.append(_FILTER_SQL_COUNT_COMMERCEAVAILABILITYESTIMATE_WHERE);
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
+		}
+
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CommerceAvailabilityEstimate.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
+
+			queryPos.add(companyId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_UUID_C_UUID_2 =
 		"commerceAvailabilityEstimate.uuid = ? AND ";
 
 	private static final String _FINDER_COLUMN_UUID_C_UUID_3 =
 		"(commerceAvailabilityEstimate.uuid IS NULL OR commerceAvailabilityEstimate.uuid = '') AND ";
+
+	private static final String _FINDER_COLUMN_UUID_C_UUID_2_SQL =
+		"commerceAvailabilityEstimate.uuid_ = ? AND ";
+
+	private static final String _FINDER_COLUMN_UUID_C_UUID_3_SQL =
+		"(commerceAvailabilityEstimate.uuid_ IS NULL OR commerceAvailabilityEstimate.uuid_ = '') AND ";
 
 	private static final String _FINDER_COLUMN_UUID_C_COMPANYID_2 =
 		"commerceAvailabilityEstimate.companyId = ?";
@@ -1453,221 +1466,149 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 	}
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where companyId = &#63;.
+	 * Returns all the commerce availability estimates that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a matching commerce availability estimate could not be found
+	 * @return the matching commerce availability estimates that the user has permission to view
 	 */
 	@Override
-	public CommerceAvailabilityEstimate findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException {
+	public List<CommerceAvailabilityEstimate> filterFindByCompanyId(
+		long companyId) {
 
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-			fetchByCompanyId_Last(companyId, orderByComparator);
-
-		if (commerceAvailabilityEstimate != null) {
-			return commerceAvailabilityEstimate;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchAvailabilityEstimateException(sb.toString());
+		return filterFindByCompanyId(
+			companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where companyId = &#63;.
+	 * Returns a range of all the commerce availability estimates that the user has permission to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate, or <code>null</code> if a matching commerce availability estimate could not be found
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @return the range of matching commerce availability estimates that the user has permission to view
 	 */
 	@Override
-	public CommerceAvailabilityEstimate fetchByCompanyId_Last(
-		long companyId,
+	public List<CommerceAvailabilityEstimate> filterFindByCompanyId(
+		long companyId, int start, int end) {
+
+		return filterFindByCompanyId(companyId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the commerce availability estimates that the user has permissions to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching commerce availability estimates that the user has permission to view
+	 */
+	@Override
+	public List<CommerceAvailabilityEstimate> filterFindByCompanyId(
+		long companyId, int start, int end,
 		OrderByComparator<CommerceAvailabilityEstimate> orderByComparator) {
 
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByCompanyId(companyId, start, end, orderByComparator);
 		}
 
-		List<CommerceAvailabilityEstimate> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
 
-		if (!list.isEmpty()) {
-			return list.get(0);
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
-		return null;
-	}
+		StringBundler sb = null;
 
-	/**
-	 * Returns the commerce availability estimates before and after the current commerce availability estimate in the ordered set where companyId = &#63;.
-	 *
-	 * @param commerceAvailabilityEstimateId the primary key of the current commerce availability estimate
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a commerce availability estimate with the primary key could not be found
-	 */
-	@Override
-	public CommerceAvailabilityEstimate[] findByCompanyId_PrevAndNext(
-			long commerceAvailabilityEstimateId, long companyId,
-			OrderByComparator<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException {
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
 
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate =
-			findByPrimaryKey(commerceAvailabilityEstimateId);
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(
+					CommerceAvailabilityEstimateModelImpl.
+						ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CommerceAvailabilityEstimateModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CommerceAvailabilityEstimate.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			CommerceAvailabilityEstimate[] array =
-				new CommerceAvailabilityEstimateImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByCompanyId_PrevAndNext(
-				session, commerceAvailabilityEstimate, companyId,
-				orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS,
+					CommerceAvailabilityEstimateImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE,
+					CommerceAvailabilityEstimateImpl.class);
+			}
 
-			array[1] = commerceAvailabilityEstimate;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByCompanyId_PrevAndNext(
-				session, commerceAvailabilityEstimate, companyId,
-				orderByComparator, false);
+			queryPos.add(companyId);
 
-			return array;
+			return (List<CommerceAvailabilityEstimate>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected CommerceAvailabilityEstimate getByCompanyId_PrevAndNext(
-		Session session,
-		CommerceAvailabilityEstimate commerceAvailabilityEstimate,
-		long companyId,
-		OrderByComparator<CommerceAvailabilityEstimate> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CommerceAvailabilityEstimateModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						commerceAvailabilityEstimate)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CommerceAvailabilityEstimate> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -1733,6 +1674,64 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 		}
 
 		return count.intValue();
+	}
+
+	/**
+	 * Returns the number of commerce availability estimates that the user has permission to view where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching commerce availability estimates that the user has permission to view
+	 */
+	@Override
+	public int filterCountByCompanyId(long companyId) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CommerceAvailabilityEstimate> commerceAvailabilityEstimates =
+				findByCompanyId(companyId);
+
+			commerceAvailabilityEstimates = InlineSQLHelperUtil.filter(
+				commerceAvailabilityEstimates);
+
+			return commerceAvailabilityEstimates.size();
+		}
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_COMMERCEAVAILABILITYESTIMATE_WHERE);
+
+		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CommerceAvailabilityEstimate.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(companyId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
 	}
 
 	private static final String _FINDER_COLUMN_COMPANYID_COMPANYID_2 =
@@ -2462,8 +2461,36 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 	private static final String _SQL_COUNT_COMMERCEAVAILABILITYESTIMATE_WHERE =
 		"SELECT COUNT(commerceAvailabilityEstimate) FROM CommerceAvailabilityEstimate commerceAvailabilityEstimate WHERE ";
 
+	private static final String _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN =
+		"commerceAvailabilityEstimate.commerceAvailabilityEstimateId";
+
+	private static final String
+		_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_WHERE =
+			"SELECT DISTINCT {commerceAvailabilityEstimate.*} FROM CommerceAvailabilityEstimate commerceAvailabilityEstimate WHERE ";
+
+	private static final String
+		_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_1 =
+			"SELECT {CommerceAvailabilityEstimate.*} FROM (SELECT DISTINCT commerceAvailabilityEstimate.commerceAvailabilityEstimateId FROM CommerceAvailabilityEstimate commerceAvailabilityEstimate WHERE ";
+
+	private static final String
+		_FILTER_SQL_SELECT_COMMERCEAVAILABILITYESTIMATE_NO_INLINE_DISTINCT_WHERE_2 =
+			") TEMP_TABLE INNER JOIN CommerceAvailabilityEstimate ON TEMP_TABLE.commerceAvailabilityEstimateId = CommerceAvailabilityEstimate.commerceAvailabilityEstimateId";
+
+	private static final String
+		_FILTER_SQL_COUNT_COMMERCEAVAILABILITYESTIMATE_WHERE =
+			"SELECT COUNT(DISTINCT commerceAvailabilityEstimate.commerceAvailabilityEstimateId) AS COUNT_VALUE FROM CommerceAvailabilityEstimate commerceAvailabilityEstimate WHERE ";
+
+	private static final String _FILTER_ENTITY_ALIAS =
+		"commerceAvailabilityEstimate";
+
+	private static final String _FILTER_ENTITY_TABLE =
+		"CommerceAvailabilityEstimate";
+
 	private static final String _ORDER_BY_ENTITY_ALIAS =
 		"commerceAvailabilityEstimate.";
+
+	private static final String _ORDER_BY_ENTITY_TABLE =
+		"CommerceAvailabilityEstimate.";
 
 	private static final String _NO_SUCH_ENTITY_WITH_PRIMARY_KEY =
 		"No CommerceAvailabilityEstimate exists with the primary key ";
@@ -2483,3 +2510,4 @@ public class CommerceAvailabilityEstimatePersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1096163321

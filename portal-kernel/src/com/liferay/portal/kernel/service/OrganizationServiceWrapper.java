@@ -250,7 +250,7 @@ public class OrganizationServiceWrapper
 	@Override
 	public Organization getOrAddEmptyOrganization(
 			String externalReferenceCode, String name)
-		throws Exception {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _organizationService.getOrAddEmptyOrganization(
 			externalReferenceCode, name);
@@ -570,3 +570,4 @@ public class OrganizationServiceWrapper
 	private OrganizationService _organizationService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:958100657

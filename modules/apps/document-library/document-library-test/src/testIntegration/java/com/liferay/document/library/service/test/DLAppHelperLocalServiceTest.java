@@ -6,11 +6,14 @@
 package com.liferay.document.library.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppHelperLocalService;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUtil;
 import com.liferay.layout.page.template.test.util.DisplayPageTemplateTestUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -92,13 +95,17 @@ public class DLAppHelperLocalServiceTest {
 		String workflowDefinitionContent = StringUtil.read(inputStream);
 
 		_workflowDefinitionManager.deployWorkflowDefinition(
-			null, TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			workflowDefinitionContent.getBytes());
+			workflowDefinitionContent.getBytes(),
+			TestPropsValues.getCompanyId(), null, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), TestPropsValues.getUserId());
+
+		DLFileEntryType basicDocumentDLFileEntryType =
+			DLFileEntryTypeLocalServiceUtil.getBasicDocumentDLFileEntryType();
 
 		DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 			TestPropsValues.getGroupId(),
-			PortalUtil.getClassNameId(FileEntry.class.getName()), 0, true,
+			PortalUtil.getClassNameId(FileEntry.class.getName()),
+			basicDocumentDLFileEntryType.getFileEntryTypeKey(), true,
 			WorkflowConstants.STATUS_APPROVED);
 
 		String fileEntryContent = StringUtil.randomString();
@@ -111,7 +118,10 @@ public class DLAppHelperLocalServiceTest {
 
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
+		themeDisplay.setCompany(
+			_companyLocalService.getCompany(TestPropsValues.getCompanyId()));
 		themeDisplay.setPortalURL("http://localhost:8080");
+		themeDisplay.setScopeGroupId(TestPropsValues.getGroupId());
 		themeDisplay.setSiteGroupId(TestPropsValues.getGroupId());
 
 		mockHttpServletRequest.setAttribute(
@@ -158,6 +168,9 @@ public class DLAppHelperLocalServiceTest {
 			content.getBytes(),
 			_file.getBytes(restoredFileEntry.getContentStream()));
 	}
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
 
 	@Inject
 	private DLAppHelperLocalService _dlAppHelperLocalService;

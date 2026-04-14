@@ -23,6 +23,7 @@ import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.expando.kernel.util.ExpandoBridgeFactoryUtil;
 import com.liferay.exportimport.kernel.empty.model.EmptyModelManager;
+import com.liferay.exportimport.kernel.empty.model.EmptyModelManagerUtil;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
@@ -203,12 +204,12 @@ public class AccountEntryLocalServiceImpl
 		// Group
 
 		_groupLocalService.addGroup(
-			userId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
+			StringPool.BLANK, userId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
 			AccountEntry.class.getName(), accountEntryId,
 			GroupConstants.DEFAULT_LIVE_GROUP_ID, getLocalizationMap(name),
-			null, GroupConstants.TYPE_SITE_PRIVATE, false,
-			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null, false, true,
-			null);
+			null, GroupConstants.TYPE_SITE_PRIVATE, null, false,
+			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, null, false, false,
+			true, null);
 
 		// Resources
 
@@ -485,7 +486,7 @@ public class AccountEntryLocalServiceImpl
 	public AccountEntry getOrAddEmptyAccountEntry(
 			String externalReferenceCode, long companyId, long userId,
 			String name, String type)
-		throws Exception {
+		throws PortalException {
 
 		return _emptyModelManager.getOrAddEmptyModel(
 			AccountEntry.class, companyId,
@@ -497,7 +498,8 @@ public class AccountEntryLocalServiceImpl
 				WorkflowConstants.STATUS_EMPTY, null),
 			externalReferenceCode,
 			this::fetchAccountEntryByExternalReferenceCode,
-			this::getAccountEntryByExternalReferenceCode);
+			this::getAccountEntryByExternalReferenceCode,
+			AccountEntry.class.getName());
 	}
 
 	@Override
@@ -554,7 +556,7 @@ public class AccountEntryLocalServiceImpl
 						AccountEntryTable.INSTANCE),
 					userId, parentAccountEntryId, keywords, types, status)
 			).union(
-				_getUerAccountEntriesGroupByStep(
+				_getUserAccountEntriesGroupByStep(
 					DSLQueryFactoryUtil.selectDistinct(
 						AccountEntryTable.INSTANCE),
 					userId, parentAccountEntryId, keywords, types, status)
@@ -687,9 +689,10 @@ public class AccountEntryLocalServiceImpl
 				accountEntry = updateDomains(accountEntryId, domains);
 			}
 
-			if (status == WorkflowConstants.STATUS_EMPTY) {
-				status = WorkflowConstants.STATUS_APPROVED;
-			}
+			status = EmptyModelManagerUtil.solveEmptyModel(
+				externalReferenceCode, accountEntry.getModelClassName(),
+				accountEntry.getCompanyId(), 0L, status,
+				() -> WorkflowConstants.STATUS_APPROVED);
 
 			ServiceContext workflowServiceContext = new ServiceContext();
 			long workflowUserId = accountEntry.getUserId();
@@ -1031,7 +1034,7 @@ public class AccountEntryLocalServiceImpl
 		return searchRequestBuilder.build();
 	}
 
-	private GroupByStep _getUerAccountEntriesGroupByStep(
+	private GroupByStep _getUserAccountEntriesGroupByStep(
 		FromStep fromStep, long userId, Long parentAccountId, String keywords,
 		String[] types, Integer status) {
 
@@ -1071,7 +1074,7 @@ public class AccountEntryLocalServiceImpl
 					userId, parentAccountEntryId, keywords, types, status)));
 		accountEntryIds.addAll(
 			dslQuery(
-				_getUerAccountEntriesGroupByStep(
+				_getUserAccountEntriesGroupByStep(
 					DSLQueryFactoryUtil.selectDistinct(
 						AccountEntryTable.INSTANCE.accountEntryId),
 					userId, parentAccountEntryId, keywords, types, status)));

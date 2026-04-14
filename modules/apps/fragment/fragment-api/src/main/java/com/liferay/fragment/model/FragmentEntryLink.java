@@ -51,6 +51,8 @@ public interface FragmentEntryLink
 
 			};
 
+	public FragmentEntry fetchFragmentEntry();
+
 	public com.liferay.portal.kernel.json.JSONObject
 		getConfigurationJSONObject();
 
@@ -68,8 +70,7 @@ public interface FragmentEntryLink
 	public boolean isLatestVersion()
 		throws com.liferay.portal.kernel.exception.PortalException;
 
-	public boolean isSystem()
-		throws com.liferay.portal.kernel.exception.PortalException;
+	public boolean isSystem();
 
 	public boolean isTypeComponent();
 
@@ -82,3 +83,4 @@ public interface FragmentEntryLink
 	public boolean isTypeSection();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-815531985

@@ -212,52 +212,6 @@ public class FaroPreferencesUtil {
 	}
 
 	/**
-	 * Returns the last faro preferences in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching faro preferences
-	 * @throws NoSuchFaroPreferencesException if a matching faro preferences could not be found
-	 */
-	public static FaroPreferences findByGroupId_Last(
-			long groupId, OrderByComparator<FaroPreferences> orderByComparator)
-		throws com.liferay.osb.faro.exception.NoSuchFaroPreferencesException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last faro preferences in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching faro preferences, or <code>null</code> if a matching faro preferences could not be found
-	 */
-	public static FaroPreferences fetchByGroupId_Last(
-		long groupId, OrderByComparator<FaroPreferences> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the faro preferenceses before and after the current faro preferences in the ordered set where groupId = &#63;.
-	 *
-	 * @param faroPreferencesId the primary key of the current faro preferences
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next faro preferences
-	 * @throws NoSuchFaroPreferencesException if a faro preferences with the primary key could not be found
-	 */
-	public static FaroPreferences[] findByGroupId_PrevAndNext(
-			long faroPreferencesId, long groupId,
-			OrderByComparator<FaroPreferences> orderByComparator)
-		throws com.liferay.osb.faro.exception.NoSuchFaroPreferencesException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			faroPreferencesId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the faro preferenceses where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -499,3 +453,4 @@ public class FaroPreferencesUtil {
 	private static volatile FaroPreferencesPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-645842066

@@ -10,7 +10,6 @@ import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentCollectionLocalServiceUtil;
-import com.liferay.fragment.service.FragmentEntryLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -30,9 +29,7 @@ public class ResourcesFragmentEntryProcessorUtil {
 			FragmentEntryLink fragmentEntryLink, String code)
 		throws PortalException {
 
-		FragmentEntry fragmentEntry =
-			FragmentEntryLocalServiceUtil.fetchFragmentEntry(
-				fragmentEntryLink.getFragmentEntryId());
+		FragmentEntry fragmentEntry = fragmentEntryLink.fetchFragmentEntry();
 
 		if (fragmentEntry == null) {
 			return code;

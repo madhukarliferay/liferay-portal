@@ -569,8 +569,9 @@ public class LayoutPageTemplateCollectionLocalServiceWrapper
 
 	@Override
 	public String getUniqueLayoutPageTemplateCollectionName(
-		long groupId, long layoutPageTemplateCollectionId, String sourceName,
-		int type) {
+			long groupId, long layoutPageTemplateCollectionId,
+			String sourceName, int type)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutPageTemplateCollectionLocalService.
 			getUniqueLayoutPageTemplateCollectionName(
@@ -671,3 +672,4 @@ public class LayoutPageTemplateCollectionLocalServiceWrapper
 		_layoutPageTemplateCollectionLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1884950835

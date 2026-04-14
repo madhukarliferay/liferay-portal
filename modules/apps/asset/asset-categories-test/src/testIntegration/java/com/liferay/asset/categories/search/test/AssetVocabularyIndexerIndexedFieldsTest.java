@@ -29,7 +29,6 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.search.document.DocumentBuilderFactory;
 import com.liferay.portal.search.model.uid.UIDFactory;
 import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.searcher.Searcher;
@@ -90,8 +89,7 @@ public class AssetVocabularyIndexerIndexedFieldsTest {
 		_groups = groupSearchFixture.getGroups();
 
 		_indexedFieldsFixture = new IndexedFieldsFixture(
-			resourcePermissionLocalService, searchEngineHelper, uidFactory,
-			documentBuilderFactory);
+			resourcePermissionLocalService, searchEngineHelper, uidFactory);
 		_defaultLocale = LocaleThreadLocal.getDefaultLocale();
 	}
 
@@ -161,9 +159,6 @@ public class AssetVocabularyIndexerIndexedFieldsTest {
 	@Inject
 	protected AssetVocabularyService assetVocabularyService;
 
-	@Inject
-	protected DocumentBuilderFactory documentBuilderFactory;
-
 	@Inject(
 		filter = "indexer.class.name=com.liferay.asset.kernel.model.AssetVocabulary"
 	)
@@ -217,6 +212,12 @@ public class AssetVocabularyIndexerIndexedFieldsTest {
 		).put(
 			Field.VISIBILITY_TYPE,
 			String.valueOf(assetVocabulary.getVisibilityType())
+		).put(
+			"categoriesCount",
+			String.valueOf(assetVocabulary.getCategoriesCount())
+		).put(
+			"categoriesCount_sortable",
+			String.valueOf(assetVocabulary.getCategoriesCount())
 		).put(
 			"classNameIds",
 			() -> {

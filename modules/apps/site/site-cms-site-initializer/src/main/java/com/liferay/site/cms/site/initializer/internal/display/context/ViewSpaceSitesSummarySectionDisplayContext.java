@@ -25,6 +25,7 @@ import com.liferay.site.cms.site.initializer.internal.util.SpaceSummaryHeaderUti
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -34,17 +35,19 @@ import java.util.Map;
 public class ViewSpaceSitesSummarySectionDisplayContext {
 
 	public ViewSpaceSitesSummarySectionDisplayContext(
-		DepotEntryService depotEntryService,
 		DepotEntryGroupRelLocalService depotEntryGroupRelLocalService,
-		long groupId, HttpServletRequest httpServletRequest, Language language,
-		ModelResourcePermission<DepotEntry> depotEntryModelResourcePermission) {
+		ModelResourcePermission<DepotEntry> depotEntryModelResourcePermission,
+		DepotEntryService depotEntryService, String externalReferenceCode,
+		long groupId, HttpServletRequest httpServletRequest,
+		Language language) {
 
-		_depotEntryService = depotEntryService;
 		_depotEntryGroupRelLocalService = depotEntryGroupRelLocalService;
+		_depotEntryModelResourcePermission = depotEntryModelResourcePermission;
+		_depotEntryService = depotEntryService;
+		_externalReferenceCode = externalReferenceCode;
 		_groupId = groupId;
 		_httpServletRequest = httpServletRequest;
 		_language = language;
-		_depotEntryModelResourcePermission = depotEntryModelResourcePermission;
 
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -52,15 +55,22 @@ public class ViewSpaceSitesSummarySectionDisplayContext {
 
 	public String getAPIURL() {
 		return StringBundler.concat(
-			"/o/headless-asset-library/v1.0/asset-libraries/", _groupId,
-			"/sites?page=", CMSSpaceConstants.SPACE_SUMMARY_PAGE, "&pageSize=",
+			"/o/headless-asset-library/v1.0/asset-libraries/",
+			_externalReferenceCode, "/connected-sites?page=",
+			CMSSpaceConstants.SPACE_SUMMARY_PAGE, "&pageSize=",
 			CMSSpaceConstants.SPACE_SUMMARY_PAGE_SIZE);
 	}
 
-	public CreationMenu getCreationMenu() {
+	public CreationMenu getCreationMenu() throws Exception {
+		if (!_hasConnectSitesPermission()) {
+			return new CreationMenu();
+		}
+
 		return CreationMenuBuilder.addPrimaryDropdownItem(
 			dropdownItem -> {
 				dropdownItem.putData("action", "connectSites");
+				dropdownItem.putData(
+					"externalReferenceCode", _externalReferenceCode);
 				dropdownItem.putData("groupId", _groupId);
 				dropdownItem.putData("title", _getSpaceSitesHeaderTitle());
 				dropdownItem.setLabel(
@@ -81,14 +91,21 @@ public class ViewSpaceSitesSummarySectionDisplayContext {
 		).build();
 	}
 
-	public List<FDSActionDropdownItem> getFDSActionDropdownItems() {
+	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
+		throws Exception {
+
+		if (!_hasConnectSitesPermission()) {
+			return Collections.emptyList();
+		}
+
 		return ListUtil.fromArray(
 			_getSearchableFDSActionDropdownItem(true),
 			_getSearchableFDSActionDropdownItem(false),
 			new FDSActionDropdownItem(
 				StringBundler.concat(
-					"/o/headless-asset-library/v1.0/asset-libraries/", _groupId,
-					"/sites/{id}"),
+					"/o/headless-asset-library/v1.0/asset-libraries/",
+					_externalReferenceCode,
+					"/connected-sites/{externalReferenceCode}"),
 				null, "delete",
 				_language.get(_httpServletRequest, "disconnect"), "delete",
 				null, "headless"));
@@ -96,14 +113,14 @@ public class ViewSpaceSitesSummarySectionDisplayContext {
 
 	public Map<String, Object> getHeaderProps() throws Exception {
 		return SpaceSummaryHeaderUtil.getSpaceSummaryHeaderProps(
-			_httpServletRequest, "view-all-sites",
+			getAPIURL(), null, _httpServletRequest, "view-all-sites",
 			HashMapBuilder.<String, Object>put(
 				"hasConnectSitesPermission", _hasConnectSitesPermission()
 			).build(),
 			HashMapBuilder.<String, Object>put(
 				"action", "open-sites-modal"
 			).put(
-				"assetLibraryId", String.valueOf(_groupId)
+				"externalReferenceCode", _externalReferenceCode
 			).build(),
 			_getSpaceSitesHeaderTitle(), StringPool.BLANK);
 	}
@@ -113,8 +130,9 @@ public class ViewSpaceSitesSummarySectionDisplayContext {
 
 		FDSActionDropdownItem fdsActionDropdownItem = new FDSActionDropdownItem(
 			StringBundler.concat(
-				"/o/headless-asset-library/v1.0/asset-libraries/", _groupId,
-				"/sites/{id}"),
+				"/o/headless-asset-library/v1.0/asset-libraries/",
+				_externalReferenceCode,
+				"/connected-sites/{externalReferenceCode}"),
 			null, searchable ? "make-searchable" : "make-unsearchable",
 			_language.get(
 				_httpServletRequest,
@@ -138,7 +156,8 @@ public class ViewSpaceSitesSummarySectionDisplayContext {
 
 	private boolean _hasConnectSitesPermission() throws Exception {
 		return _depotEntryModelResourcePermission.contains(
-			_themeDisplay.getPermissionChecker(), _groupId, ActionKeys.UPDATE);
+			_themeDisplay.getPermissionChecker(),
+			_depotEntryService.getGroupDepotEntry(_groupId), ActionKeys.UPDATE);
 	}
 
 	private final DepotEntryGroupRelLocalService
@@ -146,6 +165,7 @@ public class ViewSpaceSitesSummarySectionDisplayContext {
 	private final ModelResourcePermission<DepotEntry>
 		_depotEntryModelResourcePermission;
 	private final DepotEntryService _depotEntryService;
+	private final String _externalReferenceCode;
 	private final long _groupId;
 	private final HttpServletRequest _httpServletRequest;
 	private final Language _language;

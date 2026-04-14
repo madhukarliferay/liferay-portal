@@ -49,10 +49,11 @@ import com.liferay.dynamic.data.mapping.internal.upgrade.v4_3_5.DDMTemplateVersi
 import com.liferay.dynamic.data.mapping.internal.upgrade.v5_2_0.DDMFacetTemplateUpgradeProcess;
 import com.liferay.dynamic.data.mapping.internal.upgrade.v5_2_1.WorkflowDefinitionLinkUpgradeProcess;
 import com.liferay.dynamic.data.mapping.internal.upgrade.v5_2_2.DLFileEntryDDMFormInstanceRecordUpgradeProcess;
-import com.liferay.dynamic.data.mapping.internal.upgrade.v5_3_3.BrowserSnifferTemplateUpgradeProcess;
+import com.liferay.dynamic.data.mapping.internal.upgrade.v5_3_3.BrowserSnifferDDMTemplateTemplateUpgradeProcess;
 import com.liferay.dynamic.data.mapping.internal.upgrade.v5_4_5.DDMTemplateLinkUpgradeProcess;
 import com.liferay.dynamic.data.mapping.internal.upgrade.v5_5_1.DDMFieldAttributeUpgradeProcess;
 import com.liferay.dynamic.data.mapping.internal.upgrade.v7_0_4.PollsToDDMUpgradeProcess;
+import com.liferay.dynamic.data.mapping.internal.upgrade.v7_1_0.DDMFacetTemplateVersionUpgradeProcess;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutSerializer;
@@ -595,7 +596,8 @@ public class DDMServiceUpgradeStepRegistrator
 				DDMFormInstanceSettingsUpgradeProcess(_jsonFactory));
 
 		registry.register(
-			"5.3.2", "5.3.3", new BrowserSnifferTemplateUpgradeProcess());
+			"5.3.2", "5.3.3",
+			new BrowserSnifferDDMTemplateTemplateUpgradeProcess());
 
 		registry.register(
 			"5.3.3", "5.4.0",
@@ -642,8 +644,8 @@ public class DDMServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {{"DDMTemplate", "templateId"}};
+				protected String[] getTableNames() {
+					return new String[] {"DDMTemplate"};
 				}
 
 			});
@@ -665,8 +667,8 @@ public class DDMServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {{"DDMStructure", "structureId"}};
+				protected String[] getTableNames() {
+					return new String[] {"DDMStructure"};
 				}
 
 			});
@@ -701,6 +703,12 @@ public class DDMServiceUpgradeStepRegistrator
 			"7.0.5", "7.0.6",
 			UpgradeProcessFactory.alterColumnType(
 				"DDMField", "fieldName", "VARCHAR(500) null"));
+
+		registry.register(
+			"7.0.6", "7.1.0",
+			new DDMFacetTemplateVersionUpgradeProcess(_classNameLocalService));
+
+		registry.register("7.1.0", "7.1.1", new DummyUpgradeStep());
 	}
 
 	@Activate

@@ -8,10 +8,10 @@ package com.liferay.dynamic.data.mapping.internal.upgrade.v5_5_1;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.DBTypeToSQLMap;
-import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,7 +23,7 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		if (DBPartition.isPartitionEnabled()) {
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
 			_upgradeByCompanyId(CompanyThreadLocal.getCompanyId());
 
 			return;
@@ -42,13 +42,11 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 
 	private boolean _hasDDMFieldCompanyId0() throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select count(*) from DDMField where companyId = 0")) {
+				"select count(*) as count from DDMField where companyId = 0")) {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
-					int count = resultSet.getInt(1);
-
-					if (count > 0) {
+					if (resultSet.getLong("count") > 0) {
 						return true;
 					}
 				}

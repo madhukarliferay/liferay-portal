@@ -8,7 +8,7 @@ import {createReadStream} from 'fs';
 import path from 'path';
 
 import {accountSettingsPagesTest} from '../../../fixtures/accountSettingsPagesTest';
-import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
+import {accountsPagesTest} from '../../../fixtures/accountsPagesTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
@@ -17,21 +17,18 @@ import {createCategories} from '../../../helpers/CreateCategories';
 import getGlobalSiteId from '../../../utils/getGlobalSiteId';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import getRandomString from '../../../utils/getRandomString';
-import performLogin, {
-	performLoginViaApi,
-	performLogout,
-	userData,
-} from '../../../utils/performLogin';
+import {performUserSwitch, userData} from '../../../utils/performLogin';
 import {waitForAlert} from '../../../utils/waitForAlert';
 import {assetCategoriesPagesTest} from '../../asset-categories-admin-web/main/fixtures/assetCategoriesAdminPagesTest';
 
 export const test = mergeTests(
+	accountsPagesTest,
 	accountSettingsPagesTest,
 	assetCategoriesPagesTest,
-	apiHelpersTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPD-47858': {enabled: true},
+		'LPD-35443': {enabled: true},
+		'LPD-36105': {enabled: true},
 	}),
 	loginTest(),
 	usersAndOrganizationsPagesTest
@@ -42,67 +39,113 @@ test(
 	{tag: '@LPD-204541'},
 	async ({usersAndOrganizationsPage}) => {
 		await usersAndOrganizationsPage.goToUsers();
-		await usersAndOrganizationsPage.openOptionsMenu();
-		await expect(
-			usersAndOrganizationsPage.exportImportOptionsMenuItem
-		).toHaveCount(0);
-		await expect(
-			usersAndOrganizationsPage.exportUsersOptionsMenuItem
-		).toBeVisible();
-		await expect(
-			usersAndOrganizationsPage.manageCustomFieldsOptionsMenuItem
-		).toBeVisible();
+
+		await expect(async () => {
+			await usersAndOrganizationsPage.openOptionsMenu();
+
+			await expect(
+				usersAndOrganizationsPage.exportImportOptionsMenuItem
+			).toHaveCount(0, {timeout: 500});
+			await expect(
+				usersAndOrganizationsPage.exportUsersOptionsMenuItem
+			).toBeVisible({timeout: 500});
+			await expect(
+				usersAndOrganizationsPage.manageCustomFieldsOptionsMenuItem
+			).toBeVisible({timeout: 500});
+		}).toPass({timeout: 5000});
 
 		await usersAndOrganizationsPage.goToOrganizations();
-		await usersAndOrganizationsPage.openOptionsMenu();
-		await expect(
-			usersAndOrganizationsPage.exportImportOptionsMenuItem
-		).toBeVisible();
-		await expect(
-			usersAndOrganizationsPage.exportUsersOptionsMenuItem
-		).toBeVisible();
-		await expect(
-			usersAndOrganizationsPage.manageCustomFieldsOptionsMenuItem
-		).toHaveCount(0);
+
+		await expect(async () => {
+			await usersAndOrganizationsPage.openOptionsMenu();
+
+			await expect(
+				usersAndOrganizationsPage.exportImportOptionsMenuItem
+			).toBeVisible({timeout: 500});
+			await expect(
+				usersAndOrganizationsPage.exportUsersOptionsMenuItem
+			).toBeVisible({timeout: 500});
+			await expect(
+				usersAndOrganizationsPage.manageCustomFieldsOptionsMenuItem
+			).toHaveCount(0, {timeout: 500});
+		}).toPass({timeout: 5000});
 	}
 );
 
 test(
 	'Check escape of memberships account name',
-	{tag: '@LPD-15224'},
-	async ({apiHelpers, editUserPage, page, usersAndOrganizationsPage}) => {
+	{tag: ['@LPD-15224', '@LPD-71476']},
+	async ({
+		accountUsersAccountSelectorPage,
+		apiHelpers,
+		editUserPage,
+		page,
+		usersAndOrganizationsPage,
+	}) => {
 		await page.goto('/');
 
-		const account = await apiHelpers.headlessAdminUser.postAccount({
-			name: '<img src="x" onError="alert(document.location)">',
+		const account1 = await apiHelpers.headlessAdminUser.postAccount({
+			name: '"></option><img src=x onerror=alert(document.location)',
 		});
 
 		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
-			account.id,
+			account1.id,
 			['test@liferay.com']
 		);
 
-		try {
-			await usersAndOrganizationsPage.goToUsers();
+		const account2 = await apiHelpers.headlessAdminUser.postAccount({
+			name: '<img src="x" onError="alert(document.location)">',
+		});
 
-			await (
-				await usersAndOrganizationsPage.usersTableRowLink('test')
-			).click();
-			await editUserPage.membershipsLink.click();
+		page.on('dialog', async (dialog) => {
+			if (dialog.type() === 'alert') {
+				throw new Error('XSS');
+			}
+		});
 
-			await expect(
-				(
-					await editUserPage.membershipsAccountsTableRow(
-						0,
-						account.name,
-						true
-					)
-				).row
-			).toBeVisible();
-		}
-		finally {
-			await apiHelpers.headlessAdminUser.deleteAccount(account.id);
-		}
+		await usersAndOrganizationsPage.goToUsers();
+
+		await (
+			await usersAndOrganizationsPage.usersTableRowLink('test')
+		).click();
+		await editUserPage.membershipsLink.click();
+
+		await expect(
+			(
+				await editUserPage.membershipsAccountsTableRow(
+					0,
+					account1.name,
+					true
+				)
+			).row
+		).toBeVisible();
+
+		await editUserPage.selectAccountsButton.click();
+
+		await expect(
+			accountUsersAccountSelectorPage.accountsTable.searchInput
+		).toBeEditable();
+
+		await expect(
+			accountUsersAccountSelectorPage.accountsTable.cell('Active')
+		).toBeVisible();
+
+		await (
+			await accountUsersAccountSelectorPage.accountsTable.rowCheckbox(
+				account2.name
+			)
+		).click();
+		await page.getByRole('button', {name: 'Add'}).click();
+
+		await expect(
+			(
+				await editUserPage.membershipsAccountsTableRow(
+					0,
+					account2.name,
+					true
+				)
+			).row
+		).toBeVisible();
 	}
 );
 
@@ -121,6 +164,87 @@ test(
 		await editUserPage.generateWebDAVPasswordButton.click();
 
 		await expect(editUserPage.webDAVPasswordLabel).toBeVisible();
+	}
+);
+
+test(
+	'WebDAV password generation should not be allowed for users without update permission',
+	{tag: '@LPD-69623'},
+	async ({apiHelpers, editUserPage, page, usersAndOrganizationsPage}) => {
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: 'Role' + getRandomInt(),
+			rolePermissions: [
+				{
+					actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName:
+						'com_liferay_users_admin_web_portlet_UsersAdminPortlet',
+					scope: 1,
+				},
+				{
+					actionIds: ['VIEW'],
+					primaryKey: companyId,
+					resourceName: 'com.liferay.portal.kernel.model.User',
+					scope: 1,
+				},
+			],
+		});
+
+		await apiHelpers.headlessAdminUser.postRoleByExternalReferenceCodeUserAccountAssociation(
+			role.externalReferenceCode,
+			user.id
+		);
+
+		await performUserSwitch(page, user.alternateName);
+
+		await page.goto(
+			'/group/control_panel/manage?p_p_id=com_liferay_users_admin_web_portlet_UsersAdminPortlet'
+		);
+
+		await (
+			await usersAndOrganizationsPage.usersTableRowLink(
+				user.alternateName
+			)
+		).click();
+
+		await expect(editUserPage.passwordLink).toBeVisible();
+
+		await editUserPage.passwordLink.click();
+
+		await expect(editUserPage.generateWebDAVPasswordButton).toBeEnabled();
+
+		const adminUser =
+			await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
+				'test@liferay.com'
+			);
+
+		let currentUrl = page.url();
+
+		currentUrl = currentUrl.replace(
+			user.id.toString(),
+			adminUser.id.toString()
+		);
+
+		await page.goto(currentUrl);
+
+		await editUserPage.passwordLink.click();
+
+		await expect(editUserPage.passwordInput).toBeVisible();
+		await expect(
+			editUserPage.generateWebDAVPasswordButton
+		).not.toBeVisible();
 	}
 );
 
@@ -240,11 +364,18 @@ test(
 
 		await usersAndOrganizationsPage.goToOrganizations();
 
-		await (
-			await usersAndOrganizationsPage.organizationsTable.rowActions(
-				organization.name
-			)
-		).click();
+		await expect(async () => {
+			await (
+				await usersAndOrganizationsPage.organizationsTable.rowActions(
+					organization.name
+				)
+			).click();
+
+			await expect(
+				usersAndOrganizationsPage.assignUsersMenuItem
+			).toBeVisible({timeout: 500});
+		}).toPass({timeout: 6000});
+
 		await usersAndOrganizationsPage.assignUsersMenuItem.click();
 
 		await (await assignUsersPage.usersTableRowCheckbox(userName)).check();
@@ -279,6 +410,10 @@ test(
 		});
 
 		await usersAndOrganizationsPage.goToOrganizations();
+
+		await usersAndOrganizationsPage.organizationsTable.search(
+			organization.name
+		);
 
 		await usersAndOrganizationsPage.organizationsTable
 			.valueLink(organization.name)
@@ -321,6 +456,10 @@ test(
 			await apiHelpers.headlessAdminUser.postOrganization();
 
 		await usersAndOrganizationsPage.goToOrganizations();
+
+		await usersAndOrganizationsPage.organizationsTable.search(
+			organization.name
+		);
 
 		await (
 			await usersAndOrganizationsPage.organizationsTable.rowActions(
@@ -463,6 +602,8 @@ test(
 	'Check custom field is escaped',
 	{tag: '@LPD-29981'},
 	async ({page, usersAndOrganizationsPage}) => {
+		const fieldName = `field${getRandomInt()}`;
+
 		await page.goto('/');
 
 		await usersAndOrganizationsPage.goToUsers();
@@ -483,7 +624,7 @@ test(
 
 		await customFieldLabel.waitFor({state: 'visible'});
 		await customFieldLabel.click();
-		await customFieldLabel.fill('fieldTest');
+		await customFieldLabel.fill(fieldName);
 
 		const customFieldValue = page.getByLabel('Values Required');
 
@@ -507,21 +648,28 @@ test(
 			await usersAndOrganizationsPage.usersTableRowLink('test')
 		).click();
 
-		const customFieldDropDownLabel = page.getByLabel('Fieldtest', {
+		const fieldLabel =
+			fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+		const fieldTitle = fieldName.replace(
+			/[A-Z]/g,
+			(match) => `-${match.toLowerCase()}`
+		);
+
+		const customFieldDropDownLabel = page.getByLabel(fieldLabel, {
 			exact: true,
 		});
 
 		await customFieldDropDownLabel.waitFor({state: 'visible'});
 
-		const customFieldDropDownOptions = await page.evaluate(() => {
-			const selection = document.querySelector('[title="field-test"]');
+		const customFieldDropDownOptions = await page.evaluate((title) => {
+			const selection = document.querySelector(`[title="${title}"]`);
 
 			// @ts-ignore
 
 			return [...selection.options].some(
 				(option) => option.text === 'a & b'
 			);
-		});
+		}, fieldTitle);
 
 		expect(customFieldDropDownOptions).toBeTruthy();
 	}
@@ -657,10 +805,13 @@ test(
 			type: 'organizationUserAccountAssociation',
 		});
 
-		await performLogout(page);
-		await performLogin(page, user.alternateName);
+		await performUserSwitch(page, user.alternateName);
 
 		await usersAndOrganizationsPage.goToOrganizationsWithLimitedAccess();
+
+		await usersAndOrganizationsPage.organizationsTable.search(
+			organization.name
+		);
 
 		await usersAndOrganizationsPage.organizationsTable
 			.valueLink(organization.name)
@@ -887,7 +1038,7 @@ test(
 			name: getRandomString(),
 		});
 
-		apiHelpers.data.push({id: site.id, type: 'site'});
+		apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 		const role =
 			await apiHelpers.headlessAdminUser.getRoleByName(
@@ -902,13 +1053,11 @@ test(
 
 		await siteMembershipsPage.goto(site.friendlyUrlPath);
 		await siteMembershipsPage.userGroupsLink.click();
-		await siteMembershipsPage.newUserGroupButton.click();
 
-		await expect(
-			siteMembershipsPage.assignUserGroupIFrameTitle
-		).toBeVisible();
-
-		await siteMembershipsPage.assignUserGroupTable.changeView('Table');
+		await expect(async () => {
+			await siteMembershipsPage.newUserGroupButton.click();
+			await siteMembershipsPage.assignUserGroupTable.changeView('Table');
+		}).toPass({timeout: 5000});
 
 		await expect(
 			siteMembershipsPage.assignUserGroupTable.cell(userGroup.name)
@@ -923,11 +1072,7 @@ test(
 
 		await waitForAlert(page);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: userAccount1.alternateName,
-		});
+		await performUserSwitch(page, userAccount1.alternateName);
 
 		const document = await apiHelpers.headlessDelivery.postDocument(
 			site.id,
@@ -960,11 +1105,7 @@ test(
 
 		await waitForAlert(page, 'Success:The item was shared successfully.');
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: userAccount2.alternateName,
-		});
+		await performUserSwitch(page, userAccount2.alternateName);
 
 		await notificationsPage.goto(userAccount2.name);
 
@@ -1058,11 +1199,7 @@ test(
 			userAccount3.id
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: userAccount1.alternateName,
-		});
+		await performUserSwitch(page, userAccount1.alternateName);
 
 		await usersAndOrganizationsPage.goToUsersWithLimitedAccess();
 
@@ -1077,19 +1214,14 @@ test(
 			)
 		).not.toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({page, screenName: 'test'});
+		await performUserSwitch(page, 'test');
 
 		await apiHelpers.headlessAdminUser.postRoleByExternalReferenceCodeUserAccountAssociation(
 			role2.externalReferenceCode,
 			userAccount1.id
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: userAccount1.alternateName,
-		});
+		await performUserSwitch(page, userAccount1.alternateName);
 
 		await usersAndOrganizationsPage.goToUsersWithLimitedAccess();
 
@@ -1119,11 +1251,7 @@ test(
 
 		await newPage.close();
 
-		await performLogout(page);
-		await performLoginViaApi({
-			page,
-			screenName: userAccount3.alternateName,
-		});
+		await performUserSwitch(page, userAccount3.alternateName);
 
 		await usersAndOrganizationsPage.goToUsers();
 
@@ -1178,11 +1306,18 @@ test(
 
 		await usersAndOrganizationsPage.goToOrganizations();
 
-		await (
-			await usersAndOrganizationsPage.organizationsTable.rowActions(
-				organization.name
-			)
-		).click();
+		await expect(async () => {
+			await (
+				await usersAndOrganizationsPage.organizationsTable.rowActions(
+					organization.name
+				)
+			).click();
+
+			await expect(
+				editOrganizationPage.organizationEditMenuItem
+			).toBeVisible({timeout: 500});
+		}).toPass({timeout: 6000});
+
 		await editOrganizationPage.organizationEditMenuItem.click();
 		await editOrganizationPage.organizationSiteLink.click();
 		await editOrganizationPage.createSiteToggle.check();
@@ -1410,8 +1545,7 @@ test(
 			surname: user.familyName,
 		};
 
-		await performLogout(page);
-		await performLoginViaApi({page, screenName: user.alternateName});
+		await performUserSwitch(page, user.alternateName);
 
 		await accountSettingsPage.goToAccountSettings();
 		await accountSettingsPage.passwordMenuItem.click();
@@ -1431,8 +1565,7 @@ test(
 			surname: user.familyName,
 		};
 
-		await performLogout(page);
-		await performLoginViaApi({page, screenName: user.alternateName});
+		await performUserSwitch(page, user.alternateName);
 
 		await expect(accountSettingsPage.userPersonalMenuButton).toBeVisible();
 	}
@@ -1450,8 +1583,7 @@ test(
 			surname: user.familyName,
 		};
 
-		await performLogout(page);
-		await performLoginViaApi({page, screenName: user.alternateName});
+		await performUserSwitch(page, user.alternateName);
 
 		await accountSettingsPage.goToAccountSettings();
 		await accountSettingsPage.passwordMenuItem.click();
@@ -1475,8 +1607,7 @@ test(
 			)
 		).toBeVisible();
 
-		await performLogout(page);
-		await performLoginViaApi({page, screenName: user.alternateName});
+		await performUserSwitch(page, user.alternateName);
 
 		await expect(accountSettingsPage.userPersonalMenuButton).toBeVisible();
 	}
@@ -1555,6 +1686,8 @@ test(
 		await expect(
 			usersAndOrganizationsPage.statusText('Approved')
 		).toBeVisible();
+
+		await usersAndOrganizationsPage.organizationsTable.changeView('Table');
 	}
 );
 
@@ -1617,11 +1750,10 @@ test(
 			memberUser.emailAddress
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({
+		await performUserSwitch(
 			page,
-			screenName: organizationAdministratorUser.alternateName,
-		});
+			organizationAdministratorUser.alternateName
+		);
 
 		await usersAndOrganizationsPage.goToUsersWithLimitedAccess();
 		await usersAndOrganizationsPage.goToUser(memberUser.alternateName);
@@ -1677,11 +1809,12 @@ test(
 
 		await assetCategoriesAdminPage.goto('/global');
 		await assetCategoriesAdminPage.gotoVocabulary(vocabularyName);
-		await vocabulariesEditPage.goto(vocabularyName);
 
+		await vocabulariesEditPage.goto(vocabularyName);
 		await vocabulariesEditPage.toggleRequired();
 
 		await usersAndOrganizationsPage.goToUsers();
+		await usersAndOrganizationsPage.usersDataTable.changeView('table');
 		await (
 			await usersAndOrganizationsPage.usersTableRowLink(
 				userAccount.alternateName
@@ -1695,11 +1828,11 @@ test(
 
 		await expect(editUserPage.membershipsNoUserGroupsMessage).toBeVisible();
 
-		await editUserPage.selectUserGroupsButton.click();
+		await expect(async () => {
+			await editUserPage.selectUserGroupsButton.click();
+			await editUserPage.selectUserGroupTable.changeView('table');
+		}).toPass({timeout: 5000});
 
-		await page.waitForLoadState('domcontentloaded');
-
-		await editUserPage.selectUserGroupTable.changeView('table');
 		await editUserPage.selectUserGroupTable.cell(userGroup.name).click();
 
 		await expect(
@@ -1715,5 +1848,104 @@ test(
 		await editUserPage.saveButton.click();
 
 		await waitForAlert(page);
+	}
+);
+
+test(
+	'Allow uploading user profile image of any size when max file size is set to 0',
+	{tag: '@LPD-1799'},
+	async ({editUserPage, userSettingsPage, usersAndOrganizationsPage}) => {
+		await userSettingsPage.updateUserImageMaxFileSize(10);
+
+		await usersAndOrganizationsPage.goToUsers();
+
+		await (
+			await usersAndOrganizationsPage.usersTableRowLink('test')
+		).click();
+
+		await editUserPage.changeImageButton.click();
+
+		await expect(editUserPage.uploadImageSelectImageButton).toBeVisible();
+
+		await expect(
+			editUserPage.uploadImageFrame.getByText(
+				'Upload images no larger than 10 B.'
+			)
+		).toBeVisible();
+
+		await userSettingsPage.updateUserImageMaxFileSize(0);
+
+		await usersAndOrganizationsPage.goToUsers();
+
+		await (
+			await usersAndOrganizationsPage.usersTableRowLink('test')
+		).click();
+
+		await editUserPage.changeImageButton.click();
+
+		await expect(editUserPage.uploadImageSelectImageButton).toBeVisible();
+
+		await expect(
+			editUserPage.uploadImageFrame.getByText(
+				'Upload images no larger than 0 B.'
+			)
+		).not.toBeVisible();
+
+		await userSettingsPage.updateUserImageMaxFileSize(307200);
+	}
+);
+
+test(
+	'Test XSS vulnerability when adding user with malicious first name to an organization',
+	{tag: ['@LPD-72282']},
+	async ({
+		apiHelpers,
+		organizationUsersPage,
+		page,
+		usersAndOrganizationsPage,
+	}) => {
+		const userAccount = await apiHelpers.headlessAdminUser.postUserAccount({
+			alternateName: `xsstest${getRandomInt()}`,
+			emailAddress: `xsstest${getRandomInt()}@liferay.com`,
+			familyName: `TestUser${getRandomInt()}`,
+			givenName: `<img src=x onerror="alert('x')">`,
+		});
+
+		const organization =
+			await apiHelpers.headlessAdminUser.postOrganization();
+
+		await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
+			organization.id,
+			userAccount.emailAddress
+		);
+
+		apiHelpers.data.push({
+			id: `${organization.id}_${userAccount.emailAddress}`,
+			type: 'organizationUserAccountAssociation',
+		});
+
+		await usersAndOrganizationsPage.goToOrganizations();
+
+		await usersAndOrganizationsPage.organizationsTable
+			.valueLink(organization.name)
+			.click();
+
+		await expect(organizationUsersPage.filterButton).toBeVisible();
+
+		page.on('dialog', async (dialog) => {
+			if (dialog.type() === 'alert') {
+				throw new Error('XSS');
+			}
+		});
+
+		await organizationUsersPage.organizationUsersTable.changeView('Cards');
+
+		await expect(
+			await organizationUsersPage.screenName(
+				userAccount.givenName + ' ' + userAccount.familyName
+			)
+		).toBeVisible();
+
+		await organizationUsersPage.organizationUsersTable.changeView('Table');
 	}
 );

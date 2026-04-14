@@ -69,8 +69,9 @@ public class GetCollectionItemCountMVCResourceCommand
 
 		try {
 			jsonObject = _getCollectionItemCountJSONObject(
+				themeDisplay.getCompanyId(),
 				_portal.getHttpServletRequest(resourceRequest),
-				layoutObjectReference);
+				layoutObjectReference, themeDisplay.getScopeGroupId());
 		}
 		catch (Exception exception) {
 			_log.error("Unable to get collection item count", exception);
@@ -86,7 +87,8 @@ public class GetCollectionItemCountMVCResourceCommand
 	}
 
 	private JSONObject _getCollectionItemCountJSONObject(
-			HttpServletRequest httpServletRequest, String layoutObjectReference)
+			long companyId, HttpServletRequest httpServletRequest,
+			String layoutObjectReference, long scopeGroupId)
 		throws PortalException {
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
@@ -121,8 +123,11 @@ public class GetCollectionItemCountMVCResourceCommand
 						infoItem);
 				}
 
+				defaultLayoutListRetrieverContext.setScopeGroupId(scopeGroupId);
+
 				InfoPage<?> infoPage = layoutListRetriever.getInfoPage(
 					listObjectReferenceFactory.getListObjectReference(
+						companyId, scopeGroupId,
 						layoutObjectReferenceJSONObject),
 					defaultLayoutListRetrieverContext);
 

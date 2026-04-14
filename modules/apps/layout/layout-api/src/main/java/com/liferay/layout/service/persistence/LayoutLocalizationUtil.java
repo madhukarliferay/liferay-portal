@@ -213,53 +213,6 @@ public class LayoutLocalizationUtil {
 	}
 
 	/**
-	 * Returns the last layout localization in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout localization
-	 * @throws NoSuchLayoutLocalizationException if a matching layout localization could not be found
-	 */
-	public static LayoutLocalization findByUuid_Last(
-			String uuid,
-			OrderByComparator<LayoutLocalization> orderByComparator)
-		throws com.liferay.layout.exception.NoSuchLayoutLocalizationException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout localization in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout localization, or <code>null</code> if a matching layout localization could not be found
-	 */
-	public static LayoutLocalization fetchByUuid_Last(
-		String uuid, OrderByComparator<LayoutLocalization> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout localizations before and after the current layout localization in the ordered set where uuid = &#63;.
-	 *
-	 * @param layoutLocalizationId the primary key of the current layout localization
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout localization
-	 * @throws NoSuchLayoutLocalizationException if a layout localization with the primary key could not be found
-	 */
-	public static LayoutLocalization[] findByUuid_PrevAndNext(
-			long layoutLocalizationId, String uuid,
-			OrderByComparator<LayoutLocalization> orderByComparator)
-		throws com.liferay.layout.exception.NoSuchLayoutLocalizationException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			layoutLocalizationId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the layout localizations where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -454,59 +407,6 @@ public class LayoutLocalizationUtil {
 	}
 
 	/**
-	 * Returns the last layout localization in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout localization
-	 * @throws NoSuchLayoutLocalizationException if a matching layout localization could not be found
-	 */
-	public static LayoutLocalization findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<LayoutLocalization> orderByComparator)
-		throws com.liferay.layout.exception.NoSuchLayoutLocalizationException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout localization in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout localization, or <code>null</code> if a matching layout localization could not be found
-	 */
-	public static LayoutLocalization fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<LayoutLocalization> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout localizations before and after the current layout localization in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param layoutLocalizationId the primary key of the current layout localization
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout localization
-	 * @throws NoSuchLayoutLocalizationException if a layout localization with the primary key could not be found
-	 */
-	public static LayoutLocalization[] findByUuid_C_PrevAndNext(
-			long layoutLocalizationId, String uuid, long companyId,
-			OrderByComparator<LayoutLocalization> orderByComparator)
-		throws com.liferay.layout.exception.NoSuchLayoutLocalizationException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			layoutLocalizationId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the layout localizations where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -624,52 +524,6 @@ public class LayoutLocalizationUtil {
 		long plid, OrderByComparator<LayoutLocalization> orderByComparator) {
 
 		return getPersistence().fetchByPlid_First(plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout localization in the ordered set where plid = &#63;.
-	 *
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout localization
-	 * @throws NoSuchLayoutLocalizationException if a matching layout localization could not be found
-	 */
-	public static LayoutLocalization findByPlid_Last(
-			long plid, OrderByComparator<LayoutLocalization> orderByComparator)
-		throws com.liferay.layout.exception.NoSuchLayoutLocalizationException {
-
-		return getPersistence().findByPlid_Last(plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last layout localization in the ordered set where plid = &#63;.
-	 *
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout localization, or <code>null</code> if a matching layout localization could not be found
-	 */
-	public static LayoutLocalization fetchByPlid_Last(
-		long plid, OrderByComparator<LayoutLocalization> orderByComparator) {
-
-		return getPersistence().fetchByPlid_Last(plid, orderByComparator);
-	}
-
-	/**
-	 * Returns the layout localizations before and after the current layout localization in the ordered set where plid = &#63;.
-	 *
-	 * @param layoutLocalizationId the primary key of the current layout localization
-	 * @param plid the plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout localization
-	 * @throws NoSuchLayoutLocalizationException if a layout localization with the primary key could not be found
-	 */
-	public static LayoutLocalization[] findByPlid_PrevAndNext(
-			long layoutLocalizationId, long plid,
-			OrderByComparator<LayoutLocalization> orderByComparator)
-		throws com.liferay.layout.exception.NoSuchLayoutLocalizationException {
-
-		return getPersistence().findByPlid_PrevAndNext(
-			layoutLocalizationId, plid, orderByComparator);
 	}
 
 	/**
@@ -995,3 +849,4 @@ public class LayoutLocalizationUtil {
 	private static volatile LayoutLocalizationPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1028436955

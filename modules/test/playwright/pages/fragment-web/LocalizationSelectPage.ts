@@ -13,15 +13,18 @@ export class LocalizationSelectPage {
 	readonly page: Page;
 
 	readonly actionsDropdownTrigger: Locator;
-	readonly trigger: Locator;
 
-	constructor(page: Page) {
+	trigger: Locator;
+
+	constructor(page: Page, localizationSelectIndex: number = 0) {
 		this.page = page;
 
 		this.actionsDropdownTrigger = page.getByLabel('Localization Actions');
-		this.trigger = page.locator(
-			'.lfr-layout-structure-item-localization-select button.form-control-select'
-		);
+		this.trigger = page
+			.locator(
+				'.lfr-layout-structure-item-localization-select button.form-control-select'
+			)
+			.nth(localizationSelectIndex);
 	}
 
 	async autoTranslate(languageId: string) {
@@ -145,8 +148,6 @@ export class LocalizationSelectPage {
 			trigger: this.trigger,
 		});
 
-		await expect(this.page.locator('.form-control-select')).toHaveText(
-			languageId
-		);
+		await expect(this.trigger).toHaveText(languageId);
 	}
 }

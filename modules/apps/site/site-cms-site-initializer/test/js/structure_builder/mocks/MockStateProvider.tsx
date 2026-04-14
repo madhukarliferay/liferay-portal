@@ -13,28 +13,38 @@ import {
 import {Structure} from '../../../../src/main/resources/META-INF/resources/js/structure_builder/types/Structure';
 import getUuid from '../../../../src/main/resources/META-INF/resources/js/structure_builder/utils/getUuid';
 
-const DEFAULT_STRUCTURE: Structure = {
+export const DEFAULT_STRUCTURE: Structure = {
 	children: new Map(),
 	erc: 'default-erc',
-	label: 'untitled-structure' as any,
+	label: {
+		[Liferay.ThemeDisplay.getDefaultLanguageId()]: 'untitled-structure',
+	} as any,
 	name: 'UntitledStructure',
 	spaces: [],
 	status: 'new',
+	system: false,
+	type: 'L_CMS_CONTENT_STRUCTURES',
 	uuid: getUuid(),
+	workflows: {},
 };
 
 const DEFAULT_STATE: State = {
-	error: null,
-	history: {deletedChildren: false},
+	history: {
+		deletedChildren: [],
+		deletedGroupERCs: [],
+		deletedRelationships: [],
+		modifiedNames: new Set(),
+	},
 	invalids: new Map(),
 	publishedChildren: new Set(),
+	renamingItemUuid: null,
 	selection: [],
 	structure: DEFAULT_STRUCTURE,
 	unsavedChanges: false,
 };
 
 export type MockState = Omit<Partial<State>, 'structure'> & {
-	structure?: Partial<State['structure']>;
+	structure?: Partial<Structure>;
 };
 
 export function MockStateProvider({

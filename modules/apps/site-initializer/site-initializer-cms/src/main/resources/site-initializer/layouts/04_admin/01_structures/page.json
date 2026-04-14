@@ -1,8 +1,9 @@
 {
 	"friendlyURL": "/structures",
 	"hidden": false,
+	"name": "Content Structures",
 	"name_i18n": {
-		"en_US": "Structures"
+		"en_US": "Content Structures"
 	},
 	"permissions": [
 		{

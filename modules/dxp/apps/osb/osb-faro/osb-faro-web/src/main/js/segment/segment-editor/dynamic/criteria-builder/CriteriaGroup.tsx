@@ -28,6 +28,7 @@ import {
 	replaceWithMultipleAtIndex
 } from 'shared/util/array';
 import {isArray} from 'lodash';
+import {SegmentTypes} from 'shared/util/constants';
 
 /**
  * Passes the required values to the drop target.
@@ -77,6 +78,7 @@ interface ICriteriaGroupProps {
 	criteria: CriterionGroup;
 	criteriaGroupId: string;
 	dragging?: boolean;
+	enabledSequentialSegment: boolean;
 	groupId: string;
 	id?: string;
 	index?: number;
@@ -84,6 +86,7 @@ interface ICriteriaGroupProps {
 	onMove: OnMove;
 	parentGroupId?: string;
 	root?: boolean;
+	segmentType: SegmentTypes;
 }
 
 class CriteriaGroup extends React.Component<ICriteriaGroupProps> {
@@ -237,7 +240,14 @@ class CriteriaGroup extends React.Component<ICriteriaGroupProps> {
 	}
 
 	renderCriterion(criterion, index) {
-		const {channelId, criteriaGroupId, groupId, id, onMove} = this.props;
+		const {
+			channelId,
+			criteriaGroupId,
+			groupId,
+			id,
+			onMove,
+			segmentType
+		} = this.props;
 
 		const criterionGroup = isCriterionGroup(criterion);
 
@@ -273,6 +283,7 @@ class CriteriaGroup extends React.Component<ICriteriaGroupProps> {
 						onChange={this.handleCriterionChange(index)}
 						onDelete={this.handleCriterionDelete}
 						onMove={onMove}
+						segmentType={segmentType}
 					/>
 				)}
 
@@ -294,12 +305,14 @@ class CriteriaGroup extends React.Component<ICriteriaGroupProps> {
 			criteria,
 			criteriaGroupId,
 			dragging,
+			enabledSequentialSegment,
 			id,
 			onMove,
 			root
 		} = this.props;
 
 		const classes = getCN(
+			'sheet',
 			{
 				'criteria-group-root': criteria
 			},
@@ -311,51 +324,50 @@ class CriteriaGroup extends React.Component<ICriteriaGroupProps> {
 		const singleRow =
 			criteria && criteria.items && criteria.items.length === 1;
 
+		if (this.isCriteriaEmpty()) {
+			return (
+				<EmptyDropZone
+					enabledSequentialSegment={enabledSequentialSegment}
+					id={id}
+					onCriterionAdd={this.handleCriterionAdd}
+				/>
+			);
+		}
+
 		return connectDragPreview(
 			<div className={classes}>
-				{this.isCriteriaEmpty() ? (
-					<EmptyDropZone
+				<>
+					<DropZone
+						criteriaGroupId={criteriaGroupId}
+						dropIndex={0}
 						id={id}
 						onCriterionAdd={this.handleCriterionAdd}
+						onMove={onMove}
 					/>
-				) : (
-					<>
-						<DropZone
-							criteriaGroupId={criteriaGroupId}
-							dropIndex={0}
-							id={id}
-							onCriterionAdd={this.handleCriterionAdd}
-							onMove={onMove}
-						/>
 
-						{singleRow &&
-							!root &&
-							connectDragSource(
-								<div className='criteria-group-drag-icon drag-icon'>
-									<ClayIcon
-										className='icon-root'
-										symbol='drag'
-									/>
-								</div>
-							)}
+					{singleRow &&
+						!root &&
+						connectDragSource(
+							<div className='criteria-group-drag-icon drag-icon'>
+								<ClayIcon className='icon-root' symbol='drag' />
+							</div>
+						)}
 
-						{isCriterionGroup(criteria) &&
-							criteria.items.map((criterion, index) => (
-								<Fragment
-									key={`${criteriaGroupId}-${
-										isCriterionGroup(criterion)
-											? criterion.criteriaGroupId
-											: criterion.rowId
-									}`}
-								>
-									{index !== 0 &&
-										this.renderConjunction(index)}
+					{isCriterionGroup(criteria) &&
+						criteria.items.map((criterion, index) => (
+							<Fragment
+								key={`${criteriaGroupId}-${
+									isCriterionGroup(criterion)
+										? criterion.criteriaGroupId
+										: criterion.rowId
+								}`}
+							>
+								{index !== 0 && this.renderConjunction(index)}
 
-									{this.renderCriterion(criterion, index)}
-								</Fragment>
-							))}
-					</>
-				)}
+								{this.renderCriterion(criterion, index)}
+							</Fragment>
+						))}
+				</>
 			</div>
 		);
 	}

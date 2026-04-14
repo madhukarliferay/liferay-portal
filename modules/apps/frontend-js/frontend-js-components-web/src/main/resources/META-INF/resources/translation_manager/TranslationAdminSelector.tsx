@@ -126,6 +126,7 @@ export default function TranslationAdminSelector({
 	const [activeLanguageIds, setActiveLanguageIds] = useState<
 		Liferay.Language.Locale[]
 	>(initialActiveLanguageIds);
+	const isFirstRenderRef = useRef<Liferay.Language.Locale[] | null>(null);
 	const [selectedLanguageId, setSelectedLanguageId] =
 		useState<Liferay.Language.Locale>(initialSelectedLanguageId);
 	const [selectorDropdownActive, setSelectorDropdownActive] = useState(false);
@@ -163,7 +164,14 @@ export default function TranslationAdminSelector({
 	}, [availableLocales, defaultLanguageId, selectedLanguageId]);
 
 	useEffect(() => {
-		onActiveLanguageIdsChange(activeLanguageIds);
+		if (
+			isFirstRenderRef.current === null ||
+			JSON.stringify(isFirstRenderRef.current) !==
+				JSON.stringify(activeLanguageIds)
+		) {
+			onActiveLanguageIdsChange(activeLanguageIds);
+			isFirstRenderRef.current = activeLanguageIds;
+		}
 	}, [activeLanguageIds, onActiveLanguageIdsChange]);
 
 	useEffect(() => {
@@ -204,6 +212,15 @@ export default function TranslationAdminSelector({
 				displayType={displayType}
 				id={selectorId}
 				items={activeLocales}
+				messages={{
+					itemDescribedby: Liferay.Language.get(
+						'you-are-currently-on-a-text-element,-inside-of-a-list-box'
+					),
+					itemSelected: Liferay.Language.get('x-selected'),
+					scrollToBottomAriaLabel:
+						Liferay.Language.get('scroll-to-bottom'),
+					scrollToTopAriaLabel: Liferay.Language.get('scroll-to-top'),
+				}}
 				onActiveChange={(active: any) => {
 					if (active) {
 						onSelectorActiveChange();

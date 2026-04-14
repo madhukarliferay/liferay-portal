@@ -123,47 +123,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 			<CommerceChannelAccountEntryRel> orderByComparator);
 
 	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where accountEntryId = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByAccountEntryId_Last(
-			long accountEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where accountEntryId = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByAccountEntryId_Last(
-		long accountEntryId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where accountEntryId = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByAccountEntryId_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long accountEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
 	 * Removes all the commerce channel account entry rels where accountEntryId = &#63; from the database.
 	 *
 	 * @param accountEntryId the account entry ID
@@ -267,47 +226,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 		long commerceChannelId,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where commerceChannelId = &#63;.
-	 *
-	 * @param commerceChannelId the commerce channel ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByCommerceChannelId_Last(
-			long commerceChannelId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where commerceChannelId = &#63;.
-	 *
-	 * @param commerceChannelId the commerce channel ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByCommerceChannelId_Last(
-		long commerceChannelId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where commerceChannelId = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param commerceChannelId the commerce channel ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByCommerceChannelId_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long commerceChannelId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
 
 	/**
 	 * Removes all the commerce channel account entry rels where commerceChannelId = &#63; from the database.
@@ -417,51 +335,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 		long accountEntryId, int type,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where accountEntryId = &#63; and type = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByA_T_Last(
-			long accountEntryId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where accountEntryId = &#63; and type = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByA_T_Last(
-		long accountEntryId, int type,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where accountEntryId = &#63; and type = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param accountEntryId the account entry ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByA_T_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long accountEntryId,
-			int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
 
 	/**
 	 * Removes all the commerce channel account entry rels where accountEntryId = &#63; and type = &#63; from the database.
@@ -575,51 +448,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 			<CommerceChannelAccountEntryRel> orderByComparator);
 
 	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByC_C_Last(
-			long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByC_C_Last(
-		long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByC_C_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long classNameId,
-			long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
 	 * Removes all the commerce channel account entry rels where classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -729,51 +557,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 		long commerceChannelId, int type,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByC_T_Last(
-			long commerceChannelId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByC_T_Last(
-		long commerceChannelId, int type,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByC_T_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long commerceChannelId,
-			int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
 
 	/**
 	 * Removes all the commerce channel account entry rels where commerceChannelId = &#63; and type = &#63; from the database.
@@ -894,54 +677,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 		long accountEntryId, long commerceChannelId, int type,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where accountEntryId = &#63; and commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByA_C_T_Last(
-			long accountEntryId, long commerceChannelId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where accountEntryId = &#63; and commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByA_C_T_Last(
-		long accountEntryId, long commerceChannelId, int type,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where accountEntryId = &#63; and commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param accountEntryId the account entry ID
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByA_C_T_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long accountEntryId,
-			long commerceChannelId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
 
 	/**
 	 * Removes all the commerce channel account entry rels where accountEntryId = &#63; and commerceChannelId = &#63; and type = &#63; from the database.
@@ -1072,57 +807,6 @@ public interface CommerceChannelAccountEntryRelPersistence
 		long classNameId, long classPK, long commerceChannelId, int type,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where classNameId = &#63; and classPK = &#63; and commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel findByC_C_C_T_Last(
-			long classNameId, long classPK, long commerceChannelId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
-
-	/**
-	 * Returns the last commerce channel account entry rel in the ordered set where classNameId = &#63; and classPK = &#63; and commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce channel account entry rel, or <code>null</code> if a matching commerce channel account entry rel could not be found
-	 */
-	public CommerceChannelAccountEntryRel fetchByC_C_C_T_Last(
-		long classNameId, long classPK, long commerceChannelId, int type,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceChannelAccountEntryRel> orderByComparator);
-
-	/**
-	 * Returns the commerce channel account entry rels before and after the current commerce channel account entry rel in the ordered set where classNameId = &#63; and classPK = &#63; and commerceChannelId = &#63; and type = &#63;.
-	 *
-	 * @param commerceChannelAccountEntryRelId the primary key of the current commerce channel account entry rel
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param commerceChannelId the commerce channel ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce channel account entry rel
-	 * @throws NoSuchChannelAccountEntryRelException if a commerce channel account entry rel with the primary key could not be found
-	 */
-	public CommerceChannelAccountEntryRel[] findByC_C_C_T_PrevAndNext(
-			long commerceChannelAccountEntryRelId, long classNameId,
-			long classPK, long commerceChannelId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceChannelAccountEntryRel> orderByComparator)
-		throws NoSuchChannelAccountEntryRelException;
 
 	/**
 	 * Removes all the commerce channel account entry rels where classNameId = &#63; and classPK = &#63; and commerceChannelId = &#63; and type = &#63; from the database.
@@ -1351,3 +1035,4 @@ public interface CommerceChannelAccountEntryRelPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1834377704

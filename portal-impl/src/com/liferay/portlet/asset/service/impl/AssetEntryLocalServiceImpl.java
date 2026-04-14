@@ -63,11 +63,11 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.RenderLayoutContentThreadLocal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.view.count.ViewCountManagerUtil;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.asset.model.impl.AssetEntryModelImpl;
 import com.liferay.portlet.asset.service.base.AssetEntryLocalServiceBaseImpl;
 import com.liferay.portlet.asset.service.permission.AssetCategoryPermission;
@@ -252,7 +252,7 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 
 	@Override
 	public AssetEntry fetchEntry(String className, long classPK) {
-		return assetEntryLocalService.fetchEntry(
+		return assetEntryPersistence.fetchByC_C(
 			_classNameLocalService.getClassNameId(className), classPK);
 	}
 

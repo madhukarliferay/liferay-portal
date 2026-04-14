@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.persistence.model.SamlIdpSpConnection;
 import com.liferay.saml.persistence.service.SamlIdpSpConnectionLocalService;
+import com.liferay.saml.web.internal.util.SamlPermissionUtil;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
@@ -92,17 +93,22 @@ public class UpdateServiceProviderConnectionMVCActionCommand
 
 		if (samlIdpSpConnectionId <= 0) {
 			_samlIdpSpConnectionLocalService.addSamlIdpSpConnection(
-				assertionLifetime, attributeNames, attributesEnabled,
-				attributesNamespaceEnabled, enabled, encryptionForced,
-				metadataUrl, metadataXmlInputStream, name, nameIdAttribute,
-				nameIdFormat, samlSpEntityId, serviceContext);
-		}
-		else {
-			_samlIdpSpConnectionLocalService.updateSamlIdpSpConnection(
-				samlIdpSpConnectionId, assertionLifetime, attributeNames,
+				samlSpEntityId, assertionLifetime, attributeNames,
 				attributesEnabled, attributesNamespaceEnabled, enabled,
 				encryptionForced, metadataUrl, metadataXmlInputStream, name,
-				nameIdAttribute, nameIdFormat, samlSpEntityId, serviceContext);
+				nameIdAttribute, nameIdFormat, serviceContext);
+		}
+		else {
+			SamlPermissionUtil.checkPermission(
+				_portal.getCompanyId(actionRequest),
+				_samlIdpSpConnectionLocalService.getSamlIdpSpConnection(
+					samlIdpSpConnectionId));
+
+			_samlIdpSpConnectionLocalService.updateSamlIdpSpConnection(
+				samlIdpSpConnectionId, samlSpEntityId, assertionLifetime,
+				attributeNames, attributesEnabled, attributesNamespaceEnabled,
+				enabled, encryptionForced, metadataUrl, metadataXmlInputStream,
+				name, nameIdAttribute, nameIdFormat, serviceContext);
 		}
 	}
 

@@ -8,6 +8,7 @@ package com.liferay.site.cms.site.initializer.internal.display.context;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.document.library.configuration.DLConfiguration;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
+import com.liferay.frontend.data.set.model.FDSActionDropdownItemBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
@@ -18,7 +19,6 @@ import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -32,7 +32,9 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.site.cms.site.initializer.internal.constants.CMSSiteInitializerFDSNames;
 import com.liferay.site.cms.site.initializer.internal.util.ActionUtil;
+import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterRegistry;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -55,15 +57,45 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 		ObjectEntryFolderLocalService objectEntryFolderLocalService,
 		ModelResourcePermission<ObjectEntryFolder>
 			objectEntryFolderModelResourcePermission,
-		Portal portal) {
+		Portal portal,
+		TranslationInfoItemFieldValuesExporterRegistry
+			translationInfoItemFieldValuesExporterRegistry) {
 
 		super(
 			depotEntryLocalService, dlConfiguration, groupLocalService,
 			httpServletRequest, language, objectDefinitionService,
 			objectDefinitionSettingLocalService,
-			objectEntryFolderModelResourcePermission, portal);
+			objectEntryFolderModelResourcePermission, portal,
+			translationInfoItemFieldValuesExporterRegistry);
 
+		_httpServletRequest = httpServletRequest;
 		_objectEntryFolderLocalService = objectEntryFolderLocalService;
+	}
+
+	@Override
+	public Map<String, Object> getAdditionalProps() {
+		Boolean contentsFolder = Objects.equals(
+			getRootObjectEntryFolderExternalReferenceCode(),
+			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS);
+
+		boolean rootFolder = false;
+
+		if (objectEntryFolder != null) {
+			rootFolder = Objects.equals(
+				objectEntryFolder.getExternalReferenceCode(),
+				getRootObjectEntryFolderExternalReferenceCode());
+		}
+
+		return new HashMapBuilder<>().putAll(
+			super.getAdditionalProps()
+		).put(
+			"galleryViewEnabled", !contentsFolder
+		).put(
+			"rootFolder", rootFolder
+		).put(
+			"rootObjectEntryFolderExternalReferenceCode",
+			getRootObjectEntryFolderExternalReferenceCode()
+		).build();
 	}
 
 	public Map<String, Object> getBreadcrumbProps() {
@@ -123,10 +155,51 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 			super.getBulkActionDropdownItems();
 
 		fdsBulkActionDropdownItems.add(
+			FDSActionDropdownItemBuilder.setHighlighted(
+				true
+			).setHref(
+				"#"
+			).setIcon(
+				"move-folder"
+			).setLabel(
+				LanguageUtil.get(httpServletRequest, "move-to")
+			).build(
+				"move-to"
+			));
+		fdsBulkActionDropdownItems.add(
+			FDSActionDropdownItemBuilder.setHighlighted(
+				true
+			).setHref(
+				"#"
+			).setIcon(
+				"copy"
+			).setLabel(
+				LanguageUtil.get(httpServletRequest, "copy-to")
+			).build(
+				"copy-to"
+			));
+		fdsBulkActionDropdownItems.add(
+			FDSActionDropdownItemBuilder.setHighlighted(
+				true
+			).setHref(
+				"#"
+			).setIcon(
+				"upload"
+			).setLabel(
+				LanguageUtil.get(httpServletRequest, "export-for-translation")
+			).build(
+				"export-for-translation"
+			));
+		fdsBulkActionDropdownItems.add(
 			new FDSActionDropdownItem(
-				"#", "download", "download",
-				LanguageUtil.get(httpServletRequest, "download"), null, null,
+				"#", "password-policies", "permissions",
+				LanguageUtil.get(httpServletRequest, "permissions"), null, null,
 				null));
+		fdsBulkActionDropdownItems.add(
+			new FDSActionDropdownItem(
+				"#", "password-policies", "default-permissions",
+				LanguageUtil.get(httpServletRequest, "default-permissions"),
+				null, null, null));
 		fdsBulkActionDropdownItems.add(
 			new FDSActionDropdownItem(
 				null, "pencil", "edit-categories",
@@ -137,8 +210,66 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 				null, "pencil", "edit-tags",
 				LanguageUtil.get(httpServletRequest, "edit-tags"), "post",
 				"edit-tags", null));
+		fdsBulkActionDropdownItems.add(
+			FDSActionDropdownItemBuilder.setHighlighted(
+				true
+			).setHref(
+				"#"
+			).setIcon(
+				"time"
+			).setLabel(
+				LanguageUtil.get(_httpServletRequest, "expire")
+			).build(
+				"expire"
+			));
+		fdsBulkActionDropdownItems.add(
+			new FDSActionDropdownItem(
+				StringPool.BLANK, "password-policies",
+				"edit-default-permissions-by-role",
+				LanguageUtil.get(
+					httpServletRequest, "edit-default-permissions-by-role"),
+				null, null, null));
+		fdsBulkActionDropdownItems.add(
+			new FDSActionDropdownItem(
+				StringPool.BLANK, "password-policies",
+				"edit-permissions-by-role",
+				LanguageUtil.get(
+					httpServletRequest, "edit-permissions-by-role"),
+				null, null, null));
+		fdsBulkActionDropdownItems.add(
+			new FDSActionDropdownItem(
+				StringPool.BLANK, "password-policies",
+				"reset-to-default-permissions",
+				LanguageUtil.get(
+					httpServletRequest, "reset-to-default-permissions"),
+				null, null, null));
 
 		return fdsBulkActionDropdownItems;
+	}
+
+	public String getCMSSiteInitializerFDSName() {
+		if (Objects.equals(
+				getRootObjectEntryFolderExternalReferenceCode(),
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS)) {
+
+			return CMSSiteInitializerFDSNames.VIEW_CONTENTS_FOLDER;
+		}
+
+		return CMSSiteInitializerFDSNames.VIEW_FILES_FOLDER;
+	}
+
+	@Override
+	public List<DropdownItem> getCreationMenuDropdownItems() {
+		if (Objects.equals(
+				getRootObjectEntryFolderExternalReferenceCode(),
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS)) {
+
+			return ActionUtil.getContentsSectionCreationMenuDropdownItems(
+				httpServletRequest, objectEntryFolder);
+		}
+
+		return ActionUtil.getFilesSectionCreationMenuDropdownItems(
+			httpServletRequest, objectEntryFolder);
 	}
 
 	@Override
@@ -146,7 +277,7 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 		String rootObjectEntryFolderExternalReferenceCode =
 			getRootObjectEntryFolderExternalReferenceCode();
 
-		String description = "click-new-to-create-your-first-asset";
+		String description = "click-new-or-drag-and-drop-your-files-here";
 		String image = "/states/cms_empty_state.svg";
 		String title = "no-assets-yet";
 
@@ -162,7 +293,7 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 					rootObjectEntryFolderExternalReferenceCode,
 					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES)) {
 
-			description = "click-new-to-create-your-first-file";
+			description = "click-new-or-drag-and-drop-your-files-here";
 			image = "/states/cms_empty_state_files.svg";
 			title = "no-files-yet";
 		}
@@ -182,6 +313,7 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 			super.getFDSActionDropdownItems();
 
 		fdsActionDropdownItems.add(
+			6,
 			new FDSActionDropdownItem(
 				"{embedded.file.link.href}", "download", "download",
 				LanguageUtil.get(httpServletRequest, "download"), "get", null,
@@ -192,6 +324,7 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS)) {
 
 			fdsActionDropdownItems.add(
+				7,
 				new FDSActionDropdownItem(
 					StringBundler.concat(
 						"/o", GroupConstants.CMS_FRIENDLY_URL,
@@ -207,6 +340,7 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 		}
 
 		fdsActionDropdownItems.add(
+			9,
 			new FDSActionDropdownItem(
 				StringPool.BLANK, "info-circle-open", "show-details",
 				LanguageUtil.get(httpServletRequest, "show-details"), null,
@@ -246,6 +380,20 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 		return new String[] {_objectFolderExternalReferenceCode};
 	}
 
+	public String getPropsTransformerModule() {
+		String rootObjectEntryFolderExternalReferenceCode =
+			getRootObjectEntryFolderExternalReferenceCode();
+
+		if (rootObjectEntryFolderExternalReferenceCode.equals(
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES)) {
+
+			return "{AssetsFilesDropFDSPropsTransformer} from " +
+				"site-cms-site-initializer";
+		}
+
+		return "{AssetsFDSPropsTransformer} from site-cms-site-initializer";
+	}
+
 	@Override
 	public String getRootObjectEntryFolderExternalReferenceCode() {
 		if (_rootObjectEntryFolderExternalReferenceCode != null) {
@@ -281,42 +429,11 @@ public class ViewFolderSectionDisplayContext extends BaseSectionDisplayContext {
 	}
 
 	@Override
-	public Map<String, Object> getToolbarProps() throws PortalException {
-		return HashMapBuilder.<String, Object>putAll(
-			super.getToolbarProps()
-		).put(
-			"title",
-			() -> {
-				if (objectEntryFolder == null) {
-					return null;
-				}
-
-				String[] parts = StringUtil.split(
-					objectEntryFolder.getTreePath(), CharPool.SLASH);
-
-				if (parts.length == 0) {
-					return null;
-				}
-
-				ObjectEntryFolder rootObjectEntryFolder =
-					_objectEntryFolderLocalService.fetchObjectEntryFolder(
-						GetterUtil.getLong(parts[1]));
-
-				if (rootObjectEntryFolder == null) {
-					return null;
-				}
-
-				return rootObjectEntryFolder.getLabel(
-					themeDisplay.getLocale(), true);
-			}
-		).build();
-	}
-
-	@Override
 	protected String getCMSSectionFilterString() {
 		return null;
 	}
 
+	private final HttpServletRequest _httpServletRequest;
 	private final ObjectEntryFolderLocalService _objectEntryFolderLocalService;
 	private String _objectFolderExternalReferenceCode;
 	private String _rootObjectEntryFolderExternalReferenceCode;

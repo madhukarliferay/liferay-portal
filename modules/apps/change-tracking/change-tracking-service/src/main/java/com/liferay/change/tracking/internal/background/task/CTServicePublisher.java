@@ -18,7 +18,7 @@ import com.liferay.portal.kernel.model.change.tracking.CTModel;
 import com.liferay.portal.kernel.service.change.tracking.CTService;
 import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersistence;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.Serializable;
 
@@ -121,24 +121,28 @@ public class CTServicePublisher<T extends CTModel<T>> {
 		CTRowUtil.copyCTRows(ctPersistence, connection, sb.toString());
 	}
 
-	private int _getPredeletedRowCount(
+	private long _getPredeletedRowCount(
 			Connection connection, String tableName, String primaryKeyName)
 		throws Exception {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select count(*) from CTEntry left join ", tableName,
-					" on CTEntry.modelClassPK = ", tableName, ".",
-					primaryKeyName, " and ", tableName, ".ctCollectionId = ",
-					_targetCTCollectionId, " where CTEntry.changeType = ",
-					CTConstants.CT_CHANGE_TYPE_DELETION,
-					" and CTEntry.ctCollectionId = ", _sourceCTCollectionId,
-					" and CTEntry.modelClassNameId = ", _modelClassNameId,
-					" and ", tableName, ".", primaryKeyName, " is null"));
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"select count(*) as count from CTEntry left join ",
+					tableName, " on CTEntry.modelClassPK = ", tableName, ".",
+					primaryKeyName, " and ", tableName, ".ctCollectionId = ? ",
+					"where CTEntry.changeType = ? and CTEntry.ctCollectionId ",
+					"= ? and CTEntry.modelClassNameId = ? and ", tableName, ".",
+					primaryKeyName, " is null"))) {
 
-			if (resultSet.next()) {
-				return resultSet.getInt(1);
+			preparedStatement.setLong(1, _targetCTCollectionId);
+			preparedStatement.setInt(2, CTConstants.CT_CHANGE_TYPE_DELETION);
+			preparedStatement.setLong(3, _sourceCTCollectionId);
+			preparedStatement.setLong(4, _modelClassNameId);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong("count");
+				}
 			}
 		}
 
@@ -184,7 +188,7 @@ public class CTServicePublisher<T extends CTModel<T>> {
 		}
 
 		if (_deletionCTEntries != null) {
-			int predeletedRowCount = _getPredeletedRowCount(
+			long predeletedRowCount = _getPredeletedRowCount(
 				connection, tableName, primaryKeyName);
 
 			if (predeletedRowCount != _deletionCTEntries.size()) {
@@ -308,8 +312,9 @@ public class CTServicePublisher<T extends CTModel<T>> {
 			sb.append(".mvccVersion = ?");
 		}
 
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				sb.toString())) {
+		try (PreparedStatement preparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection, sb.toString())) {
 
 			int batchCount = 0;
 			int totalRowCount = 0;
@@ -371,6 +376,7 @@ public class CTServicePublisher<T extends CTModel<T>> {
 							ctCollectionId,
 							ListUtil.subList(primaryKeys, batchCount, count),
 							primaryKeyName, tableName));
+
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
 				while (resultSet.next()) {

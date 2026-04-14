@@ -13,13 +13,15 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
+import com.liferay.portal.kernel.util.LoggingTimer;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
-import com.liferay.portal.util.PropsValues;
 
 import java.sql.Connection;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Luis Ortiz
@@ -37,86 +39,244 @@ public class DataCleanupPreupgradeProcessSuite {
 			}
 		}
 
-		if (_log.isInfoEnabled()) {
-			_log.info(
-				"Starting " +
-					DataCleanupPreupgradeProcessSuite.class.getName());
-		}
+		try (LoggingTimer loggingTimer = new LoggingTimer()) {
+			List<DataCleanupPreupgradeProcess> dataCleanupPreupgradeProcesses =
+				getSortedDataCleanupPreupgradeProcesses();
 
-		for (DataCleanupPreupgradeProcess dataCleanupPreupgradeProcess :
-				_dataCleanupPreupgradeProcesses) {
+			for (DataCleanupPreupgradeProcess dataCleanupPreupgradeProcess :
+					dataCleanupPreupgradeProcesses) {
 
-			Class<?> clazz = dataCleanupPreupgradeProcess.getClass();
+				Class<?> clazz = dataCleanupPreupgradeProcess.getClass();
 
-			if (ArrayUtil.contains(
-					PropsValues.
-						UPGRADE_DATABASE_PREUPGRADE_DATA_CLEANUP_BLACKLIST,
-					clazz.getName())) {
+				if (ArrayUtil.contains(
+						PropsValues.
+							UPGRADE_DATABASE_PREUPGRADE_DATA_CLEANUP_BLACKLIST,
+						clazz.getName())) {
 
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"Skipping blacklisted data cleanup process: " +
-							clazz.getName());
+					if (_log.isInfoEnabled()) {
+						_log.info(
+							"Skipping blacklisted data cleanup process: " +
+								clazz.getName());
+					}
+
+					continue;
 				}
 
-				continue;
+				dataCleanupPreupgradeProcess.upgrade();
 			}
-
-			dataCleanupPreupgradeProcess.upgrade();
-		}
-
-		if (_log.isInfoEnabled()) {
-			_log.info(
-				"Finished " +
-					DataCleanupPreupgradeProcessSuite.class.getName());
 		}
 	}
 
 	public List<DataCleanupPreupgradeProcess>
-		getDataCleanupPreupgradeProcesses() {
+		getSortedDataCleanupPreupgradeProcesses() {
 
-		return _dataCleanupPreupgradeProcesses;
+		return DataCleanupPreupgradeProcess.
+			getSortedDataCleanupPreupgradeProcesses(
+				_dataCleanupPreupgradeProcessesMap);
+	}
+
+	private Map
+		<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
+			_createDataCleanupPreupgradeProcessesMap() {
+
+		DataCleanupPreupgradeProcess
+			analyticsMessageDataCleanupPreupgradeProcess =
+				new AnalyticsMessageDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess companyDataCleanupPreupgradeProcess =
+			new CompanyDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess configurationDataCleanupPreupgradeProcess =
+			new ConfigurationDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess contactDataCleanupPreupgradeProcess =
+			new ContactDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			databaseTableAndColumnCaseDataCleanupPreupgradeProcess =
+				new DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess ddmDataCleanupPreupgradeProcess =
+			new DDMDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			ddmStorageLinkDataCleanupPreupgradeProcess =
+				new DDMStorageLinkDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess dlFileEntryDataCleanupPreupgradeProcess =
+			new DLFileEntryDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess groupDataCleanupPreupgradeProcess =
+			new GroupDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			illegalCharactersContentDataCleanupPreupgradeProcess =
+				new IllegalCharactersContentDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess journalDataCleanupPreupgradeProcess =
+			new JournalDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess layoutDataCleanupPreupgradeProcess =
+			new LayoutDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			portalPreferencesDataCleanupPreupgradeProcess =
+				new PortalPreferencesDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			portletPreferencesDataCleanupPreupgradeProcess =
+				new PortletPreferencesDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			quartzJobDetailsDataCleanupPreupgradeProcess =
+				new QuartzJobDetailsDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess roleDataCleanupPreupgradeProcess =
+			new RoleDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			resourcePermissionDataCleanupPreupgradeProcess =
+				new ResourcePermissionDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			updateAllPrimaryKeysDataCleanupPreupgradeProcess =
+				new DataCleanupPreupgradeProcess() {
+
+					@Override
+					protected void doUpgrade() throws Exception {
+						PrimaryKeyUpdaterUtil.updateAllPrimaryKeys();
+					}
+
+				};
+		DataCleanupPreupgradeProcess userDataCleanupPreupgradeProcess =
+			new UserDataCleanupPreupgradeProcess();
+
+		return LinkedHashMapBuilder.
+			<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
+				put(
+					analyticsMessageDataCleanupPreupgradeProcess,
+					DataCleanupPreupgradeProcess.dependsOn(
+						databaseTableAndColumnCaseDataCleanupPreupgradeProcess)
+			).put(
+				companyDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					analyticsMessageDataCleanupPreupgradeProcess,
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					updateAllPrimaryKeysDataCleanupPreupgradeProcess)
+			).put(
+				configurationDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					companyDataCleanupPreupgradeProcess,
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				contactDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					userDataCleanupPreupgradeProcess)
+			).put(
+				new CounterDataCleanupPreupgradeProcess(),
+				DataCleanupPreupgradeProcess.dependsOn(
+					analyticsMessageDataCleanupPreupgradeProcess,
+					companyDataCleanupPreupgradeProcess,
+					configurationDataCleanupPreupgradeProcess,
+					contactDataCleanupPreupgradeProcess,
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					ddmDataCleanupPreupgradeProcess,
+					ddmStorageLinkDataCleanupPreupgradeProcess,
+					dlFileEntryDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess,
+					journalDataCleanupPreupgradeProcess,
+					layoutDataCleanupPreupgradeProcess,
+					illegalCharactersContentDataCleanupPreupgradeProcess,
+					portalPreferencesDataCleanupPreupgradeProcess,
+					portletPreferencesDataCleanupPreupgradeProcess,
+					quartzJobDetailsDataCleanupPreupgradeProcess,
+					resourcePermissionDataCleanupPreupgradeProcess,
+					roleDataCleanupPreupgradeProcess,
+					updateAllPrimaryKeysDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn()
+			).put(
+				ddmDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess)
+			).put(
+				ddmStorageLinkDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					ddmDataCleanupPreupgradeProcess,
+					dlFileEntryDataCleanupPreupgradeProcess,
+					journalDataCleanupPreupgradeProcess)
+			).put(
+				dlFileEntryDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess)
+			).put(
+				groupDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				illegalCharactersContentDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					ddmDataCleanupPreupgradeProcess)
+			).put(
+				journalDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					ddmDataCleanupPreupgradeProcess)
+			).put(
+				layoutDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					companyDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				portalPreferencesDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					companyDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				portletPreferencesDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					layoutDataCleanupPreupgradeProcess)
+			).put(
+				quartzJobDetailsDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess)
+			).put(
+				resourcePermissionDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					analyticsMessageDataCleanupPreupgradeProcess,
+					companyDataCleanupPreupgradeProcess,
+					configurationDataCleanupPreupgradeProcess,
+					contactDataCleanupPreupgradeProcess,
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					ddmDataCleanupPreupgradeProcess,
+					ddmStorageLinkDataCleanupPreupgradeProcess,
+					dlFileEntryDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess,
+					journalDataCleanupPreupgradeProcess,
+					layoutDataCleanupPreupgradeProcess,
+					illegalCharactersContentDataCleanupPreupgradeProcess,
+					portalPreferencesDataCleanupPreupgradeProcess,
+					portletPreferencesDataCleanupPreupgradeProcess,
+					quartzJobDetailsDataCleanupPreupgradeProcess,
+					roleDataCleanupPreupgradeProcess,
+					updateAllPrimaryKeysDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				roleDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					companyDataCleanupPreupgradeProcess,
+					userDataCleanupPreupgradeProcess)
+			).put(
+				updateAllPrimaryKeysDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess)
+			).put(
+				userDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					companyDataCleanupPreupgradeProcess,
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess)
+			).build();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DataCleanupPreupgradeProcessSuite.class);
 
-	private final List<DataCleanupPreupgradeProcess>
-		_dataCleanupPreupgradeProcesses = ListUtil.fromArray(
-
-			// Recreate missing primary keys so that later upgrade processes can
-			// use them
-
-			new DataCleanupPreupgradeProcess() {
-
-				@Override
-				protected void doUpgrade() throws Exception {
-					PrimaryKeyUpdaterUtil.updateAllPrimaryKeys();
-				}
-
-			},
-
-			// Company, then user, then group, and then the rest for optimal
-			// performance since cleaning companies will remove its users,
-			// groups, and related data
-
-			new CompanyDataCleanupPreupgradeProcess(),
-
-			//
-
-			new UserDataCleanupPreupgradeProcess(),
-
-			//
-
-			new GroupDataCleanupPreupgradeProcess(),
-
-			//
-
-			new AnalyticsMessageDataCleanupPreupgradeProcess(),
-			new ConfigurationDataCleanupPreupgradeProcess(),
-			new DDMStructureDataCleanupPreupgradeProcess(),
-			new DLFileEntryDataCleanupPreupgradeProcess(),
-			new NullUnicodeContentDataCleanupPreupgradeProcess(),
-			new QuartzJobDetailsDataCleanupPreupgradeProcess());
+	private final Map
+		<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
+			_dataCleanupPreupgradeProcessesMap =
+				_createDataCleanupPreupgradeProcessesMap();
 
 }

@@ -121,47 +121,6 @@ public interface LayoutSEOSitePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last layout seo site in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo site
-	 * @throws NoSuchSiteException if a matching layout seo site could not be found
-	 */
-	public LayoutSEOSite findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
-				orderByComparator)
-		throws NoSuchSiteException;
-
-	/**
-	 * Returns the last layout seo site in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo site, or <code>null</code> if a matching layout seo site could not be found
-	 */
-	public LayoutSEOSite fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
-			orderByComparator);
-
-	/**
-	 * Returns the layout seo sites before and after the current layout seo site in the ordered set where uuid = &#63;.
-	 *
-	 * @param layoutSEOSiteId the primary key of the current layout seo site
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout seo site
-	 * @throws NoSuchSiteException if a layout seo site with the primary key could not be found
-	 */
-	public LayoutSEOSite[] findByUuid_PrevAndNext(
-			long layoutSEOSiteId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
-				orderByComparator)
-		throws NoSuchSiteException;
-
-	/**
 	 * Removes all the layout seo sites where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -319,50 +278,6 @@ public interface LayoutSEOSitePersistence
 		String uuid, long companyId,
 		com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
 			orderByComparator);
-
-	/**
-	 * Returns the last layout seo site in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo site
-	 * @throws NoSuchSiteException if a matching layout seo site could not be found
-	 */
-	public LayoutSEOSite findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
-				orderByComparator)
-		throws NoSuchSiteException;
-
-	/**
-	 * Returns the last layout seo site in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo site, or <code>null</code> if a matching layout seo site could not be found
-	 */
-	public LayoutSEOSite fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
-			orderByComparator);
-
-	/**
-	 * Returns the layout seo sites before and after the current layout seo site in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param layoutSEOSiteId the primary key of the current layout seo site
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout seo site
-	 * @throws NoSuchSiteException if a layout seo site with the primary key could not be found
-	 */
-	public LayoutSEOSite[] findByUuid_C_PrevAndNext(
-			long layoutSEOSiteId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOSite>
-				orderByComparator)
-		throws NoSuchSiteException;
 
 	/**
 	 * Removes all the layout seo sites where uuid = &#63; and companyId = &#63; from the database.
@@ -545,3 +460,4 @@ public interface LayoutSEOSitePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:768480976

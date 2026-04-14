@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.util.StringUtil_IW;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.Validator_IW;
+import com.liferay.portal.tools.ArgumentsUtil;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.FreeMarkerTool;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodSignature;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.parser.util.OpenAPIParserUtil;
@@ -47,14 +48,17 @@ import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.ResponseCode;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Schema;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.IOException;
 
 import java.net.URL;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -67,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author Peter Shin
@@ -74,6 +79,40 @@ import java.util.TreeMap;
 public class RESTBuilder {
 
 	public static void main(String[] args) throws Exception {
+		Map<String, String> arguments = null;
+
+		try {
+			arguments = ArgumentsUtil.parseArguments(args);
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+		}
+
+		if (arguments != null) {
+			String restConfigDirName = arguments.get("rest.config.dirs");
+
+			if (Validator.isNotNull(restConfigDirName)) {
+				List<String> baselineTasks = _processRESTConfigFiles(
+					restConfigDirName);
+
+				String baselineOutputFileName = arguments.get(
+					"rest.builder.baseline.output.file");
+
+				if (Validator.isNotNull(baselineOutputFileName) &&
+					!baselineTasks.isEmpty()) {
+
+					Files.write(
+						Paths.get(baselineOutputFileName),
+						StringUtil.merge(
+							baselineTasks, StringPool.SPACE
+						).getBytes(
+							StandardCharsets.UTF_8
+						));
+				}
+
+				return;
+			}
+		}
+
 		RESTBuilderArgs restBuilderArgs = new RESTBuilderArgs();
 
 		JCommander jCommander = new JCommander(restBuilderArgs);
@@ -127,12 +166,13 @@ public class RESTBuilder {
 
 		_copyrightFile = copyrightFile;
 
-		_configDir = configDir;
+		_configDir = configDir.getCanonicalFile();
 
 		File configFile = new File(_configDir, "rest-config.yaml");
 
-		try (InputStream inputStream = new FileInputStream(configFile)) {
-			_configYAML = YAMLUtil.loadConfigYAML(StringUtil.read(inputStream));
+		try {
+			_configYAML = YAMLUtil.loadConfigYAML(
+				_configDir.getPath(), configFile);
 
 			if (forceClientVersionDescription != null) {
 				_configYAML.setForceClientVersionDescription(
@@ -196,6 +236,7 @@ public class RESTBuilder {
 		}
 
 		boolean createClientCustomFieldFiles = true;
+		boolean createClientScopeFiles = true;
 		List<String> validationErrorMessages = new ArrayList<>();
 
 		for (File openAPIYAMLFile :
@@ -274,16 +315,13 @@ public class RESTBuilder {
 			_createExternalSchemaFiles(
 				allExternalSchemas, context, escapedVersion);
 
-			Set<Map.Entry<String, Schema>> set = new HashSet<>(
-				allSchemas.entrySet());
-
-			for (Map.Entry<String, Schema> entry : set) {
+			for (Map.Entry<String, Schema> entry : allSchemas.entrySet()) {
 				Schema schema = entry.getValue();
 				String schemaName = entry.getKey();
 
 				_putSchema(
 					context, escapedVersion, javaDataTypeMap, schema,
-					schemaName, new HashSet<>());
+					schemaName, Collections.emptySet());
 
 				_createDTOFile(context, escapedVersion, schemaName);
 
@@ -299,7 +337,7 @@ public class RESTBuilder {
 
 				_putSchema(
 					context, escapedVersion, javaDataTypeMap, entry.getValue(),
-					entry.getKey(), new HashSet<>());
+					entry.getKey(), Collections.emptySet());
 
 				_createEnumFile(context, escapedVersion, entry.getKey());
 
@@ -313,7 +351,26 @@ public class RESTBuilder {
 				allExternalSchemas, openAPIYAML, schemas);
 
 			for (Map.Entry<String, Schema> entry : schemas.entrySet()) {
+				Schema schema = entry.getValue();
 				String schemaName = entry.getKey();
+
+				if (Validator.isNotNull(_configYAML.getClientDir())) {
+					if (createClientCustomFieldFiles &&
+						_containsVulcanCustomField(schema)) {
+
+						_createClientCustomFieldFiles(context);
+
+						createClientCustomFieldFiles = false;
+					}
+
+					if (createClientScopeFiles &&
+						_containsVulcanScope(schema)) {
+
+						_createClientScopeFile(context);
+
+						createClientScopeFiles = false;
+					}
+				}
 
 				List<JavaMethodSignature> javaMethodSignatures =
 					freeMarkerTool.getResourceJavaMethodSignatures(
@@ -322,8 +379,6 @@ public class RESTBuilder {
 				if (javaMethodSignatures.isEmpty()) {
 					continue;
 				}
-
-				Schema schema = entry.getValue();
 
 				_putSchema(
 					context, escapedVersion, javaDataTypeMap, schema,
@@ -346,14 +401,6 @@ public class RESTBuilder {
 				_createResourceImplFile(context, escapedVersion, schemaName);
 
 				if (Validator.isNotNull(_configYAML.getClientDir())) {
-					if (createClientCustomFieldFiles &&
-						_containsVulcanCustomField(schema)) {
-
-						_createClientCustomFieldFiles(context);
-
-						createClientCustomFieldFiles = false;
-					}
-
 					_createClientResourceFile(
 						context, escapedVersion, schemaName);
 				}
@@ -406,8 +453,150 @@ public class RESTBuilder {
 		}
 	}
 
+	private static String _getBaselineTask(
+		Path baseDirPath, Path restConfigYamlPath) {
+
+		try {
+			String content = new String(
+				Files.readAllBytes(restConfigYamlPath), StandardCharsets.UTF_8);
+
+			int index = content.indexOf("apiDir:");
+
+			if (index == -1) {
+				return null;
+			}
+
+			int startIndex = index + "apiDir:".length();
+
+			int endIndex = content.indexOf('\n', startIndex);
+
+			if (endIndex == -1) {
+				endIndex = content.length();
+			}
+
+			String apiDirValue = content.substring(startIndex, endIndex);
+
+			Path apiDirPath = restConfigYamlPath.resolveSibling(
+				apiDirValue.trim());
+
+			Path apiModuleDirPath = apiDirPath.getParent();
+
+			while (apiModuleDirPath != null) {
+				if (Files.exists(apiModuleDirPath.resolve("bnd.bnd"))) {
+					break;
+				}
+
+				apiModuleDirPath = apiModuleDirPath.getParent();
+			}
+
+			if (apiModuleDirPath == null) {
+				return null;
+			}
+
+			Path relativePath = baseDirPath.relativize(
+				apiModuleDirPath.normalize());
+
+			String gradleProjectPath = StringUtil.replace(
+				relativePath.toString(), File.separatorChar, ':');
+
+			return ":" + gradleProjectPath + ":baseline";
+		}
+		catch (IOException ioException) {
+			return null;
+		}
+	}
+
 	private static void _printHelp(JCommander jCommander) {
 		jCommander.usage();
+	}
+
+	private static String _processRESTConfigFile(
+			Path baseDirPath, Path restConfigYamlPath)
+		throws Exception {
+
+		Path moduleDirPath = restConfigYamlPath.getParent();
+
+		System.out.println("Processing " + moduleDirPath.getFileName());
+
+		RESTBuilder restBuilder = new RESTBuilder(
+			null, moduleDirPath.toFile(), null, null, null);
+
+		restBuilder.build();
+
+		return _getBaselineTask(baseDirPath, restConfigYamlPath);
+	}
+
+	private static List<String> _processRESTConfigFiles(String baseDirName)
+		throws Exception {
+
+		List<String> baselineTasks = new ArrayList<>();
+
+		Path baseDirPath = Paths.get(baseDirName);
+
+		List<Path> restConfigYamlPaths = new ArrayList<>();
+
+		Files.walkFileTree(
+			baseDirPath,
+			new SimpleFileVisitor<Path>() {
+
+				@Override
+				public FileVisitResult preVisitDirectory(
+						Path dir, BasicFileAttributes basicFileAttributes)
+					throws IOException {
+
+					String dirName = String.valueOf(dir.getFileName());
+
+					if (dirName.equals("build") || dirName.equals("classes") ||
+						dirName.equals("node_modules") ||
+						dirName.equals("src") ||
+						dirName.equals("test-classes") ||
+						dirName.startsWith(".")) {
+
+						return FileVisitResult.SKIP_SUBTREE;
+					}
+
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult visitFile(
+					Path file, BasicFileAttributes basicFileAttributes) {
+
+					if (!Objects.equals(
+							String.valueOf(file.getFileName()),
+							"rest-config.yaml")) {
+
+						return FileVisitResult.CONTINUE;
+					}
+
+					Path moduleDirPath = file.getParent();
+
+					String moduleName = String.valueOf(
+						moduleDirPath.getFileName());
+
+					if (!moduleName.endsWith("-rest-impl") ||
+						!Files.exists(moduleDirPath.resolve("build.gradle"))) {
+
+						return FileVisitResult.CONTINUE;
+					}
+
+					restConfigYamlPaths.add(file);
+
+					return FileVisitResult.SKIP_SIBLINGS;
+				}
+
+			});
+
+		for (Path restConfigYamlPath : restConfigYamlPaths) {
+			String baselineTask = _processRESTConfigFile(
+				baseDirPath, restConfigYamlPath);
+
+			if (baselineTask != null) {
+				baselineTasks.add(baselineTask);
+			}
+		}
+
+		return baselineTasks;
 	}
 
 	private String _addClientVersionDescription(String yamlString) {
@@ -521,6 +710,22 @@ public class RESTBuilder {
 				}
 			}
 			else if (Objects.equals(propertySchema.getType(), "customField")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _containsVulcanScope(Schema schema) {
+		Map<String, Schema> propertySchemas = schema.getPropertySchemas();
+
+		if (MapUtil.isEmpty(propertySchemas)) {
+			return false;
+		}
+
+		for (Schema propertySchema : propertySchemas.values()) {
+			if (Objects.equals(propertySchema.getType(), "scope")) {
 				return true;
 			}
 		}
@@ -731,6 +936,12 @@ public class RESTBuilder {
 			"client_resource");
 	}
 
+	private void _createClientScopeFile(Map<String, Object> context)
+		throws Exception {
+
+		_createClientFile(context, "", "scope", "Scope", "client_scope");
+	}
+
 	private void _createClientSerDesFile(
 			Map<String, Object> context, String escapedVersion,
 			String schemaName)
@@ -846,7 +1057,7 @@ public class RESTBuilder {
 			_putSchema(
 				context, escapedVersion,
 				Collections.singletonMap(schemaName, schemaName),
-				entry.getValue(), schemaName, new HashSet<>());
+				entry.getValue(), schemaName, Collections.emptySet());
 
 			if (Validator.isNotNull(_configYAML.getClientDir())) {
 				_createClientDTOFile(context, escapedVersion, schemaName);
@@ -1740,7 +1951,7 @@ public class RESTBuilder {
 		Map<String, Schema> schemas,
 		List<JavaMethodSignature> javaMethodSignatures) {
 
-		Set<String> relatedSchemaNames = new HashSet<>();
+		Set<String> relatedSchemaNames = new TreeSet<>();
 
 		for (JavaMethodSignature javaMethodSignature : javaMethodSignatures) {
 			String returnType = javaMethodSignature.getReturnType();

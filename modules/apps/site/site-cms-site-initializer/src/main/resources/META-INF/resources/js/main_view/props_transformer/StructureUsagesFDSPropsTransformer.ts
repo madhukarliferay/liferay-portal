@@ -5,9 +5,10 @@
 
 import {IInternalRenderer} from '@liferay/frontend-data-set-web';
 
+import StatusLabel from '../../common/components/StatusLabel';
+import {getScopeExternalReferenceCode} from '../../common/utils/getScopeExternalReferenceCode';
 import AuthorRenderer from './cell_renderers/AuthorRenderer';
-import NameRenderer from './cell_renderers/NameRenderer';
-import SpaceRenderer from './cell_renderers/SpaceRenderer';
+import SpaceRendererWithCache from './cell_renderers/SpaceRendererWithCache';
 import TypeRenderer from './cell_renderers/TypeRenderer';
 
 export default function StructureUsagesFDSPropsTransformer({
@@ -25,12 +26,12 @@ export default function StructureUsagesFDSPropsTransformer({
 					type: 'internal',
 				} as IInternalRenderer,
 				{
-					component: NameRenderer,
-					name: 'nameTableCellRenderer',
-					type: 'internal',
-				} as IInternalRenderer,
-				{
-					component: SpaceRenderer,
+					component: ({itemData}) =>
+						SpaceRendererWithCache({
+							scopeKey: itemData.embedded.scopeKey,
+							spaceExternalReferenceCode:
+								getScopeExternalReferenceCode(itemData),
+						}),
 					name: 'spaceTableCellRenderer',
 					type: 'internal',
 				} as IInternalRenderer,
@@ -39,7 +40,13 @@ export default function StructureUsagesFDSPropsTransformer({
 					name: 'typeTableCellRenderer',
 					type: 'internal',
 				} as IInternalRenderer,
+				{
+					component: ({value}) => StatusLabel(value),
+					name: 'statusTableCellRenderer',
+					type: 'internal',
+				} as IInternalRenderer,
 			],
 		},
+		hideManagementBarInEmptyState: true,
 	};
 }

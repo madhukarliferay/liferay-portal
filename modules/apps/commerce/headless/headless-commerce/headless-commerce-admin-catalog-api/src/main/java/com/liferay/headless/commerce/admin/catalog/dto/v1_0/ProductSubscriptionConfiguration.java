@@ -600,9 +600,7 @@ public class ProductSubscriptionConfiguration implements Serializable {
 			sb.append("\"deliverySubscriptionType\": ");
 
 			sb.append("\"");
-
 			sb.append(deliverySubscriptionType);
-
 			sb.append("\"");
 		}
 
@@ -665,9 +663,7 @@ public class ProductSubscriptionConfiguration implements Serializable {
 			sb.append("\"subscriptionType\": ");
 
 			sb.append("\"");
-
 			sb.append(subscriptionType);
-
 			sb.append("\"");
 		}
 
@@ -863,3 +859,4 @@ public class ProductSubscriptionConfiguration implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1890565956

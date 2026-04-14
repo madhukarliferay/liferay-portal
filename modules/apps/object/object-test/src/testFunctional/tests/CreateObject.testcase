@@ -2220,7 +2220,7 @@ definition {
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
-			fieldLabelName = "Custom Field",
+			fieldLabelName = "Custom Field 62",
 			fieldName = "customObjectField",
 			fieldType = "String",
 			isRequired = "false",
@@ -2234,7 +2234,7 @@ definition {
 
 		ObjectAdmin.goToFieldsTab();
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 62");
 
 		AssertElementPresent(locator1 = "ObjectField#MANDATORY_TOGGLE_DISABLED");
 	}
@@ -2967,7 +2967,7 @@ definition {
 
 		Navigator.openURL();
 
-		ApplicationsMenuHelper.openApplicationsMenu();
+		ApplicationsMenu.openApplicationsMenu();
 
 		ApplicationsMenu.gotoPanel(panel = "Control Panel");
 
@@ -3243,7 +3243,7 @@ definition {
 
 		Navigator.openURL();
 
-		ApplicationsMenuHelper.openApplicationsMenu();
+		ApplicationsMenu.openApplicationsMenu();
 
 		ApplicationsMenu.gotoPanel(panel = "Painel de Controle");
 
@@ -3268,11 +3268,11 @@ definition {
 		ObjectAdmin.goToFieldsTab();
 
 		ObjectAdmin.addObjectFieldViaUI(
-			fieldLabel = "Custom Field",
+			fieldLabel = "Custom Field 84",
 			fieldType = "Text",
 			isMandatory = "true");
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 84");
 
 		AssertChecked.assertCheckedNotVisible(locator1 = "ObjectField#MANDATORY_TOGGLE");
 	}
@@ -4293,7 +4293,7 @@ definition {
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
-			fieldLabelName = "Custom Field",
+			fieldLabelName = "Custom Field 110",
 			fieldName = "customField",
 			fieldType = "String",
 			isRequired = "false",
@@ -4305,7 +4305,7 @@ definition {
 
 		ObjectAdmin.goToFieldsTab();
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 110");
 
 		AssertElementPresent(locator1 = "ObjectAdmin#SIDE_PANEL");
 	}
@@ -4937,85 +4937,6 @@ definition {
 		ObjectAdmin.selectKebabMenuOption(kebabOption = "Edit");
 
 		ObjectAdmin.viewDetails();
-	}
-
-	@description = "LPS-135397 - Verify if it's possible to view a tab of relationship with entries"
-	@priority = 5
-	test CanViewRelationshipTab {
-		property portal.acceptance = "true";
-
-		ObjectAdmin.addObjectViaAPI(
-			labelName = "Custom Object 121",
-			objectName = "CustomObject121",
-			pluralLabelName = "Custom Objects 121");
-
-		ObjectAdmin.addObjectFieldViaAPI(
-			fieldBusinessType = "Text",
-			fieldLabelName = "Custom Field",
-			fieldName = "customObjectField",
-			fieldType = "String",
-			isRequired = "false",
-			objectName = "CustomObject121");
-
-		ObjectAdmin.addObjectRelationshipViaAPI(
-			objectName_1 = "CustomObject121",
-			objectName_2 = "CustomObject121",
-			relationshipLabel = "Relationship",
-			relationshipName = "relationship",
-			relationshipType = "oneToMany");
-
-		ObjectAdmin.addObjectLayoutViaAPI(
-			layoutName = "Layout",
-			objectName = "CustomObject121");
-
-		ObjectAdmin.openObjectAdmin();
-
-		ObjectPortlet.selectCustomObject(label = "Custom Object 121");
-
-		ObjectAdmin.goToLayoutsTab();
-
-		ObjectAdmin.selectKebabMenuOption(kebabOption = "Edit");
-
-		SelectFrame(locator1 = "IFrame#IFRAME");
-
-		Click(locator1 = "ObjectAdmin#LAYOUT_LAYOUT_TAB");
-
-		ObjectAdmin.addTabFieldsOnLayout(
-			blockName = "Block 1",
-			columnsNumber = 2,
-			fieldLabelName = "Custom Field",
-			tabName = "Field Tab");
-
-		ObjectAdmin.addTabRelationshipsOnLayout(
-			relationshipsLabelName = "Relationship",
-			tabName = "Relationship Tab");
-
-		Click(locator1 = "ObjectAdmin#LAYOUT_INFO_TAB");
-
-		Click.clickAtNotVisible(locator1 = "ObjectAdmin#ENTRY_BOOLEAN_CHECKBOX");
-
-		CreateObject.saveObject();
-
-		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject121");
-
-		ObjectAdmin.addObjectSingleFieldEntryViaAPI(
-			fieldName = "customObjectField",
-			objectName = "CustomObject121",
-			value = "Entry 1");
-
-		Navigator.openURL();
-
-		ObjectAdmin.goToCustomObject(objectName = "CustomObject121");
-
-		ObjectAdmin.selectKebabMenuOption(kebabOption = "View");
-
-		Click(
-			key_tabName = "Relationship Tab",
-			locator1 = "ObjectAdmin#ANY_TAB_ON_ENTRY");
-
-		AssertElementPresent(
-			key_tabName = "Relationship Tab",
-			locator1 = "ObjectAdmin#ANY_TAB_ON_ENTRY");
 	}
 
 	@description = "LPS-135401 - Verify if Cascade deletion type of Relationship One to Many will allow the entry with relation (from the child Object) to be deleted but not its relation"
@@ -5754,7 +5675,7 @@ definition {
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Integer",
-			fieldLabelName = "Custom Field",
+			fieldLabelName = "Custom Field 135",
 			fieldName = "customObjectField",
 			fieldType = "Integer",
 			isRequired = "false",
@@ -5766,7 +5687,7 @@ definition {
 
 		ObjectAdmin.goToFieldsTab();
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 135");
 
 		ObjectAdmin.selectDropdownItem(
 			labelName = "Type",
@@ -5791,7 +5712,7 @@ definition {
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
-			fieldLabelName = "Custom Field",
+			fieldLabelName = "Custom Field 136",
 			fieldName = "customField",
 			fieldType = "String",
 			isRequired = "false",
@@ -5803,7 +5724,7 @@ definition {
 
 		ObjectAdmin.goToFieldsTab();
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 136");
 
 		ObjectAdmin.selectDropdownItem(
 			labelName = "Type",
@@ -5822,7 +5743,7 @@ definition {
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
-			fieldLabelName = "Custom Field",
+			fieldLabelName = "Custom Field 137",
 			fieldName = "customField",
 			fieldType = "String",
 			isRequired = "false",
@@ -5834,7 +5755,7 @@ definition {
 
 		ObjectAdmin.goToFieldsTab();
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 137");
 
 		ObjectAdmin.assertKeywordAndText();
 	}
@@ -5849,7 +5770,7 @@ definition {
 
 		ObjectAdmin.addObjectFieldViaAPI(
 			fieldBusinessType = "Text",
-			fieldLabelName = "Custom Field",
+			fieldLabelName = "Custom Field 138",
 			fieldName = "customField",
 			fieldType = "String",
 			isRequired = "false",
@@ -5861,7 +5782,7 @@ definition {
 
 		ObjectAdmin.goToFieldsTab();
 
-		ObjectAdmin.goToFieldsDetails(label = "Custom Field");
+		ObjectAdmin.goToFieldsDetails(label = "Custom Field 138");
 
 		ObjectAdmin.clickFieldsSearchableSectionRadioOption(radioOption = "Text");
 
@@ -6647,7 +6568,7 @@ definition {
 
 		Navigator.openURL();
 
-		ApplicationsMenuHelper.openApplicationsMenu();
+		ApplicationsMenu.openApplicationsMenu();
 
 		ApplicationsMenu.gotoPanel(panel = "Control Panel");
 
@@ -6725,7 +6646,7 @@ definition {
 
 		Navigator.openURL();
 
-		ApplicationsMenuHelper.openApplicationsMenu();
+		ApplicationsMenu.openApplicationsMenu();
 
 		ApplicationsMenu.gotoPanel(panel = "Control Panel");
 

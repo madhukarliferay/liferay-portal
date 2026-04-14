@@ -127,7 +127,8 @@ public class GetDataMVCResourceCommandTest {
 
 		SegmentsExperience segmentsExperience =
 			SegmentsTestUtil.addSegmentsExperience(
-				segmentsEntry.getSegmentsEntryId(), layout.getPlid(),
+				segmentsEntry.getExternalReferenceCode(), null,
+				layout.getPlid(),
 				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		mockLiferayResourceRequest.setParameter(

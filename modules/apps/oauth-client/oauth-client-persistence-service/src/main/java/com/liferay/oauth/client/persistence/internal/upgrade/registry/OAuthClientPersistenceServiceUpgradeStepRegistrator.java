@@ -5,6 +5,10 @@
 
 package com.liferay.oauth.client.persistence.internal.upgrade.registry;
 
+import com.liferay.oauth.client.persistence.internal.upgrade.v1_4_0.OAuthClientASLocalMetadataUpgradeProcess;
+import com.liferay.oauth.client.persistence.internal.upgrade.v1_4_1.OAuthClientEntryUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.BaseUuidUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
@@ -30,8 +34,46 @@ public class OAuthClientPersistenceServiceUpgradeStepRegistrator
 			"1.1.0", "1.2.0",
 			UpgradeProcessFactory.addColumns(
 				"OAuthClientEntry", "metadataCacheTime LONG"),
-			new com.liferay.oauth.client.persistence.internal.upgrade.v1_2_0.
-				OAuthClientEntryUpgradeProcess(_configurationAdmin));
+			UpgradeProcessFactory.runSQL(
+				"update OAuthClientEntry set metadataCacheTime = 360000"));
+
+		registry.register(
+			"1.2.0", "1.3.0",
+			UpgradeProcessFactory.addColumns(
+				"OAuthClientEntry", "customClaimsJSON TEXT null"));
+
+		registry.register(
+			"1.3.0", "1.4.0", new OAuthClientASLocalMetadataUpgradeProcess());
+
+		registry.register(
+			"1.4.0", "1.4.1",
+			new OAuthClientEntryUpgradeProcess(_configurationAdmin));
+
+		registry.register(
+			"1.4.1", "1.5.0",
+			new BaseUuidUpgradeProcess() {
+
+				@Override
+				protected String[] getTableNames() {
+					return new String[] {
+						"OAuthClientEntry", "OAuthClientASLocalMetadata"
+					};
+				}
+
+			});
+
+		registry.register(
+			"1.5.0", "1.5.1",
+			new BaseExternalReferenceCodeUpgradeProcess() {
+
+				@Override
+				protected String[] getTableNames() {
+					return new String[] {
+						"OAuthClientEntry", "OAuthClientASLocalMetadata"
+					};
+				}
+
+			});
 	}
 
 	@Reference

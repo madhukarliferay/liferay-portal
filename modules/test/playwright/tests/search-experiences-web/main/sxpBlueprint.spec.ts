@@ -7,28 +7,34 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {isolatedLayoutTest} from '../../../fixtures/isolatedLayoutTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {searchExperiencesPagesTest} from '../../../fixtures/searchExperiencesPageTest';
+import {searchPageTest} from '../../../fixtures/searchPageTest';
 import {DEFAULT_SXP_BLUEPRINT_CONFIGURATION} from '../../../helpers/SearchExperiencesApiHelper';
+import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import getRandomString from '../../../utils/getRandomString';
+import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
 import getDataStructureDefinition from '../../journal-web/main/utils/getDataStructureDefinition';
 
 export const test = mergeTests(
+	isolatedLayoutTest({type: 'portlet'}),
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPS-129412': {enabled: true}, // Collection Providers for Blueprint
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
 	isolatedSiteTest,
 	pageEditorPagesTest,
 	loginTest(),
+	searchPageTest,
 	searchExperiencesPagesTest
 );
 
-test.describe('Blueprint table fields can toggle visibility', () => {
+test.describe('Table View', () => {
 	const tableFieldsList = [
 		'Description',
 		'ID',
@@ -118,7 +124,7 @@ test.describe('Blueprint table fields can toggle visibility', () => {
 	});
 });
 
-test.describe('Created blueprint has accurate clause contributors', () => {
+test.describe('Manual Creation', () => {
 	let sxpBlueprintId: string;
 
 	test.beforeEach(
@@ -155,16 +161,18 @@ test.describe('Created blueprint has accurate clause contributors', () => {
 		editSXPBlueprintPage,
 	}) => {
 		await test.step('Confirm clause contributors is set as Enable All', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
+			);
 
-			await editSXPBlueprintPage.assertQuerySettingsRadioPropertySelection(
+			await editSXPBlueprintPage.assertSourceRadioPropertySelection(
 				'Enable All'
 			);
 		});
 	});
 });
 
-test.describe('Saved blueprint maintains accurate clause contributors', () => {
+test.describe('Data Persistence - Clause Contributors', () => {
 	let sxpBlueprint: SXPBlueprint;
 
 	test.beforeEach(async ({apiHelpers, sxpBlueprintsAndElementsViewPage}) => {
@@ -187,11 +195,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 		sxpBlueprintsAndElementsViewPage,
 	}) => {
 		await test.step('Set clause contributors to "Enable All"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Enable All'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Enable All');
 
 			await editSXPBlueprintPage.saveBlueprint();
 		});
@@ -201,9 +209,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 				sxpBlueprint.title
 			);
 
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
+			);
 
-			await editSXPBlueprintPage.assertQuerySettingsRadioPropertySelection(
+			await editSXPBlueprintPage.assertSourceRadioPropertySelection(
 				'Enable All'
 			);
 		});
@@ -214,11 +224,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 		sxpBlueprintsAndElementsViewPage,
 	}) => {
 		await test.step('Set clause contributors to "Disable All"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Disable All'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Disable All');
 
 			await editSXPBlueprintPage.saveBlueprint();
 		});
@@ -228,9 +238,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 				sxpBlueprint.title
 			);
 
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
+			);
 
-			await editSXPBlueprintPage.assertQuerySettingsRadioPropertySelection(
+			await editSXPBlueprintPage.assertSourceRadioPropertySelection(
 				'Disable All'
 			);
 		});
@@ -241,11 +253,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 		sxpBlueprintsAndElementsViewPage,
 	}) => {
 		await test.step('Set clause contributors to "Customize"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Customize'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Customize');
 		});
 
 		await test.step('Assert all clause contributors are enabled by default', async () => {
@@ -264,9 +276,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 				sxpBlueprint.title
 			);
 
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
+			);
 
-			await editSXPBlueprintPage.assertQuerySettingsRadioPropertySelection(
+			await editSXPBlueprintPage.assertSourceRadioPropertySelection(
 				'Customize'
 			);
 
@@ -284,11 +298,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 		sxpBlueprintsAndElementsViewPage,
 	}) => {
 		await test.step('Set clause contributors to "Customize"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Customize'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Customize');
 		});
 
 		await test.step('Disable all contributors', async () => {
@@ -307,9 +321,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 				sxpBlueprint.title
 			);
 
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
+			);
 
-			await editSXPBlueprintPage.assertQuerySettingsRadioPropertySelection(
+			await editSXPBlueprintPage.assertSourceRadioPropertySelection(
 				'Disable All'
 			);
 		});
@@ -320,11 +336,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 		sxpBlueprintsAndElementsViewPage,
 	}) => {
 		await test.step('Set clause contributors to "Customize"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Customize'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Customize');
 		});
 
 		await test.step('Vary clause contributors selection', async () => {
@@ -347,9 +363,11 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 				sxpBlueprint.title
 			);
 
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
+			);
 
-			await editSXPBlueprintPage.assertQuerySettingsRadioPropertySelection(
+			await editSXPBlueprintPage.assertSourceRadioPropertySelection(
 				'Customize'
 			);
 
@@ -367,7 +385,7 @@ test.describe('Saved blueprint maintains accurate clause contributors', () => {
 	});
 });
 
-test.describe('Searching in preview with clause contributors is accurate', () => {
+test.describe('Search Preview - Clause Contributors', () => {
 	let sxpBlueprint: SXPBlueprint;
 
 	test.beforeEach(async ({apiHelpers, sxpBlueprintsAndElementsViewPage}) => {
@@ -389,11 +407,11 @@ test.describe('Searching in preview with clause contributors is accurate', () =>
 		editSXPBlueprintPage,
 	}) => {
 		await test.step('Set clause contributors to "Enable All"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Enable All'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Enable All');
 		});
 
 		await test.step('Search for "tree" in preview sidebar and find tree.png', async () => {
@@ -418,11 +436,11 @@ test.describe('Searching in preview with clause contributors is accurate', () =>
 		editSXPBlueprintPage,
 	}) => {
 		await test.step('Set clause contributors to "Disable All"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Disable All'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Disable All');
 		});
 
 		await test.step('Search for "tree" in preview sidebar and find no results', async () => {
@@ -438,11 +456,11 @@ test.describe('Searching in preview with clause contributors is accurate', () =>
 		editSXPBlueprintPage,
 	}) => {
 		await test.step('Set clause contributors to "Customize"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Customize'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Customize');
 		});
 
 		await test.step('Disable all clause contributors', async () => {
@@ -467,11 +485,11 @@ test.describe('Searching in preview with clause contributors is accurate', () =>
 		editSXPBlueprintPage,
 	}) => {
 		await test.step('Set clause contributors to "Customize"', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
-
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
-				'Customize'
+			await editSXPBlueprintPage.expandPanel(
+				'Search Framework Query Contributors'
 			);
+
+			await editSXPBlueprintPage.selectSourceRadioProperty('Customize');
 		});
 
 		await test.step('Enable only "DL File Entry" clause contributor', async () => {
@@ -507,7 +525,7 @@ test.describe('Searching in preview with clause contributors is accurate', () =>
 	});
 });
 
-test.describe('Blueprint can be registered as a collection provider', () => {
+test.describe('Collection Provider', () => {
 	test('Setup a blueprint with web content subtype as a collection provider', async ({
 		apiHelpers,
 		editSXPBlueprintPage,
@@ -557,9 +575,11 @@ test.describe('Blueprint can be registered as a collection provider', () => {
 		});
 
 		await test.step('Add the custom web content structure to blueprint subtypes', async () => {
-			await editSXPBlueprintPage.goToQuerySettingsMenuItem();
+			await editSXPBlueprintPage.expandPanel(
+				'Searchable Types and Subtypes'
+			);
 
-			await editSXPBlueprintPage.selectQuerySettingsRadioProperty(
+			await editSXPBlueprintPage.selectSourceRadioProperty(
 				'Selected Types'
 			);
 
@@ -644,6 +664,148 @@ test.describe('Blueprint can be registered as a collection provider', () => {
 					).toBeDefined();
 				}
 			);
+		});
+	});
+});
+
+test.describe('Search Preview - SXP Elements', () => {
+	test('Searching on preview with attributes is accurate', async ({
+		apiHelpers,
+		editSXPBlueprintPage,
+		page,
+		site,
+		sxpBlueprintsAndElementsViewPage,
+	}) => {
+		let categoryId: number;
+		let sxpBlueprint: SXPBlueprint;
+
+		const categoryName = `Category ${getRandomInt()}`;
+		const vocabularyName = `Vocabulary ${getRandomInt()}`;
+
+		await test.step('Create a vocabulary + category with API', async () => {
+			const {id: vocabularyId} =
+				await apiHelpers.headlessAdminTaxonomy.postSiteTaxonomyVocabulary(
+					{
+						name: vocabularyName,
+						siteId: site.id,
+					}
+				);
+
+			const {id} =
+				await apiHelpers.headlessAdminTaxonomy.postTaxonomyVocabularyTaxonomyCategory(
+					{
+						name: categoryName,
+						vocabularyId,
+					}
+				);
+
+			categoryId = id;
+
+			apiHelpers.data.push({
+				id: vocabularyId,
+				type: 'taxonomyVocabulary',
+			});
+		});
+
+		await test.step('Create web contents, one connected to the category', async () => {
+			const basicWebContentStructureId =
+				await getBasicWebContentStructureId(apiHelpers);
+
+			await apiHelpers.jsonWebServicesJournal.addWebContent({
+				content: 'apple',
+				ddmStructureId: basicWebContentStructureId,
+				groupId: site.id,
+				serviceContext: {
+					assetCategoryIds: [categoryId],
+				},
+				titleMap: {en_US: 'gala'},
+			});
+
+			await apiHelpers.jsonWebServicesJournal.addWebContent({
+				ddmStructureId: basicWebContentStructureId,
+				groupId: site.id,
+				titleMap: {en_US: 'apple apple apple'},
+			});
+		});
+
+		await test.step('Create blueprint with API', async () => {
+			sxpBlueprint =
+				await apiHelpers.searchExperiences.createSXPBlueprint();
+		});
+
+		await test.step('Navigate to created blueprint', async () => {
+			await sxpBlueprintsAndElementsViewPage.goto();
+
+			await sxpBlueprintsAndElementsViewPage.selectTableLink(
+				sxpBlueprint.title
+			);
+		});
+
+		await test.step('Add element to blueprint', async () => {
+			await editSXPBlueprintPage.addQueryElement(
+				'Boost Contents in a Category'
+			);
+		});
+
+		await test.step('Configure element with new category and high boost', async () => {
+			await editSXPBlueprintPage.querySXPElements
+				.getByRole('combobox', {name: 'Asset Category External'})
+				.fill(categoryName);
+
+			await clickAndExpectToBeVisible({
+				target: page.getByRole('gridcell', {
+					name: new RegExp(`^${categoryName} \\(ERC:`),
+				}),
+				trigger: page.getByRole('option', {name: categoryName}),
+			});
+
+			await editSXPBlueprintPage.querySXPElements
+				.getByLabel('Boost')
+				.fill('2000');
+		});
+
+		await test.step('Search for "apple" in preview sidebar with attributes', async () => {
+			await editSXPBlueprintPage.openPreviewSidebar();
+
+			await editSXPBlueprintPage.addPreviewAttributes([
+				{
+					key: 'search.experiences.scope.group.id',
+					value: String(site.id),
+				},
+			]);
+
+			await editSXPBlueprintPage.searchInPreviewSidebar('apple');
+		});
+
+		await test.step('Assert the two web contents in preview results', async () => {
+			await editSXPBlueprintPage.assertPreviewSidebarSearchResult(
+				'gala',
+				[
+					{
+						label: 'entryClassName',
+						value: 'com.liferay.journal.model.JournalArticle',
+					},
+				]
+			);
+
+			await editSXPBlueprintPage.assertPreviewSidebarSearchResult(
+				'apple apple apple',
+				[
+					{
+						label: 'entryClassName',
+						value: 'com.liferay.journal.model.JournalArticle',
+					},
+				]
+			);
+		});
+
+		await test.step('Assert "gala" is the first result', async () => {
+			await expect(
+				page
+					.getByTestId('previewSidebarResultListItem')
+					.nth(0)
+					.filter({has: page.getByText('gala')})
+			).toBeVisible();
 		});
 	});
 });

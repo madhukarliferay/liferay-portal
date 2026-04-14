@@ -5,6 +5,7 @@
 
 package com.liferay.portal.tools.rest.builder.internal.yaml;
 
+import com.liferay.portal.tools.rest.builder.internal.util.FileUtil;
 import com.liferay.portal.tools.rest.builder.internal.yaml.config.ConfigYAML;
 import com.liferay.portal.tools.rest.builder.internal.yaml.config.Security;
 import com.liferay.portal.tools.rest.builder.internal.yaml.exception.InvalidYAMLException;
@@ -16,8 +17,12 @@ import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.PathItem;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.Schema;
 import com.liferay.portal.tools.rest.builder.internal.yaml.openapi.XML;
 
+import java.io.File;
+import java.io.IOException;
+
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -33,13 +38,48 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class YAMLUtil {
 
-	public static ConfigYAML loadConfigYAML(String yamlString) {
-		try {
-			return _YAML_CONFIG.loadAs(yamlString, ConfigYAML.class);
+	public static ConfigYAML loadConfigYAML(String baseDir, File file)
+		throws IOException {
+
+		String filePath = file.getPath();
+
+		ConfigYAML configYAML = _configYAMLs.get(filePath);
+
+		if (configYAML == null) {
+			try {
+				configYAML = _YAML_CONFIG.loadAs(
+					FileUtil.read(file), ConfigYAML.class);
+
+				_configYAMLs.put(filePath, configYAML);
+			}
+			catch (MarkedYAMLException markedYAMLException) {
+				throw new InvalidYAMLException(markedYAMLException);
+			}
 		}
-		catch (MarkedYAMLException markedYAMLException) {
-			throw new InvalidYAMLException(markedYAMLException);
+
+		ConfigYAML clonedConfigYAML = configYAML.clone();
+
+		clonedConfigYAML.setBaseDir(baseDir);
+
+		return clonedConfigYAML;
+	}
+
+	public static OpenAPIYAML loadOpenAPIYAML(File file) throws IOException {
+		String filePath = file.getPath();
+
+		OpenAPIYAML openAPIYAML = _openAPIYAMLs.get(filePath);
+
+		if (openAPIYAML != null) {
+			return openAPIYAML;
 		}
+
+		openAPIYAML = loadOpenAPIYAML(FileUtil.read(file));
+
+		if (openAPIYAML != null) {
+			_openAPIYAMLs.put(filePath, openAPIYAML);
+		}
+
+		return openAPIYAML;
 	}
 
 	public static OpenAPIYAML loadOpenAPIYAML(String yamlString) {
@@ -60,6 +100,11 @@ public class YAMLUtil {
 	private static final Yaml _YAML_CONFIG;
 
 	private static final Yaml _YAML_OPEN_API;
+
+	private static final Map<String, ConfigYAML> _configYAMLs =
+		new ConcurrentHashMap<>();
+	private static final Map<String, OpenAPIYAML> _openAPIYAMLs =
+		new ConcurrentHashMap<>();
 
 	static {
 		Representer representer = new Representer(new DumperOptions());

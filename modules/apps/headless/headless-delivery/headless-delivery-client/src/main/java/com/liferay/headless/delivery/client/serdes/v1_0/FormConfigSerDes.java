@@ -86,9 +86,7 @@ public class FormConfigSerDes {
 			sb.append("\"formType\": ");
 
 			sb.append("\"");
-
 			sb.append(formConfig.getFormType());
-
 			sb.append("\"");
 		}
 
@@ -333,3 +331,4 @@ public class FormConfigSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1268010701

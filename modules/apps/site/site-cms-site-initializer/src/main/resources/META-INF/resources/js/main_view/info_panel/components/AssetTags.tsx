@@ -3,178 +3,203 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import Autocomplete from '@clayui/autocomplete';
-import {useResource} from '@clayui/data-provider';
 import Label from '@clayui/label';
 import ClayPanel from '@clayui/panel';
-import {fetch, sub} from 'frontend-js-web';
-import React, {useCallback, useEffect, useState} from 'react';
+import {ItemSelector} from '@liferay/frontend-js-item-selector-web';
+import classNames from 'classnames';
+import {sub} from 'frontend-js-web';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 
+import ApiHelper from '../../../common/services/ApiHelper';
 import TagService from '../../../common/services/TagService';
-import {IAssetObjectEntry} from '../../../structure_builder/types/AssetType';
-import {Categorization} from '../services/ObjectEntryService';
+import {IAssetObjectEntry} from '../../../common/types/AssetType';
+import {EntryCategorizationDTO} from '../services/ObjectEntryService';
 import {CategorizationInputSize} from './AssetCategorization';
 
+type TKeyword = {
+	name: string;
+};
+
 const AssetTags = ({
+	assetLibraryId,
 	cmsGroupId,
+	collapsable = true,
+	hasUpdatePermission,
 	inputSize,
 	objectEntry,
+	titleClassName,
 	updateObjectEntry,
 }: {
-	cmsGroupId: string;
+	assetLibraryId?: number | string | null | undefined;
+	cmsGroupId: number | string;
+	collapsable?: boolean;
+	hasUpdatePermission?: boolean;
 	inputSize?: CategorizationInputSize;
-	objectEntry: IAssetObjectEntry;
-	updateObjectEntry: (object: Categorization) => Promise<void>;
+	objectEntry: IAssetObjectEntry | EntryCategorizationDTO;
+	titleClassName?: string;
+	updateObjectEntry: (object: EntryCategorizationDTO) => void | Promise<void>;
 }) => {
-	const [keywords, setKeywords] = useState([] as string[]);
-	const [networkStatus, setNetworkStatus] = useState(4);
+	const [canCreate, setCanCreate] = useState(false);
 	const [value, setValue] = useState('');
 
-	const {refetch, resource} = useResource({
-		fetch,
-		link: `${Liferay.ThemeDisplay.getPortalURL()}/o/headless-admin-taxonomy/v1.0/sites/${cmsGroupId}/keywords`,
-		onNetworkStatusChange: setNetworkStatus,
-	});
+	const scopeId = useMemo(
+		() =>
+			(objectEntry as IAssetObjectEntry).scopeId ||
+			assetLibraryId ||
+			cmsGroupId,
+		[assetLibraryId, cmsGroupId, objectEntry]
+	);
 
-	const [items, setItems] = useState([] as {[key: string]: any}[]);
+	const apiURL = useMemo(() => {
+		const baseURL = `${Liferay.ThemeDisplay.getPortalURL()}/o/headless-admin-taxonomy/v1.0/sites`;
+
+		if (scopeId >= 0) {
+			return `${baseURL}/${scopeId}/keywords`;
+		}
+
+		return `${baseURL}/${cmsGroupId}/keywords?filter=groupIds in ('${scopeId}')`;
+	}, [cmsGroupId, scopeId]);
+
+	useEffect(() => {
+		const checkPermission = async () => {
+			const {data} = await ApiHelper.get<{
+				actions: {create: {href: string}};
+			}>(apiURL);
+
+			setCanCreate(!!data?.actions?.create);
+		};
+
+		checkPermission();
+	}, [apiURL]);
 
 	const addKeyword = useCallback(
-		async (keyword: any) => {
+		async (keyword: TKeyword) => {
+			const {keywords = []} = objectEntry;
+
 			if (keywords.includes(keyword.name)) {
 				return;
 			}
 
+			const updated = [...keywords, keyword.name];
+
 			await updateObjectEntry({
-				keywords: [...keywords, keyword.name],
-			});
+				keywords: updated,
+				keywordsToAdd: updated,
+			} as EntryCategorizationDTO);
 		},
-		[keywords, updateObjectEntry]
+		[objectEntry, updateObjectEntry]
 	);
 
-	const createAndAddKeyword = useCallback(
-		async (event: any) => {
-			event.preventDefault();
+	const createAndAddKeyword = useCallback(async () => {
+		const {data, error} = await TagService.createTag({
+			assetLibraryId: scopeId,
+			cmsGroupId,
+			name: value,
+		});
 
-			const {data, error} = await TagService.createTag({
-				groupId: cmsGroupId,
-				name: value,
-			});
+		if (data) {
+			await addKeyword(data);
 
-			if (data) {
-				refetch();
-
-				await addKeyword(data);
-			}
-			else if (error) {
-				console.error('Failed to create new keyword.', error);
-			}
-		},
-		[addKeyword, cmsGroupId, refetch, value]
-	);
+			setValue('');
+		}
+		else if (error) {
+			console.error('Failed to create new keyword.', error);
+		}
+	}, [addKeyword, cmsGroupId, scopeId, value]);
 
 	const removeKeyword = useCallback(
 		async (keyword: string) => {
-			const index = keywords.findIndex((value) => value === keyword);
+			const {keywords = []} = objectEntry;
 
-			if (index === -1) {
-				return;
-			}
+			const index = keywords.indexOf(keyword);
 
-			const curKeywords = [...keywords];
+			const keywordsToRemove = [];
 
-			curKeywords.splice(index, 1);
+			keywordsToRemove.push(keywords[index]);
+
+			keywords.splice(index, 1);
 
 			await updateObjectEntry({
-				keywords: curKeywords,
-			});
+				keywords,
+				keywordsToAdd: keywords,
+				keywordsToRemove,
+			} as EntryCategorizationDTO);
 		},
-		[keywords, updateObjectEntry]
+		[objectEntry, updateObjectEntry]
 	);
-
-	const updateKeywords = useCallback(
-		(keywords: string[] = []) => {
-			setValue('');
-
-			setKeywords(keywords);
-		},
-		[setValue, setKeywords]
-	);
-
-	useEffect(() => {
-		setItems((currentItems) => {
-			if (value.length) {
-				return [
-					...currentItems.filter(({name}) => name.includes(value)),
-				];
-			}
-
-			return [...(resource?.items || [])];
-		});
-	}, [value, resource, setItems]);
-
-	useEffect(() => {
-		updateKeywords(objectEntry.keywords);
-	}, [objectEntry, updateKeywords]);
 
 	return (
 		<ClayPanel
-			collapsable
+			collapsable={collapsable}
 			defaultExpanded={true}
 			displayTitle={
-				<ClayPanel.Title className="panel-title text-secondary">
+				<ClayPanel.Title
+					className={classNames(
+						'panel-title',
+						titleClassName ? titleClassName : 'text-secondary'
+					)}
+				>
 					{Liferay.Language.get('tags')}
 				</ClayPanel.Title>
 			}
 			displayType="unstyled"
-			showCollapseIcon={true}
+			showCollapseIcon={collapsable}
 		>
 			<ClayPanel.Body>
-				<Autocomplete
-					filterKey="name"
-					id="asset-tags-autocomplete"
-					items={items}
-					loadingState={networkStatus}
-					menuTrigger="focus"
+				<ItemSelector<TKeyword>
+					apiURL={apiURL}
+					disabled={!hasUpdatePermission}
+					locator={{
+						id: 'id',
+						label: 'name',
+						value: 'externalReferenceCode',
+					}}
 					onChange={setValue}
-					placeholder={sub(Liferay.Language.get('add-x'), 'tag')}
+					onItemsChange={(newItems: TKeyword[]) => {
+						if (newItems[0]) {
+							addKeyword(newItems[0]);
+
+							// The reason for this timeout is because of react's
+							// batch rendering. Clay internals set the value of
+							// the input, but we need to wait for the next 'tick' to set the value.
+
+							setTimeout(() => setValue(''));
+						}
+					}}
+					placeholder={Liferay.Language.get('add-tag')}
+					primaryAction={
+						canCreate &&
+						!!value.length &&
+						!(objectEntry?.keywords || []).includes(value) && {
+							label: sub(
+								Liferay.Language.get('create-new-tag-x'),
+								value
+							),
+							onClick: createAndAddKeyword,
+						}
+					}
+					refetchOnActive
 					sizing={inputSize}
 					value={value}
 				>
-					{!items.length ? (
-						<Autocomplete.Item
-							className="text-info"
-							key="createNewKeyword"
-							onClick={createAndAddKeyword}
-							textValue={sub(
-								Liferay.Language.get('create-new-tag-x'),
-								value
-							)}
-						/>
-					) : (
-						items.map((item) => {
-							return (
-								<Autocomplete.Item
-									key={item.id}
-									onClick={async (event) => {
-										event.preventDefault();
-
-										await addKeyword(item);
-									}}
-								>
-									{item.name}
-								</Autocomplete.Item>
-							);
-						})
+					{(item) => (
+						<ItemSelector.Item
+							key={item.name}
+							textValue={item.name}
+						>
+							{item.name}
+						</ItemSelector.Item>
 					)}
-				</Autocomplete>
+				</ItemSelector>
 
 				<div className="asset-tags mt-3">
-					{keywords.map((keyword: string, index: number) => {
+					{objectEntry?.keywords?.map((keyword, index) => {
 						return (
 							<Label
 								className="mr-2 mt-2"
 								closeButtonProps={{
 									'aria-label': Liferay.Language.get('close'),
+									'disabled': !hasUpdatePermission,
 									'onClick': async (event) => {
 										event.preventDefault();
 
@@ -184,6 +209,7 @@ const AssetTags = ({
 								}}
 								displayType="secondary"
 								key={`${keyword}_${index}`}
+								style={{textTransform: 'none'}}
 							>
 								{keyword}
 							</Label>

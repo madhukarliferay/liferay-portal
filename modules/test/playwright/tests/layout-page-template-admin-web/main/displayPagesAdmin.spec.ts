@@ -16,6 +16,7 @@ import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {pageManagementSiteTest} from '../../../fixtures/pageManagementSiteTest';
+import {pagesAdminPagesTest} from '../../../fixtures/pagesAdminPagesTest';
 import {ApiHelpers} from '../../../helpers/ApiHelpers';
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {getRandomInt} from '../../../utils/getRandomInt';
@@ -34,6 +35,7 @@ const test = mergeTests(
 	}),
 	isolatedSiteTest,
 	loginTest(),
+	pagesAdminPagesTest,
 	pageEditorPagesTest,
 	pageManagementSiteTest
 );
@@ -79,7 +81,6 @@ async function addBasicJournalArticleWithSpecificDisplayPageTemplate(
 
 async function addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 	apiHelpers: ApiHelpers,
-	contentStructureId: string,
 	displayPageTemplateName: string,
 	site: Site
 ) {
@@ -91,7 +92,7 @@ async function addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 		await apiHelpers.jsonWebServicesLayoutPageTemplateEntry.addDisplayPageLayoutPageTemplateEntry(
 			{
 				classNameId: className.classNameId,
-				classTypeId: contentStructureId,
+				classTypeKey: 'BASIC-WEB-CONTENT',
 				groupId: site.id,
 				name: displayPageTemplateName,
 			}
@@ -110,7 +111,13 @@ test.describe('Configuration', () => {
 		{
 			tag: ['@LPS-86191', '@LPS-96438'],
 		},
-		async ({apiHelpers, displayPageTemplatesPage, page, site}) => {
+		async ({
+			apiHelpers,
+			displayPageTemplatesPage,
+			page,
+			pagesAdminPage,
+			site,
+		}) => {
 
 			// Create a display page template for Basic Web Content and mark as default
 
@@ -121,7 +128,6 @@ test.describe('Configuration', () => {
 
 			await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 				apiHelpers,
-				String(contentStructureId),
 				displayPageTemplateName,
 				site
 			);
@@ -153,11 +159,7 @@ test.describe('Configuration', () => {
 				})
 				.click();
 
-			await page
-				.getByLabel('Define a custom theme for this page.', {
-					exact: true,
-				})
-				.check();
+			await pagesAdminPage.defineCustomThemeRadio.click();
 
 			await page.getByRole('checkbox', {name: 'Show Footer'}).uncheck();
 
@@ -211,7 +213,6 @@ test.describe('Configuration', () => {
 
 		await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 			apiHelpers,
-			String(contentStructureId),
 			displayPageTemplateName,
 			site
 		);
@@ -347,7 +348,6 @@ test.describe('Configuration', () => {
 
 		await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 			apiHelpers,
-			String(contentStructureId),
 			displayPageTemplateName,
 			site
 		);
@@ -428,14 +428,10 @@ test.describe('Configuration', () => {
 
 			// Create a display page template for Basic Web Content and mark as default
 
-			const contentStructureId =
-				await getBasicWebContentStructureId(apiHelpers);
-
 			const displayPageTemplateName = getRandomString();
 
 			await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 				apiHelpers,
-				String(contentStructureId),
 				displayPageTemplateName,
 				site
 			);
@@ -512,7 +508,7 @@ test.describe('UI', () => {
 
 			await page
 				.locator('.modal-header')
-				.getByLabel('close', {exact: true})
+				.getByLabel('Close', {exact: true})
 				.click();
 
 			// Assert warning message
@@ -938,14 +934,10 @@ test.describe('Usages', () => {
 
 			// Create a display page template for Basic Web Content and mark as default
 
-			const contentStructureId =
-				await getBasicWebContentStructureId(apiHelpers);
-
 			const defaultDisplayPageTemplateName = getRandomString();
 
 			await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 				apiHelpers,
-				String(contentStructureId),
 				defaultDisplayPageTemplateName,
 				site
 			);
@@ -1209,7 +1201,6 @@ test.describe('View', () => {
 
 			await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 				apiHelpers,
-				String(contentStructureId),
 				displayPageTemplateName,
 				site
 			);
@@ -1314,7 +1305,6 @@ test.describe('View', () => {
 
 			await addDefaultJournalArticleDisplayPageLayoutPageTemplateEntry(
 				apiHelpers,
-				String(contentStructureId),
 				displayPageTemplateName,
 				site
 			);
@@ -1600,19 +1590,34 @@ test.describe('View', () => {
 
 			// Open the info panel
 
-			await page
-				.getByLabel(`Select ${displayPageTemplateName}`, {exact: true})
-				.check();
-
-			await page.getByTitle('Toggle Info Panel', {exact: true}).click();
+			await clickAndExpectToBeVisible({
+				target: page.getByLabel('Close Info Panel'),
+				trigger: page.getByTitle('Toggle Info Panel', {exact: true}),
+			});
 
 			const infoPanel = page.getByLabel('Info Panel', {exact: true});
 
-			await infoPanel
-				.getByRole('button', {name: 'Manage Permissions'})
-				.click();
+			await expect(async () => {
+				await page
+					.getByLabel(`Select ${displayPageTemplateName}`, {
+						exact: true,
+					})
+					.check({timeout: 1000});
+
+				await expect(
+					infoPanel.getByRole('button', {name: 'Manage Permissions'})
+				).toBeVisible({timeout: 1000});
+			}).toPass();
 
 			const iframe = page.frameLocator('iframe[title="Permissions"]');
+
+			await clickAndExpectToBeVisible({
+				target: iframe.locator('#guest_ACTION_DELETE'),
+				timeout: 3000,
+				trigger: infoPanel.getByRole('button', {
+					name: 'Manage Permissions',
+				}),
+			});
 
 			// Change permissions for display page template
 
@@ -1640,13 +1645,28 @@ test.describe('View', () => {
 				.locator('.card-page-item-directory')
 				.filter({hasText: displayPageTemplateFolderName});
 
-			await folderCard.locator('input').check();
+			await folderCard.waitFor();
 
-			await page.getByTitle('Toggle Info Panel', {exact: true}).click();
+			await clickAndExpectToBeVisible({
+				target: page.getByLabel('Close Info Panel'),
+				trigger: page.getByTitle('Toggle Info Panel', {exact: true}),
+			});
 
-			await infoPanel
-				.getByRole('button', {name: 'Manage Permissions'})
-				.click();
+			await expect(async () => {
+				await folderCard.locator('input').check({timeout: 1000});
+
+				await expect(
+					infoPanel.getByRole('button', {name: 'Manage Permissions'})
+				).toBeVisible({timeout: 1000});
+			}).toPass();
+
+			await clickAndExpectToBeVisible({
+				target: iframe.locator('#guest_ACTION_DELETE'),
+				timeout: 3000,
+				trigger: infoPanel.getByRole('button', {
+					name: 'Manage Permissions',
+				}),
+			});
 
 			// Change permissions for folder
 

@@ -8,22 +8,23 @@ package com.liferay.batch.engine.internal.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.batch.engine.BatchEngineImportTaskExecutor;
 import com.liferay.batch.engine.BatchEngineTaskExecuteStatus;
-import com.liferay.batch.engine.BatchEngineTaskItemDelegate;
 import com.liferay.batch.engine.BatchEngineTaskOperation;
 import com.liferay.batch.engine.constants.BatchEngineImportTaskConstants;
 import com.liferay.batch.engine.exception.BatchEngineImportTaskParametersException;
-import com.liferay.batch.engine.exception.handler.BatchEngineImportTaskExceptionHandler;
 import com.liferay.batch.engine.model.BatchEngineImportTask;
 import com.liferay.batch.engine.model.BatchEngineImportTaskError;
 import com.liferay.batch.engine.service.BatchEngineImportTaskErrorLocalService;
 import com.liferay.batch.engine.service.BatchEngineImportTaskLocalService;
 import com.liferay.blogs.model.BlogsEntry;
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
+import com.liferay.exportimport.report.service.ExportImportReportEntryLocalService;
 import com.liferay.headless.admin.user.client.dto.v1_0.Account;
 import com.liferay.headless.admin.user.client.http.HttpInvoker;
 import com.liferay.headless.admin.user.client.resource.v1_0.AccountResource;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
@@ -35,6 +36,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -42,7 +44,6 @@ import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
@@ -108,6 +109,17 @@ public class BatchEngineImportTaskExecutorTest
 	}
 
 	@Test
+	public void testCreateBlogPostingsFromCSVFileWithBOM() throws Exception {
+		_importBlogPostings(
+			BatchEngineTaskOperation.CREATE,
+			_getBlogPostingsCSVCreateContent(
+				TestPropsValues.getGroupId(), _BOM_FIELD_NAMES),
+			"CSV", _fieldNamesMappingMap);
+
+		_assertCreatedBlogPostings();
+	}
+
+	@Test
 	public void testCreateBlogPostingsFromCSVFileWithFieldMappings()
 		throws Exception {
 
@@ -122,6 +134,12 @@ public class BatchEngineImportTaskExecutorTest
 
 	@Test
 	public void testCreateBlogPostingsFromInvalidJSONFile() throws Exception {
+		ExportImportThreadLocal.setPortletImportInProcess(true);
+
+		int exportImportReportEntriesCount =
+			_exportImportReportEntryLocalService.
+				getExportImportReportEntriesCount();
+
 		StringBundler sb = new StringBundler();
 
 		sb.append(StringPool.OPEN_BRACKET);
@@ -149,11 +167,25 @@ public class BatchEngineImportTaskExecutorTest
 				"JSON", null);
 
 			_assertInvalidFileImportWithOnErrorFailStrategy(1, 1, logCapture);
+
+			Assert.assertEquals(
+				exportImportReportEntriesCount + 1,
+				_exportImportReportEntryLocalService.
+					getExportImportReportEntriesCount());
+		}
+		finally {
+			ExportImportThreadLocal.setPortletImportInProcess(false);
 		}
 	}
 
 	@Test
 	public void testCreateBlogPostingsFromInvalidJSONLFile() throws Exception {
+		ExportImportThreadLocal.setPortletImportInProcess(true);
+
+		int exportImportReportEntriesCount =
+			_exportImportReportEntryLocalService.
+				getExportImportReportEntriesCount();
+
 		StringBundler sb = new StringBundler();
 
 		_createJSONRow(
@@ -177,11 +209,25 @@ public class BatchEngineImportTaskExecutorTest
 				"JSONL", null);
 
 			_assertInvalidFileImportWithOnErrorFailStrategy(1, 1, logCapture);
+
+			Assert.assertEquals(
+				exportImportReportEntriesCount + 1,
+				_exportImportReportEntryLocalService.
+					getExportImportReportEntriesCount());
+		}
+		finally {
+			ExportImportThreadLocal.setPortletImportInProcess(false);
 		}
 	}
 
 	@Test
 	public void testCreateBlogPostingsFromInvalidXLSFile() throws Exception {
+		ExportImportThreadLocal.setPortletImportInProcess(true);
+
+		int exportImportReportEntriesCount =
+			_exportImportReportEntryLocalService.
+				getExportImportReportEntriesCount();
+
 		XSSFWorkbook xssfWorkbook = new XSSFWorkbook();
 
 		Sheet sheet = xssfWorkbook.createSheet();
@@ -204,6 +250,14 @@ public class BatchEngineImportTaskExecutorTest
 				"XLS", null);
 
 			_assertInvalidFileImportWithOnErrorFailStrategy(1, 1, logCapture);
+
+			Assert.assertEquals(
+				exportImportReportEntriesCount + 1,
+				_exportImportReportEntryLocalService.
+					getExportImportReportEntriesCount());
+		}
+		finally {
+			ExportImportThreadLocal.setPortletImportInProcess(false);
 		}
 	}
 
@@ -283,6 +337,12 @@ public class BatchEngineImportTaskExecutorTest
 	public void testCreateBlogPostingsWithInvalidCSVFileAndOnErrorContinue()
 		throws Exception {
 
+		ExportImportThreadLocal.setPortletImportInProcess(true);
+
+		int exportImportReportEntriesCount =
+			_exportImportReportEntryLocalService.
+				getExportImportReportEntriesCount();
+
 		StringBundler sb = new StringBundler();
 
 		_createCSVRow(sb, FIELD_NAMES);
@@ -318,8 +378,8 @@ public class BatchEngineImportTaskExecutorTest
 		String content = sb.toString();
 
 		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.batch.engine.internal.strategy." +
-					"OnErrorContinueBatchEngineImportStrategy",
+				"com.liferay.batch.engine.internal." +
+					"BatchEngineImportTaskExecutorImpl",
 				LoggerTestUtil.ERROR);
 			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
 				_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL,
@@ -332,6 +392,14 @@ public class BatchEngineImportTaskExecutorTest
 				"CSV", null,
 				BatchEngineImportTaskConstants.
 					IMPORT_STRATEGY_ON_ERROR_CONTINUE);
+
+			Assert.assertEquals(
+				exportImportReportEntriesCount + 1,
+				_exportImportReportEntryLocalService.
+					getExportImportReportEntriesCount());
+		}
+		finally {
+			ExportImportThreadLocal.setPortletImportInProcess(false);
 		}
 
 		_assertInvalidFileImportWithOnErrorContinueStrategy(
@@ -468,8 +536,8 @@ public class BatchEngineImportTaskExecutorTest
 				new QueryDefinition<>(WorkflowConstants.STATUS_ANY)));
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.batch.engine.internal.strategy." +
-					"OnErrorContinueBatchEngineImportStrategy",
+				"com.liferay.batch.engine.internal." +
+					"BatchEngineImportTaskExecutorImpl",
 				LoggerTestUtil.ERROR)) {
 
 			_importBlogPostings(
@@ -831,13 +899,10 @@ public class BatchEngineImportTaskExecutorTest
 			batchEngineImportTaskErrors.toString(),
 			invalidItemRowNumbers.size(), batchEngineImportTaskErrors.size());
 
-		List<Integer> failedItemIndexes = new ArrayList<>();
-
-		for (BatchEngineImportTaskError batchEngineImportTaskError :
-				batchEngineImportTaskErrors) {
-
-			failedItemIndexes.add(batchEngineImportTaskError.getItemIndex());
-		}
+		List<Integer> failedItemIndexes = TransformUtil.transform(
+			batchEngineImportTaskErrors,
+			batchEngineImportTaskError ->
+				batchEngineImportTaskError.getItemIndex());
 
 		Assert.assertTrue(failedItemIndexes.containsAll(invalidItemRowNumbers));
 	}
@@ -1336,6 +1401,13 @@ public class BatchEngineImportTaskExecutorTest
 
 	private static final int _BATCH_SIZE = 10;
 
+	private static final byte[] _BOM = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
+
+	private static final String[] _BOM_FIELD_NAMES = {
+		new String(_BOM) + "alternativeHeadline1", "articleBody1",
+		"datePublished1", "headline1", "siteId1"
+	};
+
 	private static final String
 		_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL =
 			"com.liferay.batch.engine.internal." +
@@ -1358,29 +1430,13 @@ public class BatchEngineImportTaskExecutorTest
 		_batchEngineImportTaskLocalService;
 
 	@Inject
+	private ExportImportReportEntryLocalService
+		_exportImportReportEntryLocalService;
+
+	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Inject
 	private ObjectFieldLocalService _objectFieldLocalService;
-
-	private static class TestBatchEngineImportTaskExceptionHandler
-		implements BatchEngineImportTaskExceptionHandler {
-
-		@Override
-		public void handle(
-			BatchEngineImportTask batchEngineImportTask,
-			BatchEngineTaskItemDelegate<?> batchEngineTaskItemDelegate,
-			Exception exception, Object item) {
-
-			_batchEngineImportTask = batchEngineImportTask;
-			_exception = exception;
-			_item = item;
-		}
-
-		private BatchEngineImportTask _batchEngineImportTask;
-		private Exception _exception;
-		private Object _item;
-
-	}
 
 }

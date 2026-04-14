@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.ObjectNotFoundException;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
-import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -30,7 +29,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -56,6 +55,7 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 	@Override
 	public long getCurrentId(String name) {
 		try (Connection connection = getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				_SQL_SELECT_ID_BY_NAME)) {
 
@@ -77,8 +77,10 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 	@Override
 	public List<String> getNames() {
 		try (Connection connection = getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				_SQL_SELECT_NAMES);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			List<String> list = new ArrayList<>();
@@ -120,7 +122,7 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 
 	@Override
 	public void invalidate() {
-		if (!DBPartition.isPartitionEnabled() ||
+		if (!PropsValues.DATABASE_PARTITION_ENABLED ||
 			(CompanyThreadLocal.getCompanyId() == CompanyConstants.SYSTEM)) {
 
 			_counterRegisterMap.clear();
@@ -151,6 +153,7 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 			}
 
 			try (Connection connection = getConnection();
+
 				PreparedStatement preparedStatement =
 					connection.prepareStatement(_SQL_UPDATE_NAME_BY_NAME)) {
 
@@ -233,6 +236,7 @@ public class CounterFinderImpl implements CacheRegistryItem, CounterFinder {
 		long rangeMin = -1;
 
 		try (Connection connection = getConnection();
+
 			PreparedStatement preparedStatement1 = connection.prepareStatement(
 				_SQL_SELECT_ID_BY_NAME)) {
 

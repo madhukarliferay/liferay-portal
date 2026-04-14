@@ -52,9 +52,7 @@ public class OptionsSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(options.getType());
-
 			sb.append("\"");
 		}
 
@@ -228,3 +226,4 @@ public class OptionsSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1119816082

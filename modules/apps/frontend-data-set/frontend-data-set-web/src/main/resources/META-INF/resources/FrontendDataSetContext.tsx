@@ -5,7 +5,17 @@
 
 import React from 'react';
 
-import {IInlineEditingSettings, IItemsActions, ISchema} from './utils/types';
+import {
+	EConfigInURLKeys,
+	IConfigInURLUpdaterThunk,
+	IDataSetData,
+	IFDSState,
+	IInlineEditingSettings,
+	IInternalRenderer,
+	IItemsActions,
+	TRenderer,
+	TSort,
+} from './utils/types';
 
 export interface IFrontendDataSetContext {
 	actionParameterName?: string | null;
@@ -16,8 +26,8 @@ export interface IFrontendDataSetContext {
 	createInlineItem: Function;
 	customDataRenderers?: Array<any>;
 	customRenderers?: {
+		listSection?: Array<IInternalRenderer>;
 		tableCell?: Array<TRenderer>;
-		views?: Array<TRenderer>;
 	};
 	executeAsyncItemAction: ({
 		errorMessage,
@@ -27,18 +37,21 @@ export interface IFrontendDataSetContext {
 		successMessage,
 		url,
 	}: {
-		errorMessage: string;
-		method: string;
+		errorMessage?: string;
+		method?: string;
 		requestBody?: string;
 		setActionItemLoading?: (loading: boolean) => void;
 		successMessage?: string;
 		url: string;
 	}) => Promise<void>;
+	forceSortsUpdate: (sorts: TSort[]) => void;
 	formId?: string;
 	formName?: string;
+	globalFDSState: IFDSState;
+	hideManagementBarInEmptyState?: boolean;
 	highlightItems: Function;
 	highlightedItemsValue?: Array<string>;
-	id?: string;
+	id: string;
 	infoPanelId?: string;
 	infoPanelOpen?: boolean;
 	inlineAddingSettings?: {
@@ -55,30 +68,34 @@ export interface IFrontendDataSetContext {
 	nestedItemsReferenceKey?: string;
 	onActionDropdownItemClick: Function;
 	onBulkActionItemClick: Function;
+	onClearResultsBar: () => void;
+	onClearSearch: () => void;
+	onFilterChange: Function;
 	onInfoPanelToggleButtonClick: Function;
 	onItemsChange: ({itemKey, items}: {itemKey: string; items: any}) => void;
 	onSearch: ({query}: {query: string}) => void;
-	onSelect?: ({selectedItems}: {selectedItems: Array<any>}) => void;
+	onSnapshotChange: Function;
+	onViewChange: (viewName: string) => void;
 	openModal: Function;
 	openSidePanel: Function;
 	portletId?: string;
 	searchParam?: string;
 	searching: boolean;
-	selectItems: Function;
 	selectable?: boolean;
 	selectedItems?: Array<any>;
 	selectedItemsKey: string;
 	selectedItemsValue?: Array<any>;
-	selectionType?: string;
-	setSearching: (value: boolean) => void;
+	selectionType?: 'single' | 'multiple';
 	showBulkActionsManagementBar: boolean;
 	showBulkActionsManagementBarActions: boolean;
 	showInfoPanel: boolean;
 	sidePanelId?: string;
-	sorts?: Array<TRenderer>;
+	sorts?: Array<TSort>;
 	style?: string;
 	toggleItemInlineEdit: Function;
 	uniformActionsDisplay?: boolean;
+	updateActiveSorts: IConfigInURLUpdaterThunk<EConfigInURLKeys.ACTIVE_SORTS>;
+	updateAdditionalAPIURLParameters: (parameters: string) => void;
 	updateDataSetItems: ({
 		items,
 		lastPage,
@@ -86,62 +103,36 @@ export interface IFrontendDataSetContext {
 		pageSize,
 		totalCount,
 	}: IDataSetData) => void;
+	updateFilters: IConfigInURLUpdaterThunk<EConfigInURLKeys.ACTIVE_FILTERS>;
 	updateItem: Function;
+	updateView: IConfigInURLUpdaterThunk<EConfigInURLKeys.VIEW_NAME>;
+	updateVisibleFields: IConfigInURLUpdaterThunk<EConfigInURLKeys.VISIBLE_FIELDS>;
 }
-
-export interface IDataSetData {
-	items: Array<any>;
-	lastPage: number;
-	page: number;
-	pageSize?: number;
-	totalCount: number;
-}
-
-export interface IHTMLElementBuilder {
-	(args: any): HTMLElement;
-}
-
-export interface IClientExtensionRenderer {
-	externalReferenceCode?: string;
-	htmlElementBuilder?: IHTMLElementBuilder;
-	name?: string;
-	type: 'clientExtension';
-	url?: string;
-}
-
-export interface IInternalRenderer {
-	component: React.ComponentType<any>;
-	default?: boolean;
-	label?: string;
-	name?: string;
-	schema?: ISchema;
-	symbol?: string;
-	type: 'internal';
-	url?: string;
-}
-
-export type TRenderer = IClientExtensionRenderer | IInternalRenderer;
 
 const FrontendDataSetContext = React.createContext({
 	allItemsSelectedActive: false,
 	applyItemInlineUpdates: () => {},
 	createInlineItem: () => {},
 	executeAsyncItemAction: () => {},
+	forceSortsUpdate: () => {},
+	hideManagementBarInEmptyState: false,
 	highlightItems: () => {},
+	id: '',
 	loadData: () => {},
 	onActionDropdownItemClick: () => {},
 	onBulkActionItemClick: () => {},
+	onFilterChange: () => {},
 	onInfoPanelToggleButtonClick: () => {},
 	onItemsChange: () => {},
 	onSearch: () => {},
-	onSelect: () => {},
+	onSnapshotChange: () => {},
 	openModal: () => {},
 	openSidePanel: () => {},
-	selectItems: () => {},
 	selectable: false,
+	selectedItems: [],
 	selectedItemsValue: [],
-	setSearching: () => {},
 	toggleItemInlineEdit: () => {},
+	updateAdditionalAPIURLParameters: () => {},
 	updateDataSetItems: () => {},
 	updateItem: () => {},
 } as unknown as IFrontendDataSetContext);

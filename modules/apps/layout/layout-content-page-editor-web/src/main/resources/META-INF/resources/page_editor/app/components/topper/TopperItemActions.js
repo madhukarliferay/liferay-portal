@@ -8,13 +8,15 @@ import ClayDropDown, {Align} from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import {openModal, openToast} from 'frontend-js-components-web';
 import PropTypes from 'prop-types';
-import React, {useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
+import {v4 as uuidv4} from 'uuid';
 
 import {getLayoutDataItemPropTypes} from '../../../prop_types/index';
 import {FRAGMENT_ENTRY_TYPES} from '../../config/constants/fragmentEntryTypes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
 import {useClipboard, useSetClipboard} from '../../contexts/ClipboardContext';
 import {useSelectMultipleItems} from '../../contexts/ControlsContext';
+import {useRulesModal} from '../../contexts/RulesModalContext';
 import {
 	useDispatch,
 	useSelector,
@@ -22,6 +24,7 @@ import {
 } from '../../contexts/StoreContext';
 import {useGetWidgets} from '../../contexts/WidgetsContext';
 import selectCanManageFragmentEntries from '../../selectors/selectCanManageFragmentEntries';
+import selectSegmentsExperienceId from '../../selectors/selectSegmentsExperienceId';
 import deleteItem from '../../thunks/deleteItem';
 import duplicateItem from '../../thunks/duplicateItem';
 import pasteItems from '../../thunks/pasteItems';
@@ -35,13 +38,15 @@ import {
 import getPortletCustomActions from '../../utils/getPortletCustomActions';
 import getPortletId from '../../utils/getPortletId';
 import hideFragment from '../../utils/hideFragment';
+import {isAllowedInRules} from '../../utils/isAllowedInRules';
 import isCuttable from '../../utils/isCuttable';
 import isInputFragment from '../../utils/isInputFragment';
 import {isMovementValid} from '../../utils/isMovementValid';
 import isStepper from '../../utils/isStepper';
+import openFragmentCompositionModal from '../../utils/openFragmentCompositionModal';
+import openSwapFragmentModal from '../../utils/openSwapFragmentModal';
 import toMovementItem from '../../utils/toMovementItem';
 import useHasRequiredChild from '../../utils/useHasRequiredChild';
-import SaveFragmentCompositionModal from '../SaveFragmentCompositionModal';
 import hasDropZoneChild from '../layout_data_items/hasDropZoneChild';
 
 export default function TopperItemActions({disabled, item}) {
@@ -49,6 +54,7 @@ export default function TopperItemActions({disabled, item}) {
 	const hasRequiredChild = useHasRequiredChild(item.itemId);
 	const selectMultipleItems = useSelectMultipleItems();
 	const getWidgets = useGetWidgets();
+	const {openRulesModal} = useRulesModal();
 
 	const clipboard = useClipboard();
 	const setClipboard = useSetClipboard();
@@ -57,11 +63,10 @@ export default function TopperItemActions({disabled, item}) {
 
 	const canManageFragments = useSelector(selectCanManageFragmentEntries);
 
-	const {fragmentEntryLinks, layoutData, selectedViewportSize} = useSelector(
-		(state) => state
-	);
+	const {collections, fragmentEntryLinks, layoutData, selectedViewportSize} =
+		useSelector((state) => state);
 
-	const [openSaveModal, setOpenSaveModal] = useState(false);
+	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
 
 	const fragmentEntryLink = useSelectorCallback(
 		(state) => state.fragmentEntryLinks[item.config.fragmentEntryLinkId],
@@ -83,6 +88,28 @@ export default function TopperItemActions({disabled, item}) {
 
 	const dropdownItems = useMemo(() => {
 		const items = [];
+
+		if (isAllowedInRules(item, layoutData)) {
+			items.push({
+				action: () => {
+					openRulesModal({
+						rule: {
+							actions: [
+								{
+									id: uuidv4(),
+									itemId: item.itemId,
+									readOnly: true,
+									type: 'show',
+								},
+							],
+						},
+					});
+				},
+				group: 0,
+				icon: 'rules',
+				label: Liferay.Language.get('add-rule'),
+			});
+		}
 
 		if (
 			item.type !== LAYOUT_DATA_ITEM_TYPES.dropZone &&
@@ -115,9 +142,29 @@ export default function TopperItemActions({disabled, item}) {
 			});
 		}
 
+		if (isInputFragment(item, fragmentEntryLinks)) {
+			items.push({
+				action: () =>
+					openSwapFragmentModal({
+						dispatch,
+						fragmentEntryLinks,
+						item,
+					}),
+				group: 0,
+				icon: 'change',
+				label: Liferay.Language.get('swap-fragment'),
+			});
+		}
+
 		if (canBeSaved(item, layoutData) && canManageFragments) {
 			items.push({
-				action: () => setOpenSaveModal(true),
+				action: () =>
+					openFragmentCompositionModal({
+						collections,
+						dispatch,
+						itemId: item.itemId,
+						segmentsExperienceId,
+					}),
 				group: 0,
 				icon: 'disk',
 				label: Liferay.Language.get('save-composition'),
@@ -232,20 +279,23 @@ export default function TopperItemActions({disabled, item}) {
 
 		return sortItems(items);
 	}, [
-		canManageFragments,
-		clipboard,
-		dispatch,
-		fragmentEntryLink,
-		fragmentEntryLinks,
-		getWidgets,
-		hasRequiredChild,
 		item,
 		layoutData,
-		portletActions,
+		fragmentEntryLinks,
+		canManageFragments,
+		getWidgets,
 		portletId,
+		openRulesModal,
+		dispatch,
 		selectedViewportSize,
+		hasRequiredChild,
+		collections,
+		segmentsExperienceId,
 		setClipboard,
 		selectItems,
+		clipboard,
+		portletActions,
+		fragmentEntryLink,
 	]);
 
 	if (!dropdownItems.length) {
@@ -299,12 +349,6 @@ export default function TopperItemActions({disabled, item}) {
 					}
 				</ClayDropDown.ItemList>
 			</ClayDropDown>
-
-			{openSaveModal && (
-				<SaveFragmentCompositionModal
-					onCloseModal={() => setOpenSaveModal(false)}
-				/>
-			)}
 		</>
 	);
 }

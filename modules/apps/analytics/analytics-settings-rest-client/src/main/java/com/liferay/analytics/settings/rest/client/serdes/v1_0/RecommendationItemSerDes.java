@@ -64,9 +64,7 @@ public class RecommendationItemSerDes {
 			sb.append("\"status\": ");
 
 			sb.append("\"");
-
 			sb.append(recommendationItem.getStatus());
-
 			sb.append("\"");
 		}
 
@@ -232,3 +230,4 @@ public class RecommendationItemSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:877697618

@@ -27,6 +27,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
+component: liferay
 helm.sh/chart: {{ include "liferay.chart" . }}
 {{- include "liferay.customLabels" . }}
 {{- end }}
@@ -45,9 +46,9 @@ app.kubernetes.io/name: {{ include "liferay.name" . }}
 {{- end }}
 
 {{- define "liferay.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "liferay.name" .) .Values.serviceAccount.name }}
+{{- if .Values.global.liferayServiceAccount.create }}
+{{- default (include "liferay.name" .) .Values.global.liferayServiceAccount.name }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- default "default" .Values.global.liferayServiceAccount.name }}
 {{- end }}
 {{- end }}

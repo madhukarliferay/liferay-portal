@@ -7,11 +7,12 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
-import {liferayConfig} from '../../../liferay.config';
 import fillAndClickOutside from '../../../utils/fillAndClickOutside';
 import getRandomString from '../../../utils/getRandomString';
 import {performUserSwitch, userData} from '../../../utils/performLogin';
@@ -21,7 +22,12 @@ import {segmentsPageTest} from './fixtures/segmentsPageTest';
 
 export const test = mergeTests(
 	apiHelpersTest,
+	isolatedSiteTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+		'LPD-78863': {enabled: true, system: true},
+	}),
 	pageEditorPagesTest,
 	productMenuPageTest,
 	segmentsPageTest,
@@ -29,32 +35,13 @@ export const test = mergeTests(
 	loginTest()
 );
 
-const randomString = getRandomString();
+const userEmailAddress = getRandomString() + '@liferay.com';
 
-const siteName = 'My Site ' + randomString;
+test.beforeEach(async ({page}) => {
+	page.setViewportSize({height: 1080, width: 1920});
 
-let site;
-
-test.beforeEach(async ({apiHelpers, page}) => {
 	page.on('dialog', async (dialog) => {
 		await dialog.accept();
-	});
-
-	site = await apiHelpers.headlessSite.createSite({
-		name: siteName,
-	});
-});
-
-test.afterEach(async ({apiHelpers, page, segmentsPage}) => {
-	await test.step('Delete site on the DXP side', async () => {
-		await page.goto(liferayConfig.environment.baseUrl);
-
-		await apiHelpers.headlessSite.deleteSite(String(site.id));
-	});
-
-	await test.step('Delete all segments created during test execution', async () => {
-		await goToSegmentsAdmin(page);
-		await segmentsPage.deleteAllSegmentEntries();
 	});
 });
 
@@ -71,40 +58,55 @@ test(
 		page,
 		pageEditorPage,
 		segmentsPage,
+		site,
 		usersAndOrganizationsPage,
 	}) => {
 		const segmentName = 'AddSegmentByOrganizationCountry Test';
+		const organizationName = getRandomString();
 
 		await test.step('Given a user and an organization were created and the user was assigned to the organization', async () => {
-			const orgName = await apiHelpers.headlessAdminUser.postOrganization(
-				{
-					name: 'Organization1',
-				}
-			);
+			const organization =
+				await apiHelpers.headlessAdminUser.postOrganization({
+					name: organizationName,
+				});
 
 			const user = await apiHelpers.headlessAdminUser.postUserAccount({
-				emailAddress: 'userea@liferay.com',
+				emailAddress: userEmailAddress,
 			});
 
 			await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
-				orgName.id,
+				organization.id,
 				user.emailAddress
 			);
 
 			await usersAndOrganizationsPage.goToOrganizations();
-			await (
-				await usersAndOrganizationsPage.organizationsTable.rowActions(
-					'Organization1'
-				)
-			).click();
+
+			await expect(async () => {
+				await (
+					await usersAndOrganizationsPage.organizationsTable.rowActions(
+						organization.name
+					)
+				).click({timeout: 3000});
+
+				await expect(
+					usersAndOrganizationsPage.editOrganizationMenuItem
+				).toBeVisible({timeout: 2000});
+			}).toPass();
+
 			await usersAndOrganizationsPage.editOrganizationMenuItem.click();
+
 			await editOrganizationPage.countrySelect.selectOption('Spain');
 			await editOrganizationPage.regionSelect.selectOption('Madrid');
 			await editOrganizationPage.saveButton.click();
+
+			await waitForAlert(
+				page,
+				'Success:Your request completed successfully.'
+			);
 		});
 
 		await test.step('When a segment designer adds a segment and checks the user belongs to the segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -127,12 +129,12 @@ test(
 			await segmentsPage.clickLinkByText(segmentName);
 
 			await segmentsPage.viewMembers({
-				expectedEmail: 'userea@liferay.com',
+				expectedEmail: userEmailAddress,
 			});
 		});
 
 		await test.step('Then can assert the segment is correctly created', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			const linkLocator = page.locator(`a:has-text('${segmentName}')`);
 			await linkLocator.click();
@@ -151,28 +153,28 @@ test(
 		tag: '@LPS-130277',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
+		const organizationName = getRandomString();
 		const segmentName = 'AddSegmentByOrganizationName Test';
 
 		await test.step('Given a user and an organization were created and the user was assigned to the organization', async () => {
-			const orgName = await apiHelpers.headlessAdminUser.postOrganization(
-				{
-					name: 'Organization Name',
-				}
-			);
+			const organization =
+				await apiHelpers.headlessAdminUser.postOrganization({
+					name: organizationName,
+				});
 
 			const user = await apiHelpers.headlessAdminUser.postUserAccount({
-				emailAddress: 'userea@liferay.com',
+				emailAddress: userEmailAddress,
 			});
 
 			await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
-				orgName.id,
+				organization.id,
 				user.emailAddress
 			);
 		});
 
 		await test.step('When a segment designer adds a segment and checks the user belongs to the segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -182,25 +184,25 @@ test(
 
 			await segmentsPage.editSegmentsEntry(segmentName);
 
-			await segmentsPage.fillField('Organization Name');
+			await segmentsPage.fillField(organizationName);
 
 			await segmentsPage.saveButton.click();
 
 			await segmentsPage.clickLinkByText(segmentName);
 
 			await segmentsPage.viewMembers({
-				expectedEmail: 'userea@liferay.com',
+				expectedEmail: userEmailAddress,
 			});
 		});
 
 		await test.step('Then can assert the segment is correctly created', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickLinkByText(segmentName);
 
 			await page.waitForLoadState('networkidle');
 
-			await segmentsPage.viewCriterionValue('Organization Name');
+			await segmentsPage.viewCriterionValue(organizationName);
 		});
 	}
 );
@@ -212,28 +214,27 @@ test(
 		tag: '@LPS-130280',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'AddSegmentByOrganizationType Test';
 
 		await test.step('Given a user and an organization were created and the user was assigned to the organization', async () => {
-			const orgName = await apiHelpers.headlessAdminUser.postOrganization(
-				{
-					name: 'Organization Name',
-				}
-			);
+			const organization =
+				await apiHelpers.headlessAdminUser.postOrganization({
+					name: getRandomString(),
+				});
 
 			const user = await apiHelpers.headlessAdminUser.postUserAccount({
-				emailAddress: 'userea@liferay.com',
+				emailAddress: userEmailAddress,
 			});
 
 			await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
-				orgName.id,
+				organization.id,
 				user.emailAddress
 			);
 		});
 
 		await test.step('When a segment designer adds a segment and checks the user belongs to the segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -248,12 +249,12 @@ test(
 			await segmentsPage.clickLinkByText(segmentName);
 
 			await segmentsPage.viewMembers({
-				expectedEmail: 'userea@liferay.com',
+				expectedEmail: userEmailAddress,
 			});
 		});
 
 		await test.step('Then can assert the segment is correctly created', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickLinkByText(segmentName);
 
@@ -271,11 +272,11 @@ test(
 		tag: '@LPS-130346',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'AddSegment Test';
 
 		await test.step('When a segment designer adds a new segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -301,23 +302,26 @@ test(
 		tag: '@LPS-130347',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'Segment With User1';
 		const segmentName2 = 'Segment With User2';
 		const segmentName3 = 'AddSegmentByOtherSegmentsWarning Test';
 
+		const emailAddress1 = getRandomString() + '@liferay.com';
+		const emailAddress2 = getRandomString() + '@liferay.com';
+
 		await test.step('Given 2 users were created', async () => {
 			await apiHelpers.headlessAdminUser.postUserAccount({
-				emailAddress: `userea1@liferay.com`,
+				emailAddress: emailAddress1,
 			});
 
 			await apiHelpers.headlessAdminUser.postUserAccount({
-				emailAddress: `userea2@liferay.com`,
+				emailAddress: emailAddress2,
 			});
 		});
 
 		await test.step('When a segment designer adds 2 segments', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -325,7 +329,7 @@ test(
 				user: ['Email Address'],
 			});
 
-			await segmentsPage.fillField('userea1@liferay.com');
+			await segmentsPage.fillField(emailAddress1);
 
 			await segmentsPage.saveButton.click();
 
@@ -335,7 +339,7 @@ test(
 				user: ['Email Address'],
 			});
 
-			await segmentsPage.fillField('userea2@liferay.com');
+			await segmentsPage.fillField(emailAddress2);
 
 			await segmentsPage.saveButton.click();
 		});
@@ -367,7 +371,7 @@ test(
 		});
 
 		await test.step('Then asserts that a warning is shown', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.editSegmentsEntry(segmentName3);
 
@@ -388,11 +392,11 @@ test(
 		tag: '@LPS-130313',
 	},
 
-	async ({page, segmentsPage}) => {
+	async ({page, segmentsPage, site}) => {
 		const segmentName = 'AddSegmentBySessionBrowser Test';
 
 		await test.step('When a segment designer adds a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -426,11 +430,11 @@ test(
 		tag: '@LPS-130351',
 	},
 
-	async ({page, segmentsPage}) => {
+	async ({page, segmentsPage, site}) => {
 		const segmentName = 'AddSegmentBySessionLanguage Test';
 
 		await test.step('When a segment designer adds a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -462,11 +466,11 @@ test(
 		tag: '@LPS-130325',
 	},
 
-	async ({page, segmentsPage}) => {
+	async ({page, segmentsPage, site}) => {
 		const segmentName = 'AddSegmentBySessionURL Test';
 
 		await test.step('When a segment designer adds a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -501,6 +505,7 @@ test(
 		page,
 		pageEditorPage,
 		segmentsPage,
+		site,
 		usersAndOrganizationsPage,
 	}) => {
 		const segmentName = 'Segment with Apostrophe';
@@ -509,7 +514,9 @@ test(
 			await usersAndOrganizationsPage.goToUsers();
 			await usersAndOrganizationsPage.addUserButton.click();
 
-			await editUserPage.emailAddressInput.fill('shaquille@liferay.com');
+			await editUserPage.emailAddressInput.fill(
+				getRandomString() + '@liferay.com'
+			);
 			await editUserPage.firstNameInput.fill('Shaquille');
 			await editUserPage.lastNameInput.fill(`O'Neal`);
 			await editUserPage.screenNameInput.fill('shaquille');
@@ -518,7 +525,7 @@ test(
 		});
 
 		await test.step('When a segment designer adds a segment with last name property', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -550,18 +557,18 @@ test(
 		tag: '@LPS-152077',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'First Segment';
 		const segmentName2 = 'Second Segment';
 
 		await test.step('Given a user is created', async () => {
 			await apiHelpers.headlessAdminUser.postUserAccount({
-				emailAddress: `userea@liferay.com`,
+				emailAddress: userEmailAddress,
 			});
 		});
 
 		await test.step('And a segment designer adds the first segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -569,7 +576,7 @@ test(
 				user: ['Email Address'],
 			});
 
-			await segmentsPage.fillField('userea@liferay.com');
+			await segmentsPage.fillField(userEmailAddress);
 
 			await segmentsPage.saveButton.click();
 		});
@@ -596,7 +603,7 @@ test(
 		});
 
 		await test.step('And removes from second segment the criterion related to the first segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.editSegmentsEntry(segmentName2);
 
@@ -624,9 +631,9 @@ test(
 		tag: '@LPS-150511',
 	},
 
-	async ({page, segmentsPage}) => {
+	async ({page, segmentsPage, site}) => {
 		await test.step('Given a segment designer goes to the segments editor page', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 		});
@@ -659,6 +666,7 @@ test(
 		page,
 		pageEditorPage,
 		segmentsPage,
+		site,
 		usersAndOrganizationsPage,
 	}) => {
 		const segmentName = 'Segment With Special Characters';
@@ -667,7 +675,9 @@ test(
 			await usersAndOrganizationsPage.goToUsers();
 			await usersAndOrganizationsPage.addUserButton.click();
 
-			await editUserPage.emailAddressInput.fill('u1@liferay.com');
+			await editUserPage.emailAddressInput.fill(
+				getRandomString() + '@liferay.com'
+			);
 			await editUserPage.firstNameInput.fill('User');
 			await editUserPage.lastNameInput.fill(`1 + / ? # &`);
 			await editUserPage.screenNameInput.fill('u1');
@@ -676,7 +686,7 @@ test(
 		});
 
 		await test.step('When a segment designer adds a segment with last name property', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -708,9 +718,9 @@ test(
 		tag: '@LPS-136086',
 	},
 
-	async ({page}) => {
+	async ({page, site}) => {
 		await test.step('Given a segment designer goes to the segments editor page', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 		});
 
 		await test.step('Then can assert that the default segment is not displayed', async () => {
@@ -728,19 +738,18 @@ test(
 		tag: '@LPS-135880',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
+		const organizationName = getRandomString();
 		const segmentName = 'Validate Organization Segment';
-
-		const orgName = 'Organization Name';
 
 		await test.step('Given an organization is created', async () => {
 			await apiHelpers.headlessAdminUser.postOrganization({
-				name: orgName,
+				name: organizationName,
 			});
 		});
 
 		await test.step('When a segment designer adds a segment with Organization criterion', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -750,7 +759,7 @@ test(
 
 			await segmentsPage.selectButton.click();
 
-			await segmentsPage.selectCheckboxItem(orgName);
+			await segmentsPage.selectCheckboxItem(organizationName);
 
 			await segmentsPage.saveButton.click();
 
@@ -762,7 +771,7 @@ test(
 
 			await page.waitForLoadState('networkidle');
 
-			await segmentsPage.viewCriterionValue('Organization Name');
+			await segmentsPage.viewCriterionValue(organizationName);
 		});
 	}
 );
@@ -774,17 +783,19 @@ test(
 		tag: '@LPS-135880',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'Validate Parent Organization Segment';
+		const parentOrganizationName = getRandomString();
+		const organizationName = getRandomString();
 
 		await test.step('Given 2 organizations are created, the first as the parent of the second', async () => {
 			const organization1 =
 				await apiHelpers.headlessAdminUser.postOrganization({
-					name: 'Parent Organization Name',
+					name: parentOrganizationName,
 				});
 
 			await apiHelpers.headlessAdminUser.postOrganization({
-				name: 'Organization Name',
+				name: organizationName,
 				parentOrganization: {
 					externalReferenceCode: organization1.externalReferenceCode,
 				},
@@ -792,7 +803,7 @@ test(
 		});
 
 		await test.step('When a segment designer adds a segment with Parent Organization criterion', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -802,7 +813,7 @@ test(
 
 			await segmentsPage.selectButton.click();
 
-			await segmentsPage.selectCheckboxItem('Parent Organization Name');
+			await segmentsPage.selectCheckboxItem(parentOrganizationName);
 
 			await segmentsPage.saveButton.click();
 
@@ -814,7 +825,7 @@ test(
 
 			await page.waitForLoadState('networkidle');
 
-			await segmentsPage.viewCriterionValue('Parent Organization Name');
+			await segmentsPage.viewCriterionValue(parentOrganizationName);
 		});
 	}
 );
@@ -826,11 +837,11 @@ test(
 		tag: '@LPS-135880',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'Validate Role Segment';
 
 		await test.step('When a segment designer adds a segment with Regular Role criterion', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -864,11 +875,11 @@ test(
 		tag: '@LPS-135880',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'Validate Site Segment';
 
 		await test.step('When a segment designer adds a segment with Site criterion', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -878,7 +889,7 @@ test(
 
 			await segmentsPage.selectButton.click();
 
-			await segmentsPage.selectCardItem(siteName);
+			await segmentsPage.selectCardItem(site.name);
 
 			await segmentsPage.saveButton.click();
 
@@ -890,7 +901,7 @@ test(
 
 			await page.waitForLoadState('networkidle');
 
-			await segmentsPage.viewCriterionValue(siteName);
+			await segmentsPage.viewCriterionValue(site.name);
 		});
 	}
 );
@@ -907,6 +918,7 @@ test(
 		pageEditorPage,
 		productMenuPage,
 		segmentsPage,
+		site,
 		teamsPage,
 	}) => {
 		const segmentName = 'Validate Site Segment';
@@ -961,11 +973,11 @@ test(
 		tag: '@LPS-135880',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'Validate User Segment';
 
 		await test.step('When a segment designer adds a segment with User criterion', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -999,13 +1011,7 @@ test(
 		tag: '@LPS-135880',
 	},
 
-	async ({
-		apiHelpers,
-		page,
-		pageEditorPage,
-		productMenuPage,
-		segmentsPage,
-	}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName = 'Validate User Group Segment';
 
 		await test.step('Given a User Group is created', async () => {
@@ -1015,9 +1021,7 @@ test(
 		});
 
 		await test.step('When a segment designer adds a segment with User Group criterion', async () => {
-			await productMenuPage.openProductMenuIfClosed();
-
-			await productMenuPage.goToSegments();
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1051,9 +1055,9 @@ test(
 		tag: '@LPS-103516',
 	},
 
-	async ({page, segmentsPage}) => {
+	async ({page, segmentsPage, site}) => {
 		await test.step('Given a segment designer goes to the segments editor page', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 		});
@@ -1192,12 +1196,12 @@ test(
 		tag: '@LPS-94874',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'EditSegment Test';
 		const segmentName2 = 'EditSegmentIfHaveASelectInput Test';
 
 		await test.step('Given a segment designer creates a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1257,12 +1261,12 @@ test(
 		tag: '@LPS-102740',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'EditSegment Test';
 		const segmentName2 = 'EditSegmentUserByCountry Test';
 
 		await test.step('Given a segment designer creates a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1306,12 +1310,12 @@ test(
 		tag: '@LPS-102740',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'EditSegment Test';
 		const segmentName2 = 'EditSegmentUserByRegion Test';
 
 		await test.step('Given a segment designer creates a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1355,12 +1359,12 @@ test(
 		tag: '@LPS-102743',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'EditSegment Test';
 		const segmentName2 = 'EditSegmentUserBySessionURL Test';
 
 		await test.step('Given a segment designer creates a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1407,6 +1411,7 @@ test(
 		page,
 		pageEditorPage,
 		segmentsPage,
+		site,
 		usersAndOrganizationsPage,
 	}) => {
 		const segmentName1 = 'EditSegment Test';
@@ -1416,7 +1421,7 @@ test(
 			await usersAndOrganizationsPage.goToUsers();
 			await usersAndOrganizationsPage.addUserButton.click();
 
-			await editUserPage.emailAddressInput.fill('userea@liferay.com');
+			await editUserPage.emailAddressInput.fill(userEmailAddress);
 			await editUserPage.firstNameInput.fill('userfn');
 			await editUserPage.lastNameInput.fill('userln');
 			await editUserPage.screenNameInput.fill('usersn');
@@ -1430,7 +1435,7 @@ test(
 		});
 
 		await test.step('And the segment designer creates a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1476,12 +1481,12 @@ test(
 		tag: '@LPS-97141',
 	},
 
-	async ({page, pageEditorPage, segmentsPage}) => {
+	async ({page, pageEditorPage, segmentsPage, site}) => {
 		const segmentName1 = 'EditSegment Test';
 		const segmentName2 = 'EditSegmentUserEmailAddressEqualsToContains Test';
 
 		await test.step('Given a segment designer creates a segment', async () => {
-			await goToSegmentsAdmin(page);
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
 
 			await segmentsPage.clickAddNewSegmentButton();
 
@@ -1524,7 +1529,7 @@ test(
 		tag: '@LPS-130344',
 	},
 
-	async ({apiHelpers, page, pageEditorPage, segmentsPage}) => {
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
 		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
 			groupId: site.id,
 			options: {type: 'content'},
@@ -1661,6 +1666,94 @@ test(
 			await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
 
 			await expect(page.getByText('User1 and User2')).toBeVisible();
+		});
+
+		await test.step('Switch to test user', async () => {
+			await performUserSwitch(page, 'test');
+		});
+	}
+);
+
+test(
+	'Validate segment experience using IP Geocoder Country',
+	{
+		tag: '@LPS-163095',
+	},
+
+	async ({apiHelpers, page, pageEditorPage, segmentsPage, site}) => {
+		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			options: {type: 'content'},
+			title: getRandomString(),
+		});
+
+		const mockAddress = '?mockIPGeocoderRemoteAddr=57.78.128.0';
+
+		const segmentName = 'IP Geocoder Country Segment';
+
+		await test.step('Create segment using IP Geocoder Country', async () => {
+			await goToSegmentsAdmin(page, site.friendlyUrlPath);
+
+			await segmentsPage.clickAddNewSegmentButton();
+
+			await segmentsPage.addSegmentField(
+				'IP Geocoder Country',
+				'Session',
+				segmentName
+			);
+
+			await segmentsPage.selectOption('Spain');
+
+			await waitForAlert(page);
+		});
+
+		await test.step('Create segmented experience', async () => {
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			await pageEditorPage.addFragment('Basic Components', 'Heading');
+
+			const headingId = await pageEditorPage.getFragmentId('Heading');
+
+			await pageEditorPage.createExperience('Experience Content Page');
+
+			await expect(
+				page.getByLabel('Experience: Experience Content Page')
+			).toBeVisible();
+
+			await pageEditorPage.editExperienceSegment(
+				'Experience Content Page',
+				'IP Geocoder Country Segment'
+			);
+
+			await pageEditorPage.editTextEditable(
+				headingId,
+				'element-text',
+				'Spanish Segment Heading'
+			);
+		});
+
+		await test.step('Prioritize experience and publish', async () => {
+			await pageEditorPage.openExperienceSelector();
+
+			const experience = page.locator('.dropdown-menu__experience', {
+				hasText: 'Experience Content Page',
+			});
+
+			await experience
+				.getByLabel('Prioritize Experience', {exact: true})
+				.click();
+
+			await pageEditorPage.publishPage();
+		});
+
+		await test.step('Validate correct experience is displayed using a spanish IP address', async () => {
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyURL}${mockAddress}`
+			);
+
+			await expect(
+				page.getByText('Spanish Segment Heading')
+			).toBeVisible();
 		});
 	}
 );

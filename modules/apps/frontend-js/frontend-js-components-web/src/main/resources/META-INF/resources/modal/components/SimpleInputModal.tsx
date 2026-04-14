@@ -39,6 +39,7 @@ export interface SimpleInputModalProps {
 	checkboxFieldValue: boolean;
 	closeModal: SimpleInputModalCloseModal;
 	dialogTitle: string;
+	disableSubmitOnError?: boolean;
 	formSubmitURL: string;
 	idFieldName: string;
 	idFieldValue: never;
@@ -67,6 +68,7 @@ export default function SimpleInputModal({
 	checkboxFieldValue,
 	closeModal,
 	dialogTitle,
+	disableSubmitOnError = false,
 	formSubmitURL,
 	idFieldName,
 	idFieldValue,
@@ -171,7 +173,11 @@ export default function SimpleInputModal({
 
 	return visible ? (
 		<ClayModal center={center} observer={observer} size={size}>
-			<ClayModal.Header>{dialogTitle}</ClayModal.Header>
+			<ClayModal.Header
+				closeButtonAriaLabel={Liferay.Language.get('close')}
+			>
+				{dialogTitle}
+			</ClayModal.Header>
 
 			<ClayForm
 				id={`${namespace}form`}
@@ -281,7 +287,10 @@ export default function SimpleInputModal({
 							</ClayButton>
 
 							<ClayButton
-								disabled={loadingResponse}
+								disabled={
+									loadingResponse ||
+									(disableSubmitOnError && !!errorMessage)
+								}
 								displayType="primary"
 								type="submit"
 							>

@@ -11,7 +11,6 @@ import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentCollectionLocalService;
-import com.liferay.fragment.service.FragmentEntryLinkService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
@@ -46,6 +45,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -118,8 +118,10 @@ public class ResetPrototypeMVCActionCommandTest {
 
 		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			null, fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), draftLayout,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), draftLayout.getGroupId()),
+			fragmentEntry.getHtml(), fragmentEntry.getJs(), draftLayout,
 			fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(), null,
 			0,
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
@@ -234,6 +236,14 @@ public class ResetPrototypeMVCActionCommandTest {
 
 		LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 			group.getGroupId(), false);
+
+		UnicodeProperties settingsUnicodeProperties =
+			layoutSet.getSettingsProperties();
+
+		settingsUnicodeProperties.remove(Sites.LAST_MERGE_TIME);
+		settingsUnicodeProperties.remove(Sites.LAST_MERGE_VERSION);
+
+		layoutSet = _layoutSetLocalService.updateLayoutSet(layoutSet);
 
 		MergeLayoutPrototypesThreadLocal.setSkipMerge(false);
 
@@ -351,9 +361,6 @@ public class ResetPrototypeMVCActionCommandTest {
 
 	@Inject
 	private FragmentCollectionLocalService _fragmentCollectionLocalService;
-
-	@Inject
-	private FragmentEntryLinkService _fragmentEntryLinkService;
 
 	@Inject
 	private FragmentEntryLocalService _fragmentEntryLocalService;

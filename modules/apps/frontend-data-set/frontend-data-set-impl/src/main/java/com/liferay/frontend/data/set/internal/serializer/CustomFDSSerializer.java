@@ -34,6 +34,7 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -50,10 +51,10 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
@@ -69,6 +70,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -109,10 +111,30 @@ public class CustomFDSSerializer
 
 	@Override
 	public String serializeAdditionalAPIURLParameters(
-		String fdsName, HttpServletRequest httpServletRequest) {
+		String fdsName, HttpServletRequest httpServletRequest,
+		boolean interpolate, JSONObject tokenResolutionsJSONObject) {
 
 		Map<String, Object> properties = getDataSetObjectEntryProperties(
 			fdsName, httpServletRequest);
+
+		String additionalAPIURLParameters = String.valueOf(
+			properties.get("additionalAPIURLParameters"));
+
+		String systemAdditionalAPIURLParameters =
+			_systemFDSSerializer.serializeAdditionalAPIURLParameters(
+				fdsName, httpServletRequest, interpolate,
+				tokenResolutionsJSONObject);
+
+		if (Validator.isNotNull(systemAdditionalAPIURLParameters)) {
+			if (Validator.isNotNull(additionalAPIURLParameters)) {
+				additionalAPIURLParameters =
+					systemAdditionalAPIURLParameters + StringPool.AMPERSAND +
+						additionalAPIURLParameters;
+			}
+			else {
+				additionalAPIURLParameters = systemAdditionalAPIURLParameters;
+			}
+		}
 
 		return createFDSAPIURLBuilder(
 			httpServletRequest,
@@ -120,13 +142,18 @@ public class CustomFDSSerializer
 			String.valueOf(properties.get("restEndpoint")),
 			String.valueOf(properties.get("restSchema"))
 		).addQueryString(
-			String.valueOf(properties.get("additionalAPIURLParameters"))
-		).buildQueryString();
+			additionalAPIURLParameters
+		).setTokenResolutions(
+			tokenResolutionsJSONObject
+		).buildQueryString(
+			interpolate
+		);
 	}
 
 	@Override
 	public String serializeAPIURL(
-		String fdsName, HttpServletRequest httpServletRequest) {
+		String fdsName, HttpServletRequest httpServletRequest,
+		boolean interpolate, JSONObject tokenResolutionsJSONObject) {
 
 		Map<String, Object> properties = getDataSetObjectEntryProperties(
 			fdsName, httpServletRequest);
@@ -135,14 +162,17 @@ public class CustomFDSSerializer
 			httpServletRequest,
 			String.valueOf(properties.get("restApplication")),
 			String.valueOf(properties.get("restEndpoint")),
-			String.valueOf(properties.get("restSchema")));
+			String.valueOf(properties.get("restSchema"))
+		).setTokenResolutions(
+			tokenResolutionsJSONObject
+		);
 
 		List<ObjectEntry> objectEntries = getSortedRelatedObjectEntries(
 			fdsName, httpServletRequest, (Predicate)null, "tableSectionsOrder",
 			"dataSetToDataSetTableSections");
 
 		if (objectEntries == null) {
-			return fdsAPIURLBuilder.build();
+			return fdsAPIURLBuilder.build(interpolate);
 		}
 
 		String nestedFields = StringPool.BLANK;
@@ -170,7 +200,7 @@ public class CustomFDSSerializer
 		}
 
 		if (nestedFields.equals(StringPool.BLANK)) {
-			return fdsAPIURLBuilder.build();
+			return fdsAPIURLBuilder.build(interpolate);
 		}
 
 		fdsAPIURLBuilder.addParameter(
@@ -183,7 +213,7 @@ public class CustomFDSSerializer
 				"nestedFieldsDepth", String.valueOf(nestedFieldsDepth));
 		}
 
-		return fdsAPIURLBuilder.build();
+		return fdsAPIURLBuilder.build(interpolate);
 	}
 
 	@Override
@@ -290,6 +320,27 @@ public class CustomFDSSerializer
 	}
 
 	@Override
+	public JSONArray serializeGroupedFilters(
+		String fdsName, HttpServletRequest httpServletRequest) {
+
+		// TODO LPD-70111
+
+		return _systemFDSSerializer.serializeGroupedFilters(
+			fdsName, httpServletRequest);
+	}
+
+	@Override
+	public boolean serializeHideManagementBarInEmptyState(
+		String fdsName, HttpServletRequest httpServletRequest) {
+
+		Map<String, Object> properties = getDataSetObjectEntryProperties(
+			fdsName, httpServletRequest);
+
+		return GetterUtil.getBoolean(
+			properties.get("hideManagementBarInEmptyState"));
+	}
+
+	@Override
 	public List<FDSActionDropdownItem> serializeItemsActions(
 		String fdsName, HttpServletRequest httpServletRequest) {
 
@@ -388,7 +439,7 @@ public class CustomFDSSerializer
 			() -> {
 				String[] listOfItemsPerPage = StringUtil.split(
 					String.valueOf(properties.get("listOfItemsPerPage")),
-					StringPool.COMMA_AND_SPACE);
+					StringPool.COMMA);
 
 				if (ArrayUtil.isNotEmpty(listOfItemsPerPage)) {
 					return JSONUtil.toJSONArray(
@@ -431,6 +482,32 @@ public class CustomFDSSerializer
 			fdsName, httpServletRequest);
 
 		return String.valueOf(properties.get("propsTransformer"));
+	}
+
+	@Override
+	public JSONArray serializeSnapshots(
+		String fdsName, HttpServletRequest httpServletRequest) {
+
+		try {
+			return serializeSnapshots(
+				fdsName, httpServletRequest, _objectDefinitionLocalService,
+				_objectEntryManagerRegistry);
+		}
+		catch (Exception exception) {
+			_log.error("Unable to serialize snapshots", exception);
+
+			return _jsonFactory.createJSONArray();
+		}
+	}
+
+	@Override
+	public boolean serializeSnapshotsEnabled(
+		String fdsName, HttpServletRequest httpServletRequest) {
+
+		Map<String, Object> properties = getDataSetObjectEntryProperties(
+			fdsName, httpServletRequest);
+
+		return GetterUtil.getBoolean(properties.get("snapshotsEnabled"));
 	}
 
 	@Override
@@ -515,6 +592,67 @@ public class CustomFDSSerializer
 		String defaultVisualizationMode = String.valueOf(
 			dataSetObjectEntryProperties.get("defaultVisualizationMode"));
 
+		JSONArray tableViewSchemaFieldsJSONArray = null;
+
+		JSONArray systemViewsJSONArray = _systemFDSSerializer.serializeViews(
+			fdsName, httpServletRequest);
+
+		for (int i = 0; i < systemViewsJSONArray.length(); i++) {
+			JSONObject systemViewJSONObject =
+				systemViewsJSONArray.getJSONObject(i);
+
+			String contentRenderer = systemViewJSONObject.getString(
+				"contentRenderer");
+
+			if (Validator.isNotNull(contentRenderer) &&
+				contentRenderer.contains("table")) {
+
+				JSONObject tableViewSchemaJSONObject =
+					systemViewJSONObject.getJSONObject("schema");
+
+				if (tableViewSchemaJSONObject != null) {
+					tableViewSchemaFieldsJSONArray =
+						tableViewSchemaJSONObject.getJSONArray("fields");
+
+					break;
+				}
+			}
+		}
+
+		Map<String, JSONObject> schemaFields = new HashMap<>();
+
+		if (tableViewSchemaFieldsJSONArray != null) {
+			for (int i = 0; i < tableViewSchemaFieldsJSONArray.length(); i++) {
+				JSONObject schemaFieldJSONObject =
+					tableViewSchemaFieldsJSONArray.getJSONObject(i);
+
+				Object object = schemaFieldJSONObject.get("fieldName");
+
+				String fieldName = StringPool.BLANK;
+
+				if (object instanceof String) {
+					fieldName = (String)object;
+				}
+				else {
+					StringBundler sb = new StringBundler();
+
+					String[] fieldNameItems = (String[])object;
+
+					for (int j = 0; j < fieldNameItems.length; j++) {
+						sb.append(fieldNameItems[j]);
+
+						if ((j + 1) < fieldNameItems.length) {
+							sb.append('.');
+						}
+					}
+
+					fieldName = sb.toString();
+				}
+
+				schemaFields.put(fieldName, schemaFieldJSONObject);
+			}
+		}
+
 		jsonArray.put(
 			() -> {
 				List<ObjectEntry> objectEntries = getRelatedObjectEntries(
@@ -579,12 +717,21 @@ public class CustomFDSSerializer
 						Map<String, Object> properties =
 							objectEntry.getProperties();
 
-						JSONObject jsonObject = JSONUtil.put(
+						String fieldName = (String)properties.get("fieldName");
+
+						JSONObject schemaFieldJSONObject = schemaFields.get(
+							fieldName);
+
+						if (schemaFieldJSONObject == null) {
+							schemaFieldJSONObject =
+								_jsonFactory.createJSONObject();
+						}
+
+						schemaFieldJSONObject.put(
 							"contentRenderer",
 							String.valueOf(properties.get("renderer"))
 						).put(
-							"fieldName",
-							String.valueOf(properties.get("fieldName"))
+							"fieldName", fieldName
 						).put(
 							"label",
 							MapUtil.getWithFallbackKey(
@@ -597,7 +744,7 @@ public class CustomFDSSerializer
 							properties.get("rendererType"));
 
 						if (!Objects.equals(rendererType, "clientExtension")) {
-							return jsonObject;
+							return schemaFieldJSONObject;
 						}
 
 						String externalReferenceCode = String.valueOf(
@@ -609,6 +756,14 @@ public class CustomFDSSerializer
 								externalReferenceCode);
 
 						if (fdsCellRendererCET == null) {
+							boolean clientExtension =
+								schemaFieldJSONObject.getBoolean(
+									"contentRendererClientExtension");
+
+							if (!clientExtension) {
+								return schemaFieldJSONObject;
+							}
+
 							if (_log.isWarnEnabled()) {
 								_log.warn(
 									"No frontend data set cell renderer " +
@@ -616,14 +771,14 @@ public class CustomFDSSerializer
 											externalReferenceCode);
 							}
 
-							return jsonObject.put(
+							return schemaFieldJSONObject.put(
 								"contentRenderer", "default"
 							).put(
 								"contentRendererClientExtension", false
 							);
 						}
 
-						return jsonObject.put(
+						return schemaFieldJSONObject.put(
 							"contentRendererClientExtension", true
 						).put(
 							"contentRendererModuleURL",
@@ -690,21 +845,18 @@ public class CustomFDSSerializer
 		Predicate<ObjectEntry> predicate, String propertyKey,
 		String... relationshipNames) {
 
-		ObjectEntry objectEntry = _getObjectEntry(
-			externalReferenceCode, _getObjectDefinition(httpServletRequest));
-
 		List<ObjectEntry> objectEntries = getRelatedObjectEntries(
 			externalReferenceCode, httpServletRequest, predicate,
 			relationshipNames);
 
-		objectEntries.sort(
-			new ObjectEntryComparator(
-				ListUtil.toList(
-					ListUtil.fromString(
-						MapUtil.getString(
-							objectEntry.getProperties(), propertyKey),
-						StringPool.COMMA),
-					GetterUtil::getLong)));
+		ObjectEntry objectEntry = _getObjectEntry(
+			externalReferenceCode, _getObjectDefinition(httpServletRequest));
+
+		List<String> externalReferenceCodes = ListUtil.fromString(
+			MapUtil.getString(objectEntry.getProperties(), propertyKey),
+			StringPool.COMMA);
+
+		objectEntries.sort(new ObjectEntryComparator(externalReferenceCodes));
 
 		return objectEntries;
 	}
@@ -736,8 +888,9 @@ public class CustomFDSSerializer
 	private ObjectDefinition _getObjectDefinition(
 		HttpServletRequest httpServletRequest) {
 
-		return _objectDefinitionLocalService.fetchObjectDefinition(
-			PortalUtil.getCompanyId(httpServletRequest), "DataSet");
+		return _objectDefinitionLocalService.
+			fetchObjectDefinitionByExternalReferenceCode(
+				"L_DATA_SET", PortalUtil.getCompanyId(httpServletRequest));
 	}
 
 	private ObjectEntry _getObjectEntry(
@@ -752,6 +905,7 @@ public class CustomFDSSerializer
 		DefaultObjectEntryManager defaultObjectEntryManager =
 			DefaultObjectEntryManagerProvider.provide(
 				_objectEntryManagerRegistry.getObjectEntryManager(
+					objectDefinition.getCompanyId(),
 					objectDefinition.getStorageType()));
 
 		ObjectEntryThreadLocal.setSkipObjectEntryResourcePermission(true);
@@ -785,6 +939,7 @@ public class CustomFDSSerializer
 		DefaultObjectEntryManager defaultObjectEntryManager =
 			DefaultObjectEntryManagerProvider.provide(
 				_objectEntryManagerRegistry.getObjectEntryManager(
+					objectDefinition.getCompanyId(),
 					objectDefinition.getStorageType()));
 
 		ObjectEntryThreadLocal.setSkipObjectEntryResourcePermission(true);
@@ -830,15 +985,20 @@ public class CustomFDSSerializer
 		return GetterUtil.getString(properties.get("type"));
 	}
 
-	private Boolean _isActive(ObjectEntry objectEntry) {
+	private boolean _isActive(ObjectEntry objectEntry) {
 		Map<String, Object> properties = objectEntry.getProperties();
 
-		return (Boolean)properties.get("active");
+		return (boolean)properties.get("active");
 	}
 
-	private Boolean _isCollection(String fieldName, String sourceType) {
-		return fieldName.contains(StringPool.OPEN_BRACKET) &&
-			   Objects.equals(sourceType, "OBJECT_PICKLIST");
+	private boolean _isCollection(String fieldName, String sourceType) {
+		if (fieldName.contains(StringPool.OPEN_BRACKET) &&
+			Objects.equals(sourceType, "OBJECT_PICKLIST")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private JSONObject _serializeFilter(
@@ -1176,24 +1336,26 @@ public class CustomFDSSerializer
 	private static class ObjectEntryComparator
 		implements Comparator<ObjectEntry> {
 
-		public ObjectEntryComparator(List<Long> ids) {
-			_ids = ids;
+		public ObjectEntryComparator(List<String> externalReferenceCodes) {
+			_externalReferenceCodes = externalReferenceCodes;
 		}
 
 		@Override
-		public int compare(
-			ObjectEntry dataSetObjectEntry1, ObjectEntry dataSetObjectEntry2) {
+		public int compare(ObjectEntry objectEntry1, ObjectEntry objectEntry2) {
+			String externalReferenceCode1 =
+				objectEntry1.getExternalReferenceCode();
+			String externalReferenceCode2 =
+				objectEntry2.getExternalReferenceCode();
 
-			long id1 = dataSetObjectEntry1.getId();
-			long id2 = dataSetObjectEntry2.getId();
-
-			int index1 = _ids.indexOf(id1);
-			int index2 = _ids.indexOf(id2);
+			int index1 = _externalReferenceCodes.indexOf(
+				externalReferenceCode1);
+			int index2 = _externalReferenceCodes.indexOf(
+				externalReferenceCode2);
 
 			if ((index1 == -1) && (index2 == -1)) {
-				Date date = dataSetObjectEntry1.getDateCreated();
+				Date date = objectEntry1.getDateCreated();
 
-				return date.compareTo(dataSetObjectEntry2.getDateCreated());
+				return date.compareTo(objectEntry2.getDateCreated());
 			}
 
 			if (index1 == -1) {
@@ -1204,10 +1366,10 @@ public class CustomFDSSerializer
 				return -1;
 			}
 
-			return Long.compare(index1, index2);
+			return Integer.compare(index1, index2);
 		}
 
-		private final List<Long> _ids;
+		private final List<String> _externalReferenceCodes;
 
 	}
 

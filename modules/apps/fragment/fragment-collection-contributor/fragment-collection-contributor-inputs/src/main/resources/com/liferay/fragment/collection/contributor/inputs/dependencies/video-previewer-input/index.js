@@ -1,22 +1,19 @@
 const currentLength = document.getElementById(
-	`${fragmentNamespace}-current-length`
+	`${fragmentElementId}-current-length`
+);
+const error = document.getElementById(
+	`${fragmentElementId}-video-previewer-error`
 );
 const errorMessage = document.getElementById(
-	`${fragmentNamespace}-video-previewer-error-message`
+	`${fragmentElementId}-video-previewer-error-message`
 );
-const formGroup = document.getElementById(`${fragmentNamespace}-form-group`);
+const formGroup = document.getElementById(`${fragmentElementId}-form-group`);
 const inputElement = document.getElementById(
-	`${fragmentNamespace}-video-previewer-input`
+	`${fragmentElementId}-video-previewer-input`
 );
-const lengthInfo = document.getElementById(`${fragmentNamespace}-length-info`);
-const lengthWarning = document.getElementById(
-	`${fragmentNamespace}-length-warning`
-);
-const lengthWarningText = document.getElementById(
-	`${fragmentNamespace}-length-warning-text`
-);
+const lengthInfo = document.getElementById(`${fragmentElementId}-length-info`);
 const videoPreview = document.getElementById(
-	`${fragmentNamespace}-video-preview`
+	`${fragmentElementId}-video-preview`
 );
 
 function getFragmentTranslationInput(namespace, languageId, inputId) {
@@ -30,10 +27,11 @@ function main() {
 	else {
 		import('@liferay/fragment-impl/api').then(
 			({
+				focusInput,
 				handleInputLengthError,
-				hideLengthError,
 				registerLocalizedInput,
 				registerUnlocalizedInput,
+				showInputError,
 				updateDLVideo,
 			}) => {
 				let previousUrl = null;
@@ -67,32 +65,36 @@ function main() {
 					updateVideoPreview(event.target.value);
 				});
 
-				currentLength.innerText = inputElement.value.length;
+				const hasError = formGroup.classList.contains('has-error');
+
+				if (hasError) {
+					focusInput(inputElement);
+				}
+
+				if (currentLength) {
+					currentLength.innerText = inputElement.value.length;
+				}
 
 				if (
-					!errorMessage &&
+					!hasError &&
 					inputElement.value.length > input.attributes.maxLength
 				) {
-					hideLengthError({
-						configuration,
+					showInputError({
+						errorType: 'length',
 						formGroup,
-						lengthInfo,
-						lengthWarning,
-						lengthWarningText,
+						lengthInfoContainer: lengthInfo,
 					});
 				}
 
 				const onKeyup = (event) =>
 					handleInputLengthError({
-						configuration,
 						currentLength,
-						errorMessage,
+						errorContainer: error,
+						errorMessageContainer: errorMessage,
 						event,
 						formGroup,
 						input,
-						lengthInfo,
-						lengthWarning,
-						lengthWarningText,
+						lengthInfoContainer: lengthInfo,
 					});
 
 				inputElement.addEventListener('keyup', onKeyup);
@@ -108,7 +110,7 @@ function main() {
 						inputElement,
 						inputName: input.name,
 						localizationInputsContainer: inputElement.parentNode,
-						namespace: fragmentNamespace,
+						namespace: fragmentElementId,
 						onLocaleChange: ({languageId, value}) => {
 							currentLanguageId = languageId;
 
@@ -117,14 +119,14 @@ function main() {
 						onResetTranslation: () => {
 							const defaultTranslationInput =
 								getFragmentTranslationInput(
-									fragmentNamespace,
+									fragmentElementId,
 									defaultLanguageId,
 									inputElement.id
 								);
 
 							const translationInput =
 								getFragmentTranslationInput(
-									fragmentNamespace,
+									fragmentElementId,
 									currentLanguageId,
 									inputElement.id
 								);
@@ -146,12 +148,12 @@ function main() {
 						defaultLanguageId,
 						inputElement,
 						readOnlyInputLabel: document.getElementById(
-							`${fragmentNamespace}-video-previewer-readonly`
+							`${fragmentElementId}-video-previewer-readonly`
 						),
 						unlocalizedFieldsState:
 							input.attributes.unlocalizedFieldsState,
 						unlocalizedMessageContainer: document.getElementById(
-							`${fragmentNamespace}-unlocalized-info`
+							`${fragmentElementId}-unlocalized-info`
 						),
 					});
 				}

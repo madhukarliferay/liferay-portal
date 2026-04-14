@@ -12,6 +12,8 @@ import com.liferay.fragment.internal.upgrade.v2_0_0.util.FragmentEntryLinkTable;
 import com.liferay.fragment.internal.upgrade.v2_0_0.util.FragmentEntryTable;
 import com.liferay.fragment.internal.upgrade.v2_1_0.SchemaUpgradeProcess;
 import com.liferay.fragment.internal.upgrade.v2_4_0.FragmentEntryLinkUpgradeProcess;
+import com.liferay.fragment.internal.upgrade.v3_0_1.BrowserSnifferFragmentEntryTemplateUpgradeProcess;
+import com.liferay.fragment.internal.upgrade.v3_0_2.FragmentEntryHTMLUpgradeProcess;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
@@ -131,10 +133,13 @@ public class FragmentServiceUpgradeStepRegistrator
 				FragmentEntryVersionUpgradeProcess());
 
 		registry.register(
-			"2.6.0", "2.7.0",
+			"2.6.0", "2.6.1",
 			new CTModelUpgradeProcess(
 				"FragmentCollection", "FragmentComposition", "FragmentEntry",
-				"FragmentEntryLink", "FragmentEntryVersion"),
+				"FragmentEntryLink", "FragmentEntryVersion"));
+
+		registry.register(
+			"2.6.1", "2.7.0",
 			new MVCCVersionUpgradeProcess() {
 
 				@Override
@@ -210,10 +215,8 @@ public class FragmentServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{"FragmentCollection", "fragmentCollectionId"}
-					};
+				protected String[] getTableNames() {
+					return new String[] {"FragmentCollection"};
 				}
 
 			});
@@ -223,11 +226,10 @@ public class FragmentServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{"FragmentComposition", "fragmentCompositionId"},
-						{"FragmentEntry", "fragmentEntryId"},
-						{"FragmentEntryVersion", "fragmentEntryId"}
+				protected String[] getTableNames() {
+					return new String[] {
+						"FragmentComposition", "FragmentEntry",
+						"FragmentEntryVersion"
 					};
 				}
 
@@ -238,10 +240,8 @@ public class FragmentServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{"FragmentEntryLink", "fragmentEntryLinkId"}
-					};
+				protected String[] getTableNames() {
+					return new String[] {"FragmentEntryLink"};
 				}
 
 			});
@@ -264,6 +264,18 @@ public class FragmentServiceUpgradeStepRegistrator
 			"2.14.0", "2.15.0",
 			UpgradeProcessFactory.addColumns(
 				"FragmentCollection", "marketplace BOOLEAN"));
+
+		registry.register(
+			"2.15.0", "3.0.0",
+			new com.liferay.fragment.internal.upgrade.v3_0_0.
+				FragmentEntryLinkUpgradeProcess());
+
+		registry.register(
+			"3.0.0", "3.0.1",
+			new BrowserSnifferFragmentEntryTemplateUpgradeProcess());
+
+		registry.register(
+			"3.0.1", "3.0.2", new FragmentEntryHTMLUpgradeProcess());
 	}
 
 	@Reference

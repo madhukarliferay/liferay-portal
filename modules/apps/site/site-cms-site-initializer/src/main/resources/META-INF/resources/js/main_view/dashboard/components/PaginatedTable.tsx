@@ -4,22 +4,18 @@
  */
 
 import {Body, Cell, Head, Row, Table, Text} from '@clayui/core';
-import {WeightFont} from '@clayui/core/lib/typography/Heading';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import {sub} from 'frontend-js-web';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 
 import {InventoryAnalysisDataType} from './InventoryAnalysisCard';
+
+import type {WeightFont} from '@clayui/core/src/typography/Heading';
 
 type TableData = {
 	percentage: number;
 	title: string;
 	volume: JSX.Element;
-};
-
-const initialTableValues = {
-	delta: 10,
-	page: 1,
 };
 
 const viewSpecs = {
@@ -87,42 +83,33 @@ const mapData = (
 
 interface IPaginatedTable {
 	currentStructureTypeLabel: string;
+	deltas: {label: number}[];
+	handleDeltaChange: (delta: number) => void;
+	handlePageChange: (page: number) => void;
 	inventoryAnalysisData: InventoryAnalysisDataType | undefined;
+	pagination: {
+		page: number;
+		pageSize: number;
+	};
 	viewType: 'chart' | 'table';
 }
 
 const PaginatedTable: React.FC<IPaginatedTable> = ({
 	currentStructureTypeLabel,
+	deltas,
+	handleDeltaChange,
+	handlePageChange,
 	inventoryAnalysisData,
+	pagination,
 	viewType,
 }) => {
-	const [delta, setDelta] = useState(initialTableValues.delta);
-	const [page, setPage] = useState(initialTableValues.page);
-	const [tableData, setTableData] = useState<TableData[]>([]);
-
-	const displayedItems = useMemo(() => {
-		const startIndex = (page - 1) * delta;
-		const endIndex = startIndex + delta;
-
-		return tableData.slice(startIndex, endIndex);
-	}, [page, delta, tableData]);
-
-	useEffect(() => {
+	const tableData = useMemo(() => {
 		if (inventoryAnalysisData) {
-			setTableData(mapData(inventoryAnalysisData, viewType));
-			setPage(initialTableValues.page);
-			setDelta(initialTableValues.delta);
+			return mapData(inventoryAnalysisData, viewType);
 		}
+
+		return [];
 	}, [inventoryAnalysisData, viewType]);
-
-	const handlePageChange = (newPage: number) => {
-		setPage(newPage);
-	};
-
-	const handleDeltaChange = (newDelta: number) => {
-		setDelta(newDelta);
-		setPage(1);
-	};
 
 	return (
 		<div>
@@ -137,9 +124,7 @@ const PaginatedTable: React.FC<IPaginatedTable> = ({
 						{
 							align: 'left',
 							id: 'title',
-							name: Liferay.Language.get(
-								currentStructureTypeLabel
-							),
+							name: currentStructureTypeLabel,
 							width: viewSpecs[viewType].titleWidth,
 						},
 						{
@@ -167,7 +152,7 @@ const PaginatedTable: React.FC<IPaginatedTable> = ({
 					)}
 				</Head>
 
-				<Body items={displayedItems}>
+				<Body items={tableData}>
 					{(row) => (
 						<Row>
 							<Cell
@@ -224,15 +209,17 @@ const PaginatedTable: React.FC<IPaginatedTable> = ({
 			</Table>
 
 			<ClayPaginationBarWithBasicItems
-				activeDelta={delta}
+				active={pagination.page}
+				activeDelta={pagination.pageSize}
 				className="mt-3"
+				deltas={deltas}
 				ellipsisBuffer={3}
 				ellipsisProps={{'aria-label': 'More', 'title': 'More'}}
-				onActiveChange={(newPage: number) => handlePageChange(newPage)}
-				onDeltaChange={(newDelta: number) =>
-					handleDeltaChange(newDelta)
+				onActiveChange={handlePageChange}
+				onDeltaChange={handleDeltaChange}
+				totalItems={
+					inventoryAnalysisData?.inventoryAnalysisItemsCount ?? 0
 				}
-				totalItems={tableData.length}
 			/>
 		</div>
 	);

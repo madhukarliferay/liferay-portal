@@ -5,19 +5,19 @@
 
 package com.liferay.portal.dao.db;
 
+import com.liferay.petra.io.unsync.UnsyncBufferedReader;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.Index;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
-import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 
@@ -92,7 +92,7 @@ public class MySQLDB extends BaseDB {
 			String[] columnNames = indexMetadata.getColumnNames();
 
 			if (columnNames.length > 1) {
-				runSQL(indexMetadata.getDropSQL());
+				runSQL(connection, indexMetadata.getDropSQL());
 			}
 		}
 
@@ -112,11 +112,11 @@ public class MySQLDB extends BaseDB {
 	@Override
 	public String getCharacterSet(Connection connection) throws SQLException {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select @@character_set_database")) {
+				"select @@character_set_database as characterSetDatabase")) {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				if (resultSet.next()) {
-					return resultSet.getString(1);
+					return resultSet.getString("characterSetDatabase");
 				}
 			}
 		}
@@ -135,6 +135,7 @@ public class MySQLDB extends BaseDB {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				sql);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
@@ -162,8 +163,8 @@ public class MySQLDB extends BaseDB {
 	@Override
 	public String getRecreateSQL(String databaseName) {
 		return StringBundler.concat(
-			"drop database if exists ", databaseName, ";\n", "create database ",
-			databaseName, " character set utf8;\n");
+			"drop database if exists ", databaseName, ";\ncreate database ",
+			databaseName, " character set utf8mb4;\n");
 	}
 
 	@Override

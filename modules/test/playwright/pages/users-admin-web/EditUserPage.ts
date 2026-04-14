@@ -36,10 +36,12 @@ export class EditUserPage {
 	readonly addressActions: (street: string) => Locator;
 	readonly addressesLink: Locator;
 	readonly addressPrimaryText: (streetName: string) => Locator;
+	readonly addWebsiteButton: Locator;
 	readonly alertsAndAnnouncementsDeliveryTable: DataTablePage;
 	readonly appsLink: Locator;
 	readonly backLink: Locator;
 	readonly birthdayInput: Locator;
+	readonly cannotSelectSiteRolesMessage: Locator;
 	readonly cancelButton: Locator;
 	readonly categoryGridCell: (categoryName: string) => Locator;
 	readonly categoryInput: (vocabularyName: string) => Locator;
@@ -81,6 +83,7 @@ export class EditUserPage {
 		strictEqual?: boolean
 	) => Promise<{column: Locator; row: Locator}>;
 	readonly membershipsSiteTable: Locator;
+	readonly membershipsSiteTableCell: (siteName: string) => Promise<Locator>;
 	readonly membershipsUserGroupsTableRow: (
 		colPosition: number,
 		value: string,
@@ -190,16 +193,20 @@ export class EditUserPage {
 	readonly tagInput: (name: string) => Locator;
 	readonly tagsFrame: FrameLocator;
 	readonly timeZoneInput: Locator;
+	readonly uploadImageFrame: FrameLocator;
 	readonly uploadImageSelectImageButton: Locator;
 	readonly uploadImageDoneButton: Locator;
 	readonly userIDInput: Locator;
+	readonly urlInput: Locator;
 	readonly webDAVPasswordLabel: Locator;
+	readonly websitesTableRowActions: (website: string) => Promise<Locator>;
 	readonly websitesTableRow: (
 		colPosition: number,
 		value: string,
 		strictEqual?: boolean
 	) => Promise<{column: Locator; row: Locator}>;
 	readonly websitesTable: Locator;
+	readonly websitesTablePrimaryText: (website: string) => Promise<Locator>;
 	readonly yourPasswordInput: Locator;
 
 	constructor(page: Page) {
@@ -288,6 +295,7 @@ export class EditUserPage {
 				.filter({hasText: streetName})
 				.filter({hasText: 'Primary'});
 		};
+		this.addWebsiteButton = page.getByLabel('Add Website');
 		this.alertsAndAnnouncementsDeliveryTable = new DataTablePage(
 			page,
 			page.locator(
@@ -304,6 +312,9 @@ export class EditUserPage {
 		this.backLink = page
 			.getByRole('link', {exact: true, name: 'Back'})
 			.or(page.getByRole('link', {name: 'Return to Full Page'}));
+		this.cannotSelectSiteRolesMessage = page.getByText(
+			'This user does not belong to a site to which a site role can be assigned.'
+		);
 		this.cancelButton = page.getByRole('button', {
 			exact: true,
 			name: 'Cancel',
@@ -325,11 +336,13 @@ export class EditUserPage {
 			name: 'Contact Information',
 		});
 		this.customField = async (fieldName: string) => {
-			await page.getByText('Custom Fields').waitFor({timeout: 15 * 1000});
+			await page
+				.getByText('Custom Fields', {exact: true})
+				.waitFor({timeout: 15 * 1000});
 
-			const customField = await page.getByText(fieldName);
+			const customField = page.getByText(fieldName);
 
-			if (customField.isVisible()) {
+			if (await customField.isVisible()) {
 				return customField;
 			}
 
@@ -417,6 +430,12 @@ export class EditUserPage {
 		this.membershipsSiteTable = page.locator(
 			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_groupsSearchContainer'
 		);
+		this.membershipsSiteTableCell = async (siteName: string) => {
+			return this.membershipsSiteTable.getByRole('cell', {
+				exact: true,
+				name: siteName,
+			});
+		};
 		this.membershipsUserGroupsTableRow = async (
 			colPosition: number,
 			value: string,
@@ -581,7 +600,7 @@ export class EditUserPage {
 			)
 			.or(
 				this.selectOrganizationRolesFrame.locator(
-					'#_com_liferay_roles_admin_web_portlet_RolesAdminPortlet_rolesSearchContainer'
+					'#_com_liferay_roles_admin_web_portlet_RolesAdminPortlet_rolesSearchContainerSearchContainer'
 				)
 			);
 		this.selectOrganizationRolesTableRow = async (
@@ -624,7 +643,7 @@ export class EditUserPage {
 		this.selectRegularRolesFrame = page.frameLocator(
 			'iframe[title="Select Regular Role"]'
 		);
-		this.selectRegularRolesFrameCloseButton = page.getByLabel('close');
+		this.selectRegularRolesFrameCloseButton = page.getByLabel('Close');
 		this.selectRegularRolesSearchInput =
 			this.selectRegularRolesFrame.getByPlaceholder('Search for', {
 				exact: true,
@@ -641,6 +660,7 @@ export class EditUserPage {
 		this.selectSiteFrame = page.frameLocator('iframe[title="Select Site"]');
 		this.selectSiteFrameSiteLink = (name) =>
 			this.selectSiteFrame.getByRole('link', {
+				exact: true,
 				name,
 			});
 		this.selectSiteSearchBar =
@@ -750,16 +770,26 @@ export class EditUserPage {
 		this.tagInput = (name) => page.getByRole('row', {name});
 		this.tagsFrame = page.frameLocator(`iframe[title="Tags"]`);
 		this.timeZoneInput = page.getByLabel('Time Zone');
-		this.uploadImageSelectImageButton = page
-			.frameLocator('iframe[title="Upload Image"]')
-			.getByLabel('Select Image');
-		this.uploadImageDoneButton = page
-			.frameLocator('iframe[title="Upload Image"]')
-			.getByRole('button', {name: 'Done'});
+		this.uploadImageFrame = page.frameLocator(
+			'iframe[title="Upload Image"]'
+		);
+		this.uploadImageSelectImageButton =
+			this.uploadImageFrame.getByLabel('Select Image');
+		this.uploadImageDoneButton = this.uploadImageFrame.getByRole('button', {
+			name: 'Done',
+		});
 		this.userIDInput = page.getByLabel('User ID');
+		this.urlInput = page.getByLabel('Url Required');
 		this.webDAVPasswordLabel = page.locator(
 			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_webDAVPassword'
 		);
+		this.websitesTableRowActions = async (website: string) => {
+			const tableRow = await this.websitesTableRow(0, website, true);
+
+			if (tableRow && tableRow.column) {
+				return tableRow.row.getByLabel('Edit Website');
+			}
+		};
 		this.websitesTableRow = async (
 			colPosition: number,
 			value: string,
@@ -775,7 +805,13 @@ export class EditUserPage {
 		this.websitesTable = page.locator(
 			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_websitesSearchContainer'
 		);
+		this.websitesTablePrimaryText = async (website: string) => {
+			const tableRow = await this.websitesTableRow(0, website, true);
 
+			if (tableRow && tableRow.column) {
+				return tableRow.row.getByText('Primary');
+			}
+		};
 		this.confirmButton = this.passwordConfirmationFrame.getByRole(
 			'button',
 			{name: 'Confirm'}
@@ -809,6 +845,21 @@ export class EditUserPage {
 			await this.addPhoneNumbersInput.fill(phoneNumber);
 			await this.saveButton.click();
 		}).toPass();
+		await waitForAlert(this.page);
+	}
+
+	async addNewWebsite(makePrimary: boolean, website: string) {
+		await expect(async () => {
+			await this.addWebsiteButton.click();
+
+			if (makePrimary) {
+				await this.makePrimaryCheckbox.check();
+			}
+
+			await this.urlInput.fill(website);
+			await this.saveButton.click();
+		}).toPass();
+
 		await waitForAlert(this.page);
 	}
 

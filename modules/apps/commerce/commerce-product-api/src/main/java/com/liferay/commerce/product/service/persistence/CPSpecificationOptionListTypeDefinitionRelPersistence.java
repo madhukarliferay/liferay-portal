@@ -129,53 +129,6 @@ public interface CPSpecificationOptionListTypeDefinitionRelPersistence
 				<CPSpecificationOptionListTypeDefinitionRel> orderByComparator);
 
 	/**
-	 * Returns the last cp specification option list type definition rel in the ordered set where CPSpecificationOptionId = &#63;.
-	 *
-	 * @param CPSpecificationOptionId the cp specification option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp specification option list type definition rel
-	 * @throws NoSuchCPSpecificationOptionListTypeDefinitionRelException if a matching cp specification option list type definition rel could not be found
-	 */
-	public CPSpecificationOptionListTypeDefinitionRel
-			findByCPSpecificationOptionId_Last(
-				long CPSpecificationOptionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CPSpecificationOptionListTypeDefinitionRel>
-						orderByComparator)
-		throws NoSuchCPSpecificationOptionListTypeDefinitionRelException;
-
-	/**
-	 * Returns the last cp specification option list type definition rel in the ordered set where CPSpecificationOptionId = &#63;.
-	 *
-	 * @param CPSpecificationOptionId the cp specification option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp specification option list type definition rel, or <code>null</code> if a matching cp specification option list type definition rel could not be found
-	 */
-	public CPSpecificationOptionListTypeDefinitionRel
-		fetchByCPSpecificationOptionId_Last(
-			long CPSpecificationOptionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPSpecificationOptionListTypeDefinitionRel> orderByComparator);
-
-	/**
-	 * Returns the cp specification option list type definition rels before and after the current cp specification option list type definition rel in the ordered set where CPSpecificationOptionId = &#63;.
-	 *
-	 * @param CPSpecificationOptionListTypeDefinitionRelId the primary key of the current cp specification option list type definition rel
-	 * @param CPSpecificationOptionId the cp specification option ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp specification option list type definition rel
-	 * @throws NoSuchCPSpecificationOptionListTypeDefinitionRelException if a cp specification option list type definition rel with the primary key could not be found
-	 */
-	public CPSpecificationOptionListTypeDefinitionRel[]
-			findByCPSpecificationOptionId_PrevAndNext(
-				long CPSpecificationOptionListTypeDefinitionRelId,
-				long CPSpecificationOptionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CPSpecificationOptionListTypeDefinitionRel>
-						orderByComparator)
-		throws NoSuchCPSpecificationOptionListTypeDefinitionRelException;
-
-	/**
 	 * Removes all the cp specification option list type definition rels where CPSpecificationOptionId = &#63; from the database.
 	 *
 	 * @param CPSpecificationOptionId the cp specification option ID
@@ -283,53 +236,6 @@ public interface CPSpecificationOptionListTypeDefinitionRelPersistence
 			long listTypeDefinitionId,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<CPSpecificationOptionListTypeDefinitionRel> orderByComparator);
-
-	/**
-	 * Returns the last cp specification option list type definition rel in the ordered set where listTypeDefinitionId = &#63;.
-	 *
-	 * @param listTypeDefinitionId the list type definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp specification option list type definition rel
-	 * @throws NoSuchCPSpecificationOptionListTypeDefinitionRelException if a matching cp specification option list type definition rel could not be found
-	 */
-	public CPSpecificationOptionListTypeDefinitionRel
-			findByListTypeDefinitionId_Last(
-				long listTypeDefinitionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CPSpecificationOptionListTypeDefinitionRel>
-						orderByComparator)
-		throws NoSuchCPSpecificationOptionListTypeDefinitionRelException;
-
-	/**
-	 * Returns the last cp specification option list type definition rel in the ordered set where listTypeDefinitionId = &#63;.
-	 *
-	 * @param listTypeDefinitionId the list type definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp specification option list type definition rel, or <code>null</code> if a matching cp specification option list type definition rel could not be found
-	 */
-	public CPSpecificationOptionListTypeDefinitionRel
-		fetchByListTypeDefinitionId_Last(
-			long listTypeDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CPSpecificationOptionListTypeDefinitionRel> orderByComparator);
-
-	/**
-	 * Returns the cp specification option list type definition rels before and after the current cp specification option list type definition rel in the ordered set where listTypeDefinitionId = &#63;.
-	 *
-	 * @param CPSpecificationOptionListTypeDefinitionRelId the primary key of the current cp specification option list type definition rel
-	 * @param listTypeDefinitionId the list type definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp specification option list type definition rel
-	 * @throws NoSuchCPSpecificationOptionListTypeDefinitionRelException if a cp specification option list type definition rel with the primary key could not be found
-	 */
-	public CPSpecificationOptionListTypeDefinitionRel[]
-			findByListTypeDefinitionId_PrevAndNext(
-				long CPSpecificationOptionListTypeDefinitionRelId,
-				long listTypeDefinitionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<CPSpecificationOptionListTypeDefinitionRel>
-						orderByComparator)
-		throws NoSuchCPSpecificationOptionListTypeDefinitionRelException;
 
 	/**
 	 * Removes all the cp specification option list type definition rels where listTypeDefinitionId = &#63; from the database.
@@ -533,3 +439,4 @@ public interface CPSpecificationOptionListTypeDefinitionRelPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:2107603556

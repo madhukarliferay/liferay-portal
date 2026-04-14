@@ -16,8 +16,6 @@ import com.liferay.portal.kernel.search.facet.FacetPostProcessor;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.search.configuration.DefaultSearchResultPermissionFilterConfiguration;
 import com.liferay.portal.search.hits.SearchHitsBuilder;
-import com.liferay.portal.search.hits.SearchHitsBuilderFactory;
-import com.liferay.portal.search.internal.hits.SearchHitsBuilderFactoryImpl;
 import com.liferay.portal.search.internal.searcher.SearchResponseImpl;
 import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.searcher.SearchRequest;
@@ -117,6 +115,16 @@ public class DefaultSearchResultPermissionFilterTest {
 
 		_assertPagination(
 			searchContext, defaultSearchResultPermissionFilter, 9, 9);
+	}
+
+	@Test
+	public void testSearchWithSizeZero() {
+		_groupAdmin = false;
+		_permissionFilteredSearchResultAccurateCountThreshold = 0;
+
+		_assertPagination(
+			_getSearchContext(0), _getDefaultSearchResultPermissionFilter(), 0,
+			_PRIVATE_DOCUMENTS + _PUBLIC_DOCUMENTS);
 	}
 
 	private void _assertPagination(
@@ -264,11 +272,7 @@ public class DefaultSearchResultPermissionFilterTest {
 		SearchResponseImpl searchResponseImpl = Mockito.mock(
 			SearchResponseImpl.class);
 
-		SearchHitsBuilderFactory searchHitsBuilderFactory =
-			new SearchHitsBuilderFactoryImpl();
-
-		SearchHitsBuilder searchHitsBuilder =
-			searchHitsBuilderFactory.getSearchHitsBuilder();
+		SearchHitsBuilder searchHitsBuilder = new SearchHitsBuilder();
 
 		Mockito.when(
 			searchResponseImpl.getSearchHits()

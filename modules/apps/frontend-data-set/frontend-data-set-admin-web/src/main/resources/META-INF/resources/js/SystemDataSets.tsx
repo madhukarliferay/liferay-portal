@@ -21,6 +21,7 @@ import classNames from 'classnames';
 import {openModal} from 'frontend-js-components-web';
 import {fetch, navigate} from 'frontend-js-web';
 
+import {EItemActionsType} from '../../../../../../../frontend-data-set-web/src/main/resources/META-INF/resources/utils/types';
 import Toggle from './components/Toggle';
 import {DEFAULT_FETCH_HEADERS, FDS_DEFAULT_PROPS} from './utils/constants';
 import getAPIExplorerURL from './utils/getAPIExplorerURL';
@@ -30,8 +31,7 @@ import openDefaultSuccessToast from './utils/openDefaultSuccessToast';
 import {IDataSet, ISystemDataSet} from './utils/types';
 
 interface IFrontendDataSetContext {
-	onSelect: Function;
-	selectItems: ({trigger, value}: {trigger: string; value: any}) => void;
+	selectItems: ({value}: {value: any}) => void;
 	selectable: boolean;
 	selectedItemsKey: keyof ISystemDataSet;
 	selectedItemsValue: Array<any>;
@@ -40,17 +40,15 @@ interface IFrontendDataSetContext {
 const SystemDataSetsView = ({
 	frontendDataSetContext,
 	items,
+	onItemSelectionChange,
 }: {
 	frontendDataSetContext: any;
 	items: Array<ISystemDataSet>;
+	onItemSelectionChange?: Function;
 }) => {
-	const {
-		onSelect,
-		selectItems,
-		selectable,
-		selectedItemsKey,
-		selectedItemsValue,
-	} = useContext(frontendDataSetContext) as IFrontendDataSetContext;
+	const {selectable, selectedItemsKey, selectedItemsValue} = useContext(
+		frontendDataSetContext
+	) as IFrontendDataSetContext;
 
 	return (
 		<ClayList>
@@ -69,12 +67,7 @@ const SystemDataSetsView = ({
 						key={item.name}
 						onClick={() => {
 							if (selectable) {
-								selectItems({
-									trigger: 'container',
-									value: item[selectedItemsKey],
-								});
-
-								onSelect({selectedItems: [item]});
+								onItemSelectionChange?.(item);
 							}
 						}}
 					>
@@ -136,14 +129,14 @@ const SystemDataSetsView = ({
 
 const SelectSystemDataSetModalContent = ({
 	closeModal,
-	getSystemDataSetsURL,
 	importSystemDataSetURL,
+	importedSystemFDSEntriesDataProviderURL,
 	loadData,
 	namespace,
 }: {
 	closeModal: Function;
-	getSystemDataSetsURL: string;
 	importSystemDataSetURL: string;
+	importedSystemFDSEntriesDataProviderURL: string;
 	loadData: Function;
 	namespace: string;
 }) => {
@@ -183,7 +176,10 @@ const SelectSystemDataSetModalContent = ({
 
 	return (
 		<>
-			<ClayModal.Header className="select-system-data-set-modal-header">
+			<ClayModal.Header
+				className="select-system-data-set-modal-header"
+				closeButtonAriaLabel={Liferay.Language.get('close')}
+			>
 				{Liferay.Language.get('create-system-data-set-customization')}
 			</ClayModal.Header>
 
@@ -191,15 +187,14 @@ const SelectSystemDataSetModalContent = ({
 				<div className="modal-height-full select-system-data-set-modal-body">
 					<FrontendDataSet
 						{...FDS_DEFAULT_PROPS}
-						apiURL={getSystemDataSetsURL}
+						apiURL={importedSystemFDSEntriesDataProviderURL}
 						id="SystemDataSets"
-						onSelect={({
-							selectedItems,
-						}: {
-							selectedItems: Array<ISystemDataSet>;
-						}) => {
+						onSelectedItemsChange={(
+							selectedItems: Array<ISystemDataSet>
+						) => {
 							setSelectedSystemDataSet(selectedItems[0]);
 						}}
+						selectedItems={[selectedSystemDataSet]}
 						selectedItemsKey="name"
 						selectionType="single"
 						views={[
@@ -242,14 +237,14 @@ const SelectSystemDataSetModalContent = ({
 
 const SystemDataSets = ({
 	editDataSetURL,
-	getSystemDataSetsURL,
 	importSystemDataSetURL,
+	importedSystemFDSEntriesDataProviderURL,
 	namespace,
 	systemDataSets,
 }: {
 	editDataSetURL: string;
-	getSystemDataSetsURL: string;
 	importSystemDataSetURL: string;
+	importedSystemFDSEntriesDataProviderURL: string;
 	namespace: string;
 	systemDataSets: Array<ISystemDataSet>;
 }) => {
@@ -379,8 +374,10 @@ const SystemDataSets = ({
 						}) => (
 							<SelectSystemDataSetModalContent
 								closeModal={closeModal}
-								getSystemDataSetsURL={getSystemDataSetsURL}
 								importSystemDataSetURL={importSystemDataSetURL}
+								importedSystemFDSEntriesDataProviderURL={
+									importedSystemFDSEntriesDataProviderURL
+								}
 								loadData={loadData}
 								namespace={namespace}
 							/>
@@ -403,7 +400,6 @@ const SystemDataSets = ({
 			<ClayTooltipProvider>
 				<ClayLink
 					data-tooltip-align="top"
-					decoration="underline"
 					displayType="tertiary"
 					href={apiExplorerURL}
 					rel="noopener noreferrer"
@@ -524,6 +520,7 @@ const SystemDataSets = ({
 						onClick: ({itemData}: {itemData: IDataSet}) => {
 							navigate(getEditURL(itemData));
 						},
+						type: EItemActionsType.ITEM,
 					},
 					{
 						data: {
@@ -532,6 +529,7 @@ const SystemDataSets = ({
 						icon: 'trash',
 						label: Liferay.Language.get('delete'),
 						onClick: onDeleteClick,
+						type: EItemActionsType.ITEM,
 					},
 				]}
 				sorts={[{direction: 'desc', key: 'dateCreated'}]}

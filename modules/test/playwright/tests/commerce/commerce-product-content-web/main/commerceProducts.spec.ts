@@ -7,13 +7,14 @@ import {expect, mergeTests} from '@playwright/test';
 import {createReadStream} from 'fs';
 import path from 'node:path';
 
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../../fixtures/globalMenuPagesTest';
 import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import {pageViewModePagesTest} from '../../../../fixtures/pageViewModePagesTest';
+import {liferayConfig} from '../../../../liferay.config';
 import {getRandomInt} from '../../../../utils/getRandomInt';
 import getRandomString from '../../../../utils/getRandomString';
 import performLogin, {performLogout} from '../../../../utils/performLogin';
@@ -24,12 +25,13 @@ import getWidgetDefinition from '../../../layout-content-page-editor-web/main/ut
 import {miniumSetUp} from '../../utils/commerce';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
+	globalMenuPagesTest,
 	isolatedSiteTest,
 	loginTest(),
 	pageViewModePagesTest
@@ -86,9 +88,9 @@ test('LPD-5780 Modal title and product name appear properly in product menu', as
 
 test('COMMERCE-12809 As a buyer, I want to be able to verify the included and excluded option values by combining the Products Limit rule', async ({
 	apiHelpers,
-	applicationsMenuPage,
 	commerceAdminProductPage,
 	commerceInstanceSettingsPage,
+	globalMenuPage,
 	page,
 	site,
 	widgetPagePage,
@@ -239,7 +241,7 @@ test('COMMERCE-12809 As a buyer, I want to be able to verify the included and ex
 				'\nproducts-limit-field-product-quantity=0.9\n',
 		});
 
-		await applicationsMenuPage.goToProducts();
+		await globalMenuPage.goToCommerce('Products');
 
 		await commerceAdminProductPage.managementToolbarSearchInput.fill(
 			bundleProduct.name.en_US
@@ -344,7 +346,7 @@ test('COMMERCE-8153 Verify the visibility rules', async ({
 		name: 'ProductDetailsSite',
 	});
 
-	apiHelpers.data.push({id: site.id, type: 'site'});
+	apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 	const channel = await apiHelpers.headlessCommerceAdminChannel.postChannel({
 		siteGroupId: site.id,
@@ -499,7 +501,7 @@ test('LPD-33807 Mapped product add to cart', async ({
 		name: getRandomString(),
 	});
 
-	apiHelpers.data.push({id: site.id, type: 'site'});
+	apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 	await apiHelpers.headlessDelivery.createSitePage({
 		pageDefinition: getPageDefinition([
@@ -563,9 +565,9 @@ test('LPD-33807 Mapped product add to cart', async ({
 
 test('COMMERCE-12805 As a buyer, I want to be able to verify the included and excluded option values are disabled with reason messages', async ({
 	apiHelpers,
-	applicationsMenuPage,
 	commerceAdminProductPage,
 	commerceInstanceSettingsPage,
+	globalMenuPage,
 	page,
 	productDetailsPage,
 	site,
@@ -709,7 +711,7 @@ test('COMMERCE-12805 As a buyer, I want to be able to verify the included and ex
 				],
 			});
 
-		await applicationsMenuPage.goToProducts();
+		await globalMenuPage.goToCommerce('Products');
 
 		await commerceAdminProductPage.managementToolbarSearchInput.fill(
 			bundleProduct.name.en_US
@@ -997,7 +999,7 @@ test('LPD-39067 Can product media and relation show correct date format', async 
 		name: getRandomString(),
 	});
 
-	apiHelpers.data.push({id: site.id, type: 'site'});
+	apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 	const document1 = await apiHelpers.headlessDelivery.postDocument(
 		site.id,
@@ -1109,7 +1111,7 @@ test('LPD-39067 Can product media and relation show correct date format', async 
 
 test('LPD-52731 Product shows in catalog after updating Account Group Visibility Filter through Batch API', async ({
 	apiHelpers,
-	applicationsMenuPage,
+	globalMenuPage,
 	page,
 }) => {
 	const siteName = 'minium-' + getRandomInt();
@@ -1156,7 +1158,178 @@ test('LPD-52731 Product shows in catalog after updating Account Group Visibility
 		},
 	]);
 
-	await applicationsMenuPage.goToSite(site.name);
+	await globalMenuPage.goToSite(site.name);
 
 	await expect(page.getByText(product.name['en_US'])).toBeVisible();
 });
+
+test(
+	'If AccountGroupFilter is enabled and the relationship is deleted, product should not show',
+	{tag: '@LPD-65844'},
+	async ({
+		apiHelpers,
+		commerceAdminChannelsPage,
+		page,
+		productPublisherPage,
+		site,
+		widgetPagePage,
+	}) => {
+		const layout = await apiHelpers.jsonWebServicesLayout.addLayout({
+			groupId: site.id,
+			title: getRandomString(),
+		});
+
+		const channel =
+			await apiHelpers.headlessCommerceAdminChannel.postChannel({
+				siteGroupId: site.id,
+			});
+
+		await commerceAdminChannelsPage.changeCommerceChannelSiteType(
+			channel.name,
+			'B2B'
+		);
+
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog({
+				name: getRandomString(),
+			});
+
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			name: getRandomString(),
+			type: 'business',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account.id,
+			['test@liferay.com']
+		);
+
+		const accountGroup =
+			await apiHelpers.headlessAdminUser.postAccountGroup({
+				name: getRandomString(),
+			});
+
+		apiHelpers.data.push({id: accountGroup.id, type: 'accountGroup'});
+
+		await apiHelpers.headlessAdminUser.assignAccountToAccountGroup(
+			account.externalReferenceCode,
+			accountGroup.externalReferenceCode
+		);
+
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+				name: {en_US: getRandomString()},
+				productAccountGroupFilter: true,
+				productAccountGroups: [
+					{accountGroupId: accountGroup.id, id: 0},
+				],
+			});
+
+		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyURL}`);
+
+		await widgetPagePage.addPortlet('Product Publisher');
+
+		await expect(
+			productPublisherPage.productCard(product.name.en_US)
+		).toBeVisible();
+
+		await page.goto(`/web/${site.name}`);
+
+		await expect(
+			productPublisherPage.productCard(product.name.en_US)
+		).toBeVisible();
+
+		const productAccountGroups =
+			await apiHelpers.headlessCommerceAdminCatalog.getProductAccountGroups(
+				product.productId
+			);
+
+		await apiHelpers.headlessCommerceAdminCatalog.deleteProductAccountGroup(
+			productAccountGroups.items[0].id
+		);
+
+		await page.goto(`/web/${site.name}`);
+
+		await expect(
+			productPublisherPage.productCard(product.name.en_US)
+		).not.toBeVisible();
+	}
+);
+
+test(
+	'The uploaded svg in product media is downloaded instead of being opened',
+	{tag: '@LPD-70547'},
+	async ({apiHelpers, attachmentsPage, commerceAdminProductPage, page}) => {
+		let catalog;
+		let product;
+		let site;
+		let siteDocument;
+		let siteDocumentsPage;
+
+		await test.step('Create channel, catalog and product via API', async () => {
+			site =
+				await apiHelpers.headlessAdminUser.getSiteByFriendlyUrlPath(
+					'guest'
+				);
+
+			await apiHelpers.headlessCommerceAdminChannel.postChannel({});
+
+			catalog =
+				await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+			product = await apiHelpers.headlessCommerceAdminCatalog.postProduct(
+				{
+					catalogId: catalog.id,
+				}
+			);
+		});
+
+		await test.step('Upload the svg file to the product', async () => {
+			await attachmentsPage.goToDocumentsAndMedia();
+			await attachmentsPage.createFileEntry(
+				path.join(__dirname, '/dependencies/diagram.svg'),
+				'diagram'
+			);
+
+			siteDocumentsPage =
+				await apiHelpers.headlessDelivery.getSiteDocumentsPage(
+					site.id,
+					'id:desc'
+				);
+
+			siteDocument = siteDocumentsPage.items[0];
+
+			await apiHelpers.headlessCommerceAdminCatalog.postImage(
+				product.productId,
+				siteDocument.id,
+				siteDocument.title
+			);
+
+			apiHelpers.data.push({id: siteDocument.id, type: 'document'});
+		});
+
+		await test.step('Navigate to product, get the link to src from the thumbnail, perform a get request and check the response', async () => {
+			await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+			const svgURL = await page
+				.locator('.d-none > .sticker-overlay .sticker-img')
+				.getAttribute('src');
+
+			const response = await page.request.get(
+				`${liferayConfig.environment.baseUrl}${svgURL}`
+			);
+
+			expect(response.ok).toBeTruthy();
+
+			const headers = response.headers();
+
+			const contentDisposition = headers['content-disposition'];
+			const contentType = headers['content-type'];
+
+			expect(contentDisposition).toContain('attachment');
+			expect(contentDisposition).toContain('diagram.svg');
+			expect(contentType).toBe('image/svg+xml');
+		});
+	}
+);

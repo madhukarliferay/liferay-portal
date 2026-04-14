@@ -219,58 +219,6 @@ public class CSDiagramEntryUtil {
 	}
 
 	/**
-	 * Returns the last cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	public static CSDiagramEntry findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramEntryException {
-
-		return getPersistence().findByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	public static CSDiagramEntry fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		OrderByComparator<CSDiagramEntry> orderByComparator) {
-
-		return getPersistence().fetchByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	public static CSDiagramEntry[] findByCPDefinitionId_PrevAndNext(
-			long CSDiagramEntryId, long CPDefinitionId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramEntryException {
-
-		return getPersistence().findByCPDefinitionId_PrevAndNext(
-			CSDiagramEntryId, CPDefinitionId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cs diagram entries where CPDefinitionId = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -392,58 +340,6 @@ public class CSDiagramEntryUtil {
 
 		return getPersistence().fetchByCPInstanceId_First(
 			CPInstanceId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	public static CSDiagramEntry findByCPInstanceId_Last(
-			long CPInstanceId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramEntryException {
-
-		return getPersistence().findByCPInstanceId_Last(
-			CPInstanceId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	public static CSDiagramEntry fetchByCPInstanceId_Last(
-		long CPInstanceId,
-		OrderByComparator<CSDiagramEntry> orderByComparator) {
-
-		return getPersistence().fetchByCPInstanceId_Last(
-			CPInstanceId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	public static CSDiagramEntry[] findByCPInstanceId_PrevAndNext(
-			long CSDiagramEntryId, long CPInstanceId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramEntryException {
-
-		return getPersistence().findByCPInstanceId_PrevAndNext(
-			CSDiagramEntryId, CPInstanceId, orderByComparator);
 	}
 
 	/**
@@ -570,57 +466,6 @@ public class CSDiagramEntryUtil {
 	}
 
 	/**
-	 * Returns the last cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	public static CSDiagramEntry findByCProductId_Last(
-			long CProductId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramEntryException {
-
-		return getPersistence().findByCProductId_Last(
-			CProductId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	public static CSDiagramEntry fetchByCProductId_Last(
-		long CProductId, OrderByComparator<CSDiagramEntry> orderByComparator) {
-
-		return getPersistence().fetchByCProductId_Last(
-			CProductId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	public static CSDiagramEntry[] findByCProductId_PrevAndNext(
-			long CSDiagramEntryId, long CProductId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramEntryException {
-
-		return getPersistence().findByCProductId_PrevAndNext(
-			CSDiagramEntryId, CProductId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cs diagram entries where CProductId = &#63; from the database.
 	 *
 	 * @param CProductId the c product ID
@@ -707,6 +552,78 @@ public class CSDiagramEntryUtil {
 	 */
 	public static int countByCPDI_S(long CPDefinitionId, String sequence) {
 		return getPersistence().countByCPDI_S(CPDefinitionId, sequence);
+	}
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or throws a <code>NoSuchCSDiagramEntryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching cs diagram entry
+	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
+	 */
+	public static CSDiagramEntry findByERC_C(
+			String externalReferenceCode, long companyId)
+		throws com.liferay.commerce.shop.by.diagram.exception.
+			NoSuchCSDiagramEntryException {
+
+		return getPersistence().findByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
+	 */
+	public static CSDiagramEntry fetchByERC_C(
+		String externalReferenceCode, long companyId) {
+
+		return getPersistence().fetchByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
+	 */
+	public static CSDiagramEntry fetchByERC_C(
+		String externalReferenceCode, long companyId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_C(
+			externalReferenceCode, companyId, useFinderCache);
+	}
+
+	/**
+	 * Removes the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the cs diagram entry that was removed
+	 */
+	public static CSDiagramEntry removeByERC_C(
+			String externalReferenceCode, long companyId)
+		throws com.liferay.commerce.shop.by.diagram.exception.
+			NoSuchCSDiagramEntryException {
+
+		return getPersistence().removeByERC_C(externalReferenceCode, companyId);
+	}
+
+	/**
+	 * Returns the number of cs diagram entries where externalReferenceCode = &#63; and companyId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the number of matching cs diagram entries
+	 */
+	public static int countByERC_C(
+		String externalReferenceCode, long companyId) {
+
+		return getPersistence().countByERC_C(externalReferenceCode, companyId);
 	}
 
 	/**
@@ -870,3 +787,4 @@ public class CSDiagramEntryUtil {
 	private static volatile CSDiagramEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1801305363

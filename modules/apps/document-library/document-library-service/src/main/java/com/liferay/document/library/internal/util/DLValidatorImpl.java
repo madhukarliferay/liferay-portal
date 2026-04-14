@@ -28,10 +28,10 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProvider;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeFormatter;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.documentlibrary.webdav.DLWebDAVUtil;
 
 import java.io.File;
@@ -90,17 +90,20 @@ public final class DLValidatorImpl implements DLValidator {
 					_dlSizeLimitConfigurationHelper.getCompanyMimeTypeSizeLimit(
 						companyId, mimeType),
 					_dlSizeLimitConfigurationHelper.getGroupMimeTypeSizeLimit(
-						groupId, mimeType))));
+						companyId, groupId, mimeType))));
 	}
 
 	@Override
 	public Map<String, Long> getMimeTypeSizeLimit(long groupId) {
+		long companyId = _getCompanyId(groupId);
+
 		Map<String, Long> mimeTypeSizeLimit = new HashMap<>(
-			_dlSizeLimitConfigurationHelper.getGroupMimeTypeSizeLimit(groupId));
+			_dlSizeLimitConfigurationHelper.getGroupMimeTypeSizeLimit(
+				companyId, groupId));
 
 		Map<String, Long> companyMimeTypeSizeLimit =
 			_dlSizeLimitConfigurationHelper.getCompanyMimeTypeSizeLimit(
-				_getCompanyId(groupId));
+				companyId);
 
 		companyMimeTypeSizeLimit.forEach(
 			(key, value) -> mimeTypeSizeLimit.merge(
@@ -290,11 +293,22 @@ public final class DLValidatorImpl implements DLValidator {
 		long maxSize = getMaxAllowableSize(groupId, mimeType, 0);
 
 		if ((maxSize > 0) && (size > maxSize)) {
+			if (maxSize == _getGlobalMaxAllowableSize(
+					_getCompanyId(groupId), groupId)) {
+
+				throw new FileSizeException(
+					StringBundler.concat(
+						size, " exceeds the global maximum permitted size of ",
+						maxSize, " for file ", fileName),
+					maxSize);
+			}
+
 			throw new FileSizeException(
 				StringBundler.concat(
-					size, " exceeds the maximum permitted size of ", maxSize,
-					" for file ", fileName),
-				maxSize);
+					size, " exceeds the mime type \"", mimeType,
+					"\" maximum permitted size of ", maxSize, " for file ",
+					fileName),
+				maxSize, mimeType);
 		}
 	}
 
@@ -375,7 +389,8 @@ public final class DLValidatorImpl implements DLValidator {
 			_min(
 				_dlSizeLimitConfigurationHelper.getCompanyFileMaxSize(
 					companyId),
-				_dlSizeLimitConfigurationHelper.getGroupFileMaxSize(groupId)));
+				_dlSizeLimitConfigurationHelper.getGroupFileMaxSize(
+					companyId, groupId)));
 	}
 
 	private long _min(long a, long b) {

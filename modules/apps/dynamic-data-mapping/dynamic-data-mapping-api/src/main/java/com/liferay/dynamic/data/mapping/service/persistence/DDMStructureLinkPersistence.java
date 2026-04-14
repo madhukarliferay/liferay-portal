@@ -121,47 +121,6 @@ public interface DDMStructureLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last ddm structure link in the ordered set where structureId = &#63;.
-	 *
-	 * @param structureId the structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm structure link
-	 * @throws NoSuchStructureLinkException if a matching ddm structure link could not be found
-	 */
-	public DDMStructureLink findByStructureId_Last(
-			long structureId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
-				orderByComparator)
-		throws NoSuchStructureLinkException;
-
-	/**
-	 * Returns the last ddm structure link in the ordered set where structureId = &#63;.
-	 *
-	 * @param structureId the structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm structure link, or <code>null</code> if a matching ddm structure link could not be found
-	 */
-	public DDMStructureLink fetchByStructureId_Last(
-		long structureId,
-		com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
-			orderByComparator);
-
-	/**
-	 * Returns the ddm structure links before and after the current ddm structure link in the ordered set where structureId = &#63;.
-	 *
-	 * @param structureLinkId the primary key of the current ddm structure link
-	 * @param structureId the structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm structure link
-	 * @throws NoSuchStructureLinkException if a ddm structure link with the primary key could not be found
-	 */
-	public DDMStructureLink[] findByStructureId_PrevAndNext(
-			long structureLinkId, long structureId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
-				orderByComparator)
-		throws NoSuchStructureLinkException;
-
-	/**
 	 * Removes all the ddm structure links where structureId = &#63; from the database.
 	 *
 	 * @param structureId the structure ID
@@ -269,50 +228,6 @@ public interface DDMStructureLinkPersistence
 		long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
 			orderByComparator);
-
-	/**
-	 * Returns the last ddm structure link in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm structure link
-	 * @throws NoSuchStructureLinkException if a matching ddm structure link could not be found
-	 */
-	public DDMStructureLink findByC_C_Last(
-			long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
-				orderByComparator)
-		throws NoSuchStructureLinkException;
-
-	/**
-	 * Returns the last ddm structure link in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm structure link, or <code>null</code> if a matching ddm structure link could not be found
-	 */
-	public DDMStructureLink fetchByC_C_Last(
-		long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
-			orderByComparator);
-
-	/**
-	 * Returns the ddm structure links before and after the current ddm structure link in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param structureLinkId the primary key of the current ddm structure link
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm structure link
-	 * @throws NoSuchStructureLinkException if a ddm structure link with the primary key could not be found
-	 */
-	public DDMStructureLink[] findByC_C_PrevAndNext(
-			long structureLinkId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLink>
-				orderByComparator)
-		throws NoSuchStructureLinkException;
 
 	/**
 	 * Removes all the ddm structure links where classNameId = &#63; and classPK = &#63; from the database.
@@ -511,3 +426,4 @@ public interface DDMStructureLinkPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1981137842

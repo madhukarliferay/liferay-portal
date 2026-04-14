@@ -5,6 +5,8 @@
 
 package com.liferay.site.cms.site.initializer.internal.display.context;
 
+import com.liferay.depot.constants.DepotConstants;
+import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
@@ -12,6 +14,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.TabsItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.TabsItemListBuilder;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -21,6 +24,7 @@ import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.site.cms.site.initializer.internal.constants.CMSSpaceConstants;
 import com.liferay.site.cms.site.initializer.internal.util.SpaceSummaryHeaderUtil;
@@ -29,6 +33,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Roberto Díaz
@@ -36,21 +41,27 @@ import java.util.Map;
 public class ViewSpaceMembersSummarySectionDisplayContext {
 
 	public ViewSpaceMembersSummarySectionDisplayContext(
-		DepotEntryLocalService depotEntryLocalService, long groupId,
-		GroupLocalService groupLocalService,
-		ModelResourcePermission<Group> groupModelResourcePermission,
-		HttpServletRequest httpServletRequest, Language language,
-		UserGroupLocalService userGroupLocalService,
-		UserLocalService userLocalService) {
+			DepotEntryLocalService depotEntryLocalService, long groupId,
+			GroupLocalService groupLocalService,
+			ModelResourcePermission<Group> groupModelResourcePermission,
+			HttpServletRequest httpServletRequest, Language language,
+			UserGroupLocalService userGroupLocalService,
+			UserLocalService userLocalService)
+		throws PortalException {
 
 		_depotEntryLocalService = depotEntryLocalService;
 		_groupId = groupId;
-		_groupLocalService = groupLocalService;
 		_groupModelResourcePermission = groupModelResourcePermission;
 		_httpServletRequest = httpServletRequest;
 		_language = language;
 		_userGroupLocalService = userGroupLocalService;
 		_userLocalService = userLocalService;
+
+		_depotEntry = depotEntryLocalService.fetchGroupDepotEntry(groupId);
+
+		_group = groupLocalService.getGroup(groupId);
+
+		_externalReferenceCode = _group.getExternalReferenceCode();
 
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -60,7 +71,7 @@ public class ViewSpaceMembersSummarySectionDisplayContext {
 		StringBundler sb = new StringBundler(9);
 
 		sb.append("/o/headless-asset-library/v1.0/asset-libraries/");
-		sb.append(_groupId);
+		sb.append(_externalReferenceCode);
 		sb.append("/");
 		sb.append(type);
 		sb.append("?page=");
@@ -88,6 +99,8 @@ public class ViewSpaceMembersSummarySectionDisplayContext {
 				dropdownItem.putData(
 					"assetLibraryId", String.valueOf(_groupId));
 				dropdownItem.putData(
+					"externalReferenceCode", _externalReferenceCode);
+				dropdownItem.putData(
 					"hasAssignMembersPermission",
 					_hasAssignMembersPermission());
 				dropdownItem.putData("title", _getSpaceMembersHeaderTitle());
@@ -110,7 +123,8 @@ public class ViewSpaceMembersSummarySectionDisplayContext {
 
 	public Map<String, Object> getHeaderProps() throws Exception {
 		return SpaceSummaryHeaderUtil.getSpaceSummaryHeaderProps(
-			_httpServletRequest, "view-all-members",
+			getAPIURL("user-accounts"), null, _httpServletRequest,
+			"view-all-members",
 			HashMapBuilder.<String, Object>put(
 				"hasAssignMembersPermission", _hasAssignMembersPermission()
 			).build(),
@@ -119,7 +133,24 @@ public class ViewSpaceMembersSummarySectionDisplayContext {
 			).put(
 				"assetLibraryCreatorUserId", _getAssetLibraryCreatorUserId()
 			).put(
-				"assetLibraryId", String.valueOf(_groupId)
+				"externalReferenceCode", _externalReferenceCode
+			).put(
+				"filter",
+				() -> {
+					if (!Objects.equals(
+							_depotEntry.getType(),
+							DepotConstants.TYPE_PROJECT)) {
+
+						return null;
+					}
+
+					List<Long> depotEntryGroupIds =
+						_depotEntryLocalService.getDepotEntryGroupIds(
+							_group.getCompanyId(), DepotConstants.TYPE_SPACE);
+
+					return "groupIds in (" +
+						StringUtil.merge(depotEntryGroupIds) + ")";
+				}
 			).build(),
 			_getSpaceMembersHeaderTitle(), StringPool.BLANK);
 	}
@@ -140,9 +171,7 @@ public class ViewSpaceMembersSummarySectionDisplayContext {
 	}
 
 	private String _getAssetLibraryCreatorUserId() throws Exception {
-		Group group = _groupLocalService.getGroup(_groupId);
-
-		return String.valueOf(group.getCreatorUserId());
+		return String.valueOf(_group.getCreatorUserId());
 	}
 
 	private String _getSpaceMembersHeaderTitle() {
@@ -160,9 +189,11 @@ public class ViewSpaceMembersSummarySectionDisplayContext {
 			ActionKeys.ASSIGN_MEMBERS);
 	}
 
+	private final DepotEntry _depotEntry;
 	private final DepotEntryLocalService _depotEntryLocalService;
+	private final String _externalReferenceCode;
+	private final Group _group;
 	private final long _groupId;
-	private final GroupLocalService _groupLocalService;
 	private final ModelResourcePermission<Group> _groupModelResourcePermission;
 	private final HttpServletRequest _httpServletRequest;
 	private final Language _language;

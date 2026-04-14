@@ -129,11 +129,13 @@ public abstract class CTCollectionTemplateLocalServiceBaseImpl
 	 *
 	 * @param ctCollectionTemplate the ct collection template
 	 * @return the ct collection template that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public CTCollectionTemplate deleteCTCollectionTemplate(
-		CTCollectionTemplate ctCollectionTemplate) {
+			CTCollectionTemplate ctCollectionTemplate)
+		throws PortalException {
 
 		return ctCollectionTemplatePersistence.remove(ctCollectionTemplate);
 	}
@@ -476,3 +478,4 @@ public abstract class CTCollectionTemplateLocalServiceBaseImpl
 		CTCollectionTemplateLocalServiceBaseImpl.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1399268471

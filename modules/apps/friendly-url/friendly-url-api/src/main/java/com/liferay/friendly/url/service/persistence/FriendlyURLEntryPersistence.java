@@ -121,47 +121,6 @@ public interface FriendlyURLEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last friendly url entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry, or <code>null</code> if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the friendly url entries before and after the current friendly url entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param friendlyURLEntryId the primary key of the current friendly url entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a friendly url entry with the primary key could not be found
-	 */
-	public FriendlyURLEntry[] findByUuid_PrevAndNext(
-			long friendlyURLEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
 	 * Removes all the friendly url entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface FriendlyURLEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last friendly url entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry, or <code>null</code> if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the friendly url entries before and after the current friendly url entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param friendlyURLEntryId the primary key of the current friendly url entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a friendly url entry with the primary key could not be found
-	 */
-	public FriendlyURLEntry[] findByUuid_C_PrevAndNext(
-			long friendlyURLEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
 	 * Removes all the friendly url entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -476,50 +391,6 @@ public interface FriendlyURLEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last friendly url entry in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry findByG_C_Last(
-			long groupId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry, or <code>null</code> if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry fetchByG_C_Last(
-		long groupId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the friendly url entries before and after the current friendly url entry in the ordered set where groupId = &#63; and classNameId = &#63;.
-	 *
-	 * @param friendlyURLEntryId the primary key of the current friendly url entry
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a friendly url entry with the primary key could not be found
-	 */
-	public FriendlyURLEntry[] findByG_C_PrevAndNext(
-			long friendlyURLEntryId, long groupId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
 	 * Removes all the friendly url entries where groupId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -629,50 +500,6 @@ public interface FriendlyURLEntryPersistence
 		long companyId, long classNameId,
 		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry findByC_C_Last(
-			long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry, or <code>null</code> if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry fetchByC_C_Last(
-		long companyId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the friendly url entries before and after the current friendly url entry in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param friendlyURLEntryId the primary key of the current friendly url entry
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a friendly url entry with the primary key could not be found
-	 */
-	public FriendlyURLEntry[] findByC_C_PrevAndNext(
-			long friendlyURLEntryId, long companyId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
 
 	/**
 	 * Removes all the friendly url entries where companyId = &#63; and classNameId = &#63; from the database.
@@ -790,54 +617,6 @@ public interface FriendlyURLEntryPersistence
 		long groupId, long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry findByG_C_C_Last(
-			long groupId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
-
-	/**
-	 * Returns the last friendly url entry in the ordered set where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching friendly url entry, or <code>null</code> if a matching friendly url entry could not be found
-	 */
-	public FriendlyURLEntry fetchByG_C_C_Last(
-		long groupId, long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the friendly url entries before and after the current friendly url entry in the ordered set where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param friendlyURLEntryId the primary key of the current friendly url entry
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next friendly url entry
-	 * @throws NoSuchFriendlyURLEntryException if a friendly url entry with the primary key could not be found
-	 */
-	public FriendlyURLEntry[] findByG_C_C_PrevAndNext(
-			long friendlyURLEntryId, long groupId, long classNameId,
-			long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<FriendlyURLEntry>
-				orderByComparator)
-		throws NoSuchFriendlyURLEntryException;
 
 	/**
 	 * Removes all the friendly url entries where groupId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
@@ -980,3 +759,4 @@ public interface FriendlyURLEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1941846717

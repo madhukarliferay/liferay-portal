@@ -6,14 +6,15 @@
 package com.liferay.portal.db.index;
 
 import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.db.DBResourceUtil;
 import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DuplicateUniqueFinderRowsCleaner;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.dependency.manager.DependencyManagerSyncUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -222,7 +223,7 @@ public class IndexUpdaterUtil {
 		_processedServletContextNames.clear();
 	}
 
-	private static void _deleteDuplicates(
+	private static boolean _deleteDuplicates(
 			Connection connection, DB db, String tableName, String indexesSQL)
 		throws Exception {
 
@@ -230,11 +231,14 @@ public class IndexUpdaterUtil {
 
 		DBInspector dbInspector = new DBInspector(connection);
 
+		boolean duplicatesDeleted = false;
+
 		while (matcher.find()) {
 			if (dbInspector.hasIndex(tableName, matcher.group(1))) {
 				continue;
 			}
 
+			String indexColumns = matcher.group(2);
 			String orderByColumns = StringUtil.merge(
 				db.getPrimaryKeyColumnNames(connection, tableName),
 				StringPool.COMMA_AND_SPACE);
@@ -243,11 +247,18 @@ public class IndexUpdaterUtil {
 				new DuplicateUniqueFinderRowsCleaner(
 					connection, tableName,
 					StringUtil.split(
-						matcher.group(2), StringPool.COMMA_AND_SPACE),
+						indexColumns.replaceAll(
+							"\\[\\$COLUMN_LENGTH:(\\d+)\\$\\]",
+							StringPool.BLANK),
+						StringPool.COMMA_AND_SPACE),
 					orderByColumns + " asc");
 
-			duplicateUniqueFinderRowsCleaner.deleteDuplicates();
+			if (duplicateUniqueFinderRowsCleaner.deleteDuplicates()) {
+				duplicatesDeleted = true;
+			}
 		}
+
+		return duplicatesDeleted;
 	}
 
 	private static ExecutorService _getExecutorService() {
@@ -326,11 +337,24 @@ public class IndexUpdaterUtil {
 							throw sqlException;
 						}
 
-						_deleteDuplicates(
-							connection, db, tableName, indexesSQL);
+						if (_deleteDuplicates(
+								connection, db, tableName, indexesSQL)) {
 
-						db.updateIndexes(
-							connection, tableName, indexesSQL, true);
+							if (_log.isWarnEnabled()) {
+								_log.warn(
+									StringBundler.concat(
+										"Deleted duplicate records from table ",
+										tableName,
+										" before retrying unique index ",
+										"creation"));
+							}
+
+							db.updateIndexes(
+								connection, tableName, indexesSQL, true);
+						}
+						else {
+							throw sqlException;
+						}
 					}
 				}
 				catch (Exception exception) {

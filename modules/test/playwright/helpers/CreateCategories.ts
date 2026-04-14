@@ -16,27 +16,30 @@ export async function createCategories({
 	assetLibraries,
 	assetTypes,
 	categoryNames,
+	multiValued,
 	siteId,
 	vocabularyName,
+	vocabularyVisibility,
 }: {
 	apiHelpers: ApiHelpers;
 	assetLibraries?: AssetLibrary[];
 	assetTypes?: AssetType[];
 	categoryNames: TCategory[];
+	multiValued?: boolean;
 	siteId?: string;
 	vocabularyName: string;
+	vocabularyVisibility?: boolean;
 }): Promise<({id: number} & TCategory)[]> {
-	const {id: vocabularyId} = siteId
-		? await apiHelpers.headlessAdminTaxonomy.postSiteTaxonomyVocabulary({
-				assetTypes,
-				name: vocabularyName,
-				siteId,
-			})
-		: await apiHelpers.headlessAdminTaxonomy.postTaxonomyVocabulary({
-				assetLibraries,
-				assetTypes,
-				name: vocabularyName,
-			});
+	const {id: vocabularyId} =
+		await apiHelpers.headlessAdminTaxonomy.postSiteTaxonomyVocabulary({
+			assetLibraries,
+			assetTypes,
+			multiValued,
+			name: vocabularyName,
+			siteId,
+			visibilityType:
+				vocabularyVisibility === true ? 'INTERNAL' : 'PUBLIC',
+		});
 
 	const categories = [];
 	for (const {name, name_i18n} of categoryNames) {

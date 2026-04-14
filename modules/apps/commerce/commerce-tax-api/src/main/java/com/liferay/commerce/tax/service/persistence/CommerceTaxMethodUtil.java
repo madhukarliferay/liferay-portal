@@ -215,53 +215,6 @@ public class CommerceTaxMethodUtil {
 	}
 
 	/**
-	 * Returns the last commerce tax method in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax method
-	 * @throws NoSuchTaxMethodException if a matching commerce tax method could not be found
-	 */
-	public static CommerceTaxMethod findByGroupId_Last(
-			long groupId,
-			OrderByComparator<CommerceTaxMethod> orderByComparator)
-		throws com.liferay.commerce.tax.exception.NoSuchTaxMethodException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce tax method in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax method, or <code>null</code> if a matching commerce tax method could not be found
-	 */
-	public static CommerceTaxMethod fetchByGroupId_Last(
-		long groupId, OrderByComparator<CommerceTaxMethod> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce tax methods before and after the current commerce tax method in the ordered set where groupId = &#63;.
-	 *
-	 * @param commerceTaxMethodId the primary key of the current commerce tax method
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce tax method
-	 * @throws NoSuchTaxMethodException if a commerce tax method with the primary key could not be found
-	 */
-	public static CommerceTaxMethod[] findByGroupId_PrevAndNext(
-			long commerceTaxMethodId, long groupId,
-			OrderByComparator<CommerceTaxMethod> orderByComparator)
-		throws com.liferay.commerce.tax.exception.NoSuchTaxMethodException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			commerceTaxMethodId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce tax methods where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -456,59 +409,6 @@ public class CommerceTaxMethodUtil {
 	}
 
 	/**
-	 * Returns the last commerce tax method in the ordered set where groupId = &#63; and active = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax method
-	 * @throws NoSuchTaxMethodException if a matching commerce tax method could not be found
-	 */
-	public static CommerceTaxMethod findByG_A_Last(
-			long groupId, boolean active,
-			OrderByComparator<CommerceTaxMethod> orderByComparator)
-		throws com.liferay.commerce.tax.exception.NoSuchTaxMethodException {
-
-		return getPersistence().findByG_A_Last(
-			groupId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce tax method in the ordered set where groupId = &#63; and active = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax method, or <code>null</code> if a matching commerce tax method could not be found
-	 */
-	public static CommerceTaxMethod fetchByG_A_Last(
-		long groupId, boolean active,
-		OrderByComparator<CommerceTaxMethod> orderByComparator) {
-
-		return getPersistence().fetchByG_A_Last(
-			groupId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce tax methods before and after the current commerce tax method in the ordered set where groupId = &#63; and active = &#63;.
-	 *
-	 * @param commerceTaxMethodId the primary key of the current commerce tax method
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce tax method
-	 * @throws NoSuchTaxMethodException if a commerce tax method with the primary key could not be found
-	 */
-	public static CommerceTaxMethod[] findByG_A_PrevAndNext(
-			long commerceTaxMethodId, long groupId, boolean active,
-			OrderByComparator<CommerceTaxMethod> orderByComparator)
-		throws com.liferay.commerce.tax.exception.NoSuchTaxMethodException {
-
-		return getPersistence().findByG_A_PrevAndNext(
-			commerceTaxMethodId, groupId, active, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce tax methods where groupId = &#63; and active = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -695,3 +595,4 @@ public class CommerceTaxMethodUtil {
 	private static volatile CommerceTaxMethodPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:643583445

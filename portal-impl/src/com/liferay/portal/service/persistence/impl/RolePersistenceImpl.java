@@ -63,6 +63,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -335,225 +336,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByUuid_Last(
-			String uuid, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByUuid_Last(
-		String uuid, OrderByComparator<Role> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByUuid(uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where uuid = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByUuid_PrevAndNext(
-			long roleId, String uuid, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		uuid = Objects.toString(uuid, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, role, uuid, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, role, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByUuid_PrevAndNext(
-		Session session, Role role, String uuid,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -602,6 +384,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -689,213 +480,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByUuid_PrevAndNext(
-			long roleId, String uuid, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByUuid_PrevAndNext(roleId, uuid, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByUuid_PrevAndNext(
-				session, role, uuid, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByUuid_PrevAndNext(
-				session, role, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByUuid_PrevAndNext(
-		Session session, Role role, String uuid,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -991,6 +575,14 @@ public class RolePersistenceImpl
 	public int filterCountByUuid(String uuid) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByUuid(uuid);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1308,239 +900,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByUuid_C_Last(uuid, companyId, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<Role> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByUuid_C_PrevAndNext(
-			long roleId, String uuid, long companyId,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		uuid = Objects.toString(uuid, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, role, uuid, companyId, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, role, uuid, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByUuid_C_PrevAndNext(
-		Session session, Role role, String uuid, long companyId,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -1594,6 +953,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -1685,220 +1053,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByUuid_C_PrevAndNext(
-			long roleId, String uuid, long companyId,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByUuid_C_PrevAndNext(
-				roleId, uuid, companyId, orderByComparator);
-		}
-
-		uuid = Objects.toString(uuid, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByUuid_C_PrevAndNext(
-				session, role, uuid, companyId, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByUuid_C_PrevAndNext(
-				session, role, uuid, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByUuid_C_PrevAndNext(
-		Session session, Role role, String uuid, long companyId,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2003,6 +1157,14 @@ public class RolePersistenceImpl
 	public int filterCountByUuid_C(String uuid, long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByUuid_C(uuid, companyId);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		uuid = Objects.toString(uuid, "");
@@ -2294,214 +1456,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByCompanyId_Last(
-			long companyId, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByCompanyId_Last(companyId, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByCompanyId_Last(
-		long companyId, OrderByComparator<Role> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where companyId = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByCompanyId_PrevAndNext(
-			long roleId, long companyId,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, role, companyId, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, role, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByCompanyId_PrevAndNext(
-		Session session, Role role, long companyId,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -2552,6 +1506,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -2626,202 +1589,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByCompanyId_PrevAndNext(
-			long roleId, long companyId,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				roleId, companyId, orderByComparator);
-		}
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, role, companyId, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, role, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByCompanyId_PrevAndNext(
-		Session session, Role role, long companyId,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2905,6 +1672,14 @@ public class RolePersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByCompanyId(companyId);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -3177,225 +1952,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where name = &#63;.
-	 *
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByName_Last(
-			String name, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByName_Last(name, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("name=");
-		sb.append(name);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where name = &#63;.
-	 *
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByName_Last(
-		String name, OrderByComparator<Role> orderByComparator) {
-
-		int count = countByName(name);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByName(name, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where name = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByName_PrevAndNext(
-			long roleId, String name, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		name = Objects.toString(name, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByName_PrevAndNext(
-				session, role, name, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByName_PrevAndNext(
-				session, role, name, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByName_PrevAndNext(
-		Session session, Role role, String name,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_NAME_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_NAME_NAME_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindName) {
-			queryPos.add(name);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where name = &#63;.
 	 *
 	 * @param name the name
@@ -3444,6 +2000,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByName(name, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByName(
+					name, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		name = Objects.toString(name, "");
@@ -3531,213 +2096,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where name = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByName_PrevAndNext(
-			long roleId, String name, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByName_PrevAndNext(roleId, name, orderByComparator);
-		}
-
-		name = Objects.toString(name, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByName_PrevAndNext(
-				session, role, name, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByName_PrevAndNext(
-				session, role, name, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByName_PrevAndNext(
-		Session session, Role role, String name,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_NAME_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_NAME_NAME_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindName) {
-			queryPos.add(name);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -3833,6 +2191,14 @@ public class RolePersistenceImpl
 	public int filterCountByName(String name) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByName(name);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByName(name);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		name = Objects.toString(name, "");
@@ -4107,212 +2473,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where type = &#63;.
-	 *
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByType_Last(
-			int type, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByType_Last(type, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where type = &#63;.
-	 *
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByType_Last(
-		int type, OrderByComparator<Role> orderByComparator) {
-
-		int count = countByType(type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByType(type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where type = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByType_PrevAndNext(
-			long roleId, int type, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByType_PrevAndNext(
-				session, role, type, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByType_PrevAndNext(
-				session, role, type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByType_PrevAndNext(
-		Session session, Role role, int type,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		sb.append(_FINDER_COLUMN_TYPE_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where type = &#63;.
 	 *
 	 * @param type the type
@@ -4361,6 +2521,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByType(type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByType(
+					type, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -4435,200 +2604,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where type = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByType_PrevAndNext(
-			long roleId, int type, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByType_PrevAndNext(roleId, type, orderByComparator);
-		}
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByType_PrevAndNext(
-				session, role, type, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByType_PrevAndNext(
-				session, role, type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByType_PrevAndNext(
-		Session session, Role role, int type,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_TYPE_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4711,6 +2686,14 @@ public class RolePersistenceImpl
 	public int filterCountByType(int type) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByType(type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByType(type);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -4988,227 +2971,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where subtype = &#63;.
-	 *
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findBySubtype_Last(
-			String subtype, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchBySubtype_Last(subtype, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("subtype=");
-		sb.append(subtype);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where subtype = &#63;.
-	 *
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchBySubtype_Last(
-		String subtype, OrderByComparator<Role> orderByComparator) {
-
-		int count = countBySubtype(subtype);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findBySubtype(
-			subtype, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where subtype = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findBySubtype_PrevAndNext(
-			long roleId, String subtype,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		subtype = Objects.toString(subtype, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getBySubtype_PrevAndNext(
-				session, role, subtype, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getBySubtype_PrevAndNext(
-				session, role, subtype, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getBySubtype_PrevAndNext(
-		Session session, Role role, String subtype,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		boolean bindSubtype = false;
-
-		if (subtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_SUBTYPE_SUBTYPE_3);
-		}
-		else {
-			bindSubtype = true;
-
-			sb.append(_FINDER_COLUMN_SUBTYPE_SUBTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindSubtype) {
-			queryPos.add(subtype);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where subtype = &#63;.
 	 *
 	 * @param subtype the subtype
@@ -5257,6 +3019,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findBySubtype(subtype, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findBySubtype(
+					subtype, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		subtype = Objects.toString(subtype, "");
@@ -5344,215 +3115,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where subtype = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindBySubtype_PrevAndNext(
-			long roleId, String subtype,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findBySubtype_PrevAndNext(
-				roleId, subtype, orderByComparator);
-		}
-
-		subtype = Objects.toString(subtype, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetBySubtype_PrevAndNext(
-				session, role, subtype, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetBySubtype_PrevAndNext(
-				session, role, subtype, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetBySubtype_PrevAndNext(
-		Session session, Role role, String subtype,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		boolean bindSubtype = false;
-
-		if (subtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_SUBTYPE_SUBTYPE_3);
-		}
-		else {
-			bindSubtype = true;
-
-			sb.append(_FINDER_COLUMN_SUBTYPE_SUBTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		if (bindSubtype) {
-			queryPos.add(subtype);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -5649,6 +3211,14 @@ public class RolePersistenceImpl
 	public int filterCountBySubtype(String subtype) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countBySubtype(subtype);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findBySubtype(subtype);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		subtype = Objects.toString(subtype, "");
@@ -6146,224 +3716,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByC_T_Last(
-			long companyId, int type, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByC_T_Last(companyId, type, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", type=");
-		sb.append(type);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByC_T_Last(
-		long companyId, int type, OrderByComparator<Role> orderByComparator) {
-
-		int count = countByC_T(companyId, type);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByC_T(
-			companyId, type, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByC_T_PrevAndNext(
-			long roleId, long companyId, int type,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByC_T_PrevAndNext(
-				session, role, companyId, type, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByC_T_PrevAndNext(
-				session, role, companyId, type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByC_T_PrevAndNext(
-		Session session, Role role, long companyId, int type,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		sb.append(_FINDER_COLUMN_C_T_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_T_TYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where companyId = &#63; and type = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -6417,6 +3769,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_T(companyId, type, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_T(
+					companyId, type, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -6499,207 +3860,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where companyId = &#63; and type = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByC_T_PrevAndNext(
-			long roleId, long companyId, int type,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByC_T_PrevAndNext(
-				roleId, companyId, type, orderByComparator);
-		}
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByC_T_PrevAndNext(
-				session, role, companyId, type, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByC_T_PrevAndNext(
-				session, role, companyId, type, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByC_T_PrevAndNext(
-		Session session, Role role, long companyId, int type,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_C_T_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_T_TYPE_2_SQL);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		queryPos.add(type);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where companyId = &#63; and type = any &#63;.
 	 *
 	 * @param companyId the company ID
@@ -6753,6 +3913,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByC_T(companyId, types, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_T(
+					companyId, types, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		if (types == null) {
@@ -7213,6 +4382,14 @@ public class RolePersistenceImpl
 			return countByC_T(companyId, type);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByC_T(companyId, type);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_ROLE__WHERE);
@@ -7264,6 +4441,13 @@ public class RolePersistenceImpl
 	public int filterCountByC_T(long companyId, int[] types) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_T(companyId, types);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = InlineSQLHelperUtil.filter(
+				findByC_T(companyId, types));
+
+			return roles.size();
 		}
 
 		if (types == null) {
@@ -7586,237 +4770,6 @@ public class RolePersistenceImpl
 	}
 
 	/**
-	 * Returns the last role in the ordered set where type = &#63; and subtype = &#63;.
-	 *
-	 * @param type the type
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role
-	 * @throws NoSuchRoleException if a matching role could not be found
-	 */
-	@Override
-	public Role findByT_S_Last(
-			int type, String subtype, OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		Role role = fetchByT_S_Last(type, subtype, orderByComparator);
-
-		if (role != null) {
-			return role;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("type=");
-		sb.append(type);
-
-		sb.append(", subtype=");
-		sb.append(subtype);
-
-		sb.append("}");
-
-		throw new NoSuchRoleException(sb.toString());
-	}
-
-	/**
-	 * Returns the last role in the ordered set where type = &#63; and subtype = &#63;.
-	 *
-	 * @param type the type
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching role, or <code>null</code> if a matching role could not be found
-	 */
-	@Override
-	public Role fetchByT_S_Last(
-		int type, String subtype, OrderByComparator<Role> orderByComparator) {
-
-		int count = countByT_S(type, subtype);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Role> list = findByT_S(
-			type, subtype, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set where type = &#63; and subtype = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param type the type
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] findByT_S_PrevAndNext(
-			long roleId, int type, String subtype,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		subtype = Objects.toString(subtype, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = getByT_S_PrevAndNext(
-				session, role, type, subtype, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = getByT_S_PrevAndNext(
-				session, role, type, subtype, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role getByT_S_PrevAndNext(
-		Session session, Role role, int type, String subtype,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ROLE__WHERE);
-
-		sb.append(_FINDER_COLUMN_T_S_TYPE_2);
-
-		boolean bindSubtype = false;
-
-		if (subtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_T_S_SUBTYPE_3);
-		}
-		else {
-			bindSubtype = true;
-
-			sb.append(_FINDER_COLUMN_T_S_SUBTYPE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(RoleModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(type);
-
-		if (bindSubtype) {
-			queryPos.add(subtype);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the roles that the user has permission to view where type = &#63; and subtype = &#63;.
 	 *
 	 * @param type the type
@@ -7870,6 +4823,15 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return findByT_S(type, subtype, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByT_S(
+					type, subtype, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		subtype = Objects.toString(subtype, "");
@@ -7961,220 +4923,6 @@ public class RolePersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the roles before and after the current role in the ordered set of roles that the user has permission to view where type = &#63; and subtype = &#63;.
-	 *
-	 * @param roleId the primary key of the current role
-	 * @param type the type
-	 * @param subtype the subtype
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next role
-	 * @throws NoSuchRoleException if a role with the primary key could not be found
-	 */
-	@Override
-	public Role[] filterFindByT_S_PrevAndNext(
-			long roleId, int type, String subtype,
-			OrderByComparator<Role> orderByComparator)
-		throws NoSuchRoleException {
-
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return findByT_S_PrevAndNext(
-				roleId, type, subtype, orderByComparator);
-		}
-
-		subtype = Objects.toString(subtype, "");
-
-		Role role = findByPrimaryKey(roleId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Role[] array = new RoleImpl[3];
-
-			array[0] = filterGetByT_S_PrevAndNext(
-				session, role, type, subtype, orderByComparator, true);
-
-			array[1] = role;
-
-			array[2] = filterGetByT_S_PrevAndNext(
-				session, role, type, subtype, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected Role filterGetByT_S_PrevAndNext(
-		Session session, Role role, int type, String subtype,
-		OrderByComparator<Role> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_T_S_TYPE_2_SQL);
-
-		boolean bindSubtype = false;
-
-		if (subtype.isEmpty()) {
-			sb.append(_FINDER_COLUMN_T_S_SUBTYPE_3);
-		}
-		else {
-			bindSubtype = true;
-
-			sb.append(_FINDER_COLUMN_T_S_SUBTYPE_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ROLE__NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(RoleModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(RoleModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), Role.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, RoleImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, RoleImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(type);
-
-		if (bindSubtype) {
-			queryPos.add(subtype);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(role)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Role> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -8279,6 +5027,14 @@ public class RolePersistenceImpl
 	public int filterCountByT_S(int type, String subtype) {
 		if (!InlineSQLHelperUtil.isEnabled()) {
 			return countByT_S(type, subtype);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = findByT_S(type, subtype);
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
 		}
 
 		subtype = Objects.toString(subtype, "");
@@ -8918,6 +5674,15 @@ public class RolePersistenceImpl
 			return countByC_C_C(companyId, classNameId, classPK);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = Arrays.asList(
+				fetchByC_C_C(companyId, classNameId, classPK));
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
+		}
+
 		StringBundler sb = new StringBundler(4);
 
 		sb.append(_FILTER_SQL_COUNT_ROLE__WHERE);
@@ -8976,6 +5741,13 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_C_C(companyId, classNameId, classPKs);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = InlineSQLHelperUtil.filter(
+				findByC_C_C(companyId, classNameId, classPKs));
+
+			return roles.size();
 		}
 
 		if (classPKs == null) {
@@ -9674,6 +6446,15 @@ public class RolePersistenceImpl
 			return countByC_C_C_T(companyId, classNameId, classPK, type);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = Arrays.asList(
+				fetchByC_C_C_T(companyId, classNameId, classPK, type));
+
+			roles = InlineSQLHelperUtil.filter(roles);
+
+			return roles.size();
+		}
+
 		StringBundler sb = new StringBundler(5);
 
 		sb.append(_FILTER_SQL_COUNT_ROLE__WHERE);
@@ -9737,6 +6518,13 @@ public class RolePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByC_C_C_T(companyId, classNameId, classPKs, type);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Role> roles = InlineSQLHelperUtil.filter(
+				findByC_C_C_T(companyId, classNameId, classPKs, type));
+
+			return roles.size();
 		}
 
 		if (classPKs == null) {
@@ -11958,3 +8746,4 @@ public class RolePersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1589516650

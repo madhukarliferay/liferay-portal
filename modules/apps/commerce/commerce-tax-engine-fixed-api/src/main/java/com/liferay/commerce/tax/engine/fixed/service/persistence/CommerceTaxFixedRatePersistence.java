@@ -121,47 +121,6 @@ public interface CommerceTaxFixedRatePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce tax fixed rate in the ordered set where CPTaxCategoryId = &#63;.
-	 *
-	 * @param CPTaxCategoryId the cp tax category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax fixed rate
-	 * @throws NoSuchTaxFixedRateException if a matching commerce tax fixed rate could not be found
-	 */
-	public CommerceTaxFixedRate findByCPTaxCategoryId_Last(
-			long CPTaxCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceTaxFixedRate> orderByComparator)
-		throws NoSuchTaxFixedRateException;
-
-	/**
-	 * Returns the last commerce tax fixed rate in the ordered set where CPTaxCategoryId = &#63;.
-	 *
-	 * @param CPTaxCategoryId the cp tax category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax fixed rate, or <code>null</code> if a matching commerce tax fixed rate could not be found
-	 */
-	public CommerceTaxFixedRate fetchByCPTaxCategoryId_Last(
-		long CPTaxCategoryId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceTaxFixedRate>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce tax fixed rates before and after the current commerce tax fixed rate in the ordered set where CPTaxCategoryId = &#63;.
-	 *
-	 * @param commerceTaxFixedRateId the primary key of the current commerce tax fixed rate
-	 * @param CPTaxCategoryId the cp tax category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce tax fixed rate
-	 * @throws NoSuchTaxFixedRateException if a commerce tax fixed rate with the primary key could not be found
-	 */
-	public CommerceTaxFixedRate[] findByCPTaxCategoryId_PrevAndNext(
-			long commerceTaxFixedRateId, long CPTaxCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceTaxFixedRate> orderByComparator)
-		throws NoSuchTaxFixedRateException;
-
-	/**
 	 * Removes all the commerce tax fixed rates where CPTaxCategoryId = &#63; from the database.
 	 *
 	 * @param CPTaxCategoryId the cp tax category ID
@@ -263,47 +222,6 @@ public interface CommerceTaxFixedRatePersistence
 		long commerceTaxMethodId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceTaxFixedRate>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce tax fixed rate in the ordered set where commerceTaxMethodId = &#63;.
-	 *
-	 * @param commerceTaxMethodId the commerce tax method ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax fixed rate
-	 * @throws NoSuchTaxFixedRateException if a matching commerce tax fixed rate could not be found
-	 */
-	public CommerceTaxFixedRate findByCommerceTaxMethodId_Last(
-			long commerceTaxMethodId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceTaxFixedRate> orderByComparator)
-		throws NoSuchTaxFixedRateException;
-
-	/**
-	 * Returns the last commerce tax fixed rate in the ordered set where commerceTaxMethodId = &#63;.
-	 *
-	 * @param commerceTaxMethodId the commerce tax method ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce tax fixed rate, or <code>null</code> if a matching commerce tax fixed rate could not be found
-	 */
-	public CommerceTaxFixedRate fetchByCommerceTaxMethodId_Last(
-		long commerceTaxMethodId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceTaxFixedRate>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce tax fixed rates before and after the current commerce tax fixed rate in the ordered set where commerceTaxMethodId = &#63;.
-	 *
-	 * @param commerceTaxFixedRateId the primary key of the current commerce tax fixed rate
-	 * @param commerceTaxMethodId the commerce tax method ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce tax fixed rate
-	 * @throws NoSuchTaxFixedRateException if a commerce tax fixed rate with the primary key could not be found
-	 */
-	public CommerceTaxFixedRate[] findByCommerceTaxMethodId_PrevAndNext(
-			long commerceTaxFixedRateId, long commerceTaxMethodId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceTaxFixedRate> orderByComparator)
-		throws NoSuchTaxFixedRateException;
 
 	/**
 	 * Removes all the commerce tax fixed rates where commerceTaxMethodId = &#63; from the database.
@@ -496,3 +414,4 @@ public interface CommerceTaxFixedRatePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:691431914

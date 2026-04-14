@@ -10,8 +10,9 @@ import com.liferay.client.extension.model.ClientExtensionEntryRel;
 import com.liferay.client.extension.service.ClientExtensionEntryRelLocalService;
 import com.liferay.client.extension.type.CET;
 import com.liferay.client.extension.type.manager.CETManager;
-import com.liferay.document.library.kernel.service.DLAppService;
+import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.exportimport.kernel.staging.Staging;
 import com.liferay.headless.delivery.dto.v1_0.ClientExtension;
 import com.liferay.headless.delivery.dto.v1_0.MasterPage;
 import com.liferay.headless.delivery.dto.v1_0.PageDefinition;
@@ -26,16 +27,19 @@ import com.liferay.layout.util.constants.LayoutStructureConstants;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ColorScheme;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Theme;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -292,16 +296,44 @@ public class PageDefinitionDTOConverter
 							};
 						}
 
-						long faviconFileEntryId =
-							layout.getFaviconFileEntryId();
+						String faviconFileEntryERC =
+							layout.getFaviconFileEntryERC();
 
-						if (faviconFileEntryId == 0) {
+						if (Validator.isNull(faviconFileEntryERC)) {
+							return null;
+						}
+
+						Long groupId = ScopeUtil.getItemGroupId(
+							layout.getCompanyId(),
+							layout.getFaviconFileEntryScopeERC(),
+							layout.getGroupId());
+
+						if (groupId == null) {
+							if (_log.isDebugEnabled()) {
+								_log.debug(
+									StringBundler.concat(
+										"Unable to resolve group ID for ",
+										"favicon file entry in layout with ",
+										"PLID ", layout.getPlid(),
+										" using favicon file entry scope ",
+										"external reference code ",
+										layout.getFaviconFileEntryScopeERC()));
+							}
+
+							return null;
+						}
+
+						FileEntry fileEntry =
+							_dlAppLocalService.
+								fetchFileEntryByExternalReferenceCode(
+									groupId, faviconFileEntryERC);
+
+						if (fileEntry == null) {
 							return null;
 						}
 
 						return ContentDocumentUtil.toContentDocument(
-							_dlURLHelper, "settings.favIcon.image",
-							_dlAppService.getFileEntry(faviconFileEntryId),
+							_dlURLHelper, "settings.favIcon.image", fileEntry,
 							dtoConverterContext.getUriInfo());
 					});
 				setGlobalCSSClientExtensions(
@@ -348,13 +380,16 @@ public class PageDefinitionDTOConverter
 					});
 				setStyleBook(
 					() -> {
-						StyleBookEntry styleBookEntry =
-							_styleBookEntryLocalService.fetchStyleBookEntry(
-								layout.getStyleBookEntryId());
-
-						if (styleBookEntry == null) {
+						if (Validator.isNull(layout.getStyleBookEntryERC())) {
 							return null;
 						}
+
+						StyleBookEntry styleBookEntry =
+							_styleBookEntryLocalService.
+								fetchStyleBookEntryByExternalReferenceCode(
+									layout.getStyleBookEntryERC(),
+									_staging.getLiveGroupId(
+										layout.getGroupId()));
 
 						return new StyleBook() {
 							{
@@ -418,7 +453,7 @@ public class PageDefinitionDTOConverter
 		_clientExtensionEntryRelLocalService;
 
 	@Reference
-	private DLAppService _dlAppService;
+	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
 	private DLURLHelper _dlURLHelper;
@@ -435,6 +470,9 @@ public class PageDefinitionDTOConverter
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private Staging _staging;
 
 	@Reference
 	private StyleBookEntryLocalService _styleBookEntryLocalService;

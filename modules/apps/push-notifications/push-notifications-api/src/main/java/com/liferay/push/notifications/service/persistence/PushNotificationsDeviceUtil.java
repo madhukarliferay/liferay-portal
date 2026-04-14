@@ -286,59 +286,6 @@ public class PushNotificationsDeviceUtil {
 	}
 
 	/**
-	 * Returns the last push notifications device in the ordered set where userId = &#63; and platform = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param platform the platform
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching push notifications device
-	 * @throws NoSuchDeviceException if a matching push notifications device could not be found
-	 */
-	public static PushNotificationsDevice findByU_P_Last(
-			long userId, String platform,
-			OrderByComparator<PushNotificationsDevice> orderByComparator)
-		throws com.liferay.push.notifications.exception.NoSuchDeviceException {
-
-		return getPersistence().findByU_P_Last(
-			userId, platform, orderByComparator);
-	}
-
-	/**
-	 * Returns the last push notifications device in the ordered set where userId = &#63; and platform = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param platform the platform
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching push notifications device, or <code>null</code> if a matching push notifications device could not be found
-	 */
-	public static PushNotificationsDevice fetchByU_P_Last(
-		long userId, String platform,
-		OrderByComparator<PushNotificationsDevice> orderByComparator) {
-
-		return getPersistence().fetchByU_P_Last(
-			userId, platform, orderByComparator);
-	}
-
-	/**
-	 * Returns the push notifications devices before and after the current push notifications device in the ordered set where userId = &#63; and platform = &#63;.
-	 *
-	 * @param pushNotificationsDeviceId the primary key of the current push notifications device
-	 * @param userId the user ID
-	 * @param platform the platform
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next push notifications device
-	 * @throws NoSuchDeviceException if a push notifications device with the primary key could not be found
-	 */
-	public static PushNotificationsDevice[] findByU_P_PrevAndNext(
-			long pushNotificationsDeviceId, long userId, String platform,
-			OrderByComparator<PushNotificationsDevice> orderByComparator)
-		throws com.liferay.push.notifications.exception.NoSuchDeviceException {
-
-		return getPersistence().findByU_P_PrevAndNext(
-			pushNotificationsDeviceId, userId, platform, orderByComparator);
-	}
-
-	/**
 	 * Returns all the push notifications devices where userId = any &#63; and platform = &#63;.
 	 *
 	 * <p>
@@ -625,3 +572,4 @@ public class PushNotificationsDeviceUtil {
 	private static volatile PushNotificationsDevicePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-599532459

@@ -303,9 +303,7 @@ public class MappedProductSerDes {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(mappedProduct.getType());
-
 			sb.append("\"");
 		}
 
@@ -865,3 +863,4 @@ public class MappedProductSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:359971938

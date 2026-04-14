@@ -260,6 +260,16 @@ public class SharedAssetSerDes {
 			sb.append("\"");
 		}
 
+		if (sharedAsset.getVisible() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"visible\": ");
+
+			sb.append(sharedAsset.getVisible());
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -403,6 +413,13 @@ public class SharedAssetSerDes {
 			map.put("title", String.valueOf(sharedAsset.getTitle()));
 		}
 
+		if (sharedAsset.getVisible() == null) {
+			map.put("visible", null);
+		}
+		else {
+			map.put("visible", String.valueOf(sharedAsset.getVisible()));
+		}
+
 		return map;
 	}
 
@@ -469,6 +486,9 @@ public class SharedAssetSerDes {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "title")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "visible")) {
 				return false;
 			}
 
@@ -572,6 +592,11 @@ public class SharedAssetSerDes {
 					sharedAsset.setTitle((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "visible")) {
+				if (jsonParserFieldValue != null) {
+					sharedAsset.setVisible((Boolean)jsonParserFieldValue);
+				}
+			}
 		}
 
 	}
@@ -653,3 +678,4 @@ public class SharedAssetSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:654510131

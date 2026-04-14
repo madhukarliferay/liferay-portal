@@ -4,7 +4,6 @@
  */
 
 import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
-import ClayForm from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import ClayPopover from '@clayui/popover';
@@ -21,7 +20,7 @@ import {FieldFeedback} from 'frontend-js-components-web';
 import {sub} from 'frontend-js-web';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 
-import {getFilteredPage} from './translation';
+import {getFilteredPage, getNonLocalizableFieldMessage} from './translation';
 
 import './FieldBase.scss';
 
@@ -261,14 +260,9 @@ export default function FieldBase({
 		type,
 	]);
 
-	const nonLocalizableFieldMessage =
-		isLocalizationSupported === undefined
-			? Liferay.Language.get('this-field-cannot-be-localized')
-			: isLocalizationSupported
-				? Liferay.Language.get('translation-is-disabled-for-this-field')
-				: Liferay.Language.get(
-						'this-field-does-not-support-translations'
-					);
+	const nonLocalizableFieldMessage = getNonLocalizableFieldMessage(
+		isLocalizationSupported
+	);
 
 	const renderLabel =
 		(label && showLabel) || hideField || repeatable || required || tooltip;
@@ -278,6 +272,10 @@ export default function FieldBase({
 
 	const showDisabledFieldIcon =
 		editOnlyInDefaultLanguage && showLabel && readOnly;
+
+	const showNonLocalizableFieldTooltip =
+		showDisabledFieldIcon && !hiddenTranslations.length;
+
 	const showGroup =
 		type === 'checkbox_multiple' ||
 		type === 'grid' ||
@@ -285,10 +283,12 @@ export default function FieldBase({
 		type === 'radio';
 	const popoverOrTooltip = !!popover || !!tooltip;
 	const showFor =
+		type === 'auto-increment' ||
 		type === 'date' ||
 		type === 'date_time' ||
 		type === 'document_library' ||
 		type === 'image' ||
+		type === 'localizable_text' ||
 		type === 'numeric' ||
 		type === 'rich_text' ||
 		type === 'search_location' ||
@@ -297,10 +297,23 @@ export default function FieldBase({
 	const hasFieldDetails =
 		accessible && fieldDetails && readFieldDetails && type !== 'select';
 
+	const isGroup = type === 'fieldset';
+
+	const hasFormGroup =
+		errorMessage ||
+		typeof tip === 'string' ||
+		warningMessage ||
+		renderLabel ||
+		isGroup;
+
 	const accessiblePropsGroup = {
-		...(!renderLabel &&
-			hasFieldDetails && {'aria-labelledby': fieldDetailsId}),
-		...(type === 'fieldset' && {role: 'group'}),
+		...(isGroup && {
+			role: 'group',
+			...(!renderLabel &&
+				hasFieldDetails && {
+					'aria-labelledby': fieldDetailsId,
+				}),
+		}),
 	};
 
 	const accessiblePropsFields = {
@@ -503,9 +516,10 @@ export default function FieldBase({
 	}, [resetTranslations, markAsTranslated, translationFilterChange]);
 
 	return (
-		<ClayForm.Group
+		<div
 			{...accessiblePropsGroup}
 			className={classNames({
+				'form-group': hasFormGroup,
 				'has-error': hasError,
 				'has-warning': warningMessage && !hasError,
 				'hide': !visible,
@@ -550,7 +564,9 @@ export default function FieldBase({
 											),
 										});
 									},
-									type === 'text' ? 1000 : 0
+									type === 'fieldset' || type === 'text'
+										? 1000
+										: 0
 								);
 							}}
 							small
@@ -589,7 +605,9 @@ export default function FieldBase({
 										),
 									});
 								},
-								type === 'text' ? 1000 : 0
+								type === 'fieldset' || type === 'text'
+									? 1000
+									: 0
 							)
 						}
 						small
@@ -624,7 +642,7 @@ export default function FieldBase({
 								/>
 							)}
 
-							{showDisabledFieldIcon && (
+							{showNonLocalizableFieldTooltip && (
 								<FieldInformation
 									tooltip={nonLocalizableFieldMessage}
 								/>
@@ -666,7 +684,7 @@ export default function FieldBase({
 								/>
 							)}
 
-							{showDisabledFieldIcon && (
+							{showNonLocalizableFieldTooltip && (
 								<FieldInformation
 									tooltip={nonLocalizableFieldMessage}
 								/>
@@ -715,6 +733,6 @@ export default function FieldBase({
 			)}
 
 			{defaultRows && <Layout itemPath={itemPath} rows={defaultRows} />}
-		</ClayForm.Group>
+		</div>
 	);
 }

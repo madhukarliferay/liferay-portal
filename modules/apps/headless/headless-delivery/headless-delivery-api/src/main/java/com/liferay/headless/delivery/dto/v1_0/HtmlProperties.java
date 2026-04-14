@@ -144,9 +144,7 @@ public class HtmlProperties implements Serializable {
 			sb.append("\"htmlTag\": ");
 
 			sb.append("\"");
-
 			sb.append(htmlTag);
-
 			sb.append("\"");
 		}
 
@@ -290,3 +288,4 @@ public class HtmlProperties implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-2033282171

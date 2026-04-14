@@ -122,47 +122,6 @@ public interface CPMeasurementUnitPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp measurement unit in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit, or <code>null</code> if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-			orderByComparator);
-
-	/**
-	 * Returns the cp measurement units before and after the current cp measurement unit in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPMeasurementUnitId the primary key of the current cp measurement unit
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a cp measurement unit with the primary key could not be found
-	 */
-	public CPMeasurementUnit[] findByUuid_PrevAndNext(
-			long CPMeasurementUnitId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
 	 * Removes all the cp measurement units where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -322,50 +281,6 @@ public interface CPMeasurementUnitPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp measurement unit in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit, or <code>null</code> if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-			orderByComparator);
-
-	/**
-	 * Returns the cp measurement units before and after the current cp measurement unit in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPMeasurementUnitId the primary key of the current cp measurement unit
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a cp measurement unit with the primary key could not be found
-	 */
-	public CPMeasurementUnit[] findByUuid_C_PrevAndNext(
-			long CPMeasurementUnitId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
 	 * Removes all the cp measurement units where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -468,47 +383,6 @@ public interface CPMeasurementUnitPersistence
 		long companyId,
 		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit, or <code>null</code> if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-			orderByComparator);
-
-	/**
-	 * Returns the cp measurement units before and after the current cp measurement unit in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPMeasurementUnitId the primary key of the current cp measurement unit
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a cp measurement unit with the primary key could not be found
-	 */
-	public CPMeasurementUnit[] findByCompanyId_PrevAndNext(
-			long CPMeasurementUnitId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
 
 	/**
 	 * Removes all the cp measurement units where companyId = &#63; from the database.
@@ -670,50 +544,6 @@ public interface CPMeasurementUnitPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last cp measurement unit in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit findByC_T_Last(
-			long companyId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit, or <code>null</code> if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit fetchByC_T_Last(
-		long companyId, int type,
-		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-			orderByComparator);
-
-	/**
-	 * Returns the cp measurement units before and after the current cp measurement unit in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param CPMeasurementUnitId the primary key of the current cp measurement unit
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a cp measurement unit with the primary key could not be found
-	 */
-	public CPMeasurementUnit[] findByC_T_PrevAndNext(
-			long CPMeasurementUnitId, long companyId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
 	 * Removes all the cp measurement units where companyId = &#63; and type = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -829,53 +659,6 @@ public interface CPMeasurementUnitPersistence
 		long companyId, boolean primary, int type,
 		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
 			orderByComparator);
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where companyId = &#63; and primary = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit findByC_P_T_Last(
-			long companyId, boolean primary, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
-
-	/**
-	 * Returns the last cp measurement unit in the ordered set where companyId = &#63; and primary = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp measurement unit, or <code>null</code> if a matching cp measurement unit could not be found
-	 */
-	public CPMeasurementUnit fetchByC_P_T_Last(
-		long companyId, boolean primary, int type,
-		com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-			orderByComparator);
-
-	/**
-	 * Returns the cp measurement units before and after the current cp measurement unit in the ordered set where companyId = &#63; and primary = &#63; and type = &#63;.
-	 *
-	 * @param CPMeasurementUnitId the primary key of the current cp measurement unit
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp measurement unit
-	 * @throws NoSuchCPMeasurementUnitException if a cp measurement unit with the primary key could not be found
-	 */
-	public CPMeasurementUnit[] findByC_P_T_PrevAndNext(
-			long CPMeasurementUnitId, long companyId, boolean primary, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CPMeasurementUnit>
-				orderByComparator)
-		throws NoSuchCPMeasurementUnitException;
 
 	/**
 	 * Removes all the cp measurement units where companyId = &#63; and primary = &#63; and type = &#63; from the database.
@@ -1071,3 +854,4 @@ public interface CPMeasurementUnitPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:2011723215

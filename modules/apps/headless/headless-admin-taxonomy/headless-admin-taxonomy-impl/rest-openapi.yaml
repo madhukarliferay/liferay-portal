@@ -2,6 +2,10 @@ components:
     schemas:
         AssetLibrary:
             properties:
+                externalReferenceCode:
+                    description:
+                        The asset library's external reference code.
+                    type: string
                 id:
                     description:
                         The asset library's site ID.
@@ -19,6 +23,10 @@ components:
                         The localized asset library's name.
                     readOnly: true
                     type: object
+                scopeKey:
+                    description:
+                        The asset library's scope key.
+                    type: string
             type: object
         AssetType:
             description:
@@ -285,6 +293,11 @@ components:
                             readOnly: true
                             type: object
                     type: object
+                path:
+                    description:
+                        The path of the category.
+                    readOnly: true
+                    type: string
                 permissions:
                     items:
                         type: permission
@@ -315,6 +328,10 @@ components:
                         The `TaxonomyVocabulary` id, only if the category does not have a parent category.
                     format: int64
                     type: integer
+                uuid:
+                    description:
+                        The UUID of the category.
+                    type: string
                 viewableBy:
                     description:
                         A write-only property that specifies the category's default permissions.
@@ -448,6 +465,10 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
+                uuid:
+                    description:
+                        The UUID of the vocabulary.
+                    type: string
                 viewableBy:
                     description:
                         A write-only property that specifies the vocabulary's default permissions.
@@ -457,7 +478,7 @@ components:
                 visibilityType:
                     description:
                         The vocabulary's visibility type.
-                    enum: [PUBLIC, INTERNAL]
+                    enum: [EMPTY, INTERNAL, PUBLIC]
                     type: string
             required:
                 -   name
@@ -465,7 +486,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.admin.taxonomy.client', and version '4.0.43'."
+        'com.liferay.headless.admin.taxonomy.client', and version '4.0.47'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -1112,78 +1133,6 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["TaxonomyVocabulary"]
-    "/keywords":
-        get:
-            operationId: getKeywordsPage
-            parameters:
-                -   in: query
-                    name: aggregationTerms
-                    schema:
-                        items:
-                            type: string
-                        type: array
-                -   in: query
-                    name: fields
-                    schema:
-                        type: string
-                -   in: query
-                    name: filter
-                    schema:
-                        type: string
-                -   in: query
-                    name: page
-                    schema:
-                        type: integer
-                -   in: query
-                    name: pageSize
-                    schema:
-                        type: integer
-                -   in: query
-                    name: restrictFields
-                    schema:
-                        type: string
-                -   in: query
-                    name: search
-                    schema:
-                        type: string
-                -   in: query
-                    name: sort
-                    schema:
-                        type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/Keyword"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/Keyword"
-                                type: array
-            tags: ["Keyword"]
-        post:
-            operationId: postKeyword
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/Keyword"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/Keyword"
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/Keyword"
-                        application/xml:
-                            schema:
-                                $ref: "#/components/schemas/Keyword"
-            tags: ["Keyword"]
     "/keywords/ranked":
         get:
             operationId: getKeywordsRankedPage
@@ -1422,6 +1371,35 @@ paths:
                                     $ref: "#/components/schemas/Keyword"
                                 type: array
             tags: ["Keyword"]
+        patch:
+            description:
+                Updates only the fields received in the request body. Other fields are left untouched.
+            operationId: patchSiteKeyword
+            parameters:
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Keyword"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/Keyword"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Keyword"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/Keyword"
+            tags: ["Keyword"]
         post:
             description:
                 Inserts a new keyword in a Site.
@@ -1500,6 +1478,41 @@ paths:
                     name: restrictFields
                     schema:
                         type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Keyword"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/Keyword"
+            tags: ["Keyword"]
+        patch:
+            # @review
+            description:
+                Updates only the fields received in the request body. Other fields are left untouched.
+            operationId: patchSiteKeywordByExternalReferenceCode
+            parameters:
+                -   in: path
+                    name: siteId
+                    required: true
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: path
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Keyword"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/Keyword"
             responses:
                 200:
                     content:
@@ -2282,87 +2295,6 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["TaxonomyCategory"]
-    "/taxonomy-vocabularies":
-        get:
-            description:
-                Gets all taxonomy vocabularies that were created in CMS. Does not retrieve vocabularies created in DXP.
-                CMS vocabularies are distinguished by having a `groupId = 0`.
-            operationId: getTaxonomyVocabulariesPage
-            parameters:
-                -   in: query
-                    name: aggregationTerms
-                    schema:
-                        items:
-                            type: string
-                        type: array
-                -   in: query
-                    name: fields
-                    schema:
-                        type: string
-                -   in: query
-                    name: filter
-                    schema:
-                        type: string
-                -   in: query
-                    name: page
-                    schema:
-                        type: integer
-                -   in: query
-                    name: pageSize
-                    schema:
-                        type: integer
-                -   in: query
-                    name: restrictFields
-                    schema:
-                        type: string
-                -   in: query
-                    name: search
-                    schema:
-                        type: string
-                -   in: query
-                    name: sort
-                    schema:
-                        type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/TaxonomyVocabulary"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/TaxonomyVocabulary"
-                                type: array
-                    description:
-                        successful operation
-            tags: ["TaxonomyVocabulary"]
-        post:
-            description:
-                Creates the asset library's taxonomy vocabulary in the given spaces.
-            operationId: postTaxonomyVocabulary
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/TaxonomyVocabulary"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/TaxonomyVocabulary"
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/TaxonomyVocabulary"
-                        application/xml:
-                            schema:
-                                $ref: "#/components/schemas/TaxonomyVocabulary"
-                    description:
-                        successful operation
-            tags: ["TaxonomyVocabulary"]
     "/taxonomy-vocabularies/{taxonomyVocabularyId}":
         delete:
             description:

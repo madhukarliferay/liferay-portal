@@ -6,13 +6,13 @@
 import {Locator, expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedLayoutTest} from '../../../fixtures/isolatedLayoutTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {searchPageTest} from '../../../fixtures/searchPageTest';
 import getRandomString from '../../../utils/getRandomString';
-import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
 
 export const test = mergeTests(
 	isolatedLayoutTest({type: 'portlet'}),
@@ -20,10 +20,13 @@ export const test = mergeTests(
 	loginTest(),
 	searchPageTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPS-178052': {enabled: true},
+	}),
 	pageEditorPagesTest
 );
 
-test.describe('Category facet configuration for vocabularies', () => {
+test.describe('Category Facet', () => {
 	test('Lists 20+ sites available to the user @LPD-33194', async ({
 		apiHelpers,
 		layout,
@@ -38,7 +41,10 @@ test.describe('Category facet configuration for vocabularies', () => {
 					name: `${siteName}-${count}`,
 				});
 
-				apiHelpers.data.push({id: newSite.id, type: 'site'});
+				apiHelpers.data.push({
+					id: newSite.externalReferenceCode,
+					type: 'site',
+				});
 			}
 		});
 
@@ -83,87 +89,7 @@ test.describe('Category facet configuration for vocabularies', () => {
 	});
 });
 
-test.describe('Retain items per page in search paginator', () => {
-	test('Retains items per page after new keyword search @LPD-19994', async ({
-		apiHelpers,
-		page,
-		searchPage,
-		site,
-	}) => {
-		let siteLayout: Layout;
-
-		await test.step('Create web content for search results', async () => {
-			const basicWebContentStructureId =
-				await getBasicWebContentStructureId(apiHelpers);
-
-			for (let count = 0; count < 21; count++) {
-				await apiHelpers.jsonWebServicesJournal.addWebContent({
-					ddmStructureId: basicWebContentStructureId,
-					groupId: site.id,
-					titleMap: {en_US: `Test Web Content ${count}`},
-				});
-			}
-		});
-
-		await test.step('Create a portlet page associated to site', async () => {
-			siteLayout = await apiHelpers.jsonWebServicesLayout.addLayout({
-				groupId: site.id,
-				options: {type: 'portlet'},
-				title: getRandomString(),
-			});
-		});
-
-		await test.step('Navigate to the site page', async () => {
-			await page.goto(
-				`/web${site.friendlyUrlPath}${siteLayout.friendlyURL}`
-			);
-		});
-
-		await test.step('Add search bar and results portlet to new page', async () => {
-			await searchPage.addPortlet('Search Bar', 'Search');
-
-			await searchPage.addPortlet('Search Results', 'Search');
-		});
-
-		await test.step('Perform new search', async () => {
-			await searchPage.searchKeywordInMainContent('test');
-
-			await expect(searchPage.searchResultsTotalLabel).toHaveText(
-				/\d+ Results for test/
-			);
-		});
-
-		await test.step('Change pagination items per page and page number', async () => {
-			await searchPage.selectPaginationItemsPerPage(20);
-
-			await searchPage.selectPaginationPageNumber(2);
-		});
-
-		await test.step('Perform new search with different keyword', async () => {
-			await searchPage.searchKeywordInMainContent('web');
-
-			await expect(searchPage.searchResultsTotalLabel).toHaveText(
-				/\d+ Results for web/
-			);
-		});
-
-		await test.step('Verify that page number is reset but items per page is not', async () => {
-			await expect(
-				searchPage.searchResultsPaginationItemsPerPageToggle
-			).toHaveText(/20 Entries/);
-
-			await expect(
-				searchPage.searchResultsPaginationBar.getByText('1').first()
-			).toHaveAttribute('aria-current', 'page');
-
-			await expect(
-				searchPage.searchResultsPaginationDescription
-			).toHaveText(/Showing 1 to 20 of \d+ entries./);
-		});
-	});
-});
-
-test.describe('Clear and retain facet selections', () => {
+test.describe('Selection Persistence', () => {
 	let typeDocumentFacetCheckbox: Locator;
 	let folderLiferayFacetCheckbox: Locator;
 	let userTestTestFacetCheckbox: Locator;
@@ -336,6 +262,171 @@ test.describe('Clear and retain facet selections', () => {
 			await expect(lastModifiedPastYearFacetLink).toHaveClass(
 				/facet-term-selected/
 			);
+		});
+	});
+});
+
+test.describe('Custom Facet', () => {
+	test('Shows no registration warning when adding a custom facet with date picker', async ({
+		apiHelpers,
+		page,
+		pageEditorPage,
+		searchPage,
+		site,
+	}) => {
+		let layout: Layout;
+
+		await test.step('Create site page and go to the page', async () => {
+			layout = await apiHelpers.headlessDelivery.createSitePage({
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+		});
+
+		await test.step('Add custom facet to new page', async () => {
+			await pageEditorPage.addWidget('Search', 'Search Bar');
+
+			await pageEditorPage.addWidget('Search', 'Custom Facet');
+		});
+
+		await test.step('Configure custom facet to aggregate by date', async () => {
+			const customFacetFragmentId =
+				await pageEditorPage.getFragmentId('Custom Facet');
+
+			await pageEditorPage.clickFragmentOption(
+				customFacetFragmentId,
+				'Configuration'
+			);
+
+			await searchPage.modalIFrame
+				.getByLabel('Aggregation Type', {exact: true})
+				.selectOption('Date Range');
+
+			await searchPage.modalIFrame
+				.getByLabel('Aggregation Field Required')
+				.fill('modified');
+
+			await searchPage.savePortletConfiguration();
+		});
+
+		await test.step('Publish page and exit edit mode', async () => {
+			await pageEditorPage.publishPage();
+
+			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+		});
+
+		await test.step('Conduct a sample search', async () => {
+			await searchPage.searchKeywordInMainContent('test');
+
+			await page.getByLabel('Custom Range', {exact: false}).click();
+		});
+
+		await test.step('Expect no warnings about the date picker registration', async () => {
+			let warningOccurred = false;
+
+			page.on('console', (message) => {
+				if (
+					message.type() === 'warning' &&
+					message
+						.text()
+						.includes('DatePicker" is being registered twice')
+				) {
+					warningOccurred = true;
+				}
+			});
+
+			await page.waitForTimeout(500);
+
+			expect(warningOccurred).toBe(false);
+		});
+	});
+});
+
+test.describe('Folder Facet', () => {
+	test('Includes CMS object entry folders @LPD-75959', async ({
+		apiHelpers,
+		layout,
+		page,
+		searchPage,
+	}) => {
+		let folderFacetTerm: Locator;
+		let objectEntryContent: any;
+		let objectEntryFolder: any;
+		let space: any;
+
+		const cmsId = `CMS_${getRandomString()}`;
+
+		await test.step('Create a new Space', async () => {
+			space = await apiHelpers.headlessAssetLibrary.createAssetLibrary({
+				name: `Space ${cmsId}`,
+				settings: {},
+				type: 'Space',
+			});
+		});
+
+		await test.step('Create a folder for that space', async () => {
+			objectEntryFolder =
+				await apiHelpers.objectFolder.createObjectEntryFolder({
+					parentObjectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					scopeKey: space.siteId,
+					title: `${cmsId} Folder`,
+				});
+		});
+
+		await test.step('Create a web content within the new folder', async () => {
+			objectEntryContent = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode:
+						objectEntryFolder.externalReferenceCode,
+					title: `${cmsId} Content`,
+				},
+				'cms/basic-web-contents',
+				space.name
+			);
+		});
+
+		await test.step('Add search widgets to new page', async () => {
+			await page.goto('/web/guest' + layout.friendlyURL);
+
+			await searchPage.addPortlet('Search Bar', 'Search');
+			await searchPage.addPortlet('Folder Facet', 'Search');
+			await searchPage.addPortlet('Search Results', 'Search');
+		});
+
+		await test.step('Configure search bar scope', async () => {
+			await searchPage.openSearchPortletConfiguration('Search Bar', 1);
+
+			await searchPage.selectPortletConfigurationsSelect([
+				{
+					label: 'Scope',
+					value: 'Everything',
+				},
+			]);
+
+			await searchPage.savePortletConfiguration();
+		});
+
+		await test.step('Search for CMS and expect to see the folder facet term', async () => {
+			await searchPage.searchKeywordInMainContent(cmsId);
+
+			folderFacetTerm = await searchPage.getSearchFacetCheckbox(
+				objectEntryFolder.title,
+				'Folder'
+			);
+
+			await expect(folderFacetTerm).toBeVisible();
+		});
+
+		await test.step('Select the folder facet term and expect to see results', async () => {
+			await searchPage.selectSearchFacetCheckbox(folderFacetTerm);
+
+			await expect(
+				searchPage.searchResults.getByRole('link', {
+					name: objectEntryContent.title,
+				})
+			).toBeVisible();
 		});
 	});
 });

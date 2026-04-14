@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.io.Serializable;
 
+import java.util.Date;
 import java.util.List;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -223,6 +224,11 @@ public interface ObjectEntryVersionLocalService
 		throws Exception;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectEntryVersion fetchLatestApprovedObjectEntryVersion(
+		long objectEntryId,
+		OrderByComparator<ObjectEntryVersion> orderByComparator);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ObjectEntryVersion fetchObjectEntryVersion(
 		long objectEntryVersionId);
 
@@ -301,6 +307,11 @@ public interface ObjectEntryVersionLocalService
 	public List<ObjectEntryVersion> getObjectEntryVersions(
 		long objectEntryId, int start, int end);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ObjectEntryVersion> getObjectEntryVersions(
+		long objectEntryId, int start, int end,
+		OrderByComparator<ObjectEntryVersion> orderByComparator);
+
 	/**
 	 * Returns the number of object entry versions.
 	 *
@@ -335,6 +346,10 @@ public interface ObjectEntryVersionLocalService
 			ObjectEntry objectEntry)
 		throws PortalException;
 
+	public ObjectEntryVersion updateLatestObjectEntryVersionModifiedDate(
+			Date modifiedDate, long objectEntryId)
+		throws PortalException;
+
 	/**
 	 * Updates the object entry version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -350,3 +365,4 @@ public interface ObjectEntryVersionLocalService
 		ObjectEntryVersion objectEntryVersion);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1122493362

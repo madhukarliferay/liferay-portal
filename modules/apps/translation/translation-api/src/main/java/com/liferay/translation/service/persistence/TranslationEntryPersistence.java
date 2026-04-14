@@ -121,47 +121,6 @@ public interface TranslationEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last translation entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching translation entry
-	 * @throws NoSuchEntryException if a matching translation entry could not be found
-	 */
-	public TranslationEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last translation entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching translation entry, or <code>null</code> if a matching translation entry could not be found
-	 */
-	public TranslationEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the translation entries before and after the current translation entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param translationEntryId the primary key of the current translation entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next translation entry
-	 * @throws NoSuchEntryException if a translation entry with the primary key could not be found
-	 */
-	public TranslationEntry[] findByUuid_PrevAndNext(
-			long translationEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the translation entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface TranslationEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last translation entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching translation entry
-	 * @throws NoSuchEntryException if a matching translation entry could not be found
-	 */
-	public TranslationEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last translation entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching translation entry, or <code>null</code> if a matching translation entry could not be found
-	 */
-	public TranslationEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the translation entries before and after the current translation entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param translationEntryId the primary key of the current translation entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next translation entry
-	 * @throws NoSuchEntryException if a translation entry with the primary key could not be found
-	 */
-	public TranslationEntry[] findByUuid_C_PrevAndNext(
-			long translationEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the translation entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -474,50 +389,6 @@ public interface TranslationEntryPersistence
 		long classNameId, long classPK,
 		com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last translation entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching translation entry
-	 * @throws NoSuchEntryException if a matching translation entry could not be found
-	 */
-	public TranslationEntry findByC_C_Last(
-			long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last translation entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching translation entry, or <code>null</code> if a matching translation entry could not be found
-	 */
-	public TranslationEntry fetchByC_C_Last(
-		long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the translation entries before and after the current translation entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param translationEntryId the primary key of the current translation entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next translation entry
-	 * @throws NoSuchEntryException if a translation entry with the primary key could not be found
-	 */
-	public TranslationEntry[] findByC_C_PrevAndNext(
-			long translationEntryId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<TranslationEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
 
 	/**
 	 * Removes all the translation entries where classNameId = &#63; and classPK = &#63; from the database.
@@ -717,3 +588,4 @@ public interface TranslationEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-458017543

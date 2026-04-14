@@ -435,6 +435,9 @@ public interface PropsKeys {
 	public static final String CLUSTERABLE_ADVICE_CALL_MASTER_TIMEOUT =
 		"clusterable.advice.call.master.timeout";
 
+	public static final String CMS_BROKEN_LINKS_CHECKER_ENABLED =
+		"cms.broken.links.checker.enabled";
+
 	public static final String COMBO_ALLOWED_FILE_EXTENSIONS =
 		"combo.allowed.file.extensions";
 
@@ -487,6 +490,8 @@ public interface PropsKeys {
 
 	public static final String COMPANY_LOGIN_PREPOPULATE_DOMAIN =
 		"company.login.prepopulate.domain";
+
+	public static final String COMPANY_MX_UPDATE = "company.mx.update";
 
 	public static final String COMPANY_PREDICTABLE_COMPANY_IDS_ENABLED =
 		"company.predictable.company.ids.enabled";
@@ -602,6 +607,15 @@ public interface PropsKeys {
 
 	public static final String DATABASE_ORDER_BY_MAX_COLUMNS =
 		"database.order.by.max.columns";
+
+	public static final String DATABASE_PARTITION_ENABLED =
+		"database.partition.enabled";
+
+	public static final String DATABASE_PARTITION_SCHEMA_NAME_PREFIX =
+		"database.partition.schema.name.prefix";
+
+	public static final String DATABASE_PARTITION_THREAD_POOL_ENABLED =
+		"database.partition.thread.pool.enabled";
 
 	public static final String DATABASE_STRING_INDEX_MAX_LENGTH =
 		"database.string.index.max.length";
@@ -1104,6 +1118,9 @@ public interface PropsKeys {
 
 	public static final String IMAGE_AUTO_SCALE = "image.auto.scale";
 
+	public static final String IMAGE_DEFAULT_COMPANY_GROUP_LOGO =
+		"image.default.company.group.logo";
+
 	public static final String IMAGE_DEFAULT_COMPANY_LOGO =
 		"image.default.company.logo";
 
@@ -1140,6 +1157,8 @@ public interface PropsKeys {
 
 	public static final String INDEX_DATE_FORMAT_PATTERN =
 		"index.date.format.pattern";
+
+	public static final String INDEX_INTERVAL = "index.interval";
 
 	public static final String INDEX_ON_STARTUP = "index.on.startup";
 
@@ -1354,6 +1373,10 @@ public interface PropsKeys {
 	public static final String LAYOUT_FRIENDLY_URL_PUBLIC_SERVLET_MAPPING =
 		"layout.friendly.url.public.servlet.mapping";
 
+	public static final String
+		LAYOUT_FRIENDLY_URL_PUBLIC_SERVLET_MAPPING_ENABLED =
+			"layout.friendly.url.public.servlet.mapping.enabled";
+
 	public static final String LAYOUT_GUEST_SHOW_MAX_ICON =
 		"layout.guest.show.max.icon";
 
@@ -1517,55 +1540,6 @@ public interface PropsKeys {
 	public static final String LOGOUT_EVENTS_POST = "logout.events.post";
 
 	public static final String LOGOUT_EVENTS_PRE = "logout.events.pre";
-
-	public static final String MAIL_AUDIT_TRAIL = "mail.audit.trail";
-
-	public static final String MAIL_BATCH_SIZE = "mail.batch.size";
-
-	public static final String MAIL_MX_UPDATE = "mail.mx.update";
-
-	public static final String MAIL_SEND_BLACKLIST = "mail.send.blacklist";
-
-	public static final String MAIL_SESSION_MAIL = "mail.session.mail";
-
-	public static final String MAIL_SESSION_MAIL_ADVANCED_PROPERTIES =
-		"mail.session.mail.advanced.properties";
-
-	public static final String MAIL_SESSION_MAIL_POP3_HOST =
-		"mail.session.mail.pop3.host";
-
-	public static final String MAIL_SESSION_MAIL_POP3_PASSWORD =
-		"mail.session.mail.pop3.password";
-
-	public static final String MAIL_SESSION_MAIL_POP3_PORT =
-		"mail.session.mail.pop3.port";
-
-	public static final String MAIL_SESSION_MAIL_POP3_USER =
-		"mail.session.mail.pop3.user";
-
-	public static final String MAIL_SESSION_MAIL_SMTP_HOST =
-		"mail.session.mail.smtp.host";
-
-	public static final String MAIL_SESSION_MAIL_SMTP_PASSWORD =
-		"mail.session.mail.smtp.password";
-
-	public static final String MAIL_SESSION_MAIL_SMTP_PORT =
-		"mail.session.mail.smtp.port";
-
-	public static final String MAIL_SESSION_MAIL_SMTP_STARTTLS_ENABLE =
-		"mail.session.mail.smtp.starttls.enable";
-
-	public static final String MAIL_SESSION_MAIL_SMTP_USER =
-		"mail.session.mail.smtp.user";
-
-	public static final String MAIL_SESSION_MAIL_STORE_PROTOCOL =
-		"mail.session.mail.store.protocol";
-
-	public static final String MAIL_SESSION_MAIL_TRANSPORT_PROTOCOL =
-		"mail.session.mail.transport.protocol";
-
-	public static final String MAIL_THROWS_EXCEPTION_ON_FAILURE =
-		"mail.throws.exception.on.failure";
 
 	public static final String MARKETPLACE_CLIENT_ID = "marketplace.client.id";
 
@@ -2039,8 +2013,6 @@ public interface PropsKeys {
 	public static final String PERMISSIONS_CHECK_GUEST_ENABLED =
 		"permissions.check.guest.enabled";
 
-	public static final String PERMISSIONS_CHECKER = "permissions.checker";
-
 	public static final String
 		PERMISSIONS_CUSTOM_ATTRIBUTE_READ_CHECK_BY_DEFAULT =
 			"permissions.custom.attribute.read.check.by.default";
@@ -2067,11 +2039,6 @@ public interface PropsKeys {
 
 	public static final String PHONE_NUMBER_FORMAT_USA_REGEXP =
 		"phone.number.format.usa.regexp";
-
-	public static final String POP_SERVER_NOTIFICATIONS_ENABLED =
-		"pop.server.notifications.enabled";
-
-	public static final String POP_SERVER_SUBDOMAIN = "pop.server.subdomain";
 
 	public static final String PORTAL_IMPERSONATION_DEFAULT_URL =
 		"portal.impersonation.default.url";

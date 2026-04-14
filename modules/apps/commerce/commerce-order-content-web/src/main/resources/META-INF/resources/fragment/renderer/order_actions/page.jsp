@@ -16,6 +16,12 @@
 			).put(
 				"isOpen", open
 			).put(
+				"isPriceOnApplication", priceOnApplication
+			).put(
+				"manageNotesPermission", manageNotesPermission
+			).put(
+				"manageRestrictedNotesPermission", manageRestrictedNotesPermission
+			).put(
 				"orderId", commerceOrderId
 			).put(
 				"orderSummaryURL", orderSummaryURL

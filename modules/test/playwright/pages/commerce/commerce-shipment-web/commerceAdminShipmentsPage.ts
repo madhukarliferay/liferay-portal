@@ -5,14 +5,13 @@
 
 import {FrameLocator, Locator, Page} from '@playwright/test';
 
-import {ApplicationsMenuPage} from '../../product-navigation-applications-menu/ApplicationsMenuPage';
+import {GlobalMenuPage} from '../../product-navigation-applications-menu/GlobalMenuPage';
 import {searchTableRowByValue} from '../commerceDNDTablePage';
 import {CommerceIframeDNDTablePage} from '../commerceIframeDNDTablePage';
 
 export class CommerceAdminShipmentsPage extends CommerceIframeDNDTablePage {
 	readonly addQuantityInShipment: Locator;
 	readonly addProductsToShipment: Locator;
-	readonly applicationsMenuPage: ApplicationsMenuPage;
 	readonly backLink: Locator;
 	readonly carrierDetailsEditLink: Locator;
 	readonly carrierDetailsSubmitButton: Locator;
@@ -35,9 +34,10 @@ export class CommerceAdminShipmentsPage extends CommerceIframeDNDTablePage {
 		value: number | string,
 		strictEqual?: boolean
 	) => Promise<{column: Locator; row: Locator}>;
+	readonly globalMenuPage: GlobalMenuPage;
 	readonly keyShipmentStatus: (orderStatus: string) => Locator;
 	readonly page: Page;
-	readonly productEllipsis: Locator;
+	readonly productEllipsis: (productName: string) => Locator;
 	readonly productsSkuLink: (sku: string) => Locator;
 	readonly shipmentIdLink: (shipmentId: string) => Locator;
 	readonly shipmentsItemSubmitButton: Locator;
@@ -68,7 +68,7 @@ export class CommerceAdminShipmentsPage extends CommerceIframeDNDTablePage {
 		this.addProductsToShipment = page.getByText(
 			'Add Products to This Shipment'
 		);
-		this.applicationsMenuPage = new ApplicationsMenuPage(page);
+		this.globalMenuPage = new GlobalMenuPage(page);
 		this.carrierDetailsEditLink = page
 			.getByText('Carrier Details Edit')
 			.getByRole('link');
@@ -142,10 +142,11 @@ export class CommerceAdminShipmentsPage extends CommerceIframeDNDTablePage {
 		this.keyShipmentStatus = (orderStatus: string) =>
 			page.getByText(orderStatus);
 		this.page = page;
-		this.productEllipsis = page.getByRole('button', {
-			exact: true,
-			name: 'Actions',
-		});
+		this.productEllipsis = (productName: string) =>
+			page.getByRole('button', {
+				exact: true,
+				name: `${productName} Actions`,
+			});
 		this.productsSkuLink = (sku: string) =>
 			page.getByRole('link', {exact: true, name: sku});
 		this.shipmentIdLink = (shipmentId: string) =>
@@ -169,7 +170,7 @@ export class CommerceAdminShipmentsPage extends CommerceIframeDNDTablePage {
 			);
 
 			if (shipmentTableRow && shipmentTableRow.column) {
-				return shipmentTableRow.row.getByLabel('', {exact: true});
+				return shipmentTableRow.row.getByLabel('');
 			}
 
 			throw new Error(`Cannot locate shipment row with value ${value}`);
@@ -183,6 +184,6 @@ export class CommerceAdminShipmentsPage extends CommerceIframeDNDTablePage {
 	}
 
 	async goTo() {
-		await this.applicationsMenuPage.goToCommerceShipments();
+		await this.globalMenuPage.goToCommerce('Shipments');
 	}
 }

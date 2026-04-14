@@ -9,21 +9,20 @@ import {accountsPagesTest} from '../../../fixtures/accountsPagesTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
+import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 import getRandomString from '../../../utils/getRandomString';
-import {
-	performLoginViaApi,
-	performLogout,
-	userData,
-} from '../../../utils/performLogin';
+import {performUserSwitch, userData} from '../../../utils/performLogin';
 import {waitForAlert} from '../../../utils/waitForAlert';
 
 export const test = mergeTests(
 	accountsPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPD-47858': {enabled: true},
+		'LPD-35443': {enabled: true},
+		'LPD-36105': {enabled: true},
 	}),
-	loginTest()
+	loginTest(),
+	usersAndOrganizationsPagesTest
 );
 
 test(
@@ -202,6 +201,10 @@ test('Can add and edit an account group', async ({
 	};
 
 	await accountGroupsPage.goto();
+
+	await expect(
+		accountGroupsPage.accountGroupsTable.searchInput
+	).toBeEditable();
 
 	await accountGroupsPage.accountGroupsTable.newButton.click();
 	await editAccountGroupPage.addAccountGroup(apiHelpers, accountGroup);
@@ -955,8 +958,7 @@ test('User without Assign Account permission can not assign/unassign account to 
 		userAccount.id
 	);
 
-	await performLogout(page);
-	await performLoginViaApi({page, screenName: userAccount.alternateName});
+	await performUserSwitch(page, userAccount.alternateName);
 
 	await accountGroupsPage.goto(false);
 
@@ -1050,8 +1052,7 @@ test('User with Assign Account permission can assign/unassign account to an acco
 		userAccount.id
 	);
 
-	await performLogout(page);
-	await performLoginViaApi({page, screenName: userAccount.alternateName});
+	await performUserSwitch(page, userAccount.alternateName);
 
 	await accountGroupsPage.goto(false);
 
@@ -1162,8 +1163,7 @@ test('User without View Account permission can not view accounts in an account g
 		userAccount.id
 	);
 
-	await performLogout(page);
-	await performLoginViaApi({page, screenName: userAccount.alternateName});
+	await performUserSwitch(page, userAccount.alternateName);
 
 	await accountGroupsPage.goto(false);
 
@@ -1241,8 +1241,7 @@ test('User with View Account permission can view accounts in an account group', 
 		userAccount.id
 	);
 
-	await performLogout(page);
-	await performLoginViaApi({page, screenName: userAccount.alternateName});
+	await performUserSwitch(page, userAccount.alternateName);
 
 	await accountGroupsPage.goto(false);
 
@@ -1309,8 +1308,7 @@ test('User with Access in Control Panel permission can view account groups secti
 		userAccount.id
 	);
 
-	await performLogout(page);
-	await performLoginViaApi({page, screenName: userAccount.alternateName});
+	await performUserSwitch(page, userAccount.alternateName);
 
 	await accountGroupsPage.goto(false);
 
@@ -1376,8 +1374,7 @@ test(
 			userAccount.id
 		);
 
-		await performLogout(page);
-		await performLoginViaApi({page, screenName: userAccount.alternateName});
+		await performUserSwitch(page, userAccount.alternateName);
 
 		await accountGroupsPage.goto(false);
 
@@ -1556,6 +1553,179 @@ test(
 		).toHaveCount(0);
 		await expect(
 			accountGroupsPage.accountGroupsTable.cell('1', true)
+		).toBeVisible();
+	}
+);
+
+test(
+	'Test XSS vulnerability when adding account with malicious name to account group',
+	{tag: ['@LPD-70188']},
+	async ({
+		accountGroupAccountSelectorPage,
+		accountGroupAccountsPage,
+		accountGroupsPage,
+		apiHelpers,
+		page,
+	}) => {
+		const xssString = `AnyName<img src=x onerror="alert('xss')">`;
+
+		await apiHelpers.headlessAdminUser.postAccount({
+			name: xssString,
+			type: 'business',
+		});
+
+		const accountGroup =
+			await apiHelpers.headlessAdminUser.postAccountGroup({
+				name: getRandomString(),
+			});
+
+		apiHelpers.data.push({id: accountGroup.id, type: 'accountGroup'});
+
+		const userAccount =
+			await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[userAccount.alternateName] = {
+			name: userAccount.givenName,
+			password: 'test',
+			surname: userAccount.familyName,
+		};
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['VIEW_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName: '90',
+					scope: 1,
+				},
+				{
+					actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesAdminPortlet',
+					scope: 1,
+				},
+				{
+					actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName:
+						'com_liferay_account_admin_web_internal_portlet_AccountGroupsAdminPortlet',
+					scope: 1,
+				},
+				{
+					actionIds: ['UPDATE', 'VIEW'],
+					primaryKey: companyId,
+					resourceName: 'com.liferay.account.model.AccountEntry',
+					scope: 1,
+				},
+				{
+					actionIds: ['ASSIGN_ACCOUNTS', 'VIEW', 'VIEW_ACCOUNTS'],
+					primaryKey: companyId,
+					resourceName: 'com.liferay.account.model.AccountGroup',
+					scope: 1,
+				},
+			],
+		});
+
+		await apiHelpers.headlessAdminUser.postRoleByExternalReferenceCodeUserAccountAssociation(
+			role.externalReferenceCode,
+			userAccount.id
+		);
+
+		await performUserSwitch(page, userAccount.alternateName);
+
+		await accountGroupsPage.goto(false);
+		await accountGroupsPage.accountGroupLink(accountGroup.name).click();
+
+		await expect(async () => {
+			await expect(
+				accountGroupAccountsPage.accountsTable.searchInput
+			).toBeEditable();
+
+			await accountGroupAccountsPage.accountsTable.newButton.click();
+
+			await expect(
+				accountGroupAccountSelectorPage.accountsTable.cell(xssString)
+			).toBeVisible();
+		}).toPass();
+
+		page.on('dialog', async (dialog) => {
+			if (dialog.type() === 'alert') {
+				throw new Error('XSS');
+			}
+		});
+
+		await accountGroupAccountSelectorPage.selectAccounts([xssString]);
+
+		await expect(
+			accountGroupAccountsPage.accountsTable.cell(xssString)
+		).toBeVisible();
+	}
+);
+
+test(
+	'Test XSS vulnerability when adding organization with malicious name to an account in account group',
+	{tag: ['@LPD-71278']},
+	async ({
+		accountGroupAccountsPage,
+		accountGroupsPage,
+		apiHelpers,
+		editOrganizationPage,
+		page,
+		usersAndOrganizationsPage,
+	}) => {
+		const xssString = `AnyName<img src=x onerror="alert('xss')">`;
+
+		const organization =
+			await apiHelpers.headlessAdminUser.postOrganization();
+
+		const account = await apiHelpers.headlessAdminUser.postAccount();
+
+		await apiHelpers.headlessAdminUser.postAccountOrganization(
+			account.id,
+			organization.id
+		);
+
+		const accountGroup =
+			await apiHelpers.headlessAdminUser.postAccountGroup({
+				name: getRandomString(),
+			});
+
+		await apiHelpers.headlessAdminUser.assignAccountToAccountGroup(
+			account.externalReferenceCode,
+			accountGroup.externalReferenceCode
+		);
+
+		apiHelpers.data.push({id: accountGroup.id, type: 'accountGroup'});
+
+		await usersAndOrganizationsPage.goToOrganizations();
+
+		await (
+			await usersAndOrganizationsPage.organizationsTable.rowActions(
+				organization.name
+			)
+		).click();
+		await usersAndOrganizationsPage.editOrganizationMenuItem.click();
+		await editOrganizationPage.nameInput.fill(xssString);
+		await editOrganizationPage.saveButton.click();
+
+		page.on('dialog', async (dialog) => {
+			if (dialog.type() === 'alert') {
+				throw new Error('XSS');
+			}
+		});
+
+		await accountGroupsPage.goto(false);
+
+		await accountGroupsPage.accountGroupLink(accountGroup.name).click();
+
+		await expect(
+			accountGroupAccountsPage.accountsTable.cell(xssString)
 		).toBeVisible();
 	}
 );

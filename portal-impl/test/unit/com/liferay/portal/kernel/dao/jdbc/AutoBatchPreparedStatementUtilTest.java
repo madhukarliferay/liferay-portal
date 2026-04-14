@@ -5,12 +5,12 @@
 
 package com.liferay.portal.kernel.dao.jdbc;
 
+import com.liferay.petra.concurrent.DefaultNoticeableFuture;
 import com.liferay.petra.concurrent.NoticeableThreadPoolExecutor;
 import com.liferay.petra.concurrent.ThreadPoolHandlerAdapter;
 import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.concurrent.DefaultNoticeableFuture;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.SwappableSecurityManager;
@@ -31,7 +31,6 @@ import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,7 +176,7 @@ public class AutoBatchPreparedStatementUtilTest {
 	}
 
 	@Test
-	public void testConcurrentWaitingForFutures() throws SQLException {
+	public void testConcurrentWaitingForFutures() throws Exception {
 		PropsUtil.set(PropsKeys.HIBERNATE_JDBC_BATCH_SIZE, "0");
 
 		doTestConcurrentWaitingForFutures(true);
@@ -316,7 +315,7 @@ public class AutoBatchPreparedStatementUtilTest {
 
 	protected void doTestConcurrentWaitingForFutures(
 			boolean supportBatchUpdates)
-		throws SQLException {
+		throws Exception {
 
 		TestNoticeableFuture<Void> testNoticeableFuture =
 			new TestNoticeableFuture<>();

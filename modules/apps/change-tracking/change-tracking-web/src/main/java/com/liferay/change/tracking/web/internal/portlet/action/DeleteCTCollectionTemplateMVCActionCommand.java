@@ -6,10 +6,10 @@
 package com.liferay.change.tracking.web.internal.portlet.action;
 
 import com.liferay.change.tracking.constants.CTPortletKeys;
-import com.liferay.change.tracking.model.CTCollectionTemplate;
-import com.liferay.change.tracking.service.CTCollectionTemplateLocalService;
+import com.liferay.change.tracking.service.CTCollectionTemplateService;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -40,13 +40,12 @@ public class DeleteCTCollectionTemplateMVCActionCommand
 		long ctCollectionTemplateId = ParamUtil.getLong(
 			actionRequest, "ctCollectionTemplateId");
 
-		CTCollectionTemplate ctCollectionTemplate =
-			_ctCollectionTemplateLocalService.fetchCTCollectionTemplate(
+		try {
+			_ctCollectionTemplateService.deleteCTCollectionTemplate(
 				ctCollectionTemplateId);
-
-		if (ctCollectionTemplate != null) {
-			_ctCollectionTemplateLocalService.deleteCTCollectionTemplate(
-				ctCollectionTemplate);
+		}
+		catch (Exception exception) {
+			SessionErrors.add(actionRequest, exception.getClass());
 		}
 
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
@@ -57,6 +56,6 @@ public class DeleteCTCollectionTemplateMVCActionCommand
 	}
 
 	@Reference
-	private CTCollectionTemplateLocalService _ctCollectionTemplateLocalService;
+	private CTCollectionTemplateService _ctCollectionTemplateService;
 
 }

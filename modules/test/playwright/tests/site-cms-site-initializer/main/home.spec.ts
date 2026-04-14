@@ -9,136 +9,624 @@ import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {workflowPagesTest} from '../../../fixtures/workflowPagesTest';
+import getRandomString from '../../../utils/getRandomString';
+import performLogin, {
+	performLogout,
+	userData,
+} from '../../../utils/performLogin';
 import {cmsPagesTest} from './fixtures/cmsPagesTest';
+import {DataSetPage} from './pages/DataSetPage';
 
 const test = mergeTests(
 	cmsPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
+		'LPD-11235': {enabled: true},
 		'LPD-17564': {enabled: true},
-		'LPS-179669': {enabled: true},
 	}),
 	loginTest(),
 	workflowPagesTest
 );
 
-interface CreatedEntities {
-	blogPosts?: TBlogPost[];
-}
+test(
+	'My Workflow Tasks full view preserves the back button when switching tabs',
+	{tag: '@LPD-78912'},
+	async ({context, homePage, page}) => {
+		await homePage.goto();
 
-const createdEntities: CreatedEntities = {};
+		const [fullViewPage] = await Promise.all([
+			context.waitForEvent('page'),
+			page
+				.getByRole('button', {
+					name: /Open My Workflow Tasks: Assigned to Me/i,
+				})
+				.click(),
+		]);
 
-test.afterEach(async ({apiHelpers, configurationTabPage}) => {
-	await configurationTabPage.goTo();
+		await fullViewPage.waitForLoadState();
 
-	await configurationTabPage.unassignWorkflowFromAssetType('Blogs Entry');
+		const backButton = fullViewPage.getByRole('link', {
+			name: 'Return to Full Page',
+		});
 
-	if (createdEntities.blogPosts?.length) {
-		for (const blog of createdEntities.blogPosts) {
-			await apiHelpers.headlessDelivery.deleteBlog(blog.id);
-		}
+		await expect(backButton).toBeVisible();
+
+		await fullViewPage
+			.getByRole('link', {
+				name: 'Assigned to Me',
+			})
+			.click();
+
+		await fullViewPage.waitForLoadState();
+
+		await expect(backButton).toBeVisible();
+
+		await fullViewPage
+			.getByRole('link', {
+				name: 'Assigned to My Roles',
+			})
+			.click();
+
+		await fullViewPage.waitForLoadState();
+
+		await expect(backButton).toBeVisible();
 	}
-
-	delete createdEntities.blogPosts;
-});
+);
 
 test(
 	'Can manage my workflow tasks',
 	{tag: '@LPD-58790'},
-	async ({apiHelpers, configurationTabPage, homePage, page}) => {
-		await configurationTabPage.goTo();
+	async ({
+		apiHelpers,
+		configurationTabPage,
+		homePage,
+		page,
+		processBuilderPage,
+	}) => {
+		await processBuilderPage.goto('/test');
+		await configurationTabPage.configurationTabLink.waitFor({
+			state: 'visible',
+		});
+		await configurationTabPage.configurationTabLink.click({force: true});
+		await configurationTabPage.page.waitForURL((url) =>
+			url.href.includes('=configuration')
+		);
 
 		await configurationTabPage.assignWorkflowToAssetType(
 			'Single Approver',
-			'Blogs Entry'
+			'Basic Web Content'
 		);
 
-		const site = await apiHelpers.headlessSite.getSiteByERC('L_GUEST');
+		let objectEntry1;
+		let objectEntry2;
+		let objectEntry3;
 
-		const blogPost1 = await apiHelpers.headlessDelivery.postBlog(site.id);
+		const applicationName = 'cms/basic-web-contents';
 
-		createdEntities.blogPosts = [blogPost1];
+		try {
+			const contentName1 = getRandomString();
+			const contentName2 = getRandomString();
+			const contentName3 = getRandomString();
 
-		const blogPost2 = await apiHelpers.headlessDelivery.postBlog(site.id);
-
-		createdEntities.blogPosts.push(blogPost2);
-
-		const blogPost3 = await apiHelpers.headlessDelivery.postBlog(site.id);
-
-		createdEntities.blogPosts.push(blogPost3);
-
-		await homePage.goto();
-
-		await test.step('Verify workflow task assign to me action', async () => {
-			await homePage.workflowTaskFilterButton.click();
-			await homePage.assignedToMyRolesMenuItem.click();
-
-			await expect(page.getByText(blogPost1.headline)).toBeVisible();
-			await homePage.assignToMe(blogPost1.headline);
-			await expect(page.getByText(blogPost1.headline)).toBeHidden();
-
-			await homePage.workflowTaskFilterButton.click();
-			await homePage.assignedToMeMenuItem.click();
-
-			await expect(page.getByText(blogPost1.headline)).toBeVisible();
-		});
-
-		await test.step('Verify workflow task assign to... action', async () => {
-			await homePage.workflowTaskFilterButton.click();
-			await homePage.assignedToMyRolesMenuItem.click();
-
-			await expect(page.getByText(blogPost2.headline)).toBeVisible();
-			await homePage.assignTo(blogPost2.headline);
-			await expect(page.getByText(blogPost2.headline)).toBeHidden();
-
-			await homePage.workflowTaskFilterButton.click();
-			await homePage.assignedToMeMenuItem.click();
-
-			await expect(page.getByText(blogPost2.headline)).toBeVisible();
-		});
-
-		await test.step('Verify workflow task approve action', async () => {
-			await expect(page.getByText(blogPost1.headline)).toBeVisible();
-			await homePage.approveWorkflowTask(blogPost1.headline);
-			await expect(page.getByText(blogPost1.headline)).toBeHidden();
-		});
-
-		await test.step('Verify workflow task reject action', async () => {
-			await expect(page.getByText(blogPost2.headline)).toBeVisible();
-			await homePage.rejectWorkflowTask(blogPost2.headline);
-			await expect(page.getByText(blogPost2.headline)).toBeHidden();
-		});
-
-		await test.step('Verify workflow task update due date action', async () => {
-			await homePage.workflowTaskFilterButton.click();
-			await homePage.assignedToMyRolesMenuItem.click();
-
-			await expect(page.getByText(blogPost3.headline)).toBeVisible();
-			await homePage.assignToMe(blogPost3.headline);
-			await expect(page.getByText(blogPost3.headline)).toBeHidden();
-
-			await homePage.workflowTaskFilterButton.click();
-			await homePage.assignedToMeMenuItem.click();
-
-			await expect(page.getByText(blogPost3.headline)).toBeVisible();
-
-			const now = new Date();
-
-			const nextYear = now.getFullYear() + 1;
-
-			const dueDate = nextYear + '-01-01';
-
-			await homePage.updateDueDate(dueDate, blogPost3.headline);
-
-			const workflowTaskRow = page.getByRole('row', {
-				name: blogPost3.headline,
-			});
-			await workflowTaskRow.getByRole('button').click();
-			await page.getByRole('menuitem', {name: 'Update Due Date'}).click();
-
-			await expect(page.locator('input[type="date"]')).toHaveValue(
-				dueDate
+			objectEntry1 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: contentName1,
+				},
+				applicationName,
+				'Default'
 			);
+
+			objectEntry2 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: contentName2,
+				},
+				applicationName,
+				'Default'
+			);
+
+			objectEntry3 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: contentName3,
+				},
+				applicationName,
+				'Default'
+			);
+
+			await homePage.goto();
+
+			await test.step('Verify workflow task assign to me action', async () => {
+				await homePage.workflowTaskFilterButton.click();
+				await homePage.assignedToMyRolesMenuItem.click();
+				await page.waitForLoadState('networkidle');
+
+				const workflowTaskRow1 = page
+					.getByRole('row')
+					.filter({hasText: /sent you/i})
+					.filter({hasText: objectEntry1.title});
+
+				await expect(workflowTaskRow1).toBeVisible();
+				await homePage.assignToMe(objectEntry1.title);
+				await expect(workflowTaskRow1).toBeHidden();
+
+				await homePage.workflowTaskFilterButton.click();
+				await homePage.assignedToMeMenuItem.click();
+				await page.waitForLoadState('networkidle');
+
+				await expect(workflowTaskRow1).toBeVisible();
+			});
+
+			await test.step('Verify workflow task assign to... action', async () => {
+				await homePage.workflowTaskFilterButton.click();
+				await homePage.assignedToMyRolesMenuItem.click();
+				await page.waitForLoadState('networkidle');
+
+				const workflowTaskRow2 = page
+					.getByRole('row')
+					.filter({hasText: /sent you/i})
+					.filter({hasText: objectEntry2.title});
+
+				await expect(workflowTaskRow2).toBeVisible();
+				await homePage.assignTo(objectEntry2.title);
+				await expect(workflowTaskRow2).toBeHidden();
+
+				await homePage.workflowTaskFilterButton.click();
+				await homePage.assignedToMeMenuItem.click();
+				await page.waitForLoadState('networkidle');
+
+				await expect(workflowTaskRow2).toBeHidden();
+			});
+
+			await test.step('Verify workflow task update due date action', async () => {
+				await homePage.workflowTaskFilterButton.click();
+				await homePage.assignedToMyRolesMenuItem.click();
+				await page.waitForLoadState('networkidle');
+
+				const workflowTaskRow3 = page
+					.getByRole('row')
+					.filter({hasText: /sent you/i})
+					.filter({hasText: objectEntry3.title});
+
+				await expect(workflowTaskRow3).toBeVisible();
+				await homePage.assignToMe(objectEntry3.title);
+				await expect(workflowTaskRow3).toBeHidden();
+
+				await homePage.workflowTaskFilterButton.click();
+				await homePage.assignedToMeMenuItem.click();
+				await page.waitForLoadState('networkidle');
+
+				await expect(workflowTaskRow3).toBeVisible();
+
+				const now = new Date();
+
+				const nextYear = now.getFullYear() + 1;
+
+				const dueDate = nextYear + '-01-01';
+
+				await homePage.updateDueDate(dueDate, objectEntry3.title);
+
+				const workflowTaskRow = page
+					.getByRole('row')
+					.filter({hasText: /sent you/i})
+					.filter({hasText: objectEntry3.title});
+				await workflowTaskRow.getByRole('button').click();
+				await page
+					.getByRole('menuitem', {name: 'Update Due Date'})
+					.click();
+
+				await expect(page.locator('input[type="date"]')).toHaveValue(
+					dueDate
+				);
+
+				await page.getByRole('button', {name: 'Cancel'}).click();
+			});
+		}
+		finally {
+			if (objectEntry1) {
+				await apiHelpers.objectEntry.deleteObjectEntry(
+					applicationName,
+					String(objectEntry1.id)
+				);
+			}
+
+			if (objectEntry2) {
+				await apiHelpers.objectEntry.deleteObjectEntry(
+					applicationName,
+					String(objectEntry2.id)
+				);
+			}
+
+			if (objectEntry3) {
+				await apiHelpers.objectEntry.deleteObjectEntry(
+					applicationName,
+					String(objectEntry3.id)
+				);
+			}
+
+			// Teardown for created web content workflow
+
+			await processBuilderPage.goto('/test');
+			await configurationTabPage.configurationTabLink.waitFor({
+				state: 'visible',
+			});
+			await configurationTabPage.configurationTabLink.click({
+				force: true,
+			});
+			await configurationTabPage.page.waitForURL((url) =>
+				url.href.includes('=configuration')
+			);
+
+			await configurationTabPage.unassignWorkflowFromAssetType(
+				'Basic Web Content'
+			);
+		}
+	}
+);
+
+test(
+	'Can only see valid asset types for workflow task',
+	{tag: '@LPD-66218'},
+	async ({
+		apiHelpers,
+		configurationTabPage,
+		homePage,
+		page,
+		processBuilderPage,
+	}) => {
+		await processBuilderPage.goto('/test');
+		await configurationTabPage.configurationTabLink.waitFor({
+			state: 'visible',
 		});
+		await configurationTabPage.configurationTabLink.click({force: true});
+		await configurationTabPage.page.waitForURL((url) =>
+			url.href.includes('=configuration')
+		);
+
+		await configurationTabPage.assignWorkflowToAssetType(
+			'Single Approver',
+			'Account'
+		);
+
+		await configurationTabPage.assignWorkflowToAssetType(
+			'Single Approver',
+			'Basic Web Content'
+		);
+
+		const account = await apiHelpers.headlessAdminUser.postAccount({
+			name: getRandomString(),
+			type: 'business',
+		});
+
+		let objectEntry;
+
+		const applicationName = 'cms/basic-web-contents';
+
+		try {
+			const contentName = getRandomString();
+
+			objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: contentName,
+				},
+				applicationName,
+				'Default'
+			);
+
+			await homePage.goto();
+
+			await homePage.workflowTaskFilterButton.click();
+			await homePage.assignedToMyRolesMenuItem.click();
+
+			await expect(page.getByText(account.name)).toBeHidden();
+
+			const myWorkflowTasksContainer = page
+				.locator('div.container-fluid-max')
+				.filter({
+					has: page.getByRole('heading', {name: 'My Workflow Tasks'}),
+				});
+
+			await expect(
+				myWorkflowTasksContainer.getByRole('link', {
+					name: objectEntry.title,
+				})
+			).toBeVisible();
+		}
+		finally {
+			if (objectEntry) {
+				await apiHelpers.objectEntry.deleteObjectEntry(
+					applicationName,
+					String(objectEntry.id)
+				);
+			}
+
+			// Teardown for created web content workflow
+
+			await processBuilderPage.goto('/test');
+			await configurationTabPage.configurationTabLink.waitFor({
+				state: 'visible',
+			});
+			await configurationTabPage.configurationTabLink.click({
+				force: true,
+			});
+			await configurationTabPage.page.waitForURL((url) =>
+				url.href.includes('=configuration')
+			);
+
+			await configurationTabPage.unassignWorkflowFromAssetType(
+				'Basic Web Content'
+			);
+
+			await page.reload();
+
+			await configurationTabPage.unassignWorkflowFromAssetType('Account');
+		}
+	}
+);
+
+test(
+	'Can see Recent Assets',
+	{tag: '@LPD-58792'},
+	async ({apiHelpers, homePage, page}) => {
+		const applicationName = 'cms/basic-web-contents';
+		const spaceName = 'Default';
+		let objectEntry1;
+		let objectEntry2;
+
+		const file1Title = `title ${getRandomString()}`;
+
+		try {
+			objectEntry1 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: file1Title,
+				},
+				applicationName,
+				spaceName
+			);
+
+			objectEntry2 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: `some content ${getRandomString()}`,
+				},
+				applicationName,
+				spaceName
+			);
+
+			await homePage.goto();
+
+			const dataSetFragmentPage: DataSetPage = new DataSetPage(page);
+
+			const row =
+				dataSetFragmentPage.table.bodyRows.getByLabel(file1Title);
+
+			await expect(row.getByText(file1Title)).toBeVisible();
+		}
+		finally {
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry1.id)
+			);
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry2.id)
+			);
+		}
+	}
+);
+
+test(
+	'Can go to All page from Recent Assets button',
+	{tag: '@LPD-83675'},
+	async ({apiHelpers, homePage, page}) => {
+		const applicationName = 'cms/basic-web-contents';
+		const spaceName = 'Default';
+		let objectEntry1;
+		let objectEntry2;
+
+		const file1Title = `title ${getRandomString()}`;
+
+		try {
+			objectEntry1 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: file1Title,
+				},
+				applicationName,
+				spaceName
+			);
+
+			objectEntry2 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: `some content ${getRandomString()}`,
+				},
+				applicationName,
+				spaceName
+			);
+
+			await homePage.goto();
+
+			await homePage.viewAllButton.click();
+
+			await expect(
+				page.getByRole('heading', {name: 'All'})
+			).toBeVisible();
+		}
+		finally {
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry1.id)
+			);
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry2.id)
+			);
+		}
+	}
+);
+
+test(
+	'Can use Quick Actions to create new content',
+	{tag: '@LPD-58793'},
+	async ({apiHelpers, homePage, page}) => {
+		await apiHelpers.headlessAssetLibrary.createAssetLibrary({
+			name: `Space ${getRandomString()}`,
+			settings: {
+				logoColor: 'outline-3',
+				sharingEnabled: true,
+			},
+			type: 'Space',
+		});
+
+		await test.step('Check redirection after clicking New Basic Web Content button', async () => {
+			await homePage.goto();
+
+			await homePage.basicWebContentButton.click();
+
+			await homePage.selectSpace('Default');
+
+			await expect(
+				page.getByPlaceholder('New Basic Web Content')
+			).toBeVisible();
+		});
+
+		await test.step('Check redirection after clicking Blog button', async () => {
+			await homePage.goto();
+
+			await homePage.blogButton.click();
+
+			await homePage.selectSpace('Default');
+
+			await expect(page.getByPlaceholder('New Blog')).toBeVisible();
+		});
+
+		await test.step('Check redirection after clicking Basic Document button', async () => {
+			await homePage.goto();
+
+			await homePage.basicDocumentButton.click();
+
+			await homePage.selectSpace('Default');
+
+			await expect(
+				page.getByPlaceholder('New Basic Document')
+			).toBeVisible();
+		});
+
+		await test.step('Check redirection after clicking Vocabulary button', async () => {
+			await homePage.goto();
+
+			await homePage.vocabularyButton.click();
+
+			await expect(page.getByText('Basic Info')).toBeVisible();
+		});
+	}
+);
+
+test(
+	'Can use Search Bar to search for content',
+	{tag: '@LPD-61220'},
+	async ({apiHelpers, assetsPage, homePage, page}) => {
+		const applicationName = 'cms/basic-web-contents';
+		const spaceName = 'Default';
+		let objectEntry1;
+		let objectEntry2;
+
+		const file1Title = `title ${getRandomString()}`;
+
+		try {
+			objectEntry1 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: file1Title,
+				},
+				applicationName,
+				spaceName
+			);
+
+			objectEntry2 = await apiHelpers.objectEntry.postObjectEntry(
+				{
+					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
+					title: `some content ${getRandomString()}`,
+				},
+				applicationName,
+				spaceName
+			);
+
+			await homePage.goto();
+
+			const searchInput = await page.getByPlaceholder('Search');
+
+			await searchInput.fill('title');
+
+			await searchInput.press('Enter');
+
+			const row = assetsPage.table.bodyRows.filter({hasText: file1Title});
+
+			await expect(row.getByText(file1Title)).toBeVisible();
+
+			await test.step('Verify search input contains the search value', async () => {
+				const searchInput = page.getByPlaceholder('Search');
+
+				await expect(searchInput).toHaveValue('title');
+			});
+		}
+		finally {
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry1.id)
+			);
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry2.id)
+			);
+		}
+	}
+);
+
+test(
+	'Can access the CMS when assigned to a Space via user group',
+	{tag: '@LPD-83640'},
+	async ({apiHelpers, page}) => {
+		const userGroup = await apiHelpers.headlessAdminUser.postUserGroup();
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.headlessAdminUser.assignUsersToUserGroup(
+			userGroup.id,
+			[user.id]
+		);
+
+		const space = await apiHelpers.headlessAssetLibrary.createAssetLibrary({
+			name: `Space ${getRandomString()}`,
+			settings: {
+				logoColor: 'outline-3',
+				sharingEnabled: true,
+			},
+			type: 'Space',
+		});
+
+		await apiHelpers.jsonWebServicesUserGroup.assignUserGroupsToGroup(
+			String(space.siteId),
+			String(userGroup.id)
+		);
+
+		await performLogout(page);
+		await performLogin(page, user.alternateName);
+
+		await page.goto('/web/cms');
+
+		await expect(
+			page.getByRole('heading', {name: `Welcome, ${user.givenName}!`})
+		).toBeVisible();
 	}
 );

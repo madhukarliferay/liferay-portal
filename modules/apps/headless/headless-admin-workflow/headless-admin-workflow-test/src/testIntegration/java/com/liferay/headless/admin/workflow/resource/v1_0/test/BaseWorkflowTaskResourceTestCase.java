@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
@@ -48,7 +49,6 @@ import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegate;
 import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegateBuilderRegistry;
@@ -2189,6 +2189,14 @@ public abstract class BaseWorkflowTaskResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("assignedToMe", additionalAssertFieldName)) {
+				if (workflowTask.getAssignedToMe() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("assigneePerson", additionalAssertFieldName)) {
 				if (workflowTask.getAssigneePerson() == null) {
 					valid = false;
@@ -2367,6 +2375,8 @@ public abstract class BaseWorkflowTaskResourceTestCase {
 	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
+		graphQLFields.add(new GraphQLField("id"));
+
 		for (java.lang.reflect.Field field :
 				getDeclaredFields(
 					com.liferay.headless.admin.workflow.dto.v1_0.WorkflowTask.
@@ -2432,6 +2442,17 @@ public abstract class BaseWorkflowTaskResourceTestCase {
 				if (!equals(
 						(Map)workflowTask1.getActions(),
 						(Map)workflowTask2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("assignedToMe", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						workflowTask1.getAssignedToMe(),
+						workflowTask2.getAssignedToMe())) {
 
 					return false;
 				}
@@ -2728,6 +2749,11 @@ public abstract class BaseWorkflowTaskResourceTestCase {
 		sb.append(" ");
 
 		if (entityFieldName.equals("actions")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("assignedToMe")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -3134,6 +3160,7 @@ public abstract class BaseWorkflowTaskResourceTestCase {
 	protected WorkflowTask randomWorkflowTask() throws Exception {
 		return new WorkflowTask() {
 			{
+				assignedToMe = RandomTestUtil.randomBoolean();
 				completed = RandomTestUtil.randomBoolean();
 				dateCompletion = RandomTestUtil.nextDate();
 				dateCreated = RandomTestUtil.nextDate();
@@ -3396,3 +3423,4 @@ public abstract class BaseWorkflowTaskResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
+// LIFERAY-REST-BUILDER-HASH:153278978

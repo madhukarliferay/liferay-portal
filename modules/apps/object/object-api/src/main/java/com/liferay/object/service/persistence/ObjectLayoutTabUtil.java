@@ -210,52 +210,6 @@ public class ObjectLayoutTabUtil {
 	}
 
 	/**
-	 * Returns the last object layout tab in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab findByUuid_Last(
-			String uuid, OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout tab in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab, or <code>null</code> if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab fetchByUuid_Last(
-		String uuid, OrderByComparator<ObjectLayoutTab> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layout tabs before and after the current object layout tab in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectLayoutTabId the primary key of the current object layout tab
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a object layout tab with the primary key could not be found
-	 */
-	public static ObjectLayoutTab[] findByUuid_PrevAndNext(
-			long objectLayoutTabId, String uuid,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			objectLayoutTabId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object layout tabs where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -387,59 +341,6 @@ public class ObjectLayoutTabUtil {
 	}
 
 	/**
-	 * Returns the last object layout tab in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout tab in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab, or <code>null</code> if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<ObjectLayoutTab> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layout tabs before and after the current object layout tab in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectLayoutTabId the primary key of the current object layout tab
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a object layout tab with the primary key could not be found
-	 */
-	public static ObjectLayoutTab[] findByUuid_C_PrevAndNext(
-			long objectLayoutTabId, String uuid, long companyId,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			objectLayoutTabId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object layout tabs where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -568,56 +469,6 @@ public class ObjectLayoutTabUtil {
 	}
 
 	/**
-	 * Returns the last object layout tab in the ordered set where objectLayoutId = &#63;.
-	 *
-	 * @param objectLayoutId the object layout ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab findByObjectLayoutId_Last(
-			long objectLayoutId,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByObjectLayoutId_Last(
-			objectLayoutId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout tab in the ordered set where objectLayoutId = &#63;.
-	 *
-	 * @param objectLayoutId the object layout ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab, or <code>null</code> if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab fetchByObjectLayoutId_Last(
-		long objectLayoutId,
-		OrderByComparator<ObjectLayoutTab> orderByComparator) {
-
-		return getPersistence().fetchByObjectLayoutId_Last(
-			objectLayoutId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layout tabs before and after the current object layout tab in the ordered set where objectLayoutId = &#63;.
-	 *
-	 * @param objectLayoutTabId the primary key of the current object layout tab
-	 * @param objectLayoutId the object layout ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a object layout tab with the primary key could not be found
-	 */
-	public static ObjectLayoutTab[] findByObjectLayoutId_PrevAndNext(
-			long objectLayoutTabId, long objectLayoutId,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByObjectLayoutId_PrevAndNext(
-			objectLayoutTabId, objectLayoutId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the object layout tabs where objectLayoutId = &#63; from the database.
 	 *
 	 * @param objectLayoutId the object layout ID
@@ -743,56 +594,6 @@ public class ObjectLayoutTabUtil {
 
 		return getPersistence().fetchByObjectRelationshipId_First(
 			objectRelationshipId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout tab in the ordered set where objectRelationshipId = &#63;.
-	 *
-	 * @param objectRelationshipId the object relationship ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab findByObjectRelationshipId_Last(
-			long objectRelationshipId,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByObjectRelationshipId_Last(
-			objectRelationshipId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last object layout tab in the ordered set where objectRelationshipId = &#63;.
-	 *
-	 * @param objectRelationshipId the object relationship ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object layout tab, or <code>null</code> if a matching object layout tab could not be found
-	 */
-	public static ObjectLayoutTab fetchByObjectRelationshipId_Last(
-		long objectRelationshipId,
-		OrderByComparator<ObjectLayoutTab> orderByComparator) {
-
-		return getPersistence().fetchByObjectRelationshipId_Last(
-			objectRelationshipId, orderByComparator);
-	}
-
-	/**
-	 * Returns the object layout tabs before and after the current object layout tab in the ordered set where objectRelationshipId = &#63;.
-	 *
-	 * @param objectLayoutTabId the primary key of the current object layout tab
-	 * @param objectRelationshipId the object relationship ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object layout tab
-	 * @throws NoSuchObjectLayoutTabException if a object layout tab with the primary key could not be found
-	 */
-	public static ObjectLayoutTab[] findByObjectRelationshipId_PrevAndNext(
-			long objectLayoutTabId, long objectRelationshipId,
-			OrderByComparator<ObjectLayoutTab> orderByComparator)
-		throws com.liferay.object.exception.NoSuchObjectLayoutTabException {
-
-		return getPersistence().findByObjectRelationshipId_PrevAndNext(
-			objectLayoutTabId, objectRelationshipId, orderByComparator);
 	}
 
 	/**
@@ -975,3 +776,4 @@ public class ObjectLayoutTabUtil {
 	private static volatile ObjectLayoutTabPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:617949324

@@ -2,6 +2,7 @@
 
 <suppressions>
 	<source-check>
+		<suppress checks="HTMLWhitespaceCheck" files="fragment-test/src/testIntegration/resources/com/liferay/fragment/dependencies/upgrade.v3_0_1/expected-fragment-entry-browser-sniffer-content\.html" />
 		<suppress checks="IllegalImportsCheck" files="fragment-api/src/main/java/com/liferay/fragment/processor/DefaultEditableValuesFragmentEntryProcessor.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-api/src/main/java/com/liferay/fragment/processor/DocumentFragmentEntryProcessor.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-api/src/main/java/com/liferay/fragment/processor/DocumentFragmentEntryValidator.java" />
@@ -17,6 +18,7 @@
 		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-drop-zone/src/main/java/com/liferay/fragment/entry/processor/drop/zone/DropZoneFragmentEntryValidator.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-drop-zone/src/main/java/com/liferay/fragment/entry/processor/drop/zone/listener/DropZoneFragmentEntryLinkListener.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-editable/src/main/java/com/liferay/fragment/entry/processor/editable/EditableDefaultEditableValuesFragmentEntryProcessor.java" />
+		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-editable/src/main/java/com/liferay/fragment/entry/processor/editable/EditableDocumentFragmentEntryProcessor.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-editable/src/main/java/com/liferay/fragment/entry/processor/editable/EditableFragmentEntryValidator.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-editable/src/main/java/com/liferay/fragment/entry/processor/editable/internal/mapper/ActionEditableElementMapper.java" />
 		<suppress checks="IllegalImportsCheck" files="fragment-entry-processor/fragment-entry-processor-editable/src/main/java/com/liferay/fragment/entry/processor/editable/internal/mapper/LinkEditableElementMapper.java" />

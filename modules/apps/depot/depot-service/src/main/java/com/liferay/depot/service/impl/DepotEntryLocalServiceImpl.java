@@ -12,11 +12,14 @@ import com.liferay.depot.exception.DepotEntryNameException;
 import com.liferay.depot.exception.DepotEntryStagedException;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryGroupRel;
+import com.liferay.depot.model.DepotEntryTable;
 import com.liferay.depot.service.DepotAppCustomizationLocalService;
 import com.liferay.depot.service.DepotEntryPinLocalService;
 import com.liferay.depot.service.base.DepotEntryLocalServiceBaseImpl;
 import com.liferay.depot.service.persistence.DepotEntryGroupRelPersistence;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.GroupKeyException;
@@ -25,10 +28,15 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Groups_OrgsTable;
+import com.liferay.portal.kernel.model.Groups_UserGroupsTable;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.Users_GroupsTable;
+import com.liferay.portal.kernel.model.Users_OrgsTable;
+import com.liferay.portal.kernel.model.Users_UserGroupsTable;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -111,10 +119,10 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 		depotEntry.setUuid(serviceContext.getUuid());
 
 		Group group = _groupLocalService.addGroup(
-			serviceContext.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
-			DepotEntry.class.getName(), depotEntry.getDepotEntryId(),
-			GroupConstants.DEFAULT_LIVE_GROUP_ID, nameMap, descriptionMap,
-			GroupConstants.TYPE_DEPOT, true,
+			StringPool.BLANK, serviceContext.getUserId(),
+			GroupConstants.DEFAULT_PARENT_GROUP_ID, DepotEntry.class.getName(),
+			depotEntry.getDepotEntryId(), GroupConstants.DEFAULT_LIVE_GROUP_ID,
+			nameMap, descriptionMap, GroupConstants.TYPE_DEPOT, null, true,
 			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
 			"/asset-library-" + depotEntry.getDepotEntryId(), false, false,
 			true, serviceContext);
@@ -191,6 +199,126 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 	@Override
 	public DepotEntry fetchGroupDepotEntry(long groupId) {
 		return depotEntryPersistence.fetchByGroupId(groupId);
+	}
+
+	@Override
+	public List<DepotEntry> getDepotEntries(long companyId, int type) {
+		return depotEntryPersistence.findByC_T(companyId, type);
+	}
+
+	@Override
+	public int getDepotEntriesCount(long companyId, int type) {
+		return depotEntryPersistence.countByC_T(companyId, type);
+	}
+
+	@Override
+	public List<Long> getDepotEntryGroupIds(long companyId, int type) {
+		return dslQuery(
+			DSLQueryFactoryUtil.selectDistinct(
+				DepotEntryTable.INSTANCE.groupId
+			).from(
+				DepotEntryTable.INSTANCE
+			).where(
+				DepotEntryTable.INSTANCE.companyId.eq(
+					companyId
+				).and(
+					() -> {
+						if (type != DepotConstants.TYPE_ANY) {
+							return DepotEntryTable.INSTANCE.type.eq(type);
+						}
+
+						return null;
+					}
+				).and(
+					DepotEntryTable.INSTANCE.groupId.isNotNull()
+				)
+			));
+	}
+
+	@Override
+	public List<Long> getDepotEntryGroupIds(
+		long companyId, long userId, int type) {
+
+		return getDepotEntryGroupIds(companyId, userId, type, false);
+	}
+
+	@Override
+	public List<Long> getDepotEntryGroupIds(
+		long companyId, long userId, int type, boolean dynamicInheritanceOnly) {
+
+		return dslQuery(
+			DSLQueryFactoryUtil.selectDistinct(
+				DepotEntryTable.INSTANCE.groupId
+			).from(
+				DepotEntryTable.INSTANCE
+			).leftJoinOn(
+				Users_GroupsTable.INSTANCE,
+				() -> {
+					if (dynamicInheritanceOnly) {
+						return null;
+					}
+
+					return Users_GroupsTable.INSTANCE.groupId.eq(
+						DepotEntryTable.INSTANCE.groupId
+					).and(
+						Users_GroupsTable.INSTANCE.userId.eq(userId)
+					);
+				}
+			).leftJoinOn(
+				Groups_OrgsTable.INSTANCE,
+				Groups_OrgsTable.INSTANCE.groupId.eq(
+					DepotEntryTable.INSTANCE.groupId)
+			).leftJoinOn(
+				Users_OrgsTable.INSTANCE,
+				Users_OrgsTable.INSTANCE.organizationId.eq(
+					Groups_OrgsTable.INSTANCE.organizationId
+				).and(
+					Users_OrgsTable.INSTANCE.userId.eq(userId)
+				)
+			).leftJoinOn(
+				Groups_UserGroupsTable.INSTANCE,
+				Groups_UserGroupsTable.INSTANCE.groupId.eq(
+					DepotEntryTable.INSTANCE.groupId)
+			).leftJoinOn(
+				Users_UserGroupsTable.INSTANCE,
+				Users_UserGroupsTable.INSTANCE.userGroupId.eq(
+					Groups_UserGroupsTable.INSTANCE.userGroupId
+				).and(
+					Users_UserGroupsTable.INSTANCE.userId.eq(userId)
+				)
+			).where(
+				DepotEntryTable.INSTANCE.companyId.eq(
+					companyId
+				).and(
+					() -> {
+						if (type != DepotConstants.TYPE_ANY) {
+							return DepotEntryTable.INSTANCE.type.eq(type);
+						}
+
+						return null;
+					}
+				).and(
+					() -> {
+						if (dynamicInheritanceOnly) {
+							return Predicate.withParentheses(
+								Users_OrgsTable.INSTANCE.userId.isNotNull(
+								).or(
+									Users_UserGroupsTable.INSTANCE.userId.
+										isNotNull()
+								));
+						}
+
+						return Predicate.withParentheses(
+							Users_GroupsTable.INSTANCE.userId.isNotNull(
+							).or(
+								Users_OrgsTable.INSTANCE.userId.isNotNull()
+							).or(
+								Users_UserGroupsTable.INSTANCE.userId.
+									isNotNull()
+							));
+					}
+				)
+			));
 	}
 
 	/**
@@ -304,7 +432,7 @@ public class DepotEntryLocalServiceImpl extends DepotEntryLocalServiceBaseImpl {
 
 		group = _groupLocalService.updateGroup(
 			depotEntry.getGroupId(), group.getParentGroupId(), nameMap,
-			descriptionMap, group.getType(), group.isManualMembership(),
+			descriptionMap, group.getType(), null, group.isManualMembership(),
 			group.getMembershipRestriction(), group.getFriendlyURL(),
 			group.isInheritContent(), group.isActive(), serviceContext);
 

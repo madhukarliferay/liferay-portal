@@ -19,6 +19,7 @@ const VIRTUAL_INSTANCE_FULL_URL = `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`
 export const test = mergeTests(
 	dataApiHelpersTest,
 	featureFlagsTest({
+		'LPD-36105': {enabled: true},
 		'LPD-39304': {enabled: true},
 	}),
 	loginTest(),
@@ -29,6 +30,8 @@ test(
 	'Change localization after Site Template is added in virtual instance',
 	{tag: ['@LPS-180299']},
 	async ({apiHelpers, localizationInstanceSettingsPage, page}) => {
+		test.slow();
+
 		const virtualInstance =
 			await apiHelpers.headlessPortalInstance.addVirtualInstance({
 				domain: VIRTUAL_INSTANCE_DOMAIN,

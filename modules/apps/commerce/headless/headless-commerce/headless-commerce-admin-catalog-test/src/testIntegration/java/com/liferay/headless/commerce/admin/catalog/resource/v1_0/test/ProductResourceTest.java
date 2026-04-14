@@ -115,14 +115,14 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 			testGroup.getGroupId(), commerceCurrency.getCode());
 
 		_commercePriceListLocalService.addCatalogBaseCommercePriceList(
-			_commerceCatalog.getGroupId(), user.getUserId(),
-			commerceCurrency.getCode(), "price-list",
-			RandomTestUtil.randomString(), serviceContext);
+			user.getUserId(), _commerceCatalog.getGroupId(),
+			commerceCurrency.getCode(), RandomTestUtil.randomString(),
+			"price-list", serviceContext);
 
 		_commercePriceListLocalService.addCatalogBaseCommercePriceList(
-			_commerceCatalog.getGroupId(), user.getUserId(),
-			commerceCurrency.getCode(), "promotion",
-			RandomTestUtil.randomString(), serviceContext);
+			user.getUserId(), _commerceCatalog.getGroupId(),
+			commerceCurrency.getCode(), RandomTestUtil.randomString(),
+			"promotion", serviceContext);
 
 		_cpOptionCategory = CPTestUtil.addCPOptionCategory(
 			testGroup.getGroupId());
@@ -231,6 +231,12 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	@Override
 	@Test
 	public void testGraphQLDeleteProduct() throws Exception {
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteProductByVersion() throws Exception {
 	}
 
 	@Ignore
@@ -610,6 +616,15 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		assertValid(page, testGetProductsPage_getExpectedActions());
 
 		page = productResource.getProductsPage(
+			null, String.format("(productId eq %s)", product1.getProductId()),
+			Pagination.of(1, 10), null);
+
+		Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+		assertContains(product1, (List<Product>)page.getItems());
+		assertValid(page, testGetProductsPage_getExpectedActions());
+
+		page = productResource.getProductsPage(
 			null, "(specificationValues/any(x:contains(x, 'test')))",
 			Pagination.of(1, 10), null);
 
@@ -650,6 +665,12 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 				StringBundler.concat(string1, StringPool.SPACE, string2)));
 
 		Page<Product> page = productResource.getProductsPage(
+			String.valueOf(product1.getProductId()), null, Pagination.of(1, 10),
+			null);
+
+		Assert.assertEquals(1, page.getTotalCount());
+
+		page = productResource.getProductsPage(
 			string1, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(1, page.getTotalCount());

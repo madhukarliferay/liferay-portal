@@ -22,7 +22,6 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.vulcan.util.GroupUtil;
-import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.io.InputStream;
 
@@ -115,9 +114,11 @@ public class DocumentMetadataSetResourceTest
 			{
 				setActions(() -> null);
 				setAssetLibraryKey(() -> GroupUtil.getAssetLibraryKey(group));
-				setAvailableLanguages(
-					() -> LocaleUtil.toW3cLanguageIds(
-						new Locale[] {LocaleUtil.getSiteDefault()}));
+
+				Locale locale = LocaleUtil.getSiteDefault();
+
+				setAvailableLanguages(new String[] {locale.toString()});
+
 				setDataDefinitionFields(
 					DataDefinitionFieldSerDes.toDTOs(
 						_read("test-ddm-fields.json")));
@@ -127,19 +128,17 @@ public class DocumentMetadataSetResourceTest
 				setDateModified(RandomTestUtil.nextDate());
 				setDescription(() -> randomDescription);
 				setDescription_i18n(
-					() -> LocalizedMapUtil.getI18nMap(
-						HashMapBuilder.put(
-							LocaleUtil.getSiteDefault(), randomDescription
-						).build()));
+					HashMapBuilder.put(
+						locale.toString(), randomDescription
+					).build());
 				setExternalReferenceCode(
 					StringUtil.toLowerCase(RandomTestUtil.randomString()));
 				setId(RandomTestUtil.randomLong());
 				setName(() -> randomName);
 				setName_i18n(
-					() -> LocalizedMapUtil.getI18nMap(
-						HashMapBuilder.put(
-							LocaleUtil.getSiteDefault(), randomName
-						).build()));
+					HashMapBuilder.put(
+						locale.toString(), randomName
+					).build());
 				setSiteId(group::getGroupId);
 			}
 		};

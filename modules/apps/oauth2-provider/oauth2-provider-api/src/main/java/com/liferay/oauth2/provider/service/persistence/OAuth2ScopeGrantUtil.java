@@ -221,61 +221,6 @@ public class OAuth2ScopeGrantUtil {
 	}
 
 	/**
-	 * Returns the last o auth2 scope grant in the ordered set where oAuth2ApplicationScopeAliasesId = &#63;.
-	 *
-	 * @param oAuth2ApplicationScopeAliasesId the o auth2 application scope aliases ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 scope grant
-	 * @throws NoSuchOAuth2ScopeGrantException if a matching o auth2 scope grant could not be found
-	 */
-	public static OAuth2ScopeGrant findByOAuth2ApplicationScopeAliasesId_Last(
-			long oAuth2ApplicationScopeAliasesId,
-			OrderByComparator<OAuth2ScopeGrant> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2ScopeGrantException {
-
-		return getPersistence().findByOAuth2ApplicationScopeAliasesId_Last(
-			oAuth2ApplicationScopeAliasesId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last o auth2 scope grant in the ordered set where oAuth2ApplicationScopeAliasesId = &#63;.
-	 *
-	 * @param oAuth2ApplicationScopeAliasesId the o auth2 application scope aliases ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching o auth2 scope grant, or <code>null</code> if a matching o auth2 scope grant could not be found
-	 */
-	public static OAuth2ScopeGrant fetchByOAuth2ApplicationScopeAliasesId_Last(
-		long oAuth2ApplicationScopeAliasesId,
-		OrderByComparator<OAuth2ScopeGrant> orderByComparator) {
-
-		return getPersistence().fetchByOAuth2ApplicationScopeAliasesId_Last(
-			oAuth2ApplicationScopeAliasesId, orderByComparator);
-	}
-
-	/**
-	 * Returns the o auth2 scope grants before and after the current o auth2 scope grant in the ordered set where oAuth2ApplicationScopeAliasesId = &#63;.
-	 *
-	 * @param oAuth2ScopeGrantId the primary key of the current o auth2 scope grant
-	 * @param oAuth2ApplicationScopeAliasesId the o auth2 application scope aliases ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next o auth2 scope grant
-	 * @throws NoSuchOAuth2ScopeGrantException if a o auth2 scope grant with the primary key could not be found
-	 */
-	public static OAuth2ScopeGrant[]
-			findByOAuth2ApplicationScopeAliasesId_PrevAndNext(
-				long oAuth2ScopeGrantId, long oAuth2ApplicationScopeAliasesId,
-				OrderByComparator<OAuth2ScopeGrant> orderByComparator)
-		throws com.liferay.oauth2.provider.exception.
-			NoSuchOAuth2ScopeGrantException {
-
-		return getPersistence().
-			findByOAuth2ApplicationScopeAliasesId_PrevAndNext(
-				oAuth2ScopeGrantId, oAuth2ApplicationScopeAliasesId,
-				orderByComparator);
-	}
-
-	/**
 	 * Removes all the o auth2 scope grants where oAuth2ApplicationScopeAliasesId = &#63; from the database.
 	 *
 	 * @param oAuth2ApplicationScopeAliasesId the o auth2 application scope aliases ID
@@ -809,3 +754,4 @@ public class OAuth2ScopeGrantUtil {
 	private static volatile OAuth2ScopeGrantPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2058100835

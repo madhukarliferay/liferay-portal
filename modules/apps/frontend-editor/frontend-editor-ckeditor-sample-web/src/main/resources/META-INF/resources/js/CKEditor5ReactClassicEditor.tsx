@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Bookmark, Underline} from 'ckeditor5';
+import {Underline} from '@ckeditor/ckeditor5-basic-styles/dist/index.js';
+import {Bookmark} from '@ckeditor/ckeditor5-bookmark/dist/index.js';
+import ClayButton from '@clayui/button';
 import {
 	CKEditor5ClassicEditor as ClassicEditor,
 	LiferayEditorConfig,
 } from 'frontend-editor-ckeditor-web';
-import React from 'react';
+import React, {useState} from 'react';
 
 import Timestamp from './Timestamp';
 
@@ -19,11 +21,13 @@ const CKEditor5ReactClassicEditor = ({
 	editorConfig: LiferayEditorConfig;
 	editorTransformerURLs?: Array<string>;
 }) => {
+	const [disabled, setDisabled] = useState(false);
+
 	const config: LiferayEditorConfig = {
 		...editorConfig,
 		extraPlugins: [Bookmark, Timestamp],
 		initialData:
-			'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc id cursus metus aliquam eleifend mi in nulla. Quam adipiscing vitae proin sagittis nisl rhoncus. Suspendisse faucibus interdum posuere lorem. Nullam ac tortor vitae purus faucibus ornare. Ac felis donec et odio pellentesque diam. Nulla at volutpat diam ut. Posuere urna nec tincidunt praesent semper feugiat nibh. Gravida quis blandit turpis cursus. Proin libero nunc consequat interdum varius. Sollicitudin ac orci phasellus egestas tellus rutrum tellus pellentesque. Neque volutpat ac tincidunt vitae semper quis lectus nulla at. Odio euismod lacinia at quis risus sed vulputate odio ut. Augue lacus viverra vitae congue eu consequat ac. Elementum sagittis vitae et leo duis ut diam. Diam quis enim lobortis scelerisque fermentum dui faucibus.',
+			'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nunc id cursus metus aliquam eleifend mi in nulla. Quam adipiscing vitae proin sagittis nisl rhoncus. Suspendisse faucibus interdum posuere lorem. Nullam ac tortor vitae purus faucibus ornare. Ac felis donec et odio pellentesque diam. Nulla at volutpat diam ut. Posuere urna nec tincidunt praesent semper feugiat nibh. Gravida quis blandit turpis cursus. Proin libero nunc consequat interdum varius. Sollicitudin ac orci phasellus egestas tellus rutrum tellus pellentesque. Neque volutpat ac tincidunt vitae semper quis lectus nulla at. Odio euismod lacinia at quis risus sed vulputate odio ut. Augue lacus viverra vitae congue eu consequat ac. Elementum sagittis vitae et leo duis ut diam. Diam quis enim lobortis scelerisque fermentum dui faucibus. <p><a href="/home">Link to home page</a></p>',
 		removePlugins: [Underline],
 		toolbar: {
 			items: [
@@ -36,6 +40,9 @@ const CKEditor5ReactClassicEditor = ({
 				'|',
 				'bookmark',
 				'timestamp',
+				'|',
+				'headlessImageSelector',
+				'headlessVideoSelector',
 			],
 		},
 	};
@@ -44,7 +51,25 @@ const CKEditor5ReactClassicEditor = ({
 		config.editorTransformerURLs = editorTransformerURLs;
 	}
 
-	return <ClassicEditor config={config} />;
+	return (
+		<div className="container-fluid">
+			<div className="mb-2 row">
+				<ClayButton
+					onClick={() => {
+						setDisabled(!disabled);
+					}}
+				>
+					Toggle editor ReadOnly mode
+				</ClayButton>
+			</div>
+
+			<div className="row">
+				<div>
+					<ClassicEditor config={config} disabled={disabled} />
+				</div>
+			</div>
+		</div>
+	);
 };
 
 export default CKEditor5ReactClassicEditor;

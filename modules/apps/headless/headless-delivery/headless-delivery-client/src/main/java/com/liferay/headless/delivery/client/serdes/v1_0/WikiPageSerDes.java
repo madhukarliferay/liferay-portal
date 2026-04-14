@@ -353,9 +353,7 @@ public class WikiPageSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(wikiPage.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -936,3 +934,4 @@ public class WikiPageSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:847597984

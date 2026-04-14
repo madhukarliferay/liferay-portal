@@ -51,8 +51,13 @@ public interface FaroProject extends FaroProjectModel, PersistedModel {
 
 	public String getProjectId();
 
+	public java.util.Date getStartDate() throws Exception;
+
+	public String getSubscriptionName() throws Exception;
+
 	public boolean isAllowedIPAddress(String ipAddress);
 
 	public boolean isTrial();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:798404575

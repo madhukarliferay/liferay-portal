@@ -7,6 +7,7 @@ package com.liferay.data.engine.rest.internal.resource.v2_0;
 
 import com.liferay.data.engine.rest.dto.v2_0.DataDefinition;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
@@ -352,25 +353,27 @@ public abstract class BaseDataDefinitionResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(dataDefinitionId);
+		Long resourceId = getPermissionCheckerResourceId(dataDefinitionId);
 		String resourceName = getPermissionCheckerResourceName(
 			dataDefinitionId);
-		Long resourceId = getPermissionCheckerResourceId(dataDefinitionId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(dataDefinitionId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getDataDefinitionPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDataDefinitionPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putDataDefinitionPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDataDefinitionPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -858,13 +861,13 @@ public abstract class BaseDataDefinitionResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(dataDefinitionId);
+		Long resourceId = getPermissionCheckerResourceId(dataDefinitionId);
 		String resourceName = getPermissionCheckerResourceName(
 			dataDefinitionId);
-		Long resourceId = getPermissionCheckerResourceId(dataDefinitionId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(dataDefinitionId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -900,21 +903,22 @@ public abstract class BaseDataDefinitionResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(dataDefinitionId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getDataDefinitionPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDataDefinitionPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putDataDefinitionPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDataDefinitionPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1064,6 +1068,15 @@ public abstract class BaseDataDefinitionResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1281,6 +1294,9 @@ public abstract class BaseDataDefinitionResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1850,3 +1866,4 @@ public abstract class BaseDataDefinitionResourceImpl
 		LogFactoryUtil.getLog(BaseDataDefinitionResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-648444966

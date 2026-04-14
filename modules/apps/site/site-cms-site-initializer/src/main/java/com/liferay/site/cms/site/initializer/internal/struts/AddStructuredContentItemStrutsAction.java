@@ -8,6 +8,8 @@ package com.liferay.site.cms.site.initializer.internal.struts;
 import com.liferay.fragment.listener.FragmentEntryLinkListenerRegistry;
 import com.liferay.fragment.renderer.FragmentRendererRegistry;
 import com.liferay.fragment.service.FragmentEntryLinkService;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.layout.manager.FormManager;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectDefinition;
@@ -18,6 +20,8 @@ import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -66,34 +70,42 @@ public class AddStructuredContentItemStrutsAction implements StrutsAction {
 
 		ObjectEntryManager objectEntryManager =
 			_objectEntryManagerRegistry.getObjectEntryManager(
+				objectDefinition.getCompanyId(),
 				objectDefinition.getStorageType());
 
-		ObjectEntry objectEntry = new ObjectEntry();
-
-		objectEntry.setObjectEntryFolderExternalReferenceCode(
-			() -> ParamUtil.getString(
-				httpServletRequest, "objectEntryFolderExternalReferenceCode"));
-		objectEntry.setStatus(
-			() -> new Status() {
-				{
-					setCode(() -> WorkflowConstants.STATUS_DRAFT);
-				}
-			});
-
-		objectEntry = objectEntryManager.addObjectEntry(
+		DefaultDTOConverterContext defaultDTOConverterContext =
 			new DefaultDTOConverterContext(
 				false, null, null, null, null,
 				themeDisplay.getSiteDefaultLocale(), null,
-				themeDisplay.getUser()),
-			objectDefinition, objectEntry,
+				themeDisplay.getUser());
+
+		ObjectEntry objectEntry = objectEntryManager.addObjectEntry(
+			defaultDTOConverterContext, objectDefinition,
+			new ObjectEntry() {
+				{
+					setObjectEntryFolderExternalReferenceCode(
+						() -> ParamUtil.getString(
+							httpServletRequest,
+							"objectEntryFolderExternalReferenceCode"));
+					setStatus(
+						() -> new Status() {
+							{
+								setCode(() -> WorkflowConstants.STATUS_DRAFT);
+							}
+						});
+				}
+			},
 			String.valueOf(ParamUtil.getLong(httpServletRequest, "groupId")));
 
 		httpServletResponse.sendRedirect(
-			ActionUtil.getEditURL(
-				_formManager, _fragmentEntryLinkListenerRegistry,
-				_fragmentEntryLinkService, _fragmentRendererRegistry,
-				httpServletRequest, String.valueOf(objectEntry.getId()),
-				objectDefinition));
+			HttpComponentsUtil.addParameter(
+				ActionUtil.getEditURL(
+					_formManager, _fragmentEntryLinkListenerRegistry,
+					_fragmentEntryLinkService, _fragmentRendererRegistry,
+					httpServletRequest, String.valueOf(objectEntry.getId()),
+					_infoItemServiceRegistry, _infoSearchClassMapperRegistry,
+					objectDefinition),
+				Constants.CMD, Constants.ADD));
 
 		return null;
 	}
@@ -110,6 +122,12 @@ public class AddStructuredContentItemStrutsAction implements StrutsAction {
 
 	@Reference
 	private FragmentRendererRegistry _fragmentRendererRegistry;
+
+	@Reference
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
 
 	@Reference
 	private ObjectDefinitionService _objectDefinitionService;

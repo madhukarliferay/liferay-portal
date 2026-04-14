@@ -28,9 +28,9 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.StagedModelPermissionLogic;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.permission.WorkflowPermissionUtil;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.sharing.security.permission.resource.SharingModelResourcePermissionConfigurator;
 
@@ -138,6 +138,10 @@ public class DLFileEntryModelResourcePermissionWrapper
 
 					consumer.accept(
 						(permissionChecker, name, model, actionId) -> {
+							if (model.getClassNameId() > 0) {
+								return null;
+							}
+
 							if (actionId.equals(ActionKeys.DOWNLOAD)) {
 								actionId = ActionKeys.VIEW;
 							}
@@ -208,6 +212,10 @@ public class DLFileEntryModelResourcePermissionWrapper
 				PermissionChecker permissionChecker, String name,
 				DLFileEntry dlFileEntry, String actionId)
 			throws PortalException {
+
+			if (actionId.equals(ActionKeys.DOWNLOAD)) {
+				actionId = ActionKeys.VIEW;
+			}
 
 			DLFileVersion fileVersion = dlFileEntry.getFileVersion();
 

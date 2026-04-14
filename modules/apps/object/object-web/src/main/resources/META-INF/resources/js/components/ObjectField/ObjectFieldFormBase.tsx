@@ -58,9 +58,10 @@ interface ObjectFieldFormBaseProps {
 	editingObjectField?: boolean;
 	errors: ObjectFieldErrors;
 	handleChange: ChangeEventHandler<HTMLInputElement>;
+	hasDepotEntry?: boolean;
 	learnResources?: ILearnResourceContext;
 	modelBuilder?: boolean;
-	objectDefinition?: ObjectDefinition;
+	objectDefinition?: ObjectDefinition | ObjectDefinitionNodeData;
 	objectField: Partial<ObjectField>;
 	objectFieldBusinessTypesInfo: ObjectFieldBusinessType[];
 	objectRelationshipId?: number;
@@ -198,6 +199,7 @@ export default function ObjectFieldFormBase({
 	editingObjectField = false,
 	errors,
 	handleChange,
+	hasDepotEntry,
 	learnResources,
 	modelBuilder = false,
 	objectDefinition,
@@ -270,6 +272,11 @@ export default function ObjectFieldFormBase({
 				? values.indexedLanguageId ?? defaultLanguageId
 				: '';
 
+		errors.businessType =
+			selectedBusinessType === values.businessType
+				? errors.businessType
+				: undefined;
+
 		setSelectedOutputValue(undefined);
 
 		setValues({
@@ -330,11 +337,7 @@ export default function ObjectFieldFormBase({
 			return true;
 		}
 
-		return (
-			values.businessType === 'Relationship' ||
-			(!Liferay.FeatureFlags['LPD-32050'] && values.localized) ||
-			values.state
-		);
+		return values.businessType === 'Relationship' || values.state;
 	};
 
 	const handleStateToggleChange = (toggled: boolean) => {
@@ -459,6 +462,7 @@ export default function ObjectFieldFormBase({
 				className={className}
 				disabled={disabled}
 				error={errors.businessType}
+				id="object-field-form-base__type-input"
 				items={objectFieldBusinessTypesInfo}
 				label={Liferay.Language.get('type')}
 				onSelectionChange={(value) => {
@@ -486,6 +490,7 @@ export default function ObjectFieldFormBase({
 				<AttachmentFormBase
 					disabled={disabled}
 					error={errors.fileSource}
+					hasDepotEntry={hasDepotEntry}
 					objectDefinitionName={objectDefinition.name}
 					objectFieldSettings={
 						values.objectFieldSettings as ObjectFieldSetting[]

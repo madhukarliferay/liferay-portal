@@ -207,52 +207,6 @@ public class CPOptionUtil {
 	}
 
 	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option
-	 * @throws NoSuchCPOptionException if a matching cp option could not be found
-	 */
-	public static CPOption findByUuid_Last(
-			String uuid, OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option, or <code>null</code> if a matching cp option could not be found
-	 */
-	public static CPOption fetchByUuid_Last(
-		String uuid, OrderByComparator<CPOption> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public static CPOption[] findByUuid_PrevAndNext(
-			long CPOptionId, String uuid,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CPOptionId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp options that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -299,24 +253,6 @@ public class CPOptionUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set of cp options that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public static CPOption[] filterFindByUuid_PrevAndNext(
-			long CPOptionId, String uuid,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			CPOptionId, uuid, orderByComparator);
 	}
 
 	/**
@@ -458,59 +394,6 @@ public class CPOptionUtil {
 	}
 
 	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option
-	 * @throws NoSuchCPOptionException if a matching cp option could not be found
-	 */
-	public static CPOption findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp option in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option, or <code>null</code> if a matching cp option could not be found
-	 */
-	public static CPOption fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CPOption> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public static CPOption[] findByUuid_C_PrevAndNext(
-			long CPOptionId, String uuid, long companyId,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPOptionId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp options that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -562,25 +445,6 @@ public class CPOptionUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set of cp options that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public static CPOption[] filterFindByUuid_C_PrevAndNext(
-			long CPOptionId, String uuid, long companyId,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			CPOptionId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -717,54 +581,6 @@ public class CPOptionUtil {
 	}
 
 	/**
-	 * Returns the last cp option in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option
-	 * @throws NoSuchCPOptionException if a matching cp option could not be found
-	 */
-	public static CPOption findByCompanyId_Last(
-			long companyId, OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp option in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp option, or <code>null</code> if a matching cp option could not be found
-	 */
-	public static CPOption fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CPOption> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public static CPOption[] findByCompanyId_PrevAndNext(
-			long CPOptionId, long companyId,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			CPOptionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp options that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -811,24 +627,6 @@ public class CPOptionUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp options before and after the current cp option in the ordered set of cp options that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param CPOptionId the primary key of the current cp option
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp option
-	 * @throws NoSuchCPOptionException if a cp option with the primary key could not be found
-	 */
-	public static CPOption[] filterFindByCompanyId_PrevAndNext(
-			long CPOptionId, long companyId,
-			OrderByComparator<CPOption> orderByComparator)
-		throws com.liferay.commerce.product.exception.NoSuchCPOptionException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			CPOptionId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1151,3 +949,4 @@ public class CPOptionUtil {
 	private static volatile CPOptionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-134100602

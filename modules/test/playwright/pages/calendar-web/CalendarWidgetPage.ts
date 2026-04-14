@@ -16,11 +16,17 @@ export class CalendarWidgetPage {
 	readonly addEventMenuItem: Locator;
 	readonly allDayCheckbox: Locator;
 	readonly calendarColumns: Locator;
+	readonly calendarSettingsNotificationTemplates: {
+		bodyEditor: Locator;
+	};
 	readonly calendarOptions: Locator;
 	readonly calendarWidget: Locator;
 	readonly closeConfigurationButton: Locator;
 	readonly closeEventModalButton: Locator;
 	readonly configurationMenuItem: Locator;
+	readonly description: Locator;
+	readonly descriptionLocalesDropdownButton: Locator;
+	readonly descriptionLocalesDropdownMenu: Locator;
 	readonly endDate: Locator;
 	readonly endTime: Locator;
 	readonly hideSidebarIcon: Locator;
@@ -67,18 +73,42 @@ export class CalendarWidgetPage {
 		this.calendarOptions = page
 			.locator('#wrapper')
 			.getByRole('button', {name: 'Options'});
+
+		const bodyEditorContainer = page
+			.frameLocator('iframe')
+			.getByTestId('bodyEditorContainer');
+
+		this.calendarSettingsNotificationTemplates = {
+			bodyEditor: bodyEditorContainer.locator('.ck-editor__editable'),
+		};
+
 		this.calendarWidget = page.locator(
 			'.lfr-layout-structure-item-com-liferay-calendar-web-portlet-calendarportlet'
 		);
-		this.closeConfigurationButton = page.getByRole('button', {
-			exact: true,
-			name: 'close',
-		});
-		this.closeEventModalButton = page.getByRole('button', {name: 'Close'});
+		this.closeConfigurationButton = page
+			.locator('.modal-header')
+			.getByRole('button', {
+				exact: true,
+				name: 'Close',
+			});
+		this.closeEventModalButton = page
+			.locator('.modal-header')
+			.getByRole('button', {exact: true, name: 'Close'});
 		this.configurationMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Configuration',
 		});
+
+		const descriptionContainer = page
+			.frameLocator('iframe')
+			.getByTestId('descriptionContainer');
+
+		this.description = descriptionContainer.locator('.ck-editor__editable');
+		this.descriptionLocalesDropdownButton =
+			descriptionContainer.getByTitle('Select a Language');
+		this.descriptionLocalesDropdownMenu = page
+			.frameLocator('iframe')
+			.locator('.dropdown-menu.show');
 		this.endDate = page
 			.frameLocator('iframe')
 			.getByLabel('Ends Required', {exact: true});
@@ -163,6 +193,7 @@ export class CalendarWidgetPage {
 
 	async addEvent({
 		allDay,
+		description,
 		endDate,
 		endTime,
 		publishEvent,
@@ -172,6 +203,7 @@ export class CalendarWidgetPage {
 		title,
 	}: {
 		allDay: boolean;
+		description?: string;
 		endDate?: string;
 		endTime?: string;
 		publishEvent?: boolean;
@@ -211,6 +243,10 @@ export class CalendarWidgetPage {
 
 		if (endTime) {
 			await this.endTime.pressSequentially(endTime, {delay: 100});
+		}
+
+		if (description) {
+			await this.description.fill(description);
 		}
 
 		if (publishEvent) {

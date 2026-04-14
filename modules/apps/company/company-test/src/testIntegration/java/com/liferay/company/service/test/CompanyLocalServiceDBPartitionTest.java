@@ -12,8 +12,11 @@ import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.counter.kernel.service.persistence.CounterFinder;
 import com.liferay.counter.model.CounterRegister;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.store.Store;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -39,8 +42,10 @@ import com.liferay.portal.kernel.repository.registry.RepositoryDefiner;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -53,6 +58,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProxyUtil;
@@ -155,7 +161,7 @@ public class CompanyLocalServiceDBPartitionTest
 	@Test
 	public void testAddCompany() throws Exception {
 		int dbPartitionsCount = _getDBPartitionsCount();
-		int rulesCount = _getRulesCount(defaultPartitionName);
+		long rulesCount = _getRulesCount(defaultPartitionName);
 
 		_company1 = CompanyTestUtil.addCompany();
 
@@ -483,7 +489,7 @@ public class CompanyLocalServiceDBPartitionTest
 	@FeatureFlag("LPD-11342")
 	@Test
 	public void testCopyDBPartitionCompany() throws Exception {
-		int rulesCount = _getRulesCount(defaultPartitionName);
+		long rulesCount = _getRulesCount(defaultPartitionName);
 
 		Configuration configuration =
 			CompanyLocalServiceTestUtil.createFactoryConfiguration(
@@ -516,15 +522,52 @@ public class CompanyLocalServiceDBPartitionTest
 
 			_addCopyDBPartitionCompanyCache(copiedCompanyId);
 
-			Collection<ServiceReference<Portlet>> serviceReferences =
-				_bundleContext.getServiceReferences(
-					Portlet.class,
-					StringBundler.concat(
-						"(&(com.liferay.portlet.company=",
-						copiedCompany.getCompanyId(), ")(jakarta.portlet.name=",
-						objectDefinition.getPortletId(), "))"));
+			try (SafeCloseable safeCloseable2 =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						copiedCompanyId)) {
 
-			Assert.assertFalse(serviceReferences.isEmpty());
+				ObjectDefinition copiedObjectDefinition =
+					_objectDefinitionLocalService.fetchObjectDefinition(
+						objectDefinition.getObjectDefinitionId());
+
+				Assert.assertNotEquals(
+					copiedObjectDefinition.getClassName(),
+					objectDefinition.getClassName());
+
+				Collection<ServiceReference<Portlet>> serviceReferences =
+					_bundleContext.getServiceReferences(
+						Portlet.class,
+						StringBundler.concat(
+							"(&(com.liferay.portlet.company=",
+							copiedObjectDefinition.getCompanyId(),
+							")(jakarta.portlet.name=",
+							copiedObjectDefinition.getPortletId(), "))"));
+
+				Assert.assertFalse(serviceReferences.isEmpty());
+
+				Assert.assertNotNull(
+					_classNameLocalService.fetchClassName(
+						copiedObjectDefinition.getClassName()));
+				Assert.assertNotNull(
+					_portletLocalService.getPortletById(
+						copiedObjectDefinition.getPortletId()));
+				Assert.assertTrue(
+					ListUtil.isNotEmpty(
+						_resourceActionLocalService.getResourceActions(
+							copiedObjectDefinition.getClassName())));
+				Assert.assertTrue(
+					ListUtil.isNotEmpty(
+						_resourceActionLocalService.getResourceActions(
+							copiedObjectDefinition.getPortletId())));
+				Assert.assertTrue(
+					ListUtil.isNotEmpty(
+						_resourcePermissionLocalService.getResourcePermissions(
+							copiedObjectDefinition.getClassName())));
+				Assert.assertTrue(
+					ListUtil.isNotEmpty(
+						_resourcePermissionLocalService.getResourcePermissions(
+							copiedObjectDefinition.getPortletId())));
+			}
 
 			companyLocalService.deleteCompany(copiedCompany);
 
@@ -696,6 +739,13 @@ public class CompanyLocalServiceDBPartitionTest
 
 		_assertCache(_company1.getCompanyId(), true);
 
+		long repositoryId = RandomTestUtil.nextLong();
+		String fileName1 = "/" + RandomTestUtil.randomString();
+
+		_store.addFile(
+			_company1.getCompanyId(), repositoryId, fileName1,
+			Store.VERSION_DEFAULT, new UnsyncByteArrayInputStream(new byte[0]));
+
 		int dbPartitionsCount = _getDBPartitionsCount();
 
 		companyLocalService.deleteCompany(_company1);
@@ -704,6 +754,10 @@ public class CompanyLocalServiceDBPartitionTest
 			ArrayUtil.contains(
 				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
 				_company1.getCompanyId()));
+		Assert.assertFalse(
+			_store.hasFile(
+				_company1.getCompanyId(), repositoryId, fileName1,
+				Store.VERSION_DEFAULT));
 
 		Assert.assertEquals(dbPartitionsCount - 1, _getDBPartitionsCount());
 
@@ -826,7 +880,7 @@ public class CompanyLocalServiceDBPartitionTest
 
 	private void _assertCompanyConfiguration(
 			long companyId, Configuration configuration)
-		throws SQLException {
+		throws Exception {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
@@ -834,6 +888,7 @@ public class CompanyLocalServiceDBPartitionTest
 					CompanyLocalServiceTestUtil.getPartitionName(companyId),
 					".Configuration_ where configurationId like '",
 					configuration.getFactoryPid(), "%'"));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -893,7 +948,7 @@ public class CompanyLocalServiceDBPartitionTest
 
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
 
-		try (ResultSet resultSet = databaseMetaData.getTables(
+		try (ResultSet resultSet1 = databaseMetaData.getTables(
 				dbPartitionDB.getCatalog(
 					connection,
 					CompanyLocalServiceTestUtil.getPartitionName(
@@ -904,8 +959,8 @@ public class CompanyLocalServiceDBPartitionTest
 						copiedCompanyId)),
 				null, new String[] {"TABLE"})) {
 
-			while (resultSet.next()) {
-				String tableName = resultSet.getString("TABLE_NAME");
+			while (resultSet1.next()) {
+				String tableName = resultSet1.getString("TABLE_NAME");
 
 				if (dbInspector.isControlTable(tableName)) {
 					continue;
@@ -916,7 +971,7 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 
 		for (String tableName : tableNames) {
-			try (ResultSet resultSet = databaseMetaData.getColumns(
+			try (ResultSet resultSet2 = databaseMetaData.getColumns(
 					dbPartitionDB.getCatalog(
 						connection,
 						CompanyLocalServiceTestUtil.getPartitionName(
@@ -927,8 +982,8 @@ public class CompanyLocalServiceDBPartitionTest
 							copiedCompanyId)),
 					tableName, null)) {
 
-				while (resultSet.next()) {
-					int columnType = resultSet.getInt("DATA_TYPE");
+				while (resultSet2.next()) {
+					int columnType = resultSet2.getInt("DATA_TYPE");
 
 					if ((columnType != Types.BIGINT) &&
 						(columnType != Types.LONGVARCHAR) &&
@@ -937,7 +992,7 @@ public class CompanyLocalServiceDBPartitionTest
 						continue;
 					}
 
-					String columnName = resultSet.getString("COLUMN_NAME");
+					String columnName = resultSet2.getString("COLUMN_NAME");
 
 					String whereClause = StringBundler.concat(
 						columnName, " like '%", companyId, "%'");
@@ -962,17 +1017,18 @@ public class CompanyLocalServiceDBPartitionTest
 									StringPool.PERIOD, tableName, " where ",
 									whereClause)));
 
-					try (ResultSet resultSet2 =
+					try (ResultSet resultSet3 =
 							preparedStatement.executeQuery()) {
 
-						if (resultSet2.next()) {
+						if (resultSet3.next()) {
 							Assert.fail(
 								StringBundler.concat(
 									"Company ID ", companyId,
 									" is present in the copied database ",
 									"schema in ", tableName, StringPool.PERIOD,
 									columnName, StringPool.COLON,
-									StringPool.SPACE, resultSet2.getObject(1)));
+									StringPool.SPACE,
+									resultSet3.getObject(columnName)));
 						}
 					}
 				}
@@ -980,9 +1036,7 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 	}
 
-	private void _checkPartitionDoesNotExist(long companyId)
-		throws SQLException {
-
+	private void _checkPartitionDoesNotExist(long companyId) throws Exception {
 		List<String> partitionNames = new ArrayList<>();
 
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
@@ -1061,7 +1115,7 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 	}
 
-	private int _getDBPartitionsCount() throws SQLException {
+	private int _getDBPartitionsCount() throws Exception {
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
 
 		try (ResultSet resultSet = databaseMetaData.getSchemas()) {
@@ -1079,25 +1133,28 @@ public class CompanyLocalServiceDBPartitionTest
 		throw new SQLException("At least one database partition is required");
 	}
 
-	private int _getRulesCount(String partitionName) throws SQLException {
+	private long _getRulesCount(String partitionName) throws Exception {
 		if (db.getDBType() != DBType.POSTGRESQL) {
 			return 0;
 		}
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select count(pg_catalog.pg_rewrite.rulename) from ",
-					"pg_catalog.pg_rewrite join pg_catalog.pg_class on ",
+					"select count(pg_catalog.pg_rewrite.rulename) as count ",
+					"from pg_catalog.pg_rewrite join pg_catalog.pg_class on ",
 					"pg_catalog.pg_rewrite.ev_class = pg_catalog.pg_class.oid ",
-					"where pg_catalog.pg_class.relnamespace = '", partitionName,
-					"'::regnamespace and (pg_catalog.pg_rewrite.rulename like ",
+					"where pg_catalog.pg_class.relnamespace = ?::",
+					"regnamespace and (pg_catalog.pg_rewrite.rulename like ",
 					"'update_%' or pg_catalog.pg_rewrite.rulename like ",
-					"'delete_%')"));
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+					"'delete_%')"))) {
 
-			resultSet.next();
+			preparedStatement.setString(1, partitionName);
 
-			return resultSet.getInt(1);
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				resultSet.next();
+
+				return resultSet.getLong("count");
+			}
 		}
 	}
 
@@ -1161,10 +1218,16 @@ public class CompanyLocalServiceDBPartitionTest
 	private CounterFinder _counterFinder;
 
 	@Inject
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Inject
 	private PersistenceManager _persistenceManager;
 
 	@Inject
 	private Portal _portal;
+
+	@Inject
+	private PortletLocalService _portletLocalService;
 
 	@Inject
 	private RepositoryFactory _repositoryFactory;
@@ -1175,6 +1238,14 @@ public class CompanyLocalServiceDBPartitionTest
 	@Inject
 	private ResourceActionLocalService _resourceActionLocalService;
 
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
 	private ServiceRegistration<RepositoryDefiner> _serviceRegistration;
+
+	@Inject(
+		filter = "(&(objectClass=com.liferay.document.library.kernel.store.Store)(default=true))"
+	)
+	private Store _store;
 
 }

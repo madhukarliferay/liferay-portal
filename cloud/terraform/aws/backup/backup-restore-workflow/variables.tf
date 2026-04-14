@@ -1,3 +1,6 @@
+variable "arn_partition" {
+	default="aws"
+}
 variable "artifact_repository_bucket_prefix" {
 	default="argo-workflows-artifact-repository-"
 }
@@ -21,8 +24,5 @@ variable "tags" {
 	type=map(string)
 }
 variable "terraform_state_bucket_arn" {
-	type=string
-}
-variable "terraform_state_dynamodb_table_arn" {
 	type=string
 }

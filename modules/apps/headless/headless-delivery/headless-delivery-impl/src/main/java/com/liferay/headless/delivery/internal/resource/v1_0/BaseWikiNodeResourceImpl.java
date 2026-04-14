@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.WikiNode;
 import com.liferay.headless.delivery.resource.v1_0.WikiNodeResource;
@@ -310,13 +311,13 @@ public abstract class BaseWikiNodeResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteWikiNodePermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteWikiNodePermissionsPage", null, portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteWikiNodePermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteWikiNodePermissionsPage", null, portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -491,23 +492,24 @@ public abstract class BaseWikiNodeResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(wikiNodeId);
+		Long groupId = getPermissionCheckerGroupId(wikiNodeId);
 		Long resourceId = getPermissionCheckerResourceId(wikiNodeId);
+		String resourceName = getPermissionCheckerResourceName(wikiNodeId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(wikiNodeId), resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getWikiNodePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getWikiNodePermissionsPage", null, resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putWikiNodePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putWikiNodePermissionsPage", null, resourceName, groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -804,13 +806,13 @@ public abstract class BaseWikiNodeResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteWikiNodePermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteWikiNodePermissionsPage", null, portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteWikiNodePermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteWikiNodePermissionsPage", null, portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -923,11 +925,12 @@ public abstract class BaseWikiNodeResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(wikiNodeId);
+		Long groupId = getPermissionCheckerGroupId(wikiNodeId);
 		Long resourceId = getPermissionCheckerResourceId(wikiNodeId);
+		String resourceName = getPermissionCheckerResourceName(wikiNodeId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(wikiNodeId), resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -963,21 +966,20 @@ public abstract class BaseWikiNodeResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(wikiNodeId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getWikiNodePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getWikiNodePermissionsPage", null, resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putWikiNodePermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putWikiNodePermissionsPage", null, resourceName, groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -1115,9 +1117,34 @@ public abstract class BaseWikiNodeResourceImpl
 
 		UnsafeFunction<WikiNode, WikiNode, Exception> wikiNodeUnsafeFunction =
 			wikiNode -> {
-				deleteWikiNode(wikiNode.getId());
+				if (wikiNode.getId() != null) {
+					try {
+						deleteWikiNode(wikiNode.getId());
 
-				return wikiNode;
+						return wikiNode;
+					}
+					catch (Exception exception) {
+						if (wikiNode.getExternalReferenceCode() != null) {
+							if (parameters.containsKey("siteId")) {
+								deleteSiteWikiNodeByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									wikiNode.getExternalReferenceCode());
+
+								return wikiNode;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteWikiNodeByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						wikiNode.getExternalReferenceCode());
+
+					return wikiNode;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -1195,6 +1222,15 @@ public abstract class BaseWikiNodeResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1406,6 +1442,9 @@ public abstract class BaseWikiNodeResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1969,3 +2008,4 @@ public abstract class BaseWikiNodeResourceImpl
 		LogFactoryUtil.getLog(BaseWikiNodeResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1180495524

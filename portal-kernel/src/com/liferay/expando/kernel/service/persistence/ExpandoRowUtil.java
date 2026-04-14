@@ -212,52 +212,6 @@ public class ExpandoRowUtil {
 	}
 
 	/**
-	 * Returns the last expando row in the ordered set where tableId = &#63;.
-	 *
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando row
-	 * @throws NoSuchRowException if a matching expando row could not be found
-	 */
-	public static ExpandoRow findByTableId_Last(
-			long tableId, OrderByComparator<ExpandoRow> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchRowException {
-
-		return getPersistence().findByTableId_Last(tableId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last expando row in the ordered set where tableId = &#63;.
-	 *
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando row, or <code>null</code> if a matching expando row could not be found
-	 */
-	public static ExpandoRow fetchByTableId_Last(
-		long tableId, OrderByComparator<ExpandoRow> orderByComparator) {
-
-		return getPersistence().fetchByTableId_Last(tableId, orderByComparator);
-	}
-
-	/**
-	 * Returns the expando rows before and after the current expando row in the ordered set where tableId = &#63;.
-	 *
-	 * @param rowId the primary key of the current expando row
-	 * @param tableId the table ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next expando row
-	 * @throws NoSuchRowException if a expando row with the primary key could not be found
-	 */
-	public static ExpandoRow[] findByTableId_PrevAndNext(
-			long rowId, long tableId,
-			OrderByComparator<ExpandoRow> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchRowException {
-
-		return getPersistence().findByTableId_PrevAndNext(
-			rowId, tableId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the expando rows where tableId = &#63; from the database.
 	 *
 	 * @param tableId the table ID
@@ -375,52 +329,6 @@ public class ExpandoRowUtil {
 
 		return getPersistence().fetchByClassPK_First(
 			classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last expando row in the ordered set where classPK = &#63;.
-	 *
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando row
-	 * @throws NoSuchRowException if a matching expando row could not be found
-	 */
-	public static ExpandoRow findByClassPK_Last(
-			long classPK, OrderByComparator<ExpandoRow> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchRowException {
-
-		return getPersistence().findByClassPK_Last(classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last expando row in the ordered set where classPK = &#63;.
-	 *
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching expando row, or <code>null</code> if a matching expando row could not be found
-	 */
-	public static ExpandoRow fetchByClassPK_Last(
-		long classPK, OrderByComparator<ExpandoRow> orderByComparator) {
-
-		return getPersistence().fetchByClassPK_Last(classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the expando rows before and after the current expando row in the ordered set where classPK = &#63;.
-	 *
-	 * @param rowId the primary key of the current expando row
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next expando row
-	 * @throws NoSuchRowException if a expando row with the primary key could not be found
-	 */
-	public static ExpandoRow[] findByClassPK_PrevAndNext(
-			long rowId, long classPK,
-			OrderByComparator<ExpandoRow> orderByComparator)
-		throws com.liferay.expando.kernel.exception.NoSuchRowException {
-
-		return getPersistence().findByClassPK_PrevAndNext(
-			rowId, classPK, orderByComparator);
 	}
 
 	/**
@@ -663,3 +571,4 @@ public class ExpandoRowUtil {
 	private static volatile ExpandoRowPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:217141977

@@ -240,8 +240,8 @@ public class CPConfigurationListLocalServiceImpl
 				return cpConfigurationListLocalService.
 					updateCPConfigurationList(
 						externalReferenceCode,
-						cpConfigurationList.getCPConfigurationListId(), groupId,
-						userId, parentCPConfigurationListId, master, name,
+						cpConfigurationList.getCPConfigurationListId(), userId,
+						groupId, parentCPConfigurationListId, master, name,
 						priority, displayDateMonth, displayDateDay,
 						displayDateYear, displayDateHour, displayDateMinute,
 						expirationDateMonth, expirationDateDay,
@@ -418,7 +418,8 @@ public class CPConfigurationListLocalServiceImpl
 	public CPConfigurationList getMasterCPConfigurationList(long groupId)
 		throws NoSuchCPConfigurationListException {
 
-		return cpConfigurationListPersistence.findByG_M(groupId, true);
+		return cpConfigurationListPersistence.findByG_M_First(
+			groupId, true, null);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -618,8 +619,8 @@ public class CPConfigurationListLocalServiceImpl
 
 		if (masterConfigurationList) {
 			CPConfigurationList cpConfigurationList =
-				cpConfigurationListPersistence.fetchByG_M(
-					groupId, masterConfigurationList);
+				cpConfigurationListPersistence.fetchByG_M_First(
+					groupId, masterConfigurationList, null);
 
 			if ((cpConfigurationList != null) &&
 				(cpConfigurationList.getCPConfigurationListId() !=

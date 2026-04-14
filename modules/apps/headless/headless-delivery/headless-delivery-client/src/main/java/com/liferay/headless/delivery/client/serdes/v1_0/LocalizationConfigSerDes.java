@@ -66,9 +66,7 @@ public class LocalizationConfigSerDes {
 			sb.append("\"unlocalizedFieldsState\": ");
 
 			sb.append("\"");
-
 			sb.append(localizationConfig.getUnlocalizedFieldsState());
-
 			sb.append("\"");
 		}
 
@@ -248,3 +246,4 @@ public class LocalizationConfigSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:706442153

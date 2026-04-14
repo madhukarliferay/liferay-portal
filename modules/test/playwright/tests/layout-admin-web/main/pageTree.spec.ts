@@ -167,7 +167,10 @@ test(
 
 		await expect(guestActionViewCheckBox).not.toBeChecked();
 
-		await page.getByLabel('close', {exact: true}).click();
+		await page
+			.locator('.modal-header')
+			.getByLabel('Close', {exact: true})
+			.click();
 
 		// Copy page
 
@@ -623,7 +626,6 @@ test(
 		await dragAndDropElement({
 			dragTarget: treeViewItems.nth(3),
 			dropTarget: treeViewItems.nth(1),
-			page,
 		});
 
 		// Assert order
@@ -751,7 +753,7 @@ test(
 
 		await page
 			.getByRole('treeitem', {name: secondLayoutTitle})
-			.getByRole('button')
+			.getByRole('presentation')
 			.first()
 			.click();
 

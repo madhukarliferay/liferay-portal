@@ -987,6 +987,11 @@ public class GroupWrapper
 		return model.isLimitedToParentSiteMembers();
 	}
 
+	@Override
+	public boolean isMaintenanceMode() {
+		return model.isMaintenanceMode();
+	}
+
 	/**
 	 * Returns <code>true</code> if this group is manual membership.
 	 *
@@ -1055,6 +1060,11 @@ public class GroupWrapper
 	@Override
 	public boolean isStagingGroup() {
 		return model.isStagingGroup();
+	}
+
+	@Override
+	public boolean isSystemSite() {
+		return model.isSystemSite();
 	}
 
 	@Override
@@ -1513,3 +1523,4 @@ public class GroupWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1611962082

@@ -242,7 +242,18 @@ const GuestUploadFile = ({
 				value={getValue(value)}
 			/>
 
-			{progress !== 0 && <ClayProgressBar value={progress} />}
+			{progress !== 0 && (
+				<ClayProgressBar
+					messages={{
+						ariaLabelAttention: Liferay.Language.get(
+							'attention-value-is-at-x'
+						),
+						ariaLabelComplete: Liferay.Language.get('complete'),
+						ariaLabelInProgress: Liferay.Language.get('progress-x'),
+					}}
+					value={progress}
+				/>
+			)}
 
 			{message && <div className="form-feedback-item">{message}</div>}
 		</div>
@@ -457,22 +468,33 @@ const Main = ({
 
 		const fileEntryJSON = JSON.parse(value);
 
-		const fileExtension = fileEntryJSON.mimeType
-			? fileEntryJSON.mimeType.split('/')[1]
-			: fileEntryJSON.extension;
+		let fileExtension = fileEntryJSON.extension?.toLowerCase();
+
+		if (!fileExtension && fileEntryJSON.mimeType) {
+			const mimeToExt = {
+				'application/msword': 'doc',
+				'application/vnd.ms-excel': 'xls',
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+					'xlsx',
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+					'docx',
+				'text/plain': 'txt',
+			};
+
+			fileExtension =
+				mimeToExt[fileEntryJSON.mimeType.toLowerCase()] ||
+				fileEntryJSON.mimeType.split('/')[1]?.toLowerCase();
+		}
 
 		if (!fileExtension) {
 			return false;
 		}
 
-		const supportedExtensions =
-			objectFieldAcceptedFileExtensions.split(', ');
+		const supportedExtensions = objectFieldAcceptedFileExtensions
+			.split(', ')
+			.map((ext) => ext.trim().toLowerCase());
 
-		if (supportedExtensions.includes(fileExtension)) {
-			return false;
-		}
-
-		return true;
+		return !supportedExtensions.includes(fileExtension);
 	};
 
 	const deleteFileEntry = useCallback(() => {
@@ -636,6 +658,7 @@ const Main = ({
 			{...otherProps}
 			displayErrors={hasCustomError ? true : displayErrors}
 			errorMessage={errorMessage}
+			fieldName={fieldName}
 			id={id}
 			name={name}
 			overMaximumRepetitionsLimit={
@@ -669,6 +692,7 @@ const Main = ({
 						...((errorMessage || otherProps.tip) && {
 							'aria-describedby': `${id ?? name}_fieldFeedback`,
 						}),
+						...(displayErrors && !valid && {'aria-invalid': true}),
 						'aria-required': otherProps.required,
 					}}
 					editingLanguageId={editingLanguageId}

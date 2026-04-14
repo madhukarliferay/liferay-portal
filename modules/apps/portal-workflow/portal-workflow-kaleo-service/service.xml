@@ -145,6 +145,7 @@
 		<column name="scope" type="String" />
 		<column name="version" type="int" />
 		<column name="active" type="boolean" />
+		<column name="status" type="int" />
 
 		<!-- Order -->
 
@@ -164,13 +165,14 @@
 			<finder-column name="companyId" />
 			<finder-column name="name" />
 		</finder>
-		<finder name="C_S" return-type="Collection">
-			<finder-column name="companyId" />
-			<finder-column name="scope" />
-		</finder>
 		<finder name="C_A" return-type="Collection">
 			<finder-column name="companyId" />
 			<finder-column name="active" />
+		</finder>
+		<finder name="G_C_S" return-type="Collection">
+			<finder-column name="groupId" />
+			<finder-column name="companyId" />
+			<finder-column name="scope" />
 		</finder>
 		<finder name="C_N_V" return-type="KaleoDefinition">
 			<finder-column name="companyId" />
@@ -182,7 +184,8 @@
 			<finder-column name="name" />
 			<finder-column name="active" />
 		</finder>
-		<finder name="C_S_A" return-type="Collection">
+		<finder name="G_C_S_A" return-type="Collection">
+			<finder-column name="groupId" />
 			<finder-column name="companyId" />
 			<finder-column name="scope" />
 			<finder-column name="active" />
@@ -235,7 +238,7 @@
 			<finder-column name="version" />
 		</finder>
 	</entity>
-	<entity local-service="true" name="KaleoInstance" remote-service="false">
+	<entity local-service="true" name="KaleoInstance" remote-service="true">
 
 		<!-- PK fields -->
 
@@ -490,6 +493,36 @@
 		<finder name="C_KDVI" return-type="Collection">
 			<finder-column name="companyId" />
 			<finder-column name="kaleoDefinitionVersionId" />
+		</finder>
+	</entity>
+	<entity local-service="true" name="KaleoNodeSetting" remote-service="false">
+
+		<!-- PK fields -->
+
+		<column name="kaleoNodeSettingId" primary="true" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
+		<column name="createDate" type="Date" />
+		<column name="modifiedDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="kaleoNodeId" type="long" />
+		<column name="name" type="String" />
+		<column name="value" type="String" />
+
+		<!-- Finder methods -->
+
+		<finder name="KaleoNodeId" return-type="Collection">
+			<finder-column name="kaleoNodeId" />
+		</finder>
+		<finder name="KNI_N" return-type="KaleoNodeSetting" unique="true">
+			<finder-column name="kaleoNodeId" />
+			<finder-column name="name" />
 		</finder>
 	</entity>
 	<entity local-service="true" name="KaleoNotification" remote-service="false">
@@ -885,7 +918,7 @@
 			<finder-column name="kaleoTaskFormId" />
 		</finder>
 	</entity>
-	<entity local-service="true" name="KaleoTaskInstanceToken" remote-service="false">
+	<entity local-service="true" name="KaleoTaskInstanceToken" remote-service="true">
 
 		<!-- PK fields -->
 
@@ -1125,6 +1158,7 @@
 	<exceptions>
 		<exception>DuplicateKaleoDefinitionName</exception>
 		<exception>KaleoDefinitionContent</exception>
+		<exception>KaleoDefinitionGroupId</exception>
 		<exception>KaleoDefinitionName</exception>
 	</exceptions>
 </service-builder>

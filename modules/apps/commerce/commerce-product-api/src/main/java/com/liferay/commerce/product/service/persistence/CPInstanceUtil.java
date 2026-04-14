@@ -210,54 +210,6 @@ public class CPInstanceUtil {
 	}
 
 	/**
-	 * Returns the last cp instance in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByUuid_Last(
-			String uuid, OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByUuid_Last(
-		String uuid, OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByUuid_PrevAndNext(
-			long CPInstanceId, String uuid,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CPInstanceId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp instances where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -453,61 +405,6 @@ public class CPInstanceUtil {
 	}
 
 	/**
-	 * Returns the last cp instance in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByUuid_C_PrevAndNext(
-			long CPInstanceId, String uuid, long companyId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPInstanceId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp instances where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -631,54 +528,6 @@ public class CPInstanceUtil {
 	}
 
 	/**
-	 * Returns the last cp instance in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByGroupId_Last(
-			long groupId, OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByGroupId_Last(
-		long groupId, OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where groupId = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByGroupId_PrevAndNext(
-			long CPInstanceId, long groupId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			CPInstanceId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp instances that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -725,25 +574,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set of cp instances that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] filterFindByGroupId_PrevAndNext(
-			long CPInstanceId, long groupId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			CPInstanceId, groupId, orderByComparator);
 	}
 
 	/**
@@ -879,56 +709,6 @@ public class CPInstanceUtil {
 	}
 
 	/**
-	 * Returns the last cp instance in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByCompanyId_Last(
-			long companyId, OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByCompanyId_PrevAndNext(
-			long CPInstanceId, long companyId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			CPInstanceId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp instances where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -1050,57 +830,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().fetchByCPDefinitionId_First(
 			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByCPDefinitionId_Last(
-		long CPDefinitionId, OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByCPDefinitionId_PrevAndNext(
-			long CPInstanceId, long CPDefinitionId,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByCPDefinitionId_PrevAndNext(
-			CPInstanceId, CPDefinitionId, orderByComparator);
 	}
 
 	/**
@@ -1226,58 +955,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().fetchByCPInstanceUuid_First(
 			CPInstanceUuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPInstanceUuid = &#63;.
-	 *
-	 * @param CPInstanceUuid the cp instance uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByCPInstanceUuid_Last(
-			String CPInstanceUuid,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByCPInstanceUuid_Last(
-			CPInstanceUuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPInstanceUuid = &#63;.
-	 *
-	 * @param CPInstanceUuid the cp instance uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByCPInstanceUuid_Last(
-		String CPInstanceUuid,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByCPInstanceUuid_Last(
-			CPInstanceUuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where CPInstanceUuid = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param CPInstanceUuid the cp instance uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByCPInstanceUuid_PrevAndNext(
-			long CPInstanceId, String CPInstanceUuid,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByCPInstanceUuid_PrevAndNext(
-			CPInstanceId, CPInstanceUuid, orderByComparator);
 	}
 
 	/**
@@ -1411,61 +1088,6 @@ public class CPInstanceUtil {
 	}
 
 	/**
-	 * Returns the last cp instance in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByG_ST_Last(
-			long groupId, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByG_ST_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByG_ST_Last(
-		long groupId, int status,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByG_ST_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByG_ST_PrevAndNext(
-			long CPInstanceId, long groupId, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByG_ST_PrevAndNext(
-			CPInstanceId, groupId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp instances that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1515,26 +1137,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().filterFindByG_ST(
 			groupId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set of cp instances that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] filterFindByG_ST_PrevAndNext(
-			long CPInstanceId, long groupId, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().filterFindByG_ST_PrevAndNext(
-			CPInstanceId, groupId, status, orderByComparator);
 	}
 
 	/**
@@ -1678,61 +1280,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().fetchByC_S_First(
 			companyId, sku, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where companyId = &#63; and sku = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByC_S_Last(
-			long companyId, String sku,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByC_S_Last(
-			companyId, sku, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where companyId = &#63; and sku = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByC_S_Last(
-		long companyId, String sku,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByC_S_Last(
-			companyId, sku, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where companyId = &#63; and sku = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByC_S_PrevAndNext(
-			long CPInstanceId, long companyId, String sku,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByC_S_PrevAndNext(
-			CPInstanceId, companyId, sku, orderByComparator);
 	}
 
 	/**
@@ -2005,61 +1552,6 @@ public class CPInstanceUtil {
 	}
 
 	/**
-	 * Returns the last cp instance in the ordered set where CPDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByC_ST_Last(
-			long CPDefinitionId, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByC_ST_Last(
-			CPDefinitionId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByC_ST_Last(
-		long CPDefinitionId, int status,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByC_ST_Last(
-			CPDefinitionId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where CPDefinitionId = &#63; and status = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param CPDefinitionId the cp definition ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByC_ST_PrevAndNext(
-			long CPInstanceId, long CPDefinitionId, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByC_ST_PrevAndNext(
-			CPInstanceId, CPDefinitionId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp instances where CPDefinitionId = &#63; and status = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -2189,61 +1681,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().fetchByLtD_S_First(
 			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByLtD_S_Last(
-			Date displayDate, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByLtD_S_Last(
-			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByLtD_S_Last(
-		Date displayDate, int status,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByLtD_S_Last(
-			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByLtD_S_PrevAndNext(
-			long CPInstanceId, Date displayDate, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByLtD_S_PrevAndNext(
-			CPInstanceId, displayDate, status, orderByComparator);
 	}
 
 	/**
@@ -2387,65 +1824,6 @@ public class CPInstanceUtil {
 
 		return getPersistence().fetchByC_LtD_S_First(
 			CPDefinitionId, displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPDefinitionId = &#63; and displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByC_LtD_S_Last(
-			long CPDefinitionId, Date displayDate, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByC_LtD_S_Last(
-			CPDefinitionId, displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where CPDefinitionId = &#63; and displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByC_LtD_S_Last(
-		long CPDefinitionId, Date displayDate, int status,
-		OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByC_LtD_S_Last(
-			CPDefinitionId, displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where CPDefinitionId = &#63; and displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param CPDefinitionId the cp definition ID
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByC_LtD_S_PrevAndNext(
-			long CPInstanceId, long CPDefinitionId, Date displayDate,
-			int status, OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByC_LtD_S_PrevAndNext(
-			CPInstanceId, CPDefinitionId, displayDate, status,
-			orderByComparator);
 	}
 
 	/**
@@ -2604,68 +1982,6 @@ public class CPInstanceUtil {
 		return getPersistence().fetchByR_R_S_First(
 			replacementCPInstanceUuid, replacementCProductId, status,
 			orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where replacementCPInstanceUuid = &#63; and replacementCProductId = &#63; and status = &#63;.
-	 *
-	 * @param replacementCPInstanceUuid the replacement cp instance uuid
-	 * @param replacementCProductId the replacement c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance
-	 * @throws NoSuchCPInstanceException if a matching cp instance could not be found
-	 */
-	public static CPInstance findByR_R_S_Last(
-			String replacementCPInstanceUuid, long replacementCProductId,
-			int status, OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByR_R_S_Last(
-			replacementCPInstanceUuid, replacementCProductId, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp instance in the ordered set where replacementCPInstanceUuid = &#63; and replacementCProductId = &#63; and status = &#63;.
-	 *
-	 * @param replacementCPInstanceUuid the replacement cp instance uuid
-	 * @param replacementCProductId the replacement c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp instance, or <code>null</code> if a matching cp instance could not be found
-	 */
-	public static CPInstance fetchByR_R_S_Last(
-		String replacementCPInstanceUuid, long replacementCProductId,
-		int status, OrderByComparator<CPInstance> orderByComparator) {
-
-		return getPersistence().fetchByR_R_S_Last(
-			replacementCPInstanceUuid, replacementCProductId, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the cp instances before and after the current cp instance in the ordered set where replacementCPInstanceUuid = &#63; and replacementCProductId = &#63; and status = &#63;.
-	 *
-	 * @param CPInstanceId the primary key of the current cp instance
-	 * @param replacementCPInstanceUuid the replacement cp instance uuid
-	 * @param replacementCProductId the replacement c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp instance
-	 * @throws NoSuchCPInstanceException if a cp instance with the primary key could not be found
-	 */
-	public static CPInstance[] findByR_R_S_PrevAndNext(
-			long CPInstanceId, String replacementCPInstanceUuid,
-			long replacementCProductId, int status,
-			OrderByComparator<CPInstance> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPInstanceException {
-
-		return getPersistence().findByR_R_S_PrevAndNext(
-			CPInstanceId, replacementCPInstanceUuid, replacementCProductId,
-			status, orderByComparator);
 	}
 
 	/**
@@ -2931,3 +2247,4 @@ public class CPInstanceUtil {
 	private static volatile CPInstancePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-372861847

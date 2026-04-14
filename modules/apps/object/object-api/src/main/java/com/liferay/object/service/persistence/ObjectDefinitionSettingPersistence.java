@@ -120,47 +120,6 @@ public interface ObjectDefinitionSettingPersistence
 			<ObjectDefinitionSetting> orderByComparator);
 
 	/**
-	 * Returns the last object definition setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
-	 * Returns the last object definition setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting, or <code>null</code> if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<ObjectDefinitionSetting> orderByComparator);
-
-	/**
-	 * Returns the object definition settings before and after the current object definition setting in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectDefinitionSettingId the primary key of the current object definition setting
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a object definition setting with the primary key could not be found
-	 */
-	public ObjectDefinitionSetting[] findByUuid_PrevAndNext(
-			long objectDefinitionSettingId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
 	 * Removes all the object definition settings where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface ObjectDefinitionSettingPersistence
 			<ObjectDefinitionSetting> orderByComparator);
 
 	/**
-	 * Returns the last object definition setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
-	 * Returns the last object definition setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting, or <code>null</code> if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<ObjectDefinitionSetting> orderByComparator);
-
-	/**
-	 * Returns the object definition settings before and after the current object definition setting in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectDefinitionSettingId the primary key of the current object definition setting
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a object definition setting with the primary key could not be found
-	 */
-	public ObjectDefinitionSetting[] findByUuid_C_PrevAndNext(
-			long objectDefinitionSettingId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
 	 * Removes all the object definition settings where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -417,47 +332,6 @@ public interface ObjectDefinitionSettingPersistence
 		long objectDefinitionId,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<ObjectDefinitionSetting> orderByComparator);
-
-	/**
-	 * Returns the last object definition setting in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting findByObjectDefinitionId_Last(
-			long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
-	 * Returns the last object definition setting in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting, or <code>null</code> if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting fetchByObjectDefinitionId_Last(
-		long objectDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<ObjectDefinitionSetting> orderByComparator);
-
-	/**
-	 * Returns the object definition settings before and after the current object definition setting in the ordered set where objectDefinitionId = &#63;.
-	 *
-	 * @param objectDefinitionSettingId the primary key of the current object definition setting
-	 * @param objectDefinitionId the object definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a object definition setting with the primary key could not be found
-	 */
-	public ObjectDefinitionSetting[] findByObjectDefinitionId_PrevAndNext(
-			long objectDefinitionSettingId, long objectDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
 
 	/**
 	 * Removes all the object definition settings where objectDefinitionId = &#63; from the database.
@@ -569,50 +443,6 @@ public interface ObjectDefinitionSettingPersistence
 			<ObjectDefinitionSetting> orderByComparator);
 
 	/**
-	 * Returns the last object definition setting in the ordered set where companyId = &#63; and name = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting findByC_N_Last(
-			long companyId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
-	 * Returns the last object definition setting in the ordered set where companyId = &#63; and name = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object definition setting, or <code>null</code> if a matching object definition setting could not be found
-	 */
-	public ObjectDefinitionSetting fetchByC_N_Last(
-		long companyId, String name,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<ObjectDefinitionSetting> orderByComparator);
-
-	/**
-	 * Returns the object definition settings before and after the current object definition setting in the ordered set where companyId = &#63; and name = &#63;.
-	 *
-	 * @param objectDefinitionSettingId the primary key of the current object definition setting
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object definition setting
-	 * @throws NoSuchObjectDefinitionSettingException if a object definition setting with the primary key could not be found
-	 */
-	public ObjectDefinitionSetting[] findByC_N_PrevAndNext(
-			long objectDefinitionSettingId, long companyId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<ObjectDefinitionSetting> orderByComparator)
-		throws NoSuchObjectDefinitionSettingException;
-
-	/**
 	 * Removes all the object definition settings where companyId = &#63; and name = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -681,6 +511,125 @@ public interface ObjectDefinitionSettingPersistence
 	 * @return the number of matching object definition settings
 	 */
 	public int countByODI_N(long objectDefinitionId, String name);
+
+	/**
+	 * Returns all the object definition settings where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @return the matching object definition settings
+	 */
+	public java.util.List<ObjectDefinitionSetting> findByC_N_V(
+		long companyId, String name, String value);
+
+	/**
+	 * Returns a range of all the object definition settings where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>ObjectDefinitionSettingModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @param start the lower bound of the range of object definition settings
+	 * @param end the upper bound of the range of object definition settings (not inclusive)
+	 * @return the range of matching object definition settings
+	 */
+	public java.util.List<ObjectDefinitionSetting> findByC_N_V(
+		long companyId, String name, String value, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the object definition settings where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>ObjectDefinitionSettingModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @param start the lower bound of the range of object definition settings
+	 * @param end the upper bound of the range of object definition settings (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching object definition settings
+	 */
+	public java.util.List<ObjectDefinitionSetting> findByC_N_V(
+		long companyId, String name, String value, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator
+			<ObjectDefinitionSetting> orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the object definition settings where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>ObjectDefinitionSettingModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @param start the lower bound of the range of object definition settings
+	 * @param end the upper bound of the range of object definition settings (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching object definition settings
+	 */
+	public java.util.List<ObjectDefinitionSetting> findByC_N_V(
+		long companyId, String name, String value, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator
+			<ObjectDefinitionSetting> orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first object definition setting in the ordered set where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching object definition setting
+	 * @throws NoSuchObjectDefinitionSettingException if a matching object definition setting could not be found
+	 */
+	public ObjectDefinitionSetting findByC_N_V_First(
+			long companyId, String name, String value,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<ObjectDefinitionSetting> orderByComparator)
+		throws NoSuchObjectDefinitionSettingException;
+
+	/**
+	 * Returns the first object definition setting in the ordered set where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching object definition setting, or <code>null</code> if a matching object definition setting could not be found
+	 */
+	public ObjectDefinitionSetting fetchByC_N_V_First(
+		long companyId, String name, String value,
+		com.liferay.portal.kernel.util.OrderByComparator
+			<ObjectDefinitionSetting> orderByComparator);
+
+	/**
+	 * Removes all the object definition settings where companyId = &#63; and name = &#63; and value = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 */
+	public void removeByC_N_V(long companyId, String name, String value);
+
+	/**
+	 * Returns the number of object definition settings where companyId = &#63; and name = &#63; and value = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param name the name
+	 * @param value the value
+	 * @return the number of matching object definition settings
+	 */
+	public int countByC_N_V(long companyId, String name, String value);
 
 	/**
 	 * Caches the object definition setting in the entity cache if it is enabled.
@@ -807,3 +756,4 @@ public interface ObjectDefinitionSettingPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1387557959

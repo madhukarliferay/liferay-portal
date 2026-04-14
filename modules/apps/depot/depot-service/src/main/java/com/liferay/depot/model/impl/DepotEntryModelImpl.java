@@ -122,14 +122,20 @@ public class DepotEntryModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long UUID_COLUMN_BITMASK = 4L;
+	public static final long TYPE_COLUMN_BITMASK = 4L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long UUID_COLUMN_BITMASK = 8L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long DEPOTENTRYID_COLUMN_BITMASK = 8L;
+	public static final long DEPOTENTRYID_COLUMN_BITMASK = 16L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -532,6 +538,16 @@ public class DepotEntryModelImpl
 		_type = type;
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public int getOriginalType() {
+		return GetterUtil.getInteger(
+			this.<Integer>getColumnOriginalValue("type_"));
+	}
+
 	@Override
 	public StagedModelType getStagedModelType() {
 		return new StagedModelType(
@@ -926,3 +942,4 @@ public class DepotEntryModelImpl
 	private DepotEntry _escapedModel;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1152247172

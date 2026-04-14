@@ -26,9 +26,9 @@ import com.liferay.document.library.kernel.store.DLStore;
 import com.liferay.document.library.kernel.store.DLStoreRequest;
 import com.liferay.document.library.test.util.BaseDLAppTestCase;
 import com.liferay.document.library.workflow.WorkflowHandlerInvocationCounter;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -562,28 +562,13 @@ public class DLAppServiceWhenUpdatingAFileEntryTest extends BaseDLAppTestCase {
 	public void testUpdateFileEntryPublishingAFileShouldOnlyHaveOneAssetEntryFromDrafts()
 		throws Exception {
 
-		_testUpdateFileEntryShouldOnlyHaveOneAssetEntryFromDrafts(null);
-	}
-
-	@Test
-	public void testUpdateFileEntrySchedulingAFileShouldOnlyHaveOneAssetEntryFromDrafts()
-		throws Exception {
-
-		_testUpdateFileEntryShouldOnlyHaveOneAssetEntryFromDrafts(
-			new Date(System.currentTimeMillis() + Time.DAY));
-	}
-
-	private void _testUpdateFileEntryShouldOnlyHaveOneAssetEntryFromDrafts(
-			Date displayDate)
-		throws Exception {
-
 		String fileName = RandomTestUtil.randomString();
 		byte[] bytes = CONTENT.getBytes();
 
 		FileEntry fileEntry = DLAppServiceTestUtil.addFileEntry(
 			RandomTestUtil.randomString(), group.getGroupId(),
-			parentFolder.getFolderId(), fileName, fileName, displayDate, null,
-			null, null);
+			parentFolder.getFolderId(), fileName, fileName, null, null, null,
+			null);
 
 		int initialAssetEntriesCount =
 			_assetEntryLocalService.getAssetEntriesCount();
@@ -596,14 +581,14 @@ public class DLAppServiceWhenUpdatingAFileEntryTest extends BaseDLAppTestCase {
 		dlAppService.updateFileEntry(
 			fileEntry.getFileEntryId(), fileName, ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			StringPool.BLANK, DLVersionNumberIncrease.MINOR, bytes, displayDate,
-			null, null, serviceContext);
+			StringPool.BLANK, DLVersionNumberIncrease.MINOR, bytes, null, null,
+			null, serviceContext);
 
 		dlAppService.updateFileEntry(
 			fileEntry.getFileEntryId(), fileName, ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			StringPool.BLANK, DLVersionNumberIncrease.MINOR, bytes, displayDate,
-			null, null, serviceContext);
+			StringPool.BLANK, DLVersionNumberIncrease.MINOR, bytes, null, null,
+			null, serviceContext);
 
 		Assert.assertEquals(
 			initialAssetEntriesCount + 1,
@@ -614,8 +599,8 @@ public class DLAppServiceWhenUpdatingAFileEntryTest extends BaseDLAppTestCase {
 		dlAppService.updateFileEntry(
 			fileEntry.getFileEntryId(), fileName, ContentTypes.TEXT_PLAIN,
 			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			StringPool.BLANK, DLVersionNumberIncrease.MINOR, bytes, displayDate,
-			null, null, serviceContext);
+			StringPool.BLANK, DLVersionNumberIncrease.MINOR, bytes, null, null,
+			null, serviceContext);
 
 		Assert.assertEquals(
 			initialAssetEntriesCount,

@@ -6,8 +6,7 @@
 package com.liferay.site.admin.web.internal.portlet.action.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+import com.liferay.configuration.admin.util.ConfigurationFilterStringUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
@@ -94,6 +93,36 @@ public class EditMenuAccessConfigurationMVCActionCommandTest {
 		_assertConfiguration(new String[] {String.valueOf(role.getRoleId())});
 	}
 
+	@Test
+	public void testDoProcessActionWithDefaultRoles() throws Exception {
+		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+			new MockLiferayPortletActionRequest();
+
+		mockLiferayPortletActionRequest.addParameter(
+			"roleSearchContainerPrimaryKeys", new String[0]);
+		mockLiferayPortletActionRequest.addParameter(
+			"showControlMenuByRole", Boolean.TRUE.toString());
+		mockLiferayPortletActionRequest.setAttribute(
+			WebKeys.THEME_DISPLAY, _getThemeDisplay(TestPropsValues.getUser()));
+
+		ReflectionTestUtil.invoke(
+			_mvcActionCommand, "doProcessAction",
+			new Class<?>[] {ActionRequest.class, ActionResponse.class},
+			mockLiferayPortletActionRequest,
+			new MockLiferayPortletActionResponse());
+
+		Role administratorRole = _roleLocalService.getRole(
+			_group.getCompanyId(), RoleConstants.ADMINISTRATOR);
+		Role siteAdministratorRole = _roleLocalService.getRole(
+			_group.getCompanyId(), RoleConstants.SITE_ADMINISTRATOR);
+
+		_assertConfiguration(
+			new String[] {
+				String.valueOf(administratorRole.getRoleId()),
+				String.valueOf(siteAdministratorRole.getRoleId())
+			});
+	}
+
 	@Test(expected = PortalException.class)
 	public void testDoProcessActionWithoutPermission() throws Exception {
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
@@ -121,14 +150,10 @@ public class EditMenuAccessConfigurationMVCActionCommandTest {
 	private void _assertConfiguration(String[] expectedRolesCanSeeControlMenu)
 		throws Exception {
 
-		String filterString = StringBundler.concat(
-			"(&(service.factoryPid=", MenuAccessConfiguration.class.getName(),
-			".scoped)(",
-			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(), "=",
-			_group.getGroupId(), "))");
-
 		Configuration[] configurations = _configurationAdmin.listConfigurations(
-			filterString);
+			ConfigurationFilterStringUtil.getGroupScopedFilterString(
+				_group.getCompanyId(), _group.getGroupId(),
+				MenuAccessConfiguration.class.getName(), null));
 
 		Assert.assertNotNull(configurations);
 		Assert.assertEquals(

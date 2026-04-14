@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.dao.orm.FinderPath;
 import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.exception.SystemException;
@@ -35,6 +36,7 @@ import com.liferay.portal.kernel.sanitizer.SanitizerException;
 import com.liferay.portal.kernel.sanitizer.SanitizerUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
@@ -337,224 +339,156 @@ public class CPTaxCategoryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63;.
+	 * Returns all the cp tax categories that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a matching cp tax category could not be found
+	 * @return the matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory findByUuid_Last(
-			String uuid, OrderByComparator<CPTaxCategory> orderByComparator)
-		throws NoSuchCPTaxCategoryException {
-
-		CPTaxCategory cpTaxCategory = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (cpTaxCategory != null) {
-			return cpTaxCategory;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchCPTaxCategoryException(sb.toString());
+	public List<CPTaxCategory> filterFindByUuid(String uuid) {
+		return filterFindByUuid(
+			uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63;.
+	 * Returns a range of all the cp tax categories that the user has permission to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category, or <code>null</code> if a matching cp tax category could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @return the range of matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory fetchByUuid_Last(
-		String uuid, OrderByComparator<CPTaxCategory> orderByComparator) {
+	public List<CPTaxCategory> filterFindByUuid(
+		String uuid, int start, int end) {
 
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CPTaxCategory> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return filterFindByUuid(uuid, start, end, null);
 	}
 
 	/**
-	 * Returns the cp tax categories before and after the current cp tax category in the ordered set where uuid = &#63;.
+	 * Returns an ordered range of all the cp tax categories that the user has permissions to view where uuid = &#63;.
 	 *
-	 * @param CPTaxCategoryId the primary key of the current cp tax category
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a cp tax category with the primary key could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory[] findByUuid_PrevAndNext(
-			long CPTaxCategoryId, String uuid,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws NoSuchCPTaxCategoryException {
+	public List<CPTaxCategory> filterFindByUuid(
+		String uuid, int start, int end,
+		OrderByComparator<CPTaxCategory> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
 
 		uuid = Objects.toString(uuid, "");
 
-		CPTaxCategory cpTaxCategory = findByPrimaryKey(CPTaxCategoryId);
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_CPTAXCATEGORY_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
+		}
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CPTaxCategoryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CPTaxCategoryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CPTaxCategory.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			CPTaxCategory[] array = new CPTaxCategoryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByUuid_PrevAndNext(
-				session, cpTaxCategory, uuid, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS, CPTaxCategoryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE, CPTaxCategoryImpl.class);
+			}
 
-			array[1] = cpTaxCategory;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByUuid_PrevAndNext(
-				session, cpTaxCategory, uuid, orderByComparator, false);
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
 
-			return array;
+			return (List<CPTaxCategory>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected CPTaxCategory getByUuid_PrevAndNext(
-		Session session, CPTaxCategory cpTaxCategory, String uuid,
-		OrderByComparator<CPTaxCategory> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CPTAXCATEGORY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CPTaxCategoryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						cpTaxCategory)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CPTaxCategory> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -640,11 +574,86 @@ public class CPTaxCategoryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of cp tax categories that the user has permission to view where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @return the number of matching cp tax categories that the user has permission to view
+	 */
+	@Override
+	public int filterCountByUuid(String uuid) {
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CPTaxCategory> cpTaxCategories = findByUuid(uuid);
+
+			cpTaxCategories = InlineSQLHelperUtil.filter(cpTaxCategories);
+
+			return cpTaxCategories.size();
+		}
+
+		uuid = Objects.toString(uuid, "");
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_CPTAXCATEGORY_WHERE);
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CPTaxCategory.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_UUID_UUID_2 =
 		"cpTaxCategory.uuid = ?";
 
 	private static final String _FINDER_COLUMN_UUID_UUID_3 =
 		"(cpTaxCategory.uuid IS NULL OR cpTaxCategory.uuid = '')";
+
+	private static final String _FINDER_COLUMN_UUID_UUID_2_SQL =
+		"cpTaxCategory.uuid_ = ?";
+
+	private static final String _FINDER_COLUMN_UUID_UUID_3_SQL =
+		"(cpTaxCategory.uuid_ IS NULL OR cpTaxCategory.uuid_ = '')";
 
 	private FinderPath _finderPathWithPaginationFindByUuid_C;
 	private FinderPath _finderPathWithoutPaginationFindByUuid_C;
@@ -903,240 +912,163 @@ public class CPTaxCategoryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns all the cp tax categories that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a matching cp tax category could not be found
+	 * @return the matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws NoSuchCPTaxCategoryException {
-
-		CPTaxCategory cpTaxCategory = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (cpTaxCategory != null) {
-			return cpTaxCategory;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchCPTaxCategoryException(sb.toString());
+	public List<CPTaxCategory> filterFindByUuid_C(String uuid, long companyId) {
+		return filterFindByUuid_C(
+			uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns a range of all the cp tax categories that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category, or <code>null</code> if a matching cp tax category could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @return the range of matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory fetchByUuid_C_Last(
-		String uuid, long companyId,
+	public List<CPTaxCategory> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end) {
+
+		return filterFindByUuid_C(uuid, companyId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the cp tax categories that the user has permissions to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching cp tax categories that the user has permission to view
+	 */
+	@Override
+	public List<CPTaxCategory> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end,
 		OrderByComparator<CPTaxCategory> orderByComparator) {
 
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
 		}
 
-		List<CPTaxCategory> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
 
-		if (!list.isEmpty()) {
-			return list.get(0);
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the cp tax categories before and after the current cp tax category in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPTaxCategoryId the primary key of the current cp tax category
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a cp tax category with the primary key could not be found
-	 */
-	@Override
-	public CPTaxCategory[] findByUuid_C_PrevAndNext(
-			long CPTaxCategoryId, String uuid, long companyId,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws NoSuchCPTaxCategoryException {
 
 		uuid = Objects.toString(uuid, "");
 
-		CPTaxCategory cpTaxCategory = findByPrimaryKey(CPTaxCategoryId);
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				4 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(5);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_CPTAXCATEGORY_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
+		}
+
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CPTaxCategoryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CPTaxCategoryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CPTaxCategory.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			CPTaxCategory[] array = new CPTaxCategoryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByUuid_C_PrevAndNext(
-				session, cpTaxCategory, uuid, companyId, orderByComparator,
-				true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS, CPTaxCategoryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE, CPTaxCategoryImpl.class);
+			}
 
-			array[1] = cpTaxCategory;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByUuid_C_PrevAndNext(
-				session, cpTaxCategory, uuid, companyId, orderByComparator,
-				false);
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
 
-			return array;
+			queryPos.add(companyId);
+
+			return (List<CPTaxCategory>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected CPTaxCategory getByUuid_C_PrevAndNext(
-		Session session, CPTaxCategory cpTaxCategory, String uuid,
-		long companyId, OrderByComparator<CPTaxCategory> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_CPTAXCATEGORY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CPTaxCategoryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						cpTaxCategory)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CPTaxCategory> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -1230,11 +1162,91 @@ public class CPTaxCategoryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of cp tax categories that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @return the number of matching cp tax categories that the user has permission to view
+	 */
+	@Override
+	public int filterCountByUuid_C(String uuid, long companyId) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CPTaxCategory> cpTaxCategories = findByUuid_C(uuid, companyId);
+
+			cpTaxCategories = InlineSQLHelperUtil.filter(cpTaxCategories);
+
+			return cpTaxCategories.size();
+		}
+
+		uuid = Objects.toString(uuid, "");
+
+		StringBundler sb = new StringBundler(3);
+
+		sb.append(_FILTER_SQL_COUNT_CPTAXCATEGORY_WHERE);
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
+		}
+
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CPTaxCategory.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
+
+			queryPos.add(companyId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_UUID_C_UUID_2 =
 		"cpTaxCategory.uuid = ? AND ";
 
 	private static final String _FINDER_COLUMN_UUID_C_UUID_3 =
 		"(cpTaxCategory.uuid IS NULL OR cpTaxCategory.uuid = '') AND ";
+
+	private static final String _FINDER_COLUMN_UUID_C_UUID_2_SQL =
+		"cpTaxCategory.uuid_ = ? AND ";
+
+	private static final String _FINDER_COLUMN_UUID_C_UUID_3_SQL =
+		"(cpTaxCategory.uuid_ IS NULL OR cpTaxCategory.uuid_ = '') AND ";
 
 	private static final String _FINDER_COLUMN_UUID_C_COMPANYID_2 =
 		"cpTaxCategory.companyId = ?";
@@ -1465,212 +1477,143 @@ public class CPTaxCategoryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where companyId = &#63;.
+	 * Returns all the cp tax categories that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a matching cp tax category could not be found
+	 * @return the matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory findByCompanyId_Last(
-			long companyId, OrderByComparator<CPTaxCategory> orderByComparator)
-		throws NoSuchCPTaxCategoryException {
-
-		CPTaxCategory cpTaxCategory = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (cpTaxCategory != null) {
-			return cpTaxCategory;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchCPTaxCategoryException(sb.toString());
+	public List<CPTaxCategory> filterFindByCompanyId(long companyId) {
+		return filterFindByCompanyId(
+			companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where companyId = &#63;.
+	 * Returns a range of all the cp tax categories that the user has permission to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category, or <code>null</code> if a matching cp tax category could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @return the range of matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CPTaxCategory> orderByComparator) {
+	public List<CPTaxCategory> filterFindByCompanyId(
+		long companyId, int start, int end) {
 
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CPTaxCategory> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return filterFindByCompanyId(companyId, start, end, null);
 	}
 
 	/**
-	 * Returns the cp tax categories before and after the current cp tax category in the ordered set where companyId = &#63;.
+	 * Returns an ordered range of all the cp tax categories that the user has permissions to view where companyId = &#63;.
 	 *
-	 * @param CPTaxCategoryId the primary key of the current cp tax category
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a cp tax category with the primary key could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching cp tax categories that the user has permission to view
 	 */
 	@Override
-	public CPTaxCategory[] findByCompanyId_PrevAndNext(
-			long CPTaxCategoryId, long companyId,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws NoSuchCPTaxCategoryException {
+	public List<CPTaxCategory> filterFindByCompanyId(
+		long companyId, int start, int end,
+		OrderByComparator<CPTaxCategory> orderByComparator) {
 
-		CPTaxCategory cpTaxCategory = findByPrimaryKey(CPTaxCategoryId);
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_CPTAXCATEGORY_WHERE);
+		}
+		else {
+			sb.append(
+				_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(
+				_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CPTaxCategoryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CPTaxCategoryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CPTaxCategory.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			CPTaxCategory[] array = new CPTaxCategoryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByCompanyId_PrevAndNext(
-				session, cpTaxCategory, companyId, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS, CPTaxCategoryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE, CPTaxCategoryImpl.class);
+			}
 
-			array[1] = cpTaxCategory;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByCompanyId_PrevAndNext(
-				session, cpTaxCategory, companyId, orderByComparator, false);
+			queryPos.add(companyId);
 
-			return array;
+			return (List<CPTaxCategory>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected CPTaxCategory getByCompanyId_PrevAndNext(
-		Session session, CPTaxCategory cpTaxCategory, long companyId,
-		OrderByComparator<CPTaxCategory> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CPTAXCATEGORY_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CPTaxCategoryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						cpTaxCategory)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CPTaxCategory> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -1741,6 +1684,62 @@ public class CPTaxCategoryPersistenceImpl
 			}
 
 			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of cp tax categories that the user has permission to view where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching cp tax categories that the user has permission to view
+	 */
+	@Override
+	public int filterCountByCompanyId(long companyId) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CPTaxCategory> cpTaxCategories = findByCompanyId(companyId);
+
+			cpTaxCategories = InlineSQLHelperUtil.filter(cpTaxCategories);
+
+			return cpTaxCategories.size();
+		}
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_CPTAXCATEGORY_WHERE);
+
+		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), CPTaxCategory.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(companyId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
 		}
 	}
 
@@ -2994,7 +2993,30 @@ public class CPTaxCategoryPersistenceImpl
 	private static final String _SQL_COUNT_CPTAXCATEGORY_WHERE =
 		"SELECT COUNT(cpTaxCategory) FROM CPTaxCategory cpTaxCategory WHERE ";
 
+	private static final String _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN =
+		"cpTaxCategory.CPTaxCategoryId";
+
+	private static final String _FILTER_SQL_SELECT_CPTAXCATEGORY_WHERE =
+		"SELECT DISTINCT {cpTaxCategory.*} FROM CPTaxCategory cpTaxCategory WHERE ";
+
+	private static final String
+		_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_1 =
+			"SELECT {CPTaxCategory.*} FROM (SELECT DISTINCT cpTaxCategory.CPTaxCategoryId FROM CPTaxCategory cpTaxCategory WHERE ";
+
+	private static final String
+		_FILTER_SQL_SELECT_CPTAXCATEGORY_NO_INLINE_DISTINCT_WHERE_2 =
+			") TEMP_TABLE INNER JOIN CPTaxCategory ON TEMP_TABLE.CPTaxCategoryId = CPTaxCategory.CPTaxCategoryId";
+
+	private static final String _FILTER_SQL_COUNT_CPTAXCATEGORY_WHERE =
+		"SELECT COUNT(DISTINCT cpTaxCategory.CPTaxCategoryId) AS COUNT_VALUE FROM CPTaxCategory cpTaxCategory WHERE ";
+
+	private static final String _FILTER_ENTITY_ALIAS = "cpTaxCategory";
+
+	private static final String _FILTER_ENTITY_TABLE = "CPTaxCategory";
+
 	private static final String _ORDER_BY_ENTITY_ALIAS = "cpTaxCategory.";
+
+	private static final String _ORDER_BY_ENTITY_TABLE = "CPTaxCategory.";
 
 	private static final String _NO_SUCH_ENTITY_WITH_PRIMARY_KEY =
 		"No CPTaxCategory exists with the primary key ";
@@ -3014,3 +3036,4 @@ public class CPTaxCategoryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-14364891

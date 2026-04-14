@@ -118,47 +118,6 @@ public interface PortletPersistence extends BasePersistence<Portlet> {
 			orderByComparator);
 
 	/**
-	 * Returns the last portlet in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portlet
-	 * @throws NoSuchPortletException if a matching portlet could not be found
-	 */
-	public Portlet findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Portlet>
-				orderByComparator)
-		throws NoSuchPortletException;
-
-	/**
-	 * Returns the last portlet in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portlet, or <code>null</code> if a matching portlet could not be found
-	 */
-	public Portlet fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<Portlet>
-			orderByComparator);
-
-	/**
-	 * Returns the portlets before and after the current portlet in the ordered set where companyId = &#63;.
-	 *
-	 * @param id the primary key of the current portlet
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next portlet
-	 * @throws NoSuchPortletException if a portlet with the primary key could not be found
-	 */
-	public Portlet[] findByCompanyId_PrevAndNext(
-			long id, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<Portlet>
-				orderByComparator)
-		throws NoSuchPortletException;
-
-	/**
 	 * Removes all the portlets where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -342,3 +301,4 @@ public interface PortletPersistence extends BasePersistence<Portlet> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1514701470

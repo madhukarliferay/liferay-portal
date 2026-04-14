@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 // eslint-disable-next-line
 import {checkAccessibility} from '@liferay/layout-js-components-web/test/__lib__/index';
@@ -33,13 +33,14 @@ const SPACE: Partial<Space> = {
 	name: 'Cool Space',
 	settings: {
 		logoColor: 'outline-2',
-		mimeTypeLimits: [{maximumSize: 1024, mimeType: 'application/json'}],
 		sharingEnabled: true,
+		trashEnabled: true,
+		trashEntriesMaxAge: 0,
 	},
 };
 
 const closeToast = async () => {
-	await userEvent.click(screen.getByRole('button', {name: 'Close'}));
+	await userEvent.click(screen.getByRole('button', {name: 'close'}));
 };
 
 const renderComponent = ({
@@ -100,14 +101,6 @@ describe('SpaceGeneralSettings', () => {
 				name: /enable-sharing/,
 			})
 		).toBeChecked();
-
-		expect(screen.getByRole('textbox', {name: /mime-type/})).toHaveValue(
-			'application/json'
-		);
-
-		expect(
-			screen.getByRole('spinbutton', {name: /maximum-file-size/})
-		).toHaveValue(1024);
 	});
 
 	it('checks the accessibility of the general settings', async () => {
@@ -133,6 +126,11 @@ describe('SpaceGeneralSettings', () => {
 		await userEvent.clear(descriptionField);
 		await userEvent.type(descriptionField, 'My space description');
 
+		const ercField = screen.getByRole('textbox', {name: /erc/});
+
+		await userEvent.clear(ercField);
+		await userEvent.type(ercField, 'My New ERC');
+
 		await userEvent.click(
 			screen.getByRole('button', {
 				name: 'save',
@@ -147,7 +145,7 @@ describe('SpaceGeneralSettings', () => {
 				{
 					...space,
 					description: 'My space description',
-					externalReferenceCode,
+					externalReferenceCode: 'My New ERC',
 					name: 'My Space',
 				}
 			);
@@ -174,10 +172,14 @@ describe('SpaceGeneralSettings', () => {
 		});
 	});
 
-	it('shows an error toast when the request fails', async () => {
-		SpaceService.updateSpace = jest
-			.fn()
-			.mockResolvedValue({error: 'Error'});
+	it.each([
+		'Please enter a unique name',
+		'This external reference code is already in use.',
+	])('shows API error message: %s', async (errorMessage) => {
+		jest.spyOn(SpaceService, 'updateSpace').mockResolvedValue({
+			data: null,
+			error: errorMessage,
+		});
 
 		renderComponent();
 
@@ -185,33 +187,13 @@ describe('SpaceGeneralSettings', () => {
 
 		await waitFor(() => {
 			expect(SpaceService.updateSpace).toBeCalled();
-
 			expect(
 				screen.queryByText('My Space-was-saved-successfully')
 			).not.toBeInTheDocument();
-
-			expect(
-				screen.getByText(
-					'an-unexpected-error-occurred-while-saving-the-space'
-				)
-			).toBeInTheDocument();
+			expect(screen.getByText(errorMessage)).toBeInTheDocument();
 		});
 
 		await closeToast();
-	});
-
-	it('adds and remove fields for the mime type limit', async () => {
-		renderComponent();
-
-		expect(screen.getAllByLabelText('maximum-file-size').length).toBe(1);
-
-		await userEvent.click(screen.getByLabelText('add-x'));
-
-		expect(screen.getAllByLabelText('maximum-file-size').length).toBe(2);
-
-		await userEvent.click(screen.getAllByLabelText('remove-x')[1]);
-
-		expect(screen.getAllByLabelText('maximum-file-size').length).toBe(1);
 	});
 
 	describe('Errors', () => {
@@ -246,75 +228,6 @@ describe('SpaceGeneralSettings', () => {
 			).toBeInTheDocument();
 
 			expect(nameInput).toHaveFocus();
-		});
-
-		it('does not save the form when the Maximum File Size field has an error and the field is focused', async () => {
-			renderComponent();
-
-			const maximumSizeInput = screen.getByLabelText('maximum-file-size');
-
-			await userEvent.type(maximumSizeInput, '123.123');
-
-			await userEvent.click(screen.getByRole('button', {name: 'save'}));
-
-			expect(
-				screen.getByText('please-enter-a-valid-number')
-			).toBeInTheDocument();
-
-			expect(maximumSizeInput).toHaveFocus();
-		});
-
-		it('saves the form when a maximum file size field has an error and this field is removed', async () => {
-			renderComponent();
-
-			await userEvent.click(screen.getByLabelText('add-x'));
-
-			const inputs = screen.getAllByLabelText('maximum-file-size');
-
-			const [firstInput, secondInput] = inputs;
-
-			await userEvent.type(firstInput, '123.123');
-
-			firstInput.blur();
-
-			await userEvent.type(secondInput, '123');
-
-			secondInput.blur();
-
-			await waitFor(() => {
-				expect(
-					screen.getByText('please-enter-a-valid-number')
-				).toBeInTheDocument();
-			});
-
-			await userEvent.click(screen.getAllByLabelText('remove-x')[0]);
-
-			await waitFor(() => {
-				expect(
-					screen.queryByText('please-enter-a-valid-number')
-				).not.toBeInTheDocument();
-			});
-
-			await userEvent.click(screen.getByRole('button', {name: 'save'}));
-
-			await waitFor(() => {
-				const {externalReferenceCode} = SPACE;
-
-				expect(SpaceService.updateSpace).toBeCalledWith(
-					externalReferenceCode,
-					expect.objectContaining({
-						settings: expect.objectContaining({
-							mimeTypeLimits: [
-								{maximumSize: '123', mimeType: ''},
-							],
-						}),
-					})
-				);
-
-				expect(
-					screen.getByText(/was-saved-successfully/)
-				).toBeInTheDocument();
-			});
 		});
 	});
 });

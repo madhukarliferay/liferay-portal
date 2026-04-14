@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {useForm} from '@liferay/object-js-components-web';
 import {renderHook} from '@testing-library/react-hooks';
 
@@ -67,6 +67,27 @@ describe('useRecipient handleTypeChange', () => {
 		);
 
 		handleTypeChange('to', 'email');
+
+		expect(
+			(result.current.values.recipients[0] as EmailRecipients).to
+		).toStrictEqual('');
+	});
+
+	it('returns empty string to term recipient type', () => {
+		const {result} = renderHook(() =>
+			useForm({
+				initialValues,
+				onSubmit: () => {},
+				validate,
+			})
+		);
+
+		const {handleTypeChange} = useRecipient(
+			result.current.setValues,
+			result.current.values
+		);
+
+		handleTypeChange('to', 'term');
 
 		expect(
 			(result.current.values.recipients[0] as EmailRecipients).to

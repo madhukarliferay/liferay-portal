@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -46,6 +46,7 @@ describe('MemberListItem', () => {
 
 	const testUserAccount = {
 		emailAddress: 'brian.smith@example.com',
+		externalReferenceCode: 'USER_ERC',
 		id: 'user',
 		image: '/images/brian_smith.png',
 		name: 'Brian Smith',
@@ -53,6 +54,7 @@ describe('MemberListItem', () => {
 	};
 
 	const testUserGroup = {
+		externalReferenceCode: 'USER_GROUP_ERC',
 		id: 'group',
 		name: 'Sample Group',
 		numberOfUserAccounts: '5',
@@ -101,6 +103,7 @@ describe('MemberListItem', () => {
 	it('renders a user with fallback image and without the (you) tag', () => {
 		const anotherUser = {
 			emailAddress: 'another.user@example.com',
+			externalReferenceCode: 'ANOTHER_USER_ERC',
 			id: 'another-user-id',
 			name: 'Another User',
 			roles: [],
@@ -116,6 +119,13 @@ describe('MemberListItem', () => {
 
 		const image = within(listItemElement).getByAltText(anotherUser.name);
 		expect(image).toHaveAttribute('src', '/image/user_portrait');
+
+		expect(SpaceMembersPermissionSelect).toHaveBeenCalledWith(
+			expect.objectContaining({
+				selectedRoles: [SPACE_MEMBER_ROLE_NAME],
+			}),
+			{}
+		);
 	});
 
 	it('renders the word owner and hides the remove button with permission select when the user is the owner', () => {
@@ -164,6 +174,7 @@ describe('MemberListItem', () => {
 
 	it('renders correctly when items is group and there is no members', () => {
 		const testUserGroupWithoutMembers = {
+			externalReferenceCode: 'USER_GROUP_ERC',
 			id: 'group',
 			name: 'Sample Group',
 			roles: [],
@@ -183,11 +194,19 @@ describe('MemberListItem', () => {
 			testUserGroupWithoutMembers.name
 		);
 		expect(listItemElement).toHaveTextContent('(0-members)');
+
+		expect(SpaceMembersPermissionSelect).toHaveBeenCalledWith(
+			expect.objectContaining({
+				selectedRoles: [SPACE_MEMBER_ROLE_NAME],
+			}),
+			{}
+		);
 	});
 
 	it('does not render the remove button when hasAssignMembersPermission is false', () => {
 		const anotherUser = {
 			emailAddress: 'another.user@example.com',
+			externalReferenceCode: 'ANOTHER_USER_ERC',
 			id: 'another-user-id',
 			name: 'Another User',
 			roles: [],

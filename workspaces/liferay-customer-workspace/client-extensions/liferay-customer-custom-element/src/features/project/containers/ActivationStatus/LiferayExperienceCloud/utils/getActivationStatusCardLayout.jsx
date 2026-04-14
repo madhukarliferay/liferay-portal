@@ -8,7 +8,7 @@ import {Align} from '@clayui/drop-down';
 
 import i18n from '~/utils/I18n';
 import {Button, ButtonDropDown} from '~/components';
-
+import {SAAS_EXPERIENCE} from '~/utils/constants';
 import {
 	STATUS_TAG_TYPES,
 	STATUS_TAG_TYPE_NAMES,
@@ -30,14 +30,26 @@ export default function getActivationStatusCardLayout(
 	onInProgressClick,
 	userAccount
 ) {
+	const SAAS_CLOUD_ERCS = [
+		`${project?.accountKey}_liferay-saas`,
+        `${project?.accountKey}_liferay-cloud`
+	];
+
+	const ercFilter = `accountSubscriptionGroupERC in ('${SAAS_CLOUD_ERCS.join("', '")}')`;
+
 	const {data: subscriptionsData} = useGetAccountSubscriptions({
-		filter: `name in (${formatedSubscriptions()}) and accountSubscriptionGroupERC eq '${
-			project?.accountKey
-		}_liferay-saas'`,
+		filter: `name in (${formatedSubscriptions()}) and ${ercFilter}`,
+	});
+
+	const {data: newSaaSSubscriptionsData} = useGetAccountSubscriptions({
+		filter: `name eq '${SAAS_EXPERIENCE}' and ${ercFilter}`,
 	});
 
 	const hasDevInstance =
 		!!subscriptionsData?.c.accountSubscriptions.items.length;
+	
+	const isNewSaaSSubscriptionCustomer =
+		!!newSaaSSubscriptionsData?.c.accountSubscriptions.items.length;
 
 	return {
 		[STATUS_TAG_TYPE_NAMES.active]: {
@@ -46,21 +58,27 @@ export default function getActivationStatusCardLayout(
 					{lxcEnvironment?.projectId && (
 						<ActivationCardLink
 							linkText={i18n.translate('go-to-liferay-saas')}
-							url={`https://${lxcEnvironment?.projectId}.lxc.liferay.com`}
+							url={`https://${lxcEnvironment?.projectId}${
+								isNewSaaSSubscriptionCustomer ? '.liferay.net' : '.lxc.liferay.com'
+							}`}
 						/>
 					)}
 
 					{lxcEnvironment?.projectId && (
 						<ActivationCardLink
 							linkText={i18n.translate('go-to-uat')}
-							url={`https://${lxcEnvironment?.projectId}-uat.lxc.liferay.com`}
+							url={`https://${lxcEnvironment?.projectId}-uat${
+								isNewSaaSSubscriptionCustomer ? '.liferay.net' : '.lxc.liferay.com'
+							}`}
 						/>
 					)}
 
 					{hasDevInstance && lxcEnvironment?.projectId && (
 						<ActivationCardLink
 							linkText={i18n.translate('go-to-dev')}
-							url={`https://${lxcEnvironment?.projectId}-dev.lxc.liferay.com`}
+							url={`https://${lxcEnvironment?.projectId}-dev${
+								isNewSaaSSubscriptionCustomer ? '.liferay.net' : '.lxc.liferay.com'
+							}`}
 						/>
 					)}
 

@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.ContentStructure;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.resource.v1_0.ContentStructureResource;
@@ -145,14 +146,14 @@ public abstract class BaseContentStructureResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryContentStructurePermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryContentStructurePermissionsPage", null,
 					portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryContentStructurePermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryContentStructurePermissionsPage", null,
 					portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, roleNames);
@@ -331,27 +332,27 @@ public abstract class BaseContentStructureResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(contentStructureId);
+		Long resourceId = getPermissionCheckerResourceId(contentStructureId);
 		String resourceName = getPermissionCheckerResourceName(
 			contentStructureId);
-		Long resourceId = getPermissionCheckerResourceId(contentStructureId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(contentStructureId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getContentStructurePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getContentStructurePermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putContentStructurePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putContentStructurePermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -412,14 +413,14 @@ public abstract class BaseContentStructureResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteContentStructurePermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteContentStructurePermissionsPage", null, portletName,
 					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteContentStructurePermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteContentStructurePermissionsPage", null, portletName,
 					siteId)
 			).build(),
 			siteId, portletName, roleNames);
@@ -767,14 +768,14 @@ public abstract class BaseContentStructureResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryContentStructurePermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryContentStructurePermissionsPage", null,
 					portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryContentStructurePermissionsPage",
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryContentStructurePermissionsPage", null,
 					portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, null);
@@ -811,13 +812,13 @@ public abstract class BaseContentStructureResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(contentStructureId);
+		Long resourceId = getPermissionCheckerResourceId(contentStructureId);
 		String resourceName = getPermissionCheckerResourceName(
 			contentStructureId);
-		Long resourceId = getPermissionCheckerResourceId(contentStructureId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(contentStructureId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -853,23 +854,22 @@ public abstract class BaseContentStructureResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(contentStructureId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getContentStructurePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getContentStructurePermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putContentStructurePermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putContentStructurePermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -949,14 +949,14 @@ public abstract class BaseContentStructureResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteContentStructurePermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteContentStructurePermissionsPage", null, portletName,
 					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteContentStructurePermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteContentStructurePermissionsPage", null, portletName,
 					siteId)
 			).build(),
 			siteId, portletName, null);
@@ -1048,6 +1048,15 @@ public abstract class BaseContentStructureResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1231,6 +1240,9 @@ public abstract class BaseContentStructureResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1797,3 +1809,4 @@ public abstract class BaseContentStructureResourceImpl
 		LogFactoryUtil.getLog(BaseContentStructureResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:746618132

@@ -121,47 +121,6 @@ public interface CountryLocalizationPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last country localization in the ordered set where countryId = &#63;.
-	 *
-	 * @param countryId the country ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country localization
-	 * @throws NoSuchCountryLocalizationException if a matching country localization could not be found
-	 */
-	public CountryLocalization findByCountryId_Last(
-			long countryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CountryLocalization> orderByComparator)
-		throws NoSuchCountryLocalizationException;
-
-	/**
-	 * Returns the last country localization in the ordered set where countryId = &#63;.
-	 *
-	 * @param countryId the country ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country localization, or <code>null</code> if a matching country localization could not be found
-	 */
-	public CountryLocalization fetchByCountryId_Last(
-		long countryId,
-		com.liferay.portal.kernel.util.OrderByComparator<CountryLocalization>
-			orderByComparator);
-
-	/**
-	 * Returns the country localizations before and after the current country localization in the ordered set where countryId = &#63;.
-	 *
-	 * @param countryLocalizationId the primary key of the current country localization
-	 * @param countryId the country ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country localization
-	 * @throws NoSuchCountryLocalizationException if a country localization with the primary key could not be found
-	 */
-	public CountryLocalization[] findByCountryId_PrevAndNext(
-			long countryLocalizationId, long countryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CountryLocalization> orderByComparator)
-		throws NoSuchCountryLocalizationException;
-
-	/**
 	 * Removes all the country localizations where countryId = &#63; from the database.
 	 *
 	 * @param countryId the country ID
@@ -352,3 +311,4 @@ public interface CountryLocalizationPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-775378877

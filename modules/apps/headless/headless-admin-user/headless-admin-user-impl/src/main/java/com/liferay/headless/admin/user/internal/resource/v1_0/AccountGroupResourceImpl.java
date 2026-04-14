@@ -26,7 +26,6 @@ import com.liferay.headless.admin.user.resource.v1_0.AccountGroupResource;
 import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.service.context.ServiceContextBuilder;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Field;
@@ -44,7 +43,6 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.vulcan.custom.field.CustomFieldsUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
@@ -69,6 +67,7 @@ import org.osgi.service.component.annotations.ServiceScope;
  */
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/account-group.properties",
+	property = "export.import.vulcan.batch.engine.task.item.delegate=true",
 	scope = ServiceScope.PROTOTYPE, service = AccountGroupResource.class
 )
 public class AccountGroupResourceImpl
@@ -197,17 +196,36 @@ public class AccountGroupResourceImpl
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(
 					com.liferay.account.model.AccountGroup.class.getName()),
-				contextCompany.getCompanyId(), _expandoBridgeIndexer,
-				_expandoColumnLocalService, _expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoColumnLocalService,
+				_expandoTableLocalService));
 	}
 
 	@Override
-	public ExportImportDescriptor getExportImportDescriptor() {
-		return new ExportImportDescriptor() {
+	public ExportImportDescriptor<com.liferay.account.model.AccountGroup>
+		getExportImportDescriptor() {
+
+		return new ExportImportDescriptor<>() {
+
+			@Override
+			public String getKey() {
+				return AccountGroupResourceImpl.class.getName();
+			}
+
+			@Override
+			public String getLabelLanguageKey() {
+				return "account-groups";
+			}
+
+			@Override
+			public Class<com.liferay.account.model.AccountGroup>
+				getModelClass() {
+
+				return com.liferay.account.model.AccountGroup.class;
+			}
 
 			@Override
 			public List<String> getNestedFields() {
-				return List.of("accountBriefs");
+				return List.of("accountBriefs", "creator");
 			}
 
 			@Override
@@ -487,10 +505,6 @@ public class AccountGroupResourceImpl
 			com.liferay.account.model.AccountGroup serviceBuilderAccountGroup)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			return serviceBuilderAccountGroup;
-		}
-
 		AccountBrief[] accountBriefs = accountGroup.getAccountBriefs();
 
 		if (ArrayUtil.isNotEmpty(accountBriefs)) {
@@ -533,9 +547,6 @@ public class AccountGroupResourceImpl
 
 	@Reference(target = DTOConverterConstants.ACCOUNT_RESOURCE_DTO_CONVERTER)
 	private DTOConverter<AccountEntry, Account> _accountResourceDTOConverter;
-
-	@Reference
-	private ExpandoBridgeIndexer _expandoBridgeIndexer;
 
 	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;

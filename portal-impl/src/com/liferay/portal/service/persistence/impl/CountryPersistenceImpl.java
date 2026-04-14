@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.dao.orm.FinderPath;
 import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.NoSuchCountryException;
 import com.liferay.portal.kernel.log.Log;
@@ -25,6 +26,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.CountryTable;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.CountryLocalizationPersistence;
@@ -320,223 +322,150 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where uuid = &#63;.
+	 * Returns all the countries that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByUuid_Last(
-			String uuid, OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
-
-		Country country = fetchByUuid_Last(uuid, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+	public List<Country> filterFindByUuid(String uuid) {
+		return filterFindByUuid(
+			uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where uuid = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByUuid_Last(
-		String uuid, OrderByComparator<Country> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Country> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+	public List<Country> filterFindByUuid(String uuid, int start, int end) {
+		return filterFindByUuid(uuid, start, end, null);
 	}
 
 	/**
-	 * Returns the countries before and after the current country in the ordered set where uuid = &#63;.
+	 * Returns an ordered range of all the countries that the user has permissions to view where uuid = &#63;.
 	 *
-	 * @param countryId the primary key of the current country
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country[] findByUuid_PrevAndNext(
-			long countryId, String uuid,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByUuid(
+		String uuid, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByUuid(uuid, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByUuid(
+					uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
 
 		uuid = Objects.toString(uuid, "");
 
-		Country country = findByPrimaryKey(countryId);
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
+		}
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByUuid_PrevAndNext(
-				session, country, uuid, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByUuid_PrevAndNext(
-				session, country, uuid, orderByComparator, false);
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
 
-			return array;
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByUuid_PrevAndNext(
-		Session session, Country country, String uuid,
-		OrderByComparator<Country> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -622,10 +551,85 @@ public class CountryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of countries that the user has permission to view where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByUuid(String uuid) {
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByUuid(uuid);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByUuid(uuid);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		uuid = Objects.toString(uuid, "");
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_UUID_2_SQL);
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_UUID_UUID_2 = "country.uuid = ?";
 
 	private static final String _FINDER_COLUMN_UUID_UUID_3 =
 		"(country.uuid IS NULL OR country.uuid = '')";
+
+	private static final String _FINDER_COLUMN_UUID_UUID_2_SQL =
+		"country.uuid_ = ?";
+
+	private static final String _FINDER_COLUMN_UUID_UUID_3_SQL =
+		"(country.uuid_ IS NULL OR country.uuid_ = '')";
 
 	private FinderPath _finderPathWithPaginationFindByUuid_C;
 	private FinderPath _finderPathWithoutPaginationFindByUuid_C;
@@ -883,236 +887,159 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns all the countries that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
-
-		Country country = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+	public List<Country> filterFindByUuid_C(String uuid, long companyId) {
+		return filterFindByUuid_C(
+			uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByUuid_C_Last(
-		String uuid, long companyId,
+	public List<Country> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end) {
+
+		return filterFindByUuid_C(uuid, companyId, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries that the user has permissions to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end,
 		OrderByComparator<Country> orderByComparator) {
 
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByUuid_C(uuid, companyId, start, end, orderByComparator);
 		}
 
-		List<Country> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
 
-		if (!list.isEmpty()) {
-			return list.get(0);
+			return InlineSQLHelperUtil.filter(
+				findByUuid_C(
+					uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the countries before and after the current country in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param countryId the primary key of the current country
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
-	 */
-	@Override
-	public Country[] findByUuid_C_PrevAndNext(
-			long countryId, String uuid, long companyId,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
 
 		uuid = Objects.toString(uuid, "");
 
-		Country country = findByPrimaryKey(countryId);
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				4 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(5);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
+		}
+
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByUuid_C_PrevAndNext(
-				session, country, uuid, companyId, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByUuid_C_PrevAndNext(
-				session, country, uuid, companyId, orderByComparator, false);
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
 
-			return array;
+			queryPos.add(companyId);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByUuid_C_PrevAndNext(
-		Session session, Country country, String uuid, long companyId,
-		OrderByComparator<Country> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -1206,11 +1133,91 @@ public class CountryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of countries that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByUuid_C(String uuid, long companyId) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByUuid_C(uuid, companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByUuid_C(uuid, companyId);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		uuid = Objects.toString(uuid, "");
+
+		StringBundler sb = new StringBundler(3);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		boolean bindUuid = false;
+
+		if (uuid.isEmpty()) {
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_3_SQL);
+		}
+		else {
+			bindUuid = true;
+
+			sb.append(_FINDER_COLUMN_UUID_C_UUID_2_SQL);
+		}
+
+		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			if (bindUuid) {
+				queryPos.add(uuid);
+			}
+
+			queryPos.add(companyId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_UUID_C_UUID_2 =
 		"country.uuid = ? AND ";
 
 	private static final String _FINDER_COLUMN_UUID_C_UUID_3 =
 		"(country.uuid IS NULL OR country.uuid = '') AND ";
+
+	private static final String _FINDER_COLUMN_UUID_C_UUID_2_SQL =
+		"country.uuid_ = ? AND ";
+
+	private static final String _FINDER_COLUMN_UUID_C_UUID_3_SQL =
+		"(country.uuid_ IS NULL OR country.uuid_ = '') AND ";
 
 	private static final String _FINDER_COLUMN_UUID_C_COMPANYID_2 =
 		"country.companyId = ?";
@@ -1437,210 +1444,139 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63;.
+	 * Returns all the countries that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByCompanyId_Last(
-			long companyId, OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
-
-		Country country = fetchByCompanyId_Last(companyId, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+	public List<Country> filterFindByCompanyId(long companyId) {
+		return filterFindByCompanyId(
+			companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByCompanyId_Last(
-		long companyId, OrderByComparator<Country> orderByComparator) {
+	public List<Country> filterFindByCompanyId(
+		long companyId, int start, int end) {
 
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Country> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return filterFindByCompanyId(companyId, start, end, null);
 	}
 
 	/**
-	 * Returns the countries before and after the current country in the ordered set where companyId = &#63;.
+	 * Returns an ordered range of all the countries that the user has permissions to view where companyId = &#63;.
 	 *
-	 * @param countryId the primary key of the current country
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country[] findByCompanyId_PrevAndNext(
-			long countryId, long companyId,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByCompanyId(
+		long companyId, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
 
-		Country country = findByPrimaryKey(countryId);
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByCompanyId_PrevAndNext(
-				session, country, companyId, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByCompanyId_PrevAndNext(
-				session, country, companyId, orderByComparator, false);
+			queryPos.add(companyId);
 
-			return array;
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByCompanyId_PrevAndNext(
-		Session session, Country country, long companyId,
-		OrderByComparator<Country> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -1711,6 +1647,62 @@ public class CountryPersistenceImpl
 			}
 
 			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of countries that the user has permission to view where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByCompanyId(long companyId) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByCompanyId(companyId);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(companyId);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
 		}
 	}
 
@@ -1937,210 +1929,139 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where active = &#63;.
+	 * Returns all the countries that the user has permission to view where active = &#63;.
 	 *
 	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByActive_Last(
-			boolean active, OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
-
-		Country country = fetchByActive_Last(active, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("active=");
-		sb.append(active);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+	public List<Country> filterFindByActive(boolean active) {
+		return filterFindByActive(
+			active, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where active = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where active = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByActive_Last(
-		boolean active, OrderByComparator<Country> orderByComparator) {
+	public List<Country> filterFindByActive(
+		boolean active, int start, int end) {
 
-		int count = countByActive(active);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Country> list = findByActive(
-			active, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return filterFindByActive(active, start, end, null);
 	}
 
 	/**
-	 * Returns the countries before and after the current country in the ordered set where active = &#63;.
+	 * Returns an ordered range of all the countries that the user has permissions to view where active = &#63;.
 	 *
-	 * @param countryId the primary key of the current country
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country[] findByActive_PrevAndNext(
-			long countryId, boolean active,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByActive(
+		boolean active, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
 
-		Country country = findByPrimaryKey(countryId);
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByActive(active, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByActive(
+					active, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				3 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(4);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByActive_PrevAndNext(
-				session, country, active, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByActive_PrevAndNext(
-				session, country, active, orderByComparator, false);
+			queryPos.add(active);
 
-			return array;
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByActive_PrevAndNext(
-		Session session, Country country, boolean active,
-		OrderByComparator<Country> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(active);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -2214,8 +2135,67 @@ public class CountryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of countries that the user has permission to view where active = &#63;.
+	 *
+	 * @param active the active
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByActive(boolean active) {
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByActive(active);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByActive(active);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(2);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(active);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2 =
 		"country.active = ?";
+
+	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL =
+		"country.active_ = ?";
 
 	private FinderPath _finderPathFetchByC_A2;
 
@@ -2864,223 +2844,147 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63; and active = &#63;.
+	 * Returns all the countries that the user has permission to view where companyId = &#63; and active = &#63;.
 	 *
 	 * @param companyId the company ID
 	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByC_Active_Last(
-			long companyId, boolean active,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
-
-		Country country = fetchByC_Active_Last(
-			companyId, active, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", active=");
-		sb.append(active);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+	public List<Country> filterFindByC_Active(long companyId, boolean active) {
+		return filterFindByC_Active(
+			companyId, active, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63; and active = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where companyId = &#63; and active = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
 	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByC_Active_Last(
-		long companyId, boolean active,
+	public List<Country> filterFindByC_Active(
+		long companyId, boolean active, int start, int end) {
+
+		return filterFindByC_Active(companyId, active, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries that the user has permissions to view where companyId = &#63; and active = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param active the active
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_Active(
+		long companyId, boolean active, int start, int end,
 		OrderByComparator<Country> orderByComparator) {
 
-		int count = countByC_Active(companyId, active);
-
-		if (count == 0) {
-			return null;
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByC_Active(
+				companyId, active, start, end, orderByComparator);
 		}
 
-		List<Country> list = findByC_Active(
-			companyId, active, count - 1, count, orderByComparator);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
 
-		if (!list.isEmpty()) {
-			return list.get(0);
+			return InlineSQLHelperUtil.filter(
+				findByC_Active(
+					companyId, active, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
-		return null;
-	}
+		StringBundler sb = null;
 
-	/**
-	 * Returns the countries before and after the current country in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param countryId the primary key of the current country
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
-	 */
-	@Override
-	public Country[] findByC_Active_PrevAndNext(
-			long countryId, long companyId, boolean active,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				4 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(5);
+		}
 
-		Country country = findByPrimaryKey(countryId);
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_C_ACTIVE_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_ACTIVE_ACTIVE_2_SQL);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByC_Active_PrevAndNext(
-				session, country, companyId, active, orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByC_Active_PrevAndNext(
-				session, country, companyId, active, orderByComparator, false);
+			queryPos.add(companyId);
 
-			return array;
+			queryPos.add(active);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByC_Active_PrevAndNext(
-		Session session, Country country, long companyId, boolean active,
-		OrderByComparator<Country> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_ACTIVE_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_ACTIVE_ACTIVE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(active);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -3161,11 +3065,75 @@ public class CountryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of countries that the user has permission to view where companyId = &#63; and active = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param active the active
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByC_Active(long companyId, boolean active) {
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByC_Active(companyId, active);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByC_Active(companyId, active);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(3);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_ACTIVE_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_ACTIVE_ACTIVE_2_SQL);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(companyId);
+
+			queryPos.add(active);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_C_ACTIVE_COMPANYID_2 =
 		"country.companyId = ? AND ";
 
 	private static final String _FINDER_COLUMN_C_ACTIVE_ACTIVE_2 =
 		"country.active = ?";
+
+	private static final String _FINDER_COLUMN_C_ACTIVE_ACTIVE_2_SQL =
+		"country.active_ = ?";
 
 	private FinderPath _finderPathFetchByC_Name;
 
@@ -3839,238 +3807,160 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
+	 * Returns all the countries that the user has permission to view where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
 	 *
 	 * @param companyId the company ID
 	 * @param active the active
 	 * @param billingAllowed the billing allowed
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByC_A_B_Last(
-			long companyId, boolean active, boolean billingAllowed,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByC_A_B(
+		long companyId, boolean active, boolean billingAllowed) {
 
-		Country country = fetchByC_A_B_Last(
-			companyId, active, billingAllowed, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", active=");
-		sb.append(active);
-
-		sb.append(", billingAllowed=");
-		sb.append(billingAllowed);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+		return filterFindByC_A_B(
+			companyId, active, billingAllowed, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
 	 * @param active the active
 	 * @param billingAllowed the billing allowed
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByC_A_B_Last(
-		long companyId, boolean active, boolean billingAllowed,
-		OrderByComparator<Country> orderByComparator) {
+	public List<Country> filterFindByC_A_B(
+		long companyId, boolean active, boolean billingAllowed, int start,
+		int end) {
 
-		int count = countByC_A_B(companyId, active, billingAllowed);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Country> list = findByC_A_B(
-			companyId, active, billingAllowed, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return filterFindByC_A_B(
+			companyId, active, billingAllowed, start, end, null);
 	}
 
 	/**
-	 * Returns the countries before and after the current country in the ordered set where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
+	 * Returns an ordered range of all the countries that the user has permissions to view where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
 	 *
-	 * @param countryId the primary key of the current country
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param companyId the company ID
 	 * @param active the active
 	 * @param billingAllowed the billing allowed
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country[] findByC_A_B_PrevAndNext(
-			long countryId, long companyId, boolean active,
-			boolean billingAllowed,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByC_A_B(
+		long companyId, boolean active, boolean billingAllowed, int start,
+		int end, OrderByComparator<Country> orderByComparator) {
 
-		Country country = findByPrimaryKey(countryId);
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByC_A_B(
+				companyId, active, billingAllowed, start, end,
+				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_A_B(
+					companyId, active, billingAllowed, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				5 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(6);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_C_A_B_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_B_BILLINGALLOWED_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByC_A_B_PrevAndNext(
-				session, country, companyId, active, billingAllowed,
-				orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByC_A_B_PrevAndNext(
-				session, country, companyId, active, billingAllowed,
-				orderByComparator, false);
+			queryPos.add(companyId);
 
-			return array;
+			queryPos.add(active);
+
+			queryPos.add(billingAllowed);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByC_A_B_PrevAndNext(
-		Session session, Country country, long companyId, boolean active,
-		boolean billingAllowed, OrderByComparator<Country> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_A_B_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_A_B_ACTIVE_2);
-
-		sb.append(_FINDER_COLUMN_C_A_B_BILLINGALLOWED_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(active);
-
-		queryPos.add(billingAllowed);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4163,11 +4053,83 @@ public class CountryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of countries that the user has permission to view where companyId = &#63; and active = &#63; and billingAllowed = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByC_A_B(
+		long companyId, boolean active, boolean billingAllowed) {
+
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByC_A_B(companyId, active, billingAllowed);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByC_A_B(
+				companyId, active, billingAllowed);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(4);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_A_B_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_B_BILLINGALLOWED_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(companyId);
+
+			queryPos.add(active);
+
+			queryPos.add(billingAllowed);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_C_A_B_COMPANYID_2 =
 		"country.companyId = ? AND ";
 
 	private static final String _FINDER_COLUMN_C_A_B_ACTIVE_2 =
 		"country.active = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_ACTIVE_2_SQL =
+		"country.active_ = ? AND ";
 
 	private static final String _FINDER_COLUMN_C_A_B_BILLINGALLOWED_2 =
 		"country.billingAllowed = ?";
@@ -4439,238 +4401,160 @@ public class CountryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
+	 * Returns all the countries that the user has permission to view where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
 	 *
 	 * @param companyId the company ID
 	 * @param active the active
 	 * @param shippingAllowed the shipping allowed
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country
-	 * @throws NoSuchCountryException if a matching country could not be found
+	 * @return the matching countries that the user has permission to view
 	 */
 	@Override
-	public Country findByC_A_S_Last(
-			long companyId, boolean active, boolean shippingAllowed,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByC_A_S(
+		long companyId, boolean active, boolean shippingAllowed) {
 
-		Country country = fetchByC_A_S_Last(
-			companyId, active, shippingAllowed, orderByComparator);
-
-		if (country != null) {
-			return country;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", active=");
-		sb.append(active);
-
-		sb.append(", shippingAllowed=");
-		sb.append(shippingAllowed);
-
-		sb.append("}");
-
-		throw new NoSuchCountryException(sb.toString());
+		return filterFindByC_A_S(
+			companyId, active, shippingAllowed, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last country in the ordered set where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
+	 * Returns a range of all the countries that the user has permission to view where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
 	 * @param active the active
 	 * @param shippingAllowed the shipping allowed
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country fetchByC_A_S_Last(
-		long companyId, boolean active, boolean shippingAllowed,
-		OrderByComparator<Country> orderByComparator) {
+	public List<Country> filterFindByC_A_S(
+		long companyId, boolean active, boolean shippingAllowed, int start,
+		int end) {
 
-		int count = countByC_A_S(companyId, active, shippingAllowed);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<Country> list = findByC_A_S(
-			companyId, active, shippingAllowed, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return filterFindByC_A_S(
+			companyId, active, shippingAllowed, start, end, null);
 	}
 
 	/**
-	 * Returns the countries before and after the current country in the ordered set where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
+	 * Returns an ordered range of all the countries that the user has permissions to view where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
 	 *
-	 * @param countryId the primary key of the current country
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param companyId the company ID
 	 * @param active the active
 	 * @param shippingAllowed the shipping allowed
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next country
-	 * @throws NoSuchCountryException if a country with the primary key could not be found
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
 	 */
 	@Override
-	public Country[] findByC_A_S_PrevAndNext(
-			long countryId, long companyId, boolean active,
-			boolean shippingAllowed,
-			OrderByComparator<Country> orderByComparator)
-		throws NoSuchCountryException {
+	public List<Country> filterFindByC_A_S(
+		long companyId, boolean active, boolean shippingAllowed, int start,
+		int end, OrderByComparator<Country> orderByComparator) {
 
-		Country country = findByPrimaryKey(countryId);
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return findByC_A_S(
+				companyId, active, shippingAllowed, start, end,
+				orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_A_S(
+					companyId, active, shippingAllowed, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				5 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(6);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_C_A_S_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_S_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_S_SHIPPINGALLOWED_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Country[] array = new CountryImpl[3];
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
 
-			array[0] = getByC_A_S_PrevAndNext(
-				session, country, companyId, active, shippingAllowed,
-				orderByComparator, true);
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
 
-			array[1] = country;
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
 
-			array[2] = getByC_A_S_PrevAndNext(
-				session, country, companyId, active, shippingAllowed,
-				orderByComparator, false);
+			queryPos.add(companyId);
 
-			return array;
+			queryPos.add(active);
+
+			queryPos.add(shippingAllowed);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
 		catch (Exception exception) {
 			throw processException(exception);
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	protected Country getByC_A_S_PrevAndNext(
-		Session session, Country country, long companyId, boolean active,
-		boolean shippingAllowed, OrderByComparator<Country> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_COUNTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_A_S_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_A_S_ACTIVE_2);
-
-		sb.append(_FINDER_COLUMN_C_A_S_SHIPPINGALLOWED_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CountryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(active);
-
-		queryPos.add(shippingAllowed);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(country)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<Country> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4763,13 +4647,2059 @@ public class CountryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of countries that the user has permission to view where companyId = &#63; and active = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param active the active
+	 * @param shippingAllowed the shipping allowed
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByC_A_S(
+		long companyId, boolean active, boolean shippingAllowed) {
+
+		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
+			return countByC_A_S(companyId, active, shippingAllowed);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByC_A_S(
+				companyId, active, shippingAllowed);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(4);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_A_S_COMPANYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_S_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_S_SHIPPINGALLOWED_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(companyId);
+
+			queryPos.add(active);
+
+			queryPos.add(shippingAllowed);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_C_A_S_COMPANYID_2 =
 		"country.companyId = ? AND ";
 
 	private static final String _FINDER_COLUMN_C_A_S_ACTIVE_2 =
 		"country.active = ? AND ";
 
+	private static final String _FINDER_COLUMN_C_A_S_ACTIVE_2_SQL =
+		"country.active_ = ? AND ";
+
 	private static final String _FINDER_COLUMN_C_A_S_SHIPPINGALLOWED_2 =
+		"country.shippingAllowed = ?";
+
+	private FinderPath _finderPathWithPaginationFindByC_A_B_G;
+	private FinderPath _finderPathWithoutPaginationFindByC_A_B_G;
+	private FinderPath _finderPathCountByC_A_B_G;
+
+	/**
+	 * Returns all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @return the matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled) {
+
+		return findByC_A_B_G(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, int start, int end) {
+
+		return findByC_A_B_G(
+			countryId, active, billingAllowed, groupFilterEnabled, start, end,
+			null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		return findByC_A_B_G(
+			countryId, active, billingAllowed, groupFilterEnabled, start, end,
+			orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, int start, int end,
+		OrderByComparator<Country> orderByComparator, boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Country.class)) {
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_A_B_G;
+					finderArgs = new Object[] {
+						countryId, active, billingAllowed, groupFilterEnabled
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_A_B_G;
+				finderArgs = new Object[] {
+					countryId, active, billingAllowed, groupFilterEnabled,
+					start, end, orderByComparator
+				};
+			}
+
+			List<Country> list = null;
+
+			if (useFinderCache) {
+				list = (List<Country>)FinderCacheUtil.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (Country country : list) {
+						if ((countryId != country.getCountryId()) ||
+							(active != country.isActive()) ||
+							(billingAllowed != country.isBillingAllowed()) ||
+							(groupFilterEnabled !=
+								country.isGroupFilterEnabled())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						6 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(6);
+				}
+
+				sb.append(_SQL_SELECT_COUNTRY_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_COUNTRYID_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_ACTIVE_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_BILLINGALLOWED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_GROUPFILTERENABLED_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(CountryModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(countryId);
+
+					queryPos.add(active);
+
+					queryPos.add(billingAllowed);
+
+					queryPos.add(groupFilterEnabled);
+
+					list = (List<Country>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						FinderCacheUtil.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first country in the ordered set where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country
+	 * @throws NoSuchCountryException if a matching country could not be found
+	 */
+	@Override
+	public Country findByC_A_B_G_First(
+			long countryId, boolean active, boolean billingAllowed,
+			boolean groupFilterEnabled,
+			OrderByComparator<Country> orderByComparator)
+		throws NoSuchCountryException {
+
+		Country country = fetchByC_A_B_G_First(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			orderByComparator);
+
+		if (country != null) {
+			return country;
+		}
+
+		StringBundler sb = new StringBundler(10);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("countryId=");
+		sb.append(countryId);
+
+		sb.append(", active=");
+		sb.append(active);
+
+		sb.append(", billingAllowed=");
+		sb.append(billingAllowed);
+
+		sb.append(", groupFilterEnabled=");
+		sb.append(groupFilterEnabled);
+
+		sb.append("}");
+
+		throw new NoSuchCountryException(sb.toString());
+	}
+
+	/**
+	 * Returns the first country in the ordered set where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country, or <code>null</code> if a matching country could not be found
+	 */
+	@Override
+	public Country fetchByC_A_B_G_First(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled,
+		OrderByComparator<Country> orderByComparator) {
+
+		List<Country> list = findByC_A_B_G(
+			countryId, active, billingAllowed, groupFilterEnabled, 0, 1,
+			orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns all the countries that the user has permission to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @return the matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled) {
+
+		return filterFindByC_A_B_G(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries that the user has permission to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, int start, int end) {
+
+		return filterFindByC_A_B_G(
+			countryId, active, billingAllowed, groupFilterEnabled, start, end,
+			null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries that the user has permissions to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByC_A_B_G(
+				countryId, active, billingAllowed, groupFilterEnabled, start,
+				end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_A_B_G(
+					countryId, active, billingAllowed, groupFilterEnabled,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				6 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(7);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_COUNTRYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_BILLINGALLOWED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_GROUPFILTERENABLED_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(countryId);
+
+			queryPos.add(active);
+
+			queryPos.add(billingAllowed);
+
+			queryPos.add(groupFilterEnabled);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Removes all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; from the database.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 */
+	@Override
+	public void removeByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled) {
+
+		for (Country country :
+				findByC_A_B_G(
+					countryId, active, billingAllowed, groupFilterEnabled,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+
+			remove(country);
+		}
+	}
+
+	/**
+	 * Returns the number of countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @return the number of matching countries
+	 */
+	@Override
+	public int countByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Country.class)) {
+
+			FinderPath finderPath = _finderPathCountByC_A_B_G;
+
+			Object[] finderArgs = new Object[] {
+				countryId, active, billingAllowed, groupFilterEnabled
+			};
+
+			Long count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(5);
+
+				sb.append(_SQL_COUNT_COUNTRY_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_COUNTRYID_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_ACTIVE_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_BILLINGALLOWED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_GROUPFILTERENABLED_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(countryId);
+
+					queryPos.add(active);
+
+					queryPos.add(billingAllowed);
+
+					queryPos.add(groupFilterEnabled);
+
+					count = (Long)query.uniqueResult();
+
+					FinderCacheUtil.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of countries that the user has permission to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByC_A_B_G(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByC_A_B_G(
+				countryId, active, billingAllowed, groupFilterEnabled);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByC_A_B_G(
+				countryId, active, billingAllowed, groupFilterEnabled);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(5);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_COUNTRYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_BILLINGALLOWED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_GROUPFILTERENABLED_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(countryId);
+
+			queryPos.add(active);
+
+			queryPos.add(billingAllowed);
+
+			queryPos.add(groupFilterEnabled);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_C_A_B_G_COUNTRYID_2 =
+		"country.countryId = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_ACTIVE_2 =
+		"country.active = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_ACTIVE_2_SQL =
+		"country.active_ = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_BILLINGALLOWED_2 =
+		"country.billingAllowed = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_GROUPFILTERENABLED_2 =
+		"country.groupFilterEnabled = ?";
+
+	private FinderPath _finderPathWithPaginationFindByC_A_G_S;
+	private FinderPath _finderPathWithoutPaginationFindByC_A_G_S;
+	private FinderPath _finderPathCountByC_A_G_S;
+
+	/**
+	 * Returns all the countries where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed) {
+
+		return findByC_A_G_S(
+			countryId, active, groupFilterEnabled, shippingAllowed,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed, int start, int end) {
+
+		return findByC_A_G_S(
+			countryId, active, groupFilterEnabled, shippingAllowed, start, end,
+			null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		return findByC_A_G_S(
+			countryId, active, groupFilterEnabled, shippingAllowed, start, end,
+			orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed, int start, int end,
+		OrderByComparator<Country> orderByComparator, boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Country.class)) {
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_A_G_S;
+					finderArgs = new Object[] {
+						countryId, active, groupFilterEnabled, shippingAllowed
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_A_G_S;
+				finderArgs = new Object[] {
+					countryId, active, groupFilterEnabled, shippingAllowed,
+					start, end, orderByComparator
+				};
+			}
+
+			List<Country> list = null;
+
+			if (useFinderCache) {
+				list = (List<Country>)FinderCacheUtil.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (Country country : list) {
+						if ((countryId != country.getCountryId()) ||
+							(active != country.isActive()) ||
+							(groupFilterEnabled !=
+								country.isGroupFilterEnabled()) ||
+							(shippingAllowed != country.isShippingAllowed())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						6 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(6);
+				}
+
+				sb.append(_SQL_SELECT_COUNTRY_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_COUNTRYID_2);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_ACTIVE_2);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_GROUPFILTERENABLED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_SHIPPINGALLOWED_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(CountryModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(countryId);
+
+					queryPos.add(active);
+
+					queryPos.add(groupFilterEnabled);
+
+					queryPos.add(shippingAllowed);
+
+					list = (List<Country>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						FinderCacheUtil.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first country in the ordered set where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country
+	 * @throws NoSuchCountryException if a matching country could not be found
+	 */
+	@Override
+	public Country findByC_A_G_S_First(
+			long countryId, boolean active, boolean groupFilterEnabled,
+			boolean shippingAllowed,
+			OrderByComparator<Country> orderByComparator)
+		throws NoSuchCountryException {
+
+		Country country = fetchByC_A_G_S_First(
+			countryId, active, groupFilterEnabled, shippingAllowed,
+			orderByComparator);
+
+		if (country != null) {
+			return country;
+		}
+
+		StringBundler sb = new StringBundler(10);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("countryId=");
+		sb.append(countryId);
+
+		sb.append(", active=");
+		sb.append(active);
+
+		sb.append(", groupFilterEnabled=");
+		sb.append(groupFilterEnabled);
+
+		sb.append(", shippingAllowed=");
+		sb.append(shippingAllowed);
+
+		sb.append("}");
+
+		throw new NoSuchCountryException(sb.toString());
+	}
+
+	/**
+	 * Returns the first country in the ordered set where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country, or <code>null</code> if a matching country could not be found
+	 */
+	@Override
+	public Country fetchByC_A_G_S_First(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed, OrderByComparator<Country> orderByComparator) {
+
+		List<Country> list = findByC_A_G_S(
+			countryId, active, groupFilterEnabled, shippingAllowed, 0, 1,
+			orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns all the countries that the user has permission to view where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed) {
+
+		return filterFindByC_A_G_S(
+			countryId, active, groupFilterEnabled, shippingAllowed,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries that the user has permission to view where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed, int start, int end) {
+
+		return filterFindByC_A_G_S(
+			countryId, active, groupFilterEnabled, shippingAllowed, start, end,
+			null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries that the user has permissions to view where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByC_A_G_S(
+				countryId, active, groupFilterEnabled, shippingAllowed, start,
+				end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_A_G_S(
+					countryId, active, groupFilterEnabled, shippingAllowed,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				6 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(7);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_COUNTRYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_GROUPFILTERENABLED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_SHIPPINGALLOWED_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(countryId);
+
+			queryPos.add(active);
+
+			queryPos.add(groupFilterEnabled);
+
+			queryPos.add(shippingAllowed);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Removes all the countries where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63; from the database.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 */
+	@Override
+	public void removeByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed) {
+
+		for (Country country :
+				findByC_A_G_S(
+					countryId, active, groupFilterEnabled, shippingAllowed,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+
+			remove(country);
+		}
+	}
+
+	/**
+	 * Returns the number of countries where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the number of matching countries
+	 */
+	@Override
+	public int countByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Country.class)) {
+
+			FinderPath finderPath = _finderPathCountByC_A_G_S;
+
+			Object[] finderArgs = new Object[] {
+				countryId, active, groupFilterEnabled, shippingAllowed
+			};
+
+			Long count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(5);
+
+				sb.append(_SQL_COUNT_COUNTRY_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_COUNTRYID_2);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_ACTIVE_2);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_GROUPFILTERENABLED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_G_S_SHIPPINGALLOWED_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(countryId);
+
+					queryPos.add(active);
+
+					queryPos.add(groupFilterEnabled);
+
+					queryPos.add(shippingAllowed);
+
+					count = (Long)query.uniqueResult();
+
+					FinderCacheUtil.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of countries that the user has permission to view where countryId = &#63; and active = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByC_A_G_S(
+		long countryId, boolean active, boolean groupFilterEnabled,
+		boolean shippingAllowed) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByC_A_G_S(
+				countryId, active, groupFilterEnabled, shippingAllowed);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByC_A_G_S(
+				countryId, active, groupFilterEnabled, shippingAllowed);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(5);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_COUNTRYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_GROUPFILTERENABLED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_G_S_SHIPPINGALLOWED_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(countryId);
+
+			queryPos.add(active);
+
+			queryPos.add(groupFilterEnabled);
+
+			queryPos.add(shippingAllowed);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_C_A_G_S_COUNTRYID_2 =
+		"country.countryId = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_G_S_ACTIVE_2 =
+		"country.active = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_G_S_ACTIVE_2_SQL =
+		"country.active_ = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_G_S_GROUPFILTERENABLED_2 =
+		"country.groupFilterEnabled = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_G_S_SHIPPINGALLOWED_2 =
+		"country.shippingAllowed = ?";
+
+	private FinderPath _finderPathWithPaginationFindByC_A_B_G_S;
+	private FinderPath _finderPathWithoutPaginationFindByC_A_B_G_S;
+	private FinderPath _finderPathCountByC_A_B_G_S;
+
+	/**
+	 * Returns all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed) {
+
+		return findByC_A_B_G_S(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed, int start,
+		int end) {
+
+		return findByC_A_B_G_S(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		return findByC_A_B_G_S(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching countries
+	 */
+	@Override
+	public List<Country> findByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed, int start, int end,
+		OrderByComparator<Country> orderByComparator, boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Country.class)) {
+
+			FinderPath finderPath = null;
+			Object[] finderArgs = null;
+
+			if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+
+				if (useFinderCache) {
+					finderPath = _finderPathWithoutPaginationFindByC_A_B_G_S;
+					finderArgs = new Object[] {
+						countryId, active, billingAllowed, groupFilterEnabled,
+						shippingAllowed
+					};
+				}
+			}
+			else if (useFinderCache) {
+				finderPath = _finderPathWithPaginationFindByC_A_B_G_S;
+				finderArgs = new Object[] {
+					countryId, active, billingAllowed, groupFilterEnabled,
+					shippingAllowed, start, end, orderByComparator
+				};
+			}
+
+			List<Country> list = null;
+
+			if (useFinderCache) {
+				list = (List<Country>)FinderCacheUtil.getResult(
+					finderPath, finderArgs, this);
+
+				if ((list != null) && !list.isEmpty()) {
+					for (Country country : list) {
+						if ((countryId != country.getCountryId()) ||
+							(active != country.isActive()) ||
+							(billingAllowed != country.isBillingAllowed()) ||
+							(groupFilterEnabled !=
+								country.isGroupFilterEnabled()) ||
+							(shippingAllowed != country.isShippingAllowed())) {
+
+							list = null;
+
+							break;
+						}
+					}
+				}
+			}
+
+			if (list == null) {
+				StringBundler sb = null;
+
+				if (orderByComparator != null) {
+					sb = new StringBundler(
+						7 + (orderByComparator.getOrderByFields().length * 2));
+				}
+				else {
+					sb = new StringBundler(7);
+				}
+
+				sb.append(_SQL_SELECT_COUNTRY_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_COUNTRYID_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_ACTIVE_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_BILLINGALLOWED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_GROUPFILTERENABLED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_SHIPPINGALLOWED_2);
+
+				if (orderByComparator != null) {
+					appendOrderByComparator(
+						sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+				}
+				else {
+					sb.append(CountryModelImpl.ORDER_BY_JPQL);
+				}
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(countryId);
+
+					queryPos.add(active);
+
+					queryPos.add(billingAllowed);
+
+					queryPos.add(groupFilterEnabled);
+
+					queryPos.add(shippingAllowed);
+
+					list = (List<Country>)QueryUtil.list(
+						query, getDialect(), start, end);
+
+					cacheResult(list);
+
+					if (useFinderCache) {
+						FinderCacheUtil.putResult(finderPath, finderArgs, list);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return list;
+		}
+	}
+
+	/**
+	 * Returns the first country in the ordered set where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country
+	 * @throws NoSuchCountryException if a matching country could not be found
+	 */
+	@Override
+	public Country findByC_A_B_G_S_First(
+			long countryId, boolean active, boolean billingAllowed,
+			boolean groupFilterEnabled, boolean shippingAllowed,
+			OrderByComparator<Country> orderByComparator)
+		throws NoSuchCountryException {
+
+		Country country = fetchByC_A_B_G_S_First(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, orderByComparator);
+
+		if (country != null) {
+			return country;
+		}
+
+		StringBundler sb = new StringBundler(12);
+
+		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		sb.append("countryId=");
+		sb.append(countryId);
+
+		sb.append(", active=");
+		sb.append(active);
+
+		sb.append(", billingAllowed=");
+		sb.append(billingAllowed);
+
+		sb.append(", groupFilterEnabled=");
+		sb.append(groupFilterEnabled);
+
+		sb.append(", shippingAllowed=");
+		sb.append(shippingAllowed);
+
+		sb.append("}");
+
+		throw new NoSuchCountryException(sb.toString());
+	}
+
+	/**
+	 * Returns the first country in the ordered set where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country, or <code>null</code> if a matching country could not be found
+	 */
+	@Override
+	public Country fetchByC_A_B_G_S_First(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed,
+		OrderByComparator<Country> orderByComparator) {
+
+		List<Country> list = findByC_A_B_G_S(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns all the countries that the user has permission to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed) {
+
+		return filterFindByC_A_B_G_S(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries that the user has permission to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed, int start,
+		int end) {
+
+		return filterFindByC_A_B_G_S(
+			countryId, active, billingAllowed, groupFilterEnabled,
+			shippingAllowed, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries that the user has permissions to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CountryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching countries that the user has permission to view
+	 */
+	@Override
+	public List<Country> filterFindByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed, int start, int end,
+		OrderByComparator<Country> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return findByC_A_B_G_S(
+				countryId, active, billingAllowed, groupFilterEnabled,
+				shippingAllowed, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByC_A_B_G_S(
+					countryId, active, billingAllowed, groupFilterEnabled,
+					shippingAllowed, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
+		}
+
+		StringBundler sb = null;
+
+		if (orderByComparator != null) {
+			sb = new StringBundler(
+				7 + (orderByComparator.getOrderByFields().length * 2));
+		}
+		else {
+			sb = new StringBundler(8);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_WHERE);
+		}
+		else {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_COUNTRYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_BILLINGALLOWED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_GROUPFILTERENABLED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_SHIPPINGALLOWED_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			sb.append(_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				sb.append(CountryModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
+			}
+			else {
+				sb.append(CountryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CountryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CountryImpl.class);
+			}
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(countryId);
+
+			queryPos.add(active);
+
+			queryPos.add(billingAllowed);
+
+			queryPos.add(groupFilterEnabled);
+
+			queryPos.add(shippingAllowed);
+
+			return (List<Country>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Removes all the countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63; from the database.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 */
+	@Override
+	public void removeByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed) {
+
+		for (Country country :
+				findByC_A_B_G_S(
+					countryId, active, billingAllowed, groupFilterEnabled,
+					shippingAllowed, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					null)) {
+
+			remove(country);
+		}
+	}
+
+	/**
+	 * Returns the number of countries where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the number of matching countries
+	 */
+	@Override
+	public int countByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed) {
+
+		try (SafeCloseable safeCloseable =
+				CTPersistenceHelperUtil.setCTCollectionIdWithSafeCloseable(
+					Country.class)) {
+
+			FinderPath finderPath = _finderPathCountByC_A_B_G_S;
+
+			Object[] finderArgs = new Object[] {
+				countryId, active, billingAllowed, groupFilterEnabled,
+				shippingAllowed
+			};
+
+			Long count = (Long)FinderCacheUtil.getResult(
+				finderPath, finderArgs, this);
+
+			if (count == null) {
+				StringBundler sb = new StringBundler(6);
+
+				sb.append(_SQL_COUNT_COUNTRY_WHERE);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_COUNTRYID_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_ACTIVE_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_BILLINGALLOWED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_GROUPFILTERENABLED_2);
+
+				sb.append(_FINDER_COLUMN_C_A_B_G_S_SHIPPINGALLOWED_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					queryPos.add(countryId);
+
+					queryPos.add(active);
+
+					queryPos.add(billingAllowed);
+
+					queryPos.add(groupFilterEnabled);
+
+					queryPos.add(shippingAllowed);
+
+					count = (Long)query.uniqueResult();
+
+					FinderCacheUtil.putResult(finderPath, finderArgs, count);
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			return count.intValue();
+		}
+	}
+
+	/**
+	 * Returns the number of countries that the user has permission to view where countryId = &#63; and active = &#63; and billingAllowed = &#63; and groupFilterEnabled = &#63; and shippingAllowed = &#63;.
+	 *
+	 * @param countryId the country ID
+	 * @param active the active
+	 * @param billingAllowed the billing allowed
+	 * @param groupFilterEnabled the group filter enabled
+	 * @param shippingAllowed the shipping allowed
+	 * @return the number of matching countries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByC_A_B_G_S(
+		long countryId, boolean active, boolean billingAllowed,
+		boolean groupFilterEnabled, boolean shippingAllowed) {
+
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByC_A_B_G_S(
+				countryId, active, billingAllowed, groupFilterEnabled,
+				shippingAllowed);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<Country> countries = findByC_A_B_G_S(
+				countryId, active, billingAllowed, groupFilterEnabled,
+				shippingAllowed);
+
+			countries = InlineSQLHelperUtil.filter(countries);
+
+			return countries.size();
+		}
+
+		StringBundler sb = new StringBundler(6);
+
+		sb.append(_FILTER_SQL_COUNT_COUNTRY_WHERE);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_COUNTRYID_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_ACTIVE_2_SQL);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_BILLINGALLOWED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_GROUPFILTERENABLED_2);
+
+		sb.append(_FINDER_COLUMN_C_A_B_G_S_SHIPPINGALLOWED_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), Country.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+
+			queryPos.add(countryId);
+
+			queryPos.add(active);
+
+			queryPos.add(billingAllowed);
+
+			queryPos.add(groupFilterEnabled);
+
+			queryPos.add(shippingAllowed);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_C_A_B_G_S_COUNTRYID_2 =
+		"country.countryId = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_S_ACTIVE_2 =
+		"country.active = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_S_ACTIVE_2_SQL =
+		"country.active_ = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_S_BILLINGALLOWED_2 =
+		"country.billingAllowed = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_S_GROUPFILTERENABLED_2 =
+		"country.groupFilterEnabled = ? AND ";
+
+	private static final String _FINDER_COLUMN_C_A_B_G_S_SHIPPINGALLOWED_2 =
 		"country.shippingAllowed = ?";
 
 	public CountryPersistenceImpl() {
@@ -5825,6 +7755,116 @@ public class CountryPersistenceImpl
 			},
 			new String[] {"companyId", "active_", "shippingAllowed"}, false);
 
+		_finderPathWithPaginationFindByC_A_B_G = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_B_G",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "billingAllowed", "groupFilterEnabled"
+			},
+			true);
+
+		_finderPathWithoutPaginationFindByC_A_B_G = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A_B_G",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "billingAllowed", "groupFilterEnabled"
+			},
+			true);
+
+		_finderPathCountByC_A_B_G = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A_B_G",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "billingAllowed", "groupFilterEnabled"
+			},
+			false);
+
+		_finderPathWithPaginationFindByC_A_G_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_G_S",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName(),
+				Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "groupFilterEnabled", "shippingAllowed"
+			},
+			true);
+
+		_finderPathWithoutPaginationFindByC_A_G_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A_G_S",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "groupFilterEnabled", "shippingAllowed"
+			},
+			true);
+
+		_finderPathCountByC_A_G_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A_G_S",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "groupFilterEnabled", "shippingAllowed"
+			},
+			false);
+
+		_finderPathWithPaginationFindByC_A_B_G_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_B_G_S",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Integer.class.getName(),
+				Integer.class.getName(), OrderByComparator.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "billingAllowed", "groupFilterEnabled",
+				"shippingAllowed"
+			},
+			true);
+
+		_finderPathWithoutPaginationFindByC_A_B_G_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A_B_G_S",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "billingAllowed", "groupFilterEnabled",
+				"shippingAllowed"
+			},
+			true);
+
+		_finderPathCountByC_A_B_G_S = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A_B_G_S",
+			new String[] {
+				Long.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName(), Boolean.class.getName(),
+				Boolean.class.getName()
+			},
+			new String[] {
+				"countryId", "active_", "billingAllowed", "groupFilterEnabled",
+				"shippingAllowed"
+			},
+			false);
+
 		CountryUtil.setPersistence(this);
 	}
 
@@ -5849,7 +7889,30 @@ public class CountryPersistenceImpl
 	private static final String _SQL_COUNT_COUNTRY_WHERE =
 		"SELECT COUNT(country) FROM Country country WHERE ";
 
+	private static final String _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN =
+		"country.countryId";
+
+	private static final String _FILTER_SQL_SELECT_COUNTRY_WHERE =
+		"SELECT DISTINCT {country.*} FROM Country country WHERE ";
+
+	private static final String
+		_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_1 =
+			"SELECT {Country.*} FROM (SELECT DISTINCT country.countryId FROM Country country WHERE ";
+
+	private static final String
+		_FILTER_SQL_SELECT_COUNTRY_NO_INLINE_DISTINCT_WHERE_2 =
+			") TEMP_TABLE INNER JOIN Country ON TEMP_TABLE.countryId = Country.countryId";
+
+	private static final String _FILTER_SQL_COUNT_COUNTRY_WHERE =
+		"SELECT COUNT(DISTINCT country.countryId) AS COUNT_VALUE FROM Country country WHERE ";
+
+	private static final String _FILTER_ENTITY_ALIAS = "country";
+
+	private static final String _FILTER_ENTITY_TABLE = "Country";
+
 	private static final String _ORDER_BY_ENTITY_ALIAS = "country.";
+
+	private static final String _ORDER_BY_ENTITY_TABLE = "Country.";
 
 	private static final String _NO_SUCH_ENTITY_WITH_PRIMARY_KEY =
 		"No Country exists with the primary key ";
@@ -5869,3 +7932,4 @@ public class CountryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:980666742

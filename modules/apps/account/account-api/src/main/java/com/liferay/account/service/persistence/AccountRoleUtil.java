@@ -213,54 +213,6 @@ public class AccountRoleUtil {
 	}
 
 	/**
-	 * Returns the last account role in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account role
-	 * @throws NoSuchRoleException if a matching account role could not be found
-	 */
-	public static AccountRole findByCompanyId_Last(
-			long companyId, OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account role in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account role, or <code>null</code> if a matching account role could not be found
-	 */
-	public static AccountRole fetchByCompanyId_Last(
-		long companyId, OrderByComparator<AccountRole> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account roles before and after the current account role in the ordered set where companyId = &#63;.
-	 *
-	 * @param accountRoleId the primary key of the current account role
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account role
-	 * @throws NoSuchRoleException if a account role with the primary key could not be found
-	 */
-	public static AccountRole[] findByCompanyId_PrevAndNext(
-			long accountRoleId, long companyId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			accountRoleId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account roles that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -307,24 +259,6 @@ public class AccountRoleUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account roles before and after the current account role in the ordered set of account roles that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param accountRoleId the primary key of the current account role
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account role
-	 * @throws NoSuchRoleException if a account role with the primary key could not be found
-	 */
-	public static AccountRole[] filterFindByCompanyId_PrevAndNext(
-			long accountRoleId, long companyId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			accountRoleId, companyId, orderByComparator);
 	}
 
 	/**
@@ -461,55 +395,6 @@ public class AccountRoleUtil {
 	}
 
 	/**
-	 * Returns the last account role in the ordered set where accountEntryId = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account role
-	 * @throws NoSuchRoleException if a matching account role could not be found
-	 */
-	public static AccountRole findByAccountEntryId_Last(
-			long accountEntryId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().findByAccountEntryId_Last(
-			accountEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account role in the ordered set where accountEntryId = &#63;.
-	 *
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account role, or <code>null</code> if a matching account role could not be found
-	 */
-	public static AccountRole fetchByAccountEntryId_Last(
-		long accountEntryId, OrderByComparator<AccountRole> orderByComparator) {
-
-		return getPersistence().fetchByAccountEntryId_Last(
-			accountEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account roles before and after the current account role in the ordered set where accountEntryId = &#63;.
-	 *
-	 * @param accountRoleId the primary key of the current account role
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account role
-	 * @throws NoSuchRoleException if a account role with the primary key could not be found
-	 */
-	public static AccountRole[] findByAccountEntryId_PrevAndNext(
-			long accountRoleId, long accountEntryId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().findByAccountEntryId_PrevAndNext(
-			accountRoleId, accountEntryId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account roles that the user has permission to view where accountEntryId = &#63;.
 	 *
 	 * @param accountEntryId the account entry ID
@@ -559,24 +444,6 @@ public class AccountRoleUtil {
 
 		return getPersistence().filterFindByAccountEntryId(
 			accountEntryId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account roles before and after the current account role in the ordered set of account roles that the user has permission to view where accountEntryId = &#63;.
-	 *
-	 * @param accountRoleId the primary key of the current account role
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account role
-	 * @throws NoSuchRoleException if a account role with the primary key could not be found
-	 */
-	public static AccountRole[] filterFindByAccountEntryId_PrevAndNext(
-			long accountRoleId, long accountEntryId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().filterFindByAccountEntryId_PrevAndNext(
-			accountRoleId, accountEntryId, orderByComparator);
 	}
 
 	/**
@@ -932,59 +799,6 @@ public class AccountRoleUtil {
 	}
 
 	/**
-	 * Returns the last account role in the ordered set where companyId = &#63; and accountEntryId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account role
-	 * @throws NoSuchRoleException if a matching account role could not be found
-	 */
-	public static AccountRole findByC_A_Last(
-			long companyId, long accountEntryId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().findByC_A_Last(
-			companyId, accountEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account role in the ordered set where companyId = &#63; and accountEntryId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account role, or <code>null</code> if a matching account role could not be found
-	 */
-	public static AccountRole fetchByC_A_Last(
-		long companyId, long accountEntryId,
-		OrderByComparator<AccountRole> orderByComparator) {
-
-		return getPersistence().fetchByC_A_Last(
-			companyId, accountEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account roles before and after the current account role in the ordered set where companyId = &#63; and accountEntryId = &#63;.
-	 *
-	 * @param accountRoleId the primary key of the current account role
-	 * @param companyId the company ID
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account role
-	 * @throws NoSuchRoleException if a account role with the primary key could not be found
-	 */
-	public static AccountRole[] findByC_A_PrevAndNext(
-			long accountRoleId, long companyId, long accountEntryId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().findByC_A_PrevAndNext(
-			accountRoleId, companyId, accountEntryId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account roles that the user has permission to view where companyId = &#63; and accountEntryId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1037,25 +851,6 @@ public class AccountRoleUtil {
 
 		return getPersistence().filterFindByC_A(
 			companyId, accountEntryId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account roles before and after the current account role in the ordered set of account roles that the user has permission to view where companyId = &#63; and accountEntryId = &#63;.
-	 *
-	 * @param accountRoleId the primary key of the current account role
-	 * @param companyId the company ID
-	 * @param accountEntryId the account entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account role
-	 * @throws NoSuchRoleException if a account role with the primary key could not be found
-	 */
-	public static AccountRole[] filterFindByC_A_PrevAndNext(
-			long accountRoleId, long companyId, long accountEntryId,
-			OrderByComparator<AccountRole> orderByComparator)
-		throws com.liferay.account.exception.NoSuchRoleException {
-
-		return getPersistence().filterFindByC_A_PrevAndNext(
-			accountRoleId, companyId, accountEntryId, orderByComparator);
 	}
 
 	/**
@@ -1479,3 +1274,4 @@ public class AccountRoleUtil {
 	private static volatile AccountRolePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1935669820

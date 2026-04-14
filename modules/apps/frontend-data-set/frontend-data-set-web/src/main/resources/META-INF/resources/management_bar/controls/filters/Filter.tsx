@@ -8,21 +8,34 @@ import {loadModule} from 'frontend-js-web';
 import React, {ReactElement, useContext, useEffect, useState} from 'react';
 
 import FrontendDataSetContext from '../../../FrontendDataSetContext';
-import ViewsContext from '../../../views/ViewsContext';
 
 // @ts-ignore
 
-import {VIEWS_ACTION_TYPES} from '../../../views/viewsReducer';
 import clientExtensionFilterImplementation from './implementation/ClientExtensionFilter';
 import dateRangeFilterImplementation from './implementation/DateRangeFilter';
 import selectionFilterImplementation from './implementation/SelectionFilter';
+import {EEntityFieldType} from './utils/types';
 
+export interface IOdataStringArgs {
+	clientExtensionFilterImplementation?: any;
+	clientExtensionFilterURL?: string;
+	entityFieldType: EEntityFieldType;
+	id: string;
+	multiple?: boolean;
+	selectedData?: Record<string, unknown>;
+}
+
+export interface ISelectedItemsLabelArgs {
+	clientExtensionFilterImplementation?: any;
+	clientExtensionFilterURL?: string;
+	selectedData?: Record<string, unknown>;
+}
 export interface FilterImplementation<
 	T extends FilterImplementationArgs<unknown>,
 > {
 	Component: (args: T) => ReactElement;
-	getOdataString: (args: T) => string;
-	getSelectedItemsLabel: (args: T) => string;
+	getOdataString: (args: IOdataStringArgs) => string;
+	getSelectedItemsLabel: (args: ISelectedItemsLabelArgs) => string;
 }
 
 export interface FilterImplementationArgs<T> {
@@ -43,10 +56,13 @@ interface FilterConfiguration {
 	id: string;
 }
 
-interface FilterComponentArgs {
+export interface IFilter {
+	clientExtensionResolutionError?: string;
 	id: string;
-	moduleURL: string;
+	label: string;
+	moduleURL?: string;
 	onClose: () => void;
+	selectedItemsLabel: string;
 	type: 'clientExtension' | 'dateRange' | 'selection';
 }
 
@@ -56,15 +72,8 @@ const FILTER_IMPLEMENTATIONS = {
 	selection: selectionFilterImplementation,
 };
 
-const Filter = ({
-	id,
-	moduleURL,
-	onClose,
-	type,
-	...otherProps
-}: FilterComponentArgs) => {
-	const {setSearching} = useContext(FrontendDataSetContext);
-	const [{filters}, viewsDispatch] = useContext(ViewsContext);
+const Filter = ({id, moduleURL, onClose, type, ...otherProps}: IFilter) => {
+	const {globalFDSState, onFilterChange} = useContext(FrontendDataSetContext);
 
 	const filterImplementation = FILTER_IMPLEMENTATIONS[type];
 
@@ -93,26 +102,16 @@ const Filter = ({
 			);
 		}
 
-		const newFilter = {
-			...filters.find(
+		const filter = {
+			...globalFDSState.filters.find(
 				(filter: FilterConfiguration) => filter.id === filterId
 			),
 			selectedData,
 			...otherProps,
 		};
 
-		newFilter.odataFilterString =
-			filterImplementation.getOdataString(newFilter);
-		newFilter.selectedItemsLabel =
-			filterImplementation.getSelectedItemsLabel(newFilter);
-
-		setSearching(true);
-
-		viewsDispatch({
-			type: VIEWS_ACTION_TYPES.UPDATE_FILTERS,
-			value: filters.map((filter: FilterConfiguration) =>
-				filter.id === filterId ? newFilter : filter
-			),
+		onFilterChange({
+			changedFilter: filter,
 		});
 	};
 

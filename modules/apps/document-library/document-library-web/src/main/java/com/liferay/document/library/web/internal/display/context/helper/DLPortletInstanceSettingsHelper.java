@@ -27,11 +27,11 @@ import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.KeyValuePairComparator;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.view.count.ViewCountManagerUtil;
-import com.liferay.portal.util.PropsValues;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,13 +128,12 @@ public class DLPortletInstanceSettingsHelper {
 			return null;
 		}
 
-		ThemeDisplay themeDisplay = _dlRequestHelper.getThemeDisplay();
+		String selectedGroupExternalReferenceCode =
+			dlPortletInstanceSettings.getSelectedGroupExternalReferenceCode();
 
-		Group selectedGroup =
-			GroupLocalServiceUtil.getGroupByExternalReferenceCode(
-				dlPortletInstanceSettings.
-					getSelectedGroupExternalReferenceCode(),
-				themeDisplay.getCompanyId());
+		Group selectedGroup = _getSelectedGroup(
+			dlPortletInstanceSettings, selectedGroupExternalReferenceCode,
+			_dlRequestHelper.getThemeDisplay());
 
 		return DLAppLocalServiceUtil.getFolderByExternalReferenceCode(
 			rootFolderExternalReferenceCode, selectedGroup.getGroupId());
@@ -243,6 +242,21 @@ public class DLPortletInstanceSettingsHelper {
 		allEntryColumns += ",modified-date,create-date";
 
 		return StringUtil.split(allEntryColumns);
+	}
+
+	private Group _getSelectedGroup(
+			DLPortletInstanceSettings dlPortletInstanceSettings,
+			String selectedGroupExternalReferenceCode,
+			ThemeDisplay themeDisplay)
+		throws PortalException {
+
+		if (Validator.isNull(selectedGroupExternalReferenceCode)) {
+			return themeDisplay.getScopeGroup();
+		}
+
+		return GroupLocalServiceUtil.getGroupByExternalReferenceCode(
+			dlPortletInstanceSettings.getSelectedGroupExternalReferenceCode(),
+			themeDisplay.getCompanyId());
 	}
 
 	private void _populateDisplayViews() {

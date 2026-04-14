@@ -13,12 +13,15 @@ import {ObjectFolderContextProvider} from './ModelBuilderContext/objectFolderCon
 
 interface CustomObjectFolderWrapperProps {
 	baseResourceURL: string;
+	ckEditor5Config?: object;
 	companies: Scope[];
+	decimalSeparator?: string;
 	editObjectDefinitionURL: string;
 	filterOperators: TFilterOperators;
 	forbiddenChars: string[];
 	forbiddenLastChars: string[];
 	forbiddenNames: string[];
+	hasDepotEntry?: boolean;
 	learnResourceContext: ILearnResourceContext;
 	objectDefinitionPermissionsURL: string;
 	objectDefinitionsStorageTypes: LabelValueObject[];
@@ -34,12 +37,15 @@ const ReactFlowProviderWrapper = ReactFlowProvider as React.FC<{
 
 export default function CustomObjectFolderWrapper({
 	baseResourceURL,
+	ckEditor5Config,
 	companies,
+	decimalSeparator,
 	editObjectDefinitionURL,
 	filterOperators,
 	forbiddenChars,
 	forbiddenLastChars,
 	forbiddenNames,
+	hasDepotEntry,
 	learnResourceContext,
 	objectDefinitionPermissionsURL,
 	objectDefinitionsStorageTypes,
@@ -53,11 +59,14 @@ export default function CustomObjectFolderWrapper({
 			<ObjectFolderContextProvider
 				value={{
 					baseResourceURL,
+					ckEditor5Config,
+					decimalSeparator,
 					editObjectDefinitionURL,
 					filterOperators,
 					forbiddenChars,
 					forbiddenLastChars,
 					forbiddenNames,
+					hasDepotEntry,
 					learnResourceContext,
 					objectDefinitionPermissionsURL,
 					objectDefinitionsStorageTypes,

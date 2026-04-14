@@ -122,47 +122,6 @@ public interface CommerceShipmentItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce shipment item in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByUuid_PrevAndNext(
-			long commerceShipmentItemId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
 	 * Removes all the commerce shipment items where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -322,50 +281,6 @@ public interface CommerceShipmentItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce shipment item in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByUuid_C_PrevAndNext(
-			long commerceShipmentItemId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
 	 * Removes all the commerce shipment items where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -468,47 +383,6 @@ public interface CommerceShipmentItemPersistence
 		long groupId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where groupId = &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByGroupId_PrevAndNext(
-			long commerceShipmentItemId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
 
 	/**
 	 * Removes all the commerce shipment items where groupId = &#63; from the database.
@@ -614,47 +488,6 @@ public interface CommerceShipmentItemPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceShipmentId = &#63;.
-	 *
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByCommerceShipmentId_Last(
-			long commerceShipmentId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceShipmentId = &#63;.
-	 *
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByCommerceShipmentId_Last(
-		long commerceShipmentId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where commerceShipmentId = &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByCommerceShipmentId_PrevAndNext(
-			long commerceShipmentItemId, long commerceShipmentId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
 	 * Removes all the commerce shipment items where commerceShipmentId = &#63; from the database.
 	 *
 	 * @param commerceShipmentId the commerce shipment ID
@@ -756,47 +589,6 @@ public interface CommerceShipmentItemPersistence
 		long commerceOrderItemId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceOrderItemId = &#63;.
-	 *
-	 * @param commerceOrderItemId the commerce order item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByCommerceOrderItemId_Last(
-			long commerceOrderItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceOrderItemId = &#63;.
-	 *
-	 * @param commerceOrderItemId the commerce order item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByCommerceOrderItemId_Last(
-		long commerceOrderItemId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where commerceOrderItemId = &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param commerceOrderItemId the commerce order item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByCommerceOrderItemId_PrevAndNext(
-			long commerceShipmentItemId, long commerceOrderItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
 
 	/**
 	 * Removes all the commerce shipment items where commerceOrderItemId = &#63; from the database.
@@ -906,51 +698,6 @@ public interface CommerceShipmentItemPersistence
 		long commerceShipmentId, long commerceOrderItemId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceShipmentId = &#63; and commerceOrderItemId = &#63;.
-	 *
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param commerceOrderItemId the commerce order item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByC_C_Last(
-			long commerceShipmentId, long commerceOrderItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceShipmentId = &#63; and commerceOrderItemId = &#63;.
-	 *
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param commerceOrderItemId the commerce order item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByC_C_Last(
-		long commerceShipmentId, long commerceOrderItemId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where commerceShipmentId = &#63; and commerceOrderItemId = &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param commerceOrderItemId the commerce order item ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByC_C_PrevAndNext(
-			long commerceShipmentItemId, long commerceShipmentId,
-			long commerceOrderItemId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
 
 	/**
 	 * Removes all the commerce shipment items where commerceShipmentId = &#63; and commerceOrderItemId = &#63; from the database.
@@ -1138,56 +885,6 @@ public interface CommerceShipmentItemPersistence
 		BigDecimal quantity,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceShipmentId = &#63; and commerceInventoryWarehouseId &ne; &#63; and quantity &ge; &#63;.
-	 *
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param commerceInventoryWarehouseId the commerce inventory warehouse ID
-	 * @param quantity the quantity
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item
-	 * @throws NoSuchShipmentItemException if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem findByC_NotC_GteQ_Last(
-			long commerceShipmentId, long commerceInventoryWarehouseId,
-			BigDecimal quantity,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
-
-	/**
-	 * Returns the last commerce shipment item in the ordered set where commerceShipmentId = &#63; and commerceInventoryWarehouseId &ne; &#63; and quantity &ge; &#63;.
-	 *
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param commerceInventoryWarehouseId the commerce inventory warehouse ID
-	 * @param quantity the quantity
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce shipment item, or <code>null</code> if a matching commerce shipment item could not be found
-	 */
-	public CommerceShipmentItem fetchByC_NotC_GteQ_Last(
-		long commerceShipmentId, long commerceInventoryWarehouseId,
-		BigDecimal quantity,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceShipmentItem>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce shipment items before and after the current commerce shipment item in the ordered set where commerceShipmentId = &#63; and commerceInventoryWarehouseId &ne; &#63; and quantity &ge; &#63;.
-	 *
-	 * @param commerceShipmentItemId the primary key of the current commerce shipment item
-	 * @param commerceShipmentId the commerce shipment ID
-	 * @param commerceInventoryWarehouseId the commerce inventory warehouse ID
-	 * @param quantity the quantity
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce shipment item
-	 * @throws NoSuchShipmentItemException if a commerce shipment item with the primary key could not be found
-	 */
-	public CommerceShipmentItem[] findByC_NotC_GteQ_PrevAndNext(
-			long commerceShipmentItemId, long commerceShipmentId,
-			long commerceInventoryWarehouseId, BigDecimal quantity,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceShipmentItem> orderByComparator)
-		throws NoSuchShipmentItemException;
 
 	/**
 	 * Removes all the commerce shipment items where commerceShipmentId = &#63; and commerceInventoryWarehouseId &ne; &#63; and quantity &ge; &#63; from the database.
@@ -1388,3 +1085,4 @@ public interface CommerceShipmentItemPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-644318314

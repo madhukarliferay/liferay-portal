@@ -29,9 +29,12 @@ import com.liferay.commerce.model.CommerceShippingMethod;
 import com.liferay.commerce.order.engine.CommerceOrderEngine;
 import com.liferay.commerce.price.CommerceOrderPrice;
 import com.liferay.commerce.price.CommerceOrderPriceCalculation;
+import com.liferay.commerce.product.model.CPConfigurationEntry;
+import com.liferay.commerce.product.model.CPConfigurationList;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
 import com.liferay.commerce.product.service.CommerceChannelRelLocalService;
@@ -67,6 +70,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -574,25 +578,9 @@ public class CommerceShipmentTest {
 
 		CPInstance cpInstance = _createCPInstance();
 
-		CPDefinition cpDefinition = cpInstance.getCPDefinition();
-
-		cpDefinition.setShippable(false);
-
-		cpDefinition = _cpDefinitionLocalService.updateCPDefinition(
-			cpDefinition);
-
-		cpInstance = _cpInstanceLocalService.getCPInstance(
-			cpDefinition.getCPDefinitionId(), cpInstance.getSku());
-
-		BigDecimal value = BigDecimal.valueOf(RandomTestUtil.nextDouble());
-
 		CommerceOrder commerceOrder = CommerceTestUtil.addB2CCommerceOrder(
 			_user.getUserId(), _commerceChannel.getGroupId(),
 			_commerceCurrency.getCommerceCurrencyId());
-
-		CommerceContext commerceContext = new TestCommerceContext(
-			null, commerceOrder.getCommerceCurrency(), _commerceChannel, null,
-			null, commerceOrder);
 
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			_createCommerceInventoryWarehouse(
@@ -602,15 +590,35 @@ public class CommerceShipmentTest {
 			_user.getUserId(), commerceInventoryWarehouse, BigDecimal.TEN,
 			cpInstance.getSku(), StringPool.BLANK);
 
+		CPDefinition cpDefinition = cpInstance.getCPDefinition();
+
+		CPConfigurationList masterCPConfigurationList =
+			cpDefinition.getMasterCPConfigurationList();
+
+		CPConfigurationEntry cpConfigurationEntry =
+			_cpConfigurationEntryLocalService.fetchCPConfigurationEntry(
+				_portal.getClassNameId(CPDefinition.class),
+				cpDefinition.getCPDefinitionId(),
+				masterCPConfigurationList.getCPConfigurationListId());
+
+		cpConfigurationEntry.setShippable(false);
+
+		cpConfigurationEntry =
+			_cpConfigurationEntryLocalService.updateCPConfigurationEntry(
+				cpConfigurationEntry);
+
 		CommerceTestUtil.addCommerceOrderItem(
 			commerceOrder.getCommerceOrderId(), cpInstance.getCPInstanceId(),
-			BigDecimal.ONE, commerceContext);
+			BigDecimal.ONE,
+			new TestCommerceContext(
+				null, commerceOrder.getCommerceCurrency(), _commerceChannel,
+				null, null, commerceOrder));
 
 		commerceOrder = _commerceOrderLocalService.getCommerceOrder(
 			commerceOrder.getCommerceOrderId());
 
 		commerceOrder = CommerceTestUtil.addCommerceOrderShippingDetails(
-			commerceOrder, value);
+			commerceOrder, BigDecimal.valueOf(RandomTestUtil.nextDouble()));
 
 		_commerceOrders.add(commerceOrder);
 
@@ -618,7 +626,9 @@ public class CommerceShipmentTest {
 			commerceOrder.getGroupId(), commerceOrder.getCommerceOrderId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId());
 
-		Assert.assertFalse(_commerceShippingHelper.isShippable(commerceOrder));
+		Assert.assertEquals(
+			cpConfigurationEntry.isShippable(),
+			_commerceShippingHelper.isShippable(commerceOrder));
 	}
 
 	@Test
@@ -780,6 +790,61 @@ public class CommerceShipmentTest {
 	}
 
 	@Test
+	public void testDeleteOrderShipment() throws Exception {
+		frutillaRule.scenario(
+			"An order with a shipment is created"
+		).given(
+			"An order"
+		).when(
+			"I delete a shipment on that order"
+		).then(
+			"The shipment is deleted to the order"
+		);
+
+		CPInstance cpInstance = _createCPInstance();
+
+		BigDecimal value = BigDecimal.valueOf(RandomTestUtil.nextDouble());
+
+		CommerceOrder commerceOrder =
+			CommerceTestUtil.createCommerceOrderForShipping(
+				_user.getUserId(), _commerceChannel.getGroupId(),
+				_commerceCurrency.getCommerceCurrencyId(),
+				cpInstance.getCPInstanceId(), value, BigDecimal.ONE, 1);
+
+		CommerceInventoryWarehouse commerceInventoryWarehouse =
+			_createCommerceInventoryWarehouse(
+				_commerceChannel.getCommerceChannelId(), true);
+
+		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
+			_user.getUserId(), commerceInventoryWarehouse,
+			BigDecimal.valueOf(5), cpInstance.getSku(), StringPool.BLANK);
+
+		_commerceOrders.add(commerceOrder);
+
+		CommerceShipment commerceShipment =
+			CommerceShipmentTestUtil.createOrderShipment(
+				commerceOrder.getGroupId(), commerceOrder.getCommerceOrderId(),
+				commerceInventoryWarehouse.getCommerceInventoryWarehouseId());
+
+		List<CommerceShipment> commerceShipments =
+			_commerceShipmentLocalService.getCommerceShipments(
+				commerceOrder.getCommerceOrderId(), QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS);
+
+		Assert.assertEquals(
+			commerceShipments.toString(), 1, commerceShipments.size());
+
+		_commerceShipmentLocalService.deleteCommerceShipment(commerceShipment);
+
+		commerceShipments = _commerceShipmentLocalService.getCommerceShipments(
+			commerceOrder.getCommerceOrderId(), QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS);
+
+		Assert.assertEquals(
+			commerceShipments.toString(), 0, commerceShipments.size());
+	}
+
+	@Test
 	public void testShippingAmountAndShippingTaxes() throws Exception {
 		frutillaRule.scenario(
 			"When a shipping amount with tax is associated with an order the " +
@@ -798,7 +863,7 @@ public class CommerceShipmentTest {
 			_user.getGroupId());
 
 		CommerceTaxMethod commerceTaxMethod =
-			CommerceTaxTestUtil.addCommerceByAddressTaxMethod(
+			CommerceTaxTestUtil.addByAddressCommerceTaxMethod(
 				_user.getUserId(), _commerceChannel.getGroupId(), true);
 
 		double shippingTaxRate = 10;
@@ -1150,12 +1215,18 @@ public class CommerceShipmentTest {
 	private CommerceShippingHelper _commerceShippingHelper;
 
 	@Inject
+	private CPConfigurationEntryLocalService _cpConfigurationEntryLocalService;
+
+	@Inject
 	private CPDefinitionLocalService _cpDefinitionLocalService;
 
 	@Inject
 	private CPInstanceLocalService _cpInstanceLocalService;
 
 	private Group _group;
+
+	@Inject
+	private Portal _portal;
 
 	@Inject
 	private UserLocalService _userLocalService;

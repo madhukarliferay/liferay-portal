@@ -19,6 +19,8 @@ long commerceOrderId = commerceOrder.getCommerceOrderId();
 
 <aui:form action="<%= editCommerceOrderPaymentMethodActionURL %>" method="post" name="fm">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="paymentMethod" />
+	<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
+	<aui:input name="requestProcessed" type="hidden" value='<%= SessionMessages.contains(renderRequest, "requestProcessed") %>' />
 	<aui:input name="commerceOrderId" type="hidden" value="<%= commerceOrderId %>" />
 
 	<liferay-ui:error exception="<%= CommerceOrderPaymentMethodException.class %>" message="please-select-a-valid-payment-method" />
@@ -30,10 +32,9 @@ long commerceOrderId = commerceOrder.getCommerceOrderId();
 			).build()
 		%>'
 		dataProviderKey="<%= CommerceOrderFDSNames.PAYMENT_METHODS %>"
+		defaultSelectedItems="<%= Collections.singletonList(String.valueOf(commerceOrder.getCommercePaymentMethodKey())) %>"
 		formName="fm"
 		id="<%= CommerceOrderFDSNames.PAYMENT_METHODS %>"
-		itemsPerPage="<%= 10 %>"
-		selectedItems="<%= Collections.singletonList(String.valueOf(commerceOrder.getCommercePaymentMethodKey())) %>"
 		selectedItemsKey="paymentMethodKey"
 		selectionType="single"
 	/>

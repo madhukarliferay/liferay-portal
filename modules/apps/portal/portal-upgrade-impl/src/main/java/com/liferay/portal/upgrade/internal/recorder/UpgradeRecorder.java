@@ -12,10 +12,10 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.ReleaseManager;
 import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.tools.DBUpgrader;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.verify.PreupgradeVerifyProcessSuite;
 import com.liferay.portal.verify.VerifyException;
 
@@ -188,11 +188,15 @@ public class UpgradeRecorder {
 					StringBundler.concat(
 						StringUtil.upperCaseFirstLetter(_type),
 						" upgrade finished with result ", _result));
-
-				if (!_result.equals("failure") && !_errorMessages.isEmpty()) {
-					_log.info("Unrelated errors occur during the upgrade");
-				}
 			}
+		}
+
+		if (_log.isWarnEnabled() && !_errorMessages.isEmpty() &&
+			!_result.equals("failure") && !isPreupgradeVerifyFailure()) {
+
+			_log.warn(
+				"Verify if the errors during the execution are related to " +
+					"the upgrade");
 		}
 
 		if (PropsValues.UPGRADE_LOG_CONTEXT_ENABLED) {
@@ -306,6 +310,7 @@ public class UpgradeRecorder {
 		}
 
 		try (Connection connection = dataSource.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select servletContextName, schemaVersion from Release_")) {
 
@@ -338,7 +343,7 @@ public class UpgradeRecorder {
 	}
 
 	private static final String[] _FILTERED_CLASS_NAMES = {
-		"com.liferay.portal.search.elasticsearch7.internal.sidecar." +
+		"com.liferay.portal.search.elasticsearch8.internal.sidecar." +
 			"SidecarManager"
 	};
 

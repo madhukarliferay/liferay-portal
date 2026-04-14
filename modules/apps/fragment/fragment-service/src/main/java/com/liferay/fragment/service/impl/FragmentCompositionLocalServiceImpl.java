@@ -9,7 +9,9 @@ import com.liferay.fragment.exception.DuplicateFragmentCompositionKeyException;
 import com.liferay.fragment.exception.FragmentCompositionDescriptionException;
 import com.liferay.fragment.exception.FragmentCompositionNameException;
 import com.liferay.fragment.model.FragmentComposition;
+import com.liferay.fragment.model.FragmentCompositionTable;
 import com.liferay.fragment.service.base.FragmentCompositionLocalServiceBaseImpl;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -20,6 +22,7 @@ import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -280,6 +283,29 @@ public class FragmentCompositionLocalServiceImpl
 	}
 
 	@Override
+	public boolean hasExportableFragmentCompositions(
+		long fragmentCollectionId) {
+
+		int count = dslQueryCount(
+			DSLQueryFactoryUtil.count(
+			).from(
+				FragmentCompositionTable.INSTANCE
+			).where(
+				FragmentCompositionTable.INSTANCE.fragmentCollectionId.eq(
+					fragmentCollectionId
+				).and(
+					FragmentCompositionTable.INSTANCE.marketplace.eq(false)
+				)
+			));
+
+		if (count > 0) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public FragmentComposition moveFragmentComposition(
 			long fragmentCompositionId, long fragmentCollectionId)
 		throws PortalException {
@@ -309,9 +335,21 @@ public class FragmentCompositionLocalServiceImpl
 				fragmentCompositionId);
 
 		fragmentComposition.setModifiedDate(new Date());
+
+		long previousPreviewFileEntryId =
+			fragmentComposition.getPreviewFileEntryId();
+
 		fragmentComposition.setPreviewFileEntryId(previewFileEntryId);
 
-		return fragmentCompositionPersistence.update(fragmentComposition);
+		fragmentComposition = fragmentCompositionPersistence.update(
+			fragmentComposition);
+
+		if ((previewFileEntryId == 0) && (previousPreviewFileEntryId > 0)) {
+			_portletFileRepository.deletePortletFileEntry(
+				previousPreviewFileEntryId);
+		}
+
+		return fragmentComposition;
 	}
 
 	@Override
@@ -425,6 +463,9 @@ public class FragmentCompositionLocalServiceImpl
 
 	@Reference
 	private CustomSQL _customSQL;
+
+	@Reference
+	private PortletFileRepository _portletFileRepository;
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;

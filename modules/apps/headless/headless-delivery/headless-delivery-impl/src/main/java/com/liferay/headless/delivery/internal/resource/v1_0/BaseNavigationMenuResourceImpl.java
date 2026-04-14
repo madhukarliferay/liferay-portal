@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.NavigationMenu;
 import com.liferay.headless.delivery.resource.v1_0.NavigationMenuResource;
@@ -91,7 +92,9 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/{navigationMenuId}'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
+		deprecated = true,
 		description = "Deletes the navigation menu and returns a 204 if the operation succeeds"
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -124,6 +127,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/batch'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -170,7 +175,9 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
+		deprecated = true,
 		description = "Deletes the navigation menu by external reference code and returns a 204 if the operation succeeds"
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -213,6 +220,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/{navigationMenuId}'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -257,6 +266,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/{navigationMenuId}/permissions'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -300,25 +311,27 @@ public abstract class BaseNavigationMenuResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(navigationMenuId);
+		Long resourceId = getPermissionCheckerResourceId(navigationMenuId);
 		String resourceName = getPermissionCheckerResourceName(
 			navigationMenuId);
-		Long resourceId = getPermissionCheckerResourceId(navigationMenuId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(navigationMenuId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getNavigationMenuPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getNavigationMenuPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putNavigationMenuPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putNavigationMenuPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -328,7 +341,9 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
+		deprecated = true,
 		description = "Retrieves the navigation menu by external reference code."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -385,6 +400,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/permissions'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -436,13 +453,15 @@ public abstract class BaseNavigationMenuResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteNavigationMenuPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteNavigationMenuPermissionsPage", null, portletName,
+					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteNavigationMenuPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteNavigationMenuPermissionsPage", null, portletName,
+					siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -452,6 +471,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -524,8 +545,9 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus' -d $'{"externalReferenceCode": ___, "name": ___, "navigationMenuItems": ___, "navigationType": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates a new navigation menu."
+		deprecated = true, description = "Creates a new navigation menu."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -561,6 +583,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/batch'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -615,6 +639,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/export-batch'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -705,7 +731,9 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/{navigationMenuId}' -d $'{"externalReferenceCode": ___, "name": ___, "navigationMenuItems": ___, "navigationType": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
+		deprecated = true,
 		description = "Replaces the navigation menu with the information sent in the request body. Any missing fields are deleted, unless they are required."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -742,6 +770,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/batch'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -788,6 +818,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/navigation-menus/{navigationMenuId}/permissions'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -814,13 +846,13 @@ public abstract class BaseNavigationMenuResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(navigationMenuId);
+		Long resourceId = getPermissionCheckerResourceId(navigationMenuId);
 		String resourceName = getPermissionCheckerResourceName(
 			navigationMenuId);
-		Long resourceId = getPermissionCheckerResourceId(navigationMenuId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(navigationMenuId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -856,21 +888,22 @@ public abstract class BaseNavigationMenuResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(navigationMenuId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getNavigationMenuPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getNavigationMenuPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putNavigationMenuPermissionsPage",
-					resourceName, resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putNavigationMenuPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -880,7 +913,9 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/by-external-reference-code/{externalReferenceCode}' -d $'{"externalReferenceCode": ___, "name": ___, "navigationMenuItems": ___, "navigationType": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
+		deprecated = true,
 		description = "Updates the navigation menu with the given external reference code or creates it if it does not exist."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -927,6 +962,8 @@ public abstract class BaseNavigationMenuResourceImpl
 	 *
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-delivery/v1.0/sites/{siteId}/navigation-menus/permissions'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
+	@io.swagger.v3.oas.annotations.Operation(deprecated = true)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -997,13 +1034,15 @@ public abstract class BaseNavigationMenuResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteNavigationMenuPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteNavigationMenuPermissionsPage", null, portletName,
+					siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteNavigationMenuPermissionsPage", portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteNavigationMenuPermissionsPage", null, portletName,
+					siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -1087,9 +1126,34 @@ public abstract class BaseNavigationMenuResourceImpl
 
 		UnsafeFunction<NavigationMenu, NavigationMenu, Exception>
 			navigationMenuUnsafeFunction = navigationMenu -> {
-				deleteNavigationMenu(navigationMenu.getId());
+				if (navigationMenu.getId() != null) {
+					try {
+						deleteNavigationMenu(navigationMenu.getId());
 
-				return navigationMenu;
+						return navigationMenu;
+					}
+					catch (Exception exception) {
+						if (navigationMenu.getExternalReferenceCode() != null) {
+							if (parameters.containsKey("siteId")) {
+								deleteSiteNavigationMenuByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									navigationMenu.getExternalReferenceCode());
+
+								return navigationMenu;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteNavigationMenuByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						navigationMenu.getExternalReferenceCode());
+
+					return navigationMenu;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -1167,6 +1231,15 @@ public abstract class BaseNavigationMenuResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1378,6 +1451,9 @@ public abstract class BaseNavigationMenuResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1943,3 +2019,4 @@ public abstract class BaseNavigationMenuResourceImpl
 		LogFactoryUtil.getLog(BaseNavigationMenuResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:234449459

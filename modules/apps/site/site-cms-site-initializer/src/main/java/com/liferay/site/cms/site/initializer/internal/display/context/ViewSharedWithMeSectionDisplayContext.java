@@ -12,13 +12,17 @@ import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.editor.configuration.EditorConfiguration;
+import com.liferay.portal.kernel.editor.configuration.EditorConfigurationFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -28,6 +32,7 @@ import com.liferay.site.cms.site.initializer.internal.util.ActionUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +86,56 @@ public class ViewSharedWithMeSectionDisplayContext {
 
 				return collaboratorURLs;
 			}
+		).put(
+			"commentsProps",
+			HashMapBuilder.<String, Object>put(
+				"addCommentURL",
+				StringBundler.concat(
+					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
+					GroupConstants.CMS_FRIENDLY_URL,
+					"/add_content_item_comment")
+			).put(
+				"deleteCommentURL",
+				StringBundler.concat(
+					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
+					GroupConstants.CMS_FRIENDLY_URL,
+					"/delete_content_item_comment")
+			).put(
+				"editCommentURL",
+				StringBundler.concat(
+					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
+					GroupConstants.CMS_FRIENDLY_URL,
+					"/edit_content_item_comment")
+			).put(
+				"editorConfig",
+				() -> {
+					EditorConfiguration contentItemCommentEditorConfiguration =
+						EditorConfigurationFactoryUtil.getEditorConfiguration(
+							StringPool.BLANK, "contentItemCommentEditor",
+							StringPool.BLANK, Collections.emptyMap(),
+							_themeDisplay,
+							RequestBackedPortletURLFactoryUtil.create(
+								_httpServletRequest));
+
+					Map<String, Object> data =
+						contentItemCommentEditorConfiguration.getData();
+
+					return data.get("editorConfig");
+				}
+			).put(
+				"getCommentsURL",
+				StringBundler.concat(
+					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
+					GroupConstants.CMS_FRIENDLY_URL, "/get_asset_comments")
+			).build()
+		).put(
+			"contentViewURL",
+			StringBundler.concat(
+				_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
+				GroupConstants.CMS_FRIENDLY_URL,
+				"/edit_content_item?&p_l_mode=read&p_p_state=",
+				LiferayWindowState.POP_UP, "&redirect=",
+				_themeDisplay.getURLCurrent(), "&objectEntryId={embedded.id}")
 		).build();
 	}
 
@@ -88,6 +143,18 @@ public class ViewSharedWithMeSectionDisplayContext {
 		return "/o/headless-admin-user/v1.0/my-user-account/shared-assets" +
 			"/shared-with-me?filter=(spaceDepotEntry eq true)" +
 				"&nestedFields=file";
+	}
+
+	public Map<String, Object> getBreadcrumbProps() throws PortalException {
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+
+		_addBreadcrumbItem(jsonArray, false, null, _getLayoutName());
+
+		return HashMapBuilder.<String, Object>put(
+			"breadcrumbItems", jsonArray
+		).put(
+			"hideSpace", true
+		).build();
 	}
 
 	public Map<String, Object> getEmptyState() {
@@ -125,10 +192,8 @@ public class ViewSharedWithMeSectionDisplayContext {
 				"link"),
 			new FDSActionDropdownItem(
 				StringPool.BLANK, "view", "view-file",
-				LanguageUtil.get(_httpServletRequest, "view"), null, null, null,
-				HashMapBuilder.<String, Object>put(
-					"className", _getBasicDocumentClassName()
-				).build()),
+				LanguageUtil.get(_httpServletRequest, "view"), null, null,
+				null),
 			new FDSActionDropdownItem(
 				StringBundler.concat(
 					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
@@ -138,7 +203,7 @@ public class ViewSharedWithMeSectionDisplayContext {
 					_themeDisplay.getURLCurrent(), "&objectEntryId={classPK}"),
 				"view", "view-content",
 				LanguageUtil.get(_httpServletRequest, "view"), "get", null,
-				"modal"),
+				null),
 			new FDSActionDropdownItem(
 				StringBundler.concat(
 					_themeDisplay.getPortalURL(), _themeDisplay.getPathMain(),
@@ -185,43 +250,27 @@ public class ViewSharedWithMeSectionDisplayContext {
 				).build()));
 	}
 
-	public Map<String, Object> getToolbarProps() throws PortalException {
-		return HashMapBuilder.<String, Object>put(
-			"title",
-			() -> {
-				Layout layout = _themeDisplay.getLayout();
+	private void _addBreadcrumbItem(
+		JSONArray jsonArray, boolean active, String friendlyURL, String label) {
 
-				if (layout == null) {
-					return null;
-				}
-
-				return layout.getName(_themeDisplay.getLocale(), true);
-			}
-		).put(
-			"toolbarClassName", "section-toolbar tbar-light"
-		).put(
-			"toolbarTitleClassName", "section-toolbar-title"
-		).build();
+		jsonArray.put(
+			JSONUtil.put(
+				"active", active
+			).put(
+				"href", friendlyURL
+			).put(
+				"label", label
+			));
 	}
 
-	private String _getBasicDocumentClassName() {
-		try {
-			ObjectDefinition basicDocumentObjectDefinition =
-				_objectDefinitionService.
-					fetchObjectDefinitionByExternalReferenceCode(
-						"L_BASIC_DOCUMENT", _themeDisplay.getCompanyId());
+	private String _getLayoutName() {
+		Layout layout = _themeDisplay.getLayout();
 
-			if (basicDocumentObjectDefinition != null) {
-				return basicDocumentObjectDefinition.getClassName();
-			}
-		}
-		catch (PortalException portalException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(portalException);
-			}
+		if (layout == null) {
+			return null;
 		}
 
-		return StringPool.BLANK;
+		return layout.getName(_themeDisplay.getLocale(), true);
 	}
 
 	private String[] _getObjectFolderExternalReferenceCodes() {
@@ -230,9 +279,6 @@ public class ViewSharedWithMeSectionDisplayContext {
 			ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES
 		};
 	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		ViewSharedWithMeSectionDisplayContext.class);
 
 	private final HttpServletRequest _httpServletRequest;
 	private final ObjectDefinitionService _objectDefinitionService;

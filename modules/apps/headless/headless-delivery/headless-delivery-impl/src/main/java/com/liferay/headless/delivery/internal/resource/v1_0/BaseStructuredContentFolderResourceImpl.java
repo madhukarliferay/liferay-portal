@@ -5,6 +5,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.delivery.dto.v1_0.DefaultValue;
 import com.liferay.headless.delivery.dto.v1_0.StructuredContentFolder;
 import com.liferay.headless.delivery.resource.v1_0.StructuredContentFolderResource;
@@ -382,15 +383,15 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
+					ActionKeys.PERMISSIONS, assetLibraryId,
 					"getAssetLibraryStructuredContentFolderPermissionsPage",
-					portletName, assetLibraryId)
+					null, portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
+					ActionKeys.PERMISSIONS, assetLibraryId,
 					"putAssetLibraryStructuredContentFolderPermissionsPage",
-					portletName, assetLibraryId)
+					null, portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, roleNames);
 	}
@@ -603,14 +604,14 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteStructuredContentFolderPermissionsPage",
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteStructuredContentFolderPermissionsPage", null,
 					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteStructuredContentFolderPermissionsPage",
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteStructuredContentFolderPermissionsPage", null,
 					portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
@@ -809,28 +810,28 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			structuredContentFolderId);
+		Long groupId = getPermissionCheckerGroupId(structuredContentFolderId);
 		Long resourceId = getPermissionCheckerResourceId(
+			structuredContentFolderId);
+		String resourceName = getPermissionCheckerResourceName(
 			structuredContentFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(structuredContentFolderId),
-			resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getStructuredContentFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getStructuredContentFolderPermissionsPage", null,
+					resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putStructuredContentFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putStructuredContentFolderPermissionsPage", null,
+					resourceName, groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -1556,15 +1557,15 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
+					ActionKeys.PERMISSIONS, assetLibraryId,
 					"getAssetLibraryStructuredContentFolderPermissionsPage",
-					portletName, assetLibraryId)
+					null, portletName, assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
+					ActionKeys.PERMISSIONS, assetLibraryId,
 					"putAssetLibraryStructuredContentFolderPermissionsPage",
-					portletName, assetLibraryId)
+					null, portletName, assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, null);
 	}
@@ -1695,14 +1696,14 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getSiteStructuredContentFolderPermissionsPage",
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteStructuredContentFolderPermissionsPage", null,
 					portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putSiteStructuredContentFolderPermissionsPage",
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteStructuredContentFolderPermissionsPage", null,
 					portletName, siteId)
 			).build(),
 			siteId, portletName, null);
@@ -1832,14 +1833,14 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			structuredContentFolderId);
+		Long groupId = getPermissionCheckerGroupId(structuredContentFolderId);
 		Long resourceId = getPermissionCheckerResourceId(
+			structuredContentFolderId);
+		String resourceName = getPermissionCheckerResourceName(
 			structuredContentFolderId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(structuredContentFolderId),
-			resourceName, resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -1875,23 +1876,22 @@ public abstract class BaseStructuredContentFolderResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(structuredContentFolderId),
-			resourceName, String.valueOf(resourceId), modelPermissions);
+			contextCompany.getCompanyId(), groupId, resourceName,
+			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getStructuredContentFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getStructuredContentFolderPermissionsPage", null,
+					resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putStructuredContentFolderPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putStructuredContentFolderPermissionsPage", null,
+					resourceName, groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -2126,10 +2126,59 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			<StructuredContentFolder, StructuredContentFolder, Exception>
 				structuredContentFolderUnsafeFunction =
 					structuredContentFolder -> {
-						deleteStructuredContentFolder(
-							structuredContentFolder.getId());
+						if (structuredContentFolder.getId() != null) {
+							try {
+								deleteStructuredContentFolder(
+									structuredContentFolder.getId());
 
-						return structuredContentFolder;
+								return structuredContentFolder;
+							}
+							catch (Exception exception) {
+								if (structuredContentFolder.
+										getExternalReferenceCode() != null) {
+
+									if (parameters.containsKey(
+											"assetLibraryId")) {
+
+										deleteAssetLibraryStructuredContentFolderByExternalReferenceCode(
+											(Long)parameters.get(
+												"assetLibraryId"),
+											structuredContentFolder.
+												getExternalReferenceCode());
+
+										return structuredContentFolder;
+									}
+
+									if (parameters.containsKey("siteId")) {
+										deleteSiteStructuredContentFolderByExternalReferenceCode(
+											(Long)parameters.get("siteId"),
+											structuredContentFolder.
+												getExternalReferenceCode());
+
+										return structuredContentFolder;
+									}
+								}
+							}
+						}
+						else if (parameters.containsKey("assetLibraryId")) {
+							deleteAssetLibraryStructuredContentFolderByExternalReferenceCode(
+								(Long)parameters.get("assetLibraryId"),
+								structuredContentFolder.
+									getExternalReferenceCode());
+
+							return structuredContentFolder;
+						}
+						else if (parameters.containsKey("siteId")) {
+							deleteSiteStructuredContentFolderByExternalReferenceCode(
+								(Long)parameters.get("siteId"),
+								structuredContentFolder.
+									getExternalReferenceCode());
+
+							return structuredContentFolder;
+						}
+
+						throw new UnsupportedOperationException(
+							"Unable to delete by external reference code or ID");
 					};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -2219,6 +2268,15 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2451,6 +2509,9 @@ public abstract class BaseStructuredContentFolderResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -3024,3 +3085,4 @@ public abstract class BaseStructuredContentFolderResourceImpl
 		LogFactoryUtil.getLog(BaseStructuredContentFolderResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1409647301

@@ -15,6 +15,7 @@ import com.liferay.commerce.currency.model.CommerceMoney;
 import com.liferay.commerce.currency.model.CommerceMoneyFactory;
 import com.liferay.commerce.discount.CommerceDiscountValue;
 import com.liferay.commerce.exception.CommerceOrderValidatorException;
+import com.liferay.commerce.exception.DuplicateCommerceOrderItemException;
 import com.liferay.commerce.exception.GuestCartItemMaxAllowedException;
 import com.liferay.commerce.exception.NoSuchOrderItemException;
 import com.liferay.commerce.exception.ProductBundleException;
@@ -42,6 +43,7 @@ import com.liferay.commerce.product.constants.CPConstants;
 import com.liferay.commerce.product.exception.CPDefinitionOptionRelException;
 import com.liferay.commerce.product.exception.NoSuchCPInstanceException;
 import com.liferay.commerce.product.exception.NoSuchCPInstanceUnitOfMeasureException;
+import com.liferay.commerce.product.model.CPConfigurationEntry;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionOptionRel;
 import com.liferay.commerce.product.model.CPDefinitionOptionValueRel;
@@ -447,8 +449,8 @@ public class CommerceOrderItemLocalServiceImpl
 			long commerceInventoryBookedQuantityId) {
 
 		return commerceOrderItemPersistence.
-			fetchByCommerceInventoryBookedQuantityId(
-				commerceInventoryBookedQuantityId);
+			fetchByCommerceInventoryBookedQuantityId_First(
+				commerceInventoryBookedQuantityId, null);
 	}
 
 	@Override
@@ -725,7 +727,7 @@ public class CommerceOrderItemLocalServiceImpl
 
 		if (!Validator.isBlank(cpMeasurementUnitKey)) {
 			CPMeasurementUnit cpMeasurementUnit =
-				_cpMeasurementUnitLocalService.getCPMeasurementUnitByKey(
+				_cpMeasurementUnitLocalService.getCPMeasurementUnit(
 					user.getCompanyId(), cpMeasurementUnitKey);
 
 			commerceOrderItem.setCPMeasurementUnitId(
@@ -802,10 +804,14 @@ public class CommerceOrderItemLocalServiceImpl
 	@Override
 	public CommerceOrderItem updateCommerceOrderItem(
 			long commerceOrderItemId, long commerceInventoryBookedQuantityId)
-		throws NoSuchOrderItemException {
+		throws PortalException {
 
 		CommerceOrderItem commerceOrderItem =
 			commerceOrderItemPersistence.findByPrimaryKey(commerceOrderItemId);
+
+		_validateCommerceInventoryBookedQuantityId(
+			commerceInventoryBookedQuantityId,
+			commerceOrderItem.getCommerceOrderItemId());
 
 		commerceOrderItem.setCommerceInventoryBookedQuantityId(
 			commerceInventoryBookedQuantityId);
@@ -1465,16 +1471,23 @@ public class CommerceOrderItemLocalServiceImpl
 		commerceOrderItem.setCProductId(cpDefinition.getCProductId());
 		commerceOrderItem.setParentCommerceOrderItemId(
 			parentCommerceOrderItemId);
-		commerceOrderItem.setFreeShipping(cpDefinition.isFreeShipping());
+
+		CPConfigurationEntry cpConfigurationEntry = _getCPConfigurationEntry(
+			commerceOrder, cpDefinition);
+
+		commerceOrderItem.setFreeShipping(
+			cpConfigurationEntry.isFreeShipping());
+
 		commerceOrderItem.setJson(json);
 		commerceOrderItem.setManuallyAdjusted(false);
 		commerceOrderItem.setNameMap(cpDefinition.getNameMap());
 		commerceOrderItem.setQuantity(quantity);
-		commerceOrderItem.setShipSeparately(cpDefinition.isShipSeparately());
-		commerceOrderItem.setShippable(cpDefinition.isShippable());
+		commerceOrderItem.setShipSeparately(
+			cpConfigurationEntry.isShipSeparately());
+		commerceOrderItem.setShippable(cpConfigurationEntry.isShippable());
 		commerceOrderItem.setShippedQuantity(shippedQuantity);
 		commerceOrderItem.setShippingExtraPrice(
-			cpDefinition.getShippingExtraPrice());
+			cpConfigurationEntry.getShippingExtraPrice());
 		commerceOrderItem.setSku(cpInstance.getSku());
 		commerceOrderItem.setSubscription(_isSubscription(cpInstance));
 		commerceOrderItem.setUnitOfMeasureIncrementalOrderQuantity(
@@ -1647,6 +1660,31 @@ public class CommerceOrderItemLocalServiceImpl
 			commerceOrder.getBillingAddressId(),
 			commerceOrder.getShippingAddressId(), price, false,
 			_commerceTaxCalculation);
+	}
+
+	private CPConfigurationEntry _getCPConfigurationEntry(
+			CommerceOrder commerceOrder, CPDefinition cpDefinition)
+		throws PortalException {
+
+		CommerceContextFactory commerceContextFactory =
+			_commerceContextFactorySnapshot.get();
+
+		CommerceContext commerceContext = commerceContextFactory.create(
+			commerceOrder.getCommerceAccountId(), commerceOrder.getGroupId(),
+			commerceOrder.getCommerceCurrencyCode(),
+			commerceOrder.getCommerceOrderId(), commerceOrder.getCompanyId());
+
+		CPConfigurationEntry cpConfigurationEntry =
+			cpDefinition.fetchCPConfigurationEntry(
+				commerceContext.getCPConfigurationListId(
+					cpDefinition.getGroupId()));
+
+		if (cpConfigurationEntry == null) {
+			cpConfigurationEntry =
+				cpDefinition.fetchMasterCPConfigurationEntry();
+		}
+
+		return cpConfigurationEntry;
 	}
 
 	private JSONObject _getCPDefinitionOptionRelJSONObject(
@@ -2712,16 +2750,23 @@ public class CommerceOrderItemLocalServiceImpl
 			commerceOrder.getCommerceOrderId());
 		commerceOrderItem.setCPInstanceId(cpInstance.getCPInstanceId());
 		commerceOrderItem.setCProductId(cpDefinition.getCProductId());
-		commerceOrderItem.setFreeShipping(cpDefinition.isFreeShipping());
+
+		CPConfigurationEntry cpConfigurationEntry = _getCPConfigurationEntry(
+			commerceOrder, cpDefinition);
+
+		commerceOrderItem.setFreeShipping(
+			cpConfigurationEntry.isFreeShipping());
+
 		commerceOrderItem.setJson(json);
 		commerceOrderItem.setManuallyAdjusted(false);
 		commerceOrderItem.setNameMap(cpDefinition.getNameMap());
 		commerceOrderItem.setQuantity(quantity);
-		commerceOrderItem.setShipSeparately(cpDefinition.isShipSeparately());
-		commerceOrderItem.setShippable(cpDefinition.isShippable());
+		commerceOrderItem.setShipSeparately(
+			cpConfigurationEntry.isShipSeparately());
+		commerceOrderItem.setShippable(cpConfigurationEntry.isShippable());
 		commerceOrderItem.setShippedQuantity(shippedQuantity);
 		commerceOrderItem.setShippingExtraPrice(
-			cpDefinition.getShippingExtraPrice());
+			cpConfigurationEntry.getShippingExtraPrice());
 		commerceOrderItem.setSku(cpInstance.getSku());
 		commerceOrderItem.setSubscription(_isSubscription(cpInstance));
 		commerceOrderItem.setUnitOfMeasureIncrementalOrderQuantity(
@@ -2964,6 +3009,27 @@ public class CommerceOrderItemLocalServiceImpl
 				throw new CommerceOrderValidatorException(
 					commerceCartValidatorResults);
 			}
+		}
+	}
+
+	private void _validateCommerceInventoryBookedQuantityId(
+			long commerceInventoryBookedQuantityId, long commerceOrderItemId)
+		throws PortalException {
+
+		if (commerceInventoryBookedQuantityId == 0) {
+			return;
+		}
+
+		CommerceOrderItem commerceOrderItem =
+			commerceOrderItemLocalService.
+				fetchCommerceOrderItemByCommerceInventoryBookedQuantityId(
+					commerceInventoryBookedQuantityId);
+
+		if ((commerceOrderItem != null) &&
+			(commerceOrderItem.getCommerceOrderItemId() !=
+				commerceOrderItemId)) {
+
+			throw new DuplicateCommerceOrderItemException();
 		}
 	}
 

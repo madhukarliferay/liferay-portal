@@ -238,9 +238,7 @@ public class KnowledgeBaseFolderSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(knowledgeBaseFolder.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -679,3 +677,4 @@ public class KnowledgeBaseFolderSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-909868338

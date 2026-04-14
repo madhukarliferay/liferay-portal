@@ -53,6 +53,7 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -113,7 +114,6 @@ public class ObjectRelatedModelsProviderTest {
 	public void setUp() throws Exception {
 		_objectDefinition1 = ObjectDefinitionTestUtil.publishObjectDefinition();
 		_objectDefinition2 = ObjectDefinitionTestUtil.publishObjectDefinition(
-			true,
 			Arrays.asList(
 				new LongTextObjectFieldBuilder(
 				).labelMap(
@@ -156,7 +156,7 @@ public class ObjectRelatedModelsProviderTest {
 		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 	}
 
-	@FeatureFlag("LPD-53981")
+	@FeatureFlag("LPD-17564")
 	@Test
 	public void testMoveObjectEntryToTrash() throws Exception {
 		_testMoveObjectEntryToTrash(
@@ -428,8 +428,8 @@ public class ObjectRelatedModelsProviderTest {
 
 		ObjectDefinition scopeSiteObjectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, null, false, false, true, false,
-				false, false, false, false, null,
+				null, TestPropsValues.getUserId(), 0, null, true, false, true,
+				false, true, false, false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"C" + RandomTestUtil.randomString(), null,
 				PortletCategoryKeys.SITE_ADMINISTRATION_CONTENT,
@@ -441,7 +441,8 @@ public class ObjectRelatedModelsProviderTest {
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING,
-						RandomTestUtil.randomString(), StringUtil.randomId())));
+						RandomTestUtil.randomString(), StringUtil.randomId())),
+				Collections.emptyList(), new ServiceContext());
 
 		scopeSiteObjectDefinition =
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
@@ -588,14 +589,15 @@ public class ObjectRelatedModelsProviderTest {
 
 		_objectDefinition3 =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, null, false, false, true, false,
-				false, false, false, false, null,
+				null, TestPropsValues.getUserId(), 0, null, true, false, true,
+				false, true, false, false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				true, ObjectDefinitionConstants.SCOPE_SITE,
 				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
-				Collections.emptyList(), Collections.emptyList());
+				Collections.emptyList(), Collections.emptyList(),
+				Collections.emptyList(), new ServiceContext());
 
 		ObjectField objectField = _objectFieldLocalService.addCustomObjectField(
 			null, TestPropsValues.getUserId(), 0,
@@ -660,7 +662,7 @@ public class ObjectRelatedModelsProviderTest {
 				objectRelationship.getObjectRelationshipId(), null));
 	}
 
-	@FeatureFlag("LPD-53981")
+	@FeatureFlag("LPD-17564")
 	@Test
 	public void testRestoreObjectEntryFromTrash() throws Exception {
 		_testRestoreObjectEntryFromTrash(
@@ -1269,8 +1271,12 @@ public class ObjectRelatedModelsProviderTest {
 			long objectEntryId, Map<String, Serializable> values)
 		throws Exception {
 
+		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
+			objectEntryId);
+
 		return _objectEntryLocalService.updateObjectEntry(
-			TestPropsValues.getUserId(), objectEntryId, values,
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(), values,
 			ServiceContextTestUtil.getServiceContext());
 	}
 

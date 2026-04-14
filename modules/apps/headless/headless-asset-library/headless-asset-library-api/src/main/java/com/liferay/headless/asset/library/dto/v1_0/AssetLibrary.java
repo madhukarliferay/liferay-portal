@@ -148,6 +148,95 @@ public class AssetLibrary implements Serializable {
 	private Supplier<String> _assetLibraryKeySupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The asset library's connected sites."
+	)
+	@Valid
+	public ConnectedSite[] getConnectedSites() {
+		if (_connectedSitesSupplier != null) {
+			connectedSites = _connectedSitesSupplier.get();
+
+			_connectedSitesSupplier = null;
+		}
+
+		return connectedSites;
+	}
+
+	public void setConnectedSites(ConnectedSite[] connectedSites) {
+		this.connectedSites = connectedSites;
+
+		_connectedSitesSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setConnectedSites(
+		UnsafeSupplier<ConnectedSite[], Exception>
+			connectedSitesUnsafeSupplier) {
+
+		_connectedSitesSupplier = () -> {
+			try {
+				return connectedSitesUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(description = "The asset library's connected sites.")
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected ConnectedSite[] connectedSites;
+
+	@JsonIgnore
+	private Supplier<ConnectedSite[]> _connectedSitesSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The user who created the asset library."
+	)
+	@Valid
+	public Creator getCreator() {
+		if (_creatorSupplier != null) {
+			creator = _creatorSupplier.get();
+
+			_creatorSupplier = null;
+		}
+
+		return creator;
+	}
+
+	public void setCreator(Creator creator) {
+		this.creator = creator;
+
+		_creatorSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setCreator(
+		UnsafeSupplier<Creator, Exception> creatorUnsafeSupplier) {
+
+		_creatorSupplier = () -> {
+			try {
+				return creatorUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(description = "The user who created the asset library.")
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Creator creator;
+
+	@JsonIgnore
+	private Supplier<Creator> _creatorSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The asset library's creator user ID."
 	)
 	public Long getCreatorUserId() {
@@ -537,31 +626,32 @@ public class AssetLibrary implements Serializable {
 	private Supplier<Map<String, String>> _name_i18nSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The number of this asset library's sites."
+		description = "The number of this asset library's connected sites."
 	)
-	public Integer getNumberOfSites() {
-		if (_numberOfSitesSupplier != null) {
-			numberOfSites = _numberOfSitesSupplier.get();
+	public Integer getNumberOfConnectedSites() {
+		if (_numberOfConnectedSitesSupplier != null) {
+			numberOfConnectedSites = _numberOfConnectedSitesSupplier.get();
 
-			_numberOfSitesSupplier = null;
+			_numberOfConnectedSitesSupplier = null;
 		}
 
-		return numberOfSites;
+		return numberOfConnectedSites;
 	}
 
-	public void setNumberOfSites(Integer numberOfSites) {
-		this.numberOfSites = numberOfSites;
+	public void setNumberOfConnectedSites(Integer numberOfConnectedSites) {
+		this.numberOfConnectedSites = numberOfConnectedSites;
 
-		_numberOfSitesSupplier = null;
+		_numberOfConnectedSitesSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setNumberOfSites(
-		UnsafeSupplier<Integer, Exception> numberOfSitesUnsafeSupplier) {
+	public void setNumberOfConnectedSites(
+		UnsafeSupplier<Integer, Exception>
+			numberOfConnectedSitesUnsafeSupplier) {
 
-		_numberOfSitesSupplier = () -> {
+		_numberOfConnectedSitesSupplier = () -> {
 			try {
-				return numberOfSitesUnsafeSupplier.get();
+				return numberOfConnectedSitesUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -572,12 +662,14 @@ public class AssetLibrary implements Serializable {
 		};
 	}
 
-	@GraphQLField(description = "The number of this asset library's sites.")
+	@GraphQLField(
+		description = "The number of this asset library's connected sites."
+	)
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
-	protected Integer numberOfSites;
+	protected Integer numberOfConnectedSites;
 
 	@JsonIgnore
-	private Supplier<Integer> _numberOfSitesSupplier;
+	private Supplier<Integer> _numberOfConnectedSitesSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The number of this asset library's associated users."
@@ -669,6 +761,53 @@ public class AssetLibrary implements Serializable {
 	@JsonIgnore
 	private Supplier<Integer> _numberOfUserGroupsSupplier;
 
+	@io.swagger.v3.oas.annotations.media.Schema
+	@Valid
+	public com.liferay.portal.vulcan.permission.Permission[] getPermissions() {
+		if (_permissionsSupplier != null) {
+			permissions = _permissionsSupplier.get();
+
+			_permissionsSupplier = null;
+		}
+
+		return permissions;
+	}
+
+	public void setPermissions(
+		com.liferay.portal.vulcan.permission.Permission[] permissions) {
+
+		this.permissions = permissions;
+
+		_permissionsSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setPermissions(
+		UnsafeSupplier
+			<com.liferay.portal.vulcan.permission.Permission[], Exception>
+				permissionsUnsafeSupplier) {
+
+		_permissionsSupplier = () -> {
+			try {
+				return permissionsUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected com.liferay.portal.vulcan.permission.Permission[] permissions;
+
+	@JsonIgnore
+	private Supplier<com.liferay.portal.vulcan.permission.Permission[]>
+		_permissionsSupplier;
+
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The asset library's settings."
 	)
@@ -755,50 +894,6 @@ public class AssetLibrary implements Serializable {
 
 	@JsonIgnore
 	private Supplier<Long> _siteIdSupplier;
-
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The asset library's connected sites."
-	)
-	@Valid
-	public Site[] getSites() {
-		if (_sitesSupplier != null) {
-			sites = _sitesSupplier.get();
-
-			_sitesSupplier = null;
-		}
-
-		return sites;
-	}
-
-	public void setSites(Site[] sites) {
-		this.sites = sites;
-
-		_sitesSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setSites(
-		UnsafeSupplier<Site[], Exception> sitesUnsafeSupplier) {
-
-		_sitesSupplier = () -> {
-			try {
-				return sitesUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(description = "The asset library's connected sites.")
-	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
-	protected Site[] sites;
-
-	@JsonIgnore
-	private Supplier<Site[]> _sitesSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
 	@JsonGetter("type")
@@ -998,6 +1093,40 @@ public class AssetLibrary implements Serializable {
 			sb.append("\"");
 		}
 
+		ConnectedSite[] connectedSites = getConnectedSites();
+
+		if (connectedSites != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"connectedSites\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < connectedSites.length; i++) {
+				sb.append(String.valueOf(connectedSites[i]));
+
+				if ((i + 1) < connectedSites.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		Creator creator = getCreator();
+
+		if (creator != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"creator\": ");
+
+			sb.append(String.valueOf(creator));
+		}
+
 		Long creatorUserId = getCreatorUserId();
 
 		if (creatorUserId != null) {
@@ -1126,16 +1255,16 @@ public class AssetLibrary implements Serializable {
 			sb.append(_toJSON(name_i18n));
 		}
 
-		Integer numberOfSites = getNumberOfSites();
+		Integer numberOfConnectedSites = getNumberOfConnectedSites();
 
-		if (numberOfSites != null) {
+		if (numberOfConnectedSites != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"numberOfSites\": ");
+			sb.append("\"numberOfConnectedSites\": ");
 
-			sb.append(numberOfSites);
+			sb.append(numberOfConnectedSites);
 		}
 
 		Integer numberOfUserAccounts = getNumberOfUserAccounts();
@@ -1162,6 +1291,29 @@ public class AssetLibrary implements Serializable {
 			sb.append(numberOfUserGroups);
 		}
 
+		com.liferay.portal.vulcan.permission.Permission[] permissions =
+			getPermissions();
+
+		if (permissions != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"permissions\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < permissions.length; i++) {
+				sb.append(permissions[i]);
+
+				if ((i + 1) < permissions.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		Settings settings = getSettings();
 
 		if (settings != null) {
@@ -1186,28 +1338,6 @@ public class AssetLibrary implements Serializable {
 			sb.append(siteId);
 		}
 
-		Site[] sites = getSites();
-
-		if (sites != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"sites\": ");
-
-			sb.append("[");
-
-			for (int i = 0; i < sites.length; i++) {
-				sb.append(String.valueOf(sites[i]));
-
-				if ((i + 1) < sites.length) {
-					sb.append(", ");
-				}
-			}
-
-			sb.append("]");
-		}
-
 		Type type = getType();
 
 		if (type != null) {
@@ -1218,9 +1348,7 @@ public class AssetLibrary implements Serializable {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -1283,7 +1411,8 @@ public class AssetLibrary implements Serializable {
 	@GraphQLName("Type")
 	public static enum Type {
 
-		ASSET_LIBRARY("AssetLibrary"), SPACE("Space");
+		ASSET_LIBRARY("AssetLibrary"), DESIGN_LIBRARY("DesignLibrary"),
+		PROJECT("Project"), SPACE("Space");
 
 		@JsonCreator
 		public static Type create(String value) {
@@ -1407,3 +1536,4 @@ public class AssetLibrary implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1463000191

@@ -210,52 +210,6 @@ public class AccountGroupUtil {
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByUuid_Last(
-			String uuid, OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByUuid_Last(
-		String uuid, OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where uuid = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] findByUuid_PrevAndNext(
-			long accountGroupId, String uuid,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			accountGroupId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -302,24 +256,6 @@ public class AccountGroupUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] filterFindByUuid_PrevAndNext(
-			long accountGroupId, String uuid,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			accountGroupId, uuid, orderByComparator);
 	}
 
 	/**
@@ -462,59 +398,6 @@ public class AccountGroupUtil {
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] findByUuid_C_PrevAndNext(
-			long accountGroupId, String uuid, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			accountGroupId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -566,25 +449,6 @@ public class AccountGroupUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] filterFindByUuid_C_PrevAndNext(
-			long accountGroupId, String uuid, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			accountGroupId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -721,38 +585,6 @@ public class AccountGroupUtil {
 		OrderByComparator<AccountGroup> orderByComparator) {
 
 		return getPersistence().fetchByAccountGroupId_First(
-			accountGroupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByAccountGroupId_Last(
-			long accountGroupId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByAccountGroupId_Last(
-			accountGroupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where accountGroupId = &#63;.
-	 *
-	 * @param accountGroupId the account group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByAccountGroupId_Last(
-		long accountGroupId,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByAccountGroupId_Last(
 			accountGroupId, orderByComparator);
 	}
 
@@ -1091,54 +923,6 @@ public class AccountGroupUtil {
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByCompanyId_Last(
-			long companyId, OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByCompanyId_Last(
-		long companyId, OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] findByCompanyId_PrevAndNext(
-			long accountGroupId, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			accountGroupId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1185,24 +969,6 @@ public class AccountGroupUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] filterFindByCompanyId_PrevAndNext(
-			long accountGroupId, long companyId,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			accountGroupId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1349,59 +1115,6 @@ public class AccountGroupUtil {
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByC_D_Last(
-			long companyId, boolean defaultAccountGroup,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByC_D_Last(
-			companyId, defaultAccountGroup, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByC_D_Last(
-		long companyId, boolean defaultAccountGroup,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByC_D_Last(
-			companyId, defaultAccountGroup, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] findByC_D_PrevAndNext(
-			long accountGroupId, long companyId, boolean defaultAccountGroup,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByC_D_PrevAndNext(
-			accountGroupId, companyId, defaultAccountGroup, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63; and defaultAccountGroup = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1454,25 +1167,6 @@ public class AccountGroupUtil {
 
 		return getPersistence().filterFindByC_D(
 			companyId, defaultAccountGroup, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63; and defaultAccountGroup = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param defaultAccountGroup the default account group
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] filterFindByC_D_PrevAndNext(
-			long accountGroupId, long companyId, boolean defaultAccountGroup,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().filterFindByC_D_PrevAndNext(
-			accountGroupId, companyId, defaultAccountGroup, orderByComparator);
 	}
 
 	/**
@@ -1625,59 +1319,6 @@ public class AccountGroupUtil {
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByC_LikeN_Last(
-			long companyId, String name,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByC_LikeN_Last(
-			companyId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByC_LikeN_Last(
-		long companyId, String name,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByC_LikeN_Last(
-			companyId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] findByC_LikeN_PrevAndNext(
-			long accountGroupId, long companyId, String name,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByC_LikeN_PrevAndNext(
-			accountGroupId, companyId, name, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63; and name LIKE &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1730,25 +1371,6 @@ public class AccountGroupUtil {
 
 		return getPersistence().filterFindByC_LikeN(
 			companyId, name, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63; and name LIKE &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] filterFindByC_LikeN_PrevAndNext(
-			long accountGroupId, long companyId, String name,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().filterFindByC_LikeN_PrevAndNext(
-			accountGroupId, companyId, name, orderByComparator);
 	}
 
 	/**
@@ -1894,59 +1516,6 @@ public class AccountGroupUtil {
 	}
 
 	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group
-	 * @throws NoSuchGroupException if a matching account group could not be found
-	 */
-	public static AccountGroup findByC_T_Last(
-			long companyId, String type,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByC_T_Last(
-			companyId, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last account group in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching account group, or <code>null</code> if a matching account group could not be found
-	 */
-	public static AccountGroup fetchByC_T_Last(
-		long companyId, String type,
-		OrderByComparator<AccountGroup> orderByComparator) {
-
-		return getPersistence().fetchByC_T_Last(
-			companyId, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set where companyId = &#63; and type = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] findByC_T_PrevAndNext(
-			long accountGroupId, long companyId, String type,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().findByC_T_PrevAndNext(
-			accountGroupId, companyId, type, orderByComparator);
-	}
-
-	/**
 	 * Returns all the account groups that the user has permission to view where companyId = &#63; and type = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1998,25 +1567,6 @@ public class AccountGroupUtil {
 
 		return getPersistence().filterFindByC_T(
 			companyId, type, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the account groups before and after the current account group in the ordered set of account groups that the user has permission to view where companyId = &#63; and type = &#63;.
-	 *
-	 * @param accountGroupId the primary key of the current account group
-	 * @param companyId the company ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next account group
-	 * @throws NoSuchGroupException if a account group with the primary key could not be found
-	 */
-	public static AccountGroup[] filterFindByC_T_PrevAndNext(
-			long accountGroupId, long companyId, String type,
-			OrderByComparator<AccountGroup> orderByComparator)
-		throws com.liferay.account.exception.NoSuchGroupException {
-
-		return getPersistence().filterFindByC_T_PrevAndNext(
-			accountGroupId, companyId, type, orderByComparator);
 	}
 
 	/**
@@ -2279,3 +1829,4 @@ public class AccountGroupUtil {
 	private static volatile AccountGroupPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1090630765

@@ -8,6 +8,8 @@ package com.liferay.portal.workflow.metrics.rest.internal.graphql.query.v1_0;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
@@ -547,28 +549,6 @@ public class Query {
 				timeRangeResource.getTimeRangesPage()));
 	}
 
-	@GraphQLTypeExtension(Process.class)
-	public class GetProcessInstanceTypeExtension {
-
-		public GetProcessInstanceTypeExtension(Process process) {
-			_process = process;
-		}
-
-		@GraphQLField
-		public Instance instance(@GraphQLName("instanceId") Long instanceId)
-			throws Exception {
-
-			return _applyComponentServiceObjects(
-				_instanceResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				instanceResource -> instanceResource.getProcessInstance(
-					_process.getId(), instanceId));
-		}
-
-		private Process _process;
-
-	}
-
 	@GraphQLTypeExtension(TaskBulkSelection.class)
 	public class GetProcessTypeExtension {
 
@@ -586,6 +566,43 @@ public class Query {
 		}
 
 		private TaskBulkSelection _taskBulkSelection;
+
+	}
+
+	@GraphQLTypeExtension(Process.class)
+	public class GetProcessInstancesPageTypeExtension {
+
+		public GetProcessInstancesPageTypeExtension(Process process) {
+			_process = process;
+		}
+
+		@GraphQLField
+		public InstancePage instances(
+				@GraphQLName("assigneeIds") Long[] assigneeIds,
+				@GraphQLName("classPKs") Long[] classPKs,
+				@GraphQLName("dateEnd") Date dateEnd,
+				@GraphQLName("dateStart") Date dateStart,
+				@GraphQLName("slaStatuses") String[] slaStatuses,
+				@GraphQLName("statuses") String[] statuses,
+				@GraphQLName("taskNames") String[] taskNames,
+				@GraphQLName("pageSize") int pageSize,
+				@GraphQLName("page") int page,
+				@GraphQLName("sort") String sortsString)
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_instanceResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				instanceResource -> new InstancePage(
+					instanceResource.getProcessInstancesPage(
+						_process.getId(), assigneeIds, classPKs, dateEnd,
+						dateStart, slaStatuses, statuses, taskNames,
+						Pagination.of(page, pageSize),
+						_sortsBiFunction.apply(
+							instanceResource, sortsString))));
+		}
+
+		private Process _process;
 
 	}
 
@@ -610,45 +627,24 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Process.class)
-	public class GetProcessLastSLAResultTypeExtension {
+	public class GetProcessMetricTypeExtension {
 
-		public GetProcessLastSLAResultTypeExtension(Process process) {
+		public GetProcessMetricTypeExtension(Process process) {
 			_process = process;
 		}
 
 		@GraphQLField
-		public SLAResult lastSLAResult() throws Exception {
-			return _applyComponentServiceObjects(
-				_slaResultResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				slaResultResource -> slaResultResource.getProcessLastSLAResult(
-					_process.getId()));
-		}
-
-		private Process _process;
-
-	}
-
-	@GraphQLTypeExtension(Process.class)
-	public class GetProcessHistogramMetricTypeExtension {
-
-		public GetProcessHistogramMetricTypeExtension(Process process) {
-			_process = process;
-		}
-
-		@GraphQLField
-		public HistogramMetric histogramMetric(
+		public ProcessMetric metric(
+				@GraphQLName("completed") Boolean completed,
 				@GraphQLName("dateEnd") Date dateEnd,
-				@GraphQLName("dateStart") Date dateStart,
-				@GraphQLName("unit") String unit)
+				@GraphQLName("dateStart") Date dateStart)
 			throws Exception {
 
 			return _applyComponentServiceObjects(
-				_histogramMetricResourceComponentServiceObjects,
+				_processMetricResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				histogramMetricResource ->
-					histogramMetricResource.getProcessHistogramMetric(
-						_process.getId(), dateEnd, dateStart, unit));
+				processMetricResource -> processMetricResource.getProcessMetric(
+					_process.getId(), completed, dateEnd, dateStart));
 		}
 
 		private Process _process;
@@ -656,19 +652,43 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Process.class)
-	public class GetProcessTasksPageTypeExtension {
+	public class GetProcessProcessVersionsPageTypeExtension {
 
-		public GetProcessTasksPageTypeExtension(Process process) {
+		public GetProcessProcessVersionsPageTypeExtension(Process process) {
 			_process = process;
 		}
 
 		@GraphQLField
-		public TaskPage tasks() throws Exception {
+		public ProcessVersionPage processVersions() throws Exception {
 			return _applyComponentServiceObjects(
-				_taskResourceComponentServiceObjects,
+				_processVersionResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				taskResource -> new TaskPage(
-					taskResource.getProcessTasksPage(_process.getId())));
+				processVersionResource -> new ProcessVersionPage(
+					processVersionResource.getProcessProcessVersionsPage(
+						_process.getId())));
+		}
+
+		private Process _process;
+
+	}
+
+	@GraphQLTypeExtension(Process.class)
+	public class GetProcessRolesPageTypeExtension {
+
+		public GetProcessRolesPageTypeExtension(Process process) {
+			_process = process;
+		}
+
+		@GraphQLField
+		public RolePage roles(@GraphQLName("completed") Boolean completed)
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_roleResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				roleResource -> new RolePage(
+					roleResource.getProcessRolesPage(
+						_process.getId(), completed)));
 		}
 
 		private Process _process;
@@ -703,22 +723,19 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Process.class)
-	public class GetProcessRolesPageTypeExtension {
+	public class GetProcessLastSLAResultTypeExtension {
 
-		public GetProcessRolesPageTypeExtension(Process process) {
+		public GetProcessLastSLAResultTypeExtension(Process process) {
 			_process = process;
 		}
 
 		@GraphQLField
-		public RolePage roles(@GraphQLName("completed") Boolean completed)
-			throws Exception {
-
+		public SLAResult lastSLAResult() throws Exception {
 			return _applyComponentServiceObjects(
-				_roleResourceComponentServiceObjects,
+				_slaResultResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				roleResource -> new RolePage(
-					roleResource.getProcessRolesPage(
-						_process.getId(), completed)));
+				slaResultResource -> slaResultResource.getProcessLastSLAResult(
+					_process.getId()));
 		}
 
 		private Process _process;
@@ -726,44 +743,19 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Process.class)
-	public class GetProcessMetricTypeExtension {
+	public class GetProcessTasksPageTypeExtension {
 
-		public GetProcessMetricTypeExtension(Process process) {
+		public GetProcessTasksPageTypeExtension(Process process) {
 			_process = process;
 		}
 
 		@GraphQLField
-		public ProcessMetric metric(
-				@GraphQLName("completed") Boolean completed,
-				@GraphQLName("dateEnd") Date dateEnd,
-				@GraphQLName("dateStart") Date dateStart)
-			throws Exception {
-
-			return _applyComponentServiceObjects(
-				_processMetricResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				processMetricResource -> processMetricResource.getProcessMetric(
-					_process.getId(), completed, dateEnd, dateStart));
-		}
-
-		private Process _process;
-
-	}
-
-	@GraphQLTypeExtension(Process.class)
-	public class GetProcessTaskTypeExtension {
-
-		public GetProcessTaskTypeExtension(Process process) {
-			_process = process;
-		}
-
-		@GraphQLField
-		public Task task(@GraphQLName("taskId") Long taskId) throws Exception {
+		public TaskPage tasks() throws Exception {
 			return _applyComponentServiceObjects(
 				_taskResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				taskResource -> taskResource.getProcessTask(
-					_process.getId(), taskId));
+				taskResource -> new TaskPage(
+					taskResource.getProcessTasksPage(_process.getId())));
 		}
 
 		private Process _process;
@@ -771,20 +763,47 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Process.class)
-	public class GetProcessProcessVersionsPageTypeExtension {
+	public class GetProcessHistogramMetricTypeExtension {
 
-		public GetProcessProcessVersionsPageTypeExtension(Process process) {
+		public GetProcessHistogramMetricTypeExtension(Process process) {
 			_process = process;
 		}
 
 		@GraphQLField
-		public ProcessVersionPage processVersions() throws Exception {
+		public HistogramMetric histogramMetric(
+				@GraphQLName("dateEnd") Date dateEnd,
+				@GraphQLName("dateStart") Date dateStart,
+				@GraphQLName("unit") String unit)
+			throws Exception {
+
 			return _applyComponentServiceObjects(
-				_processVersionResourceComponentServiceObjects,
+				_histogramMetricResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				processVersionResource -> new ProcessVersionPage(
-					processVersionResource.getProcessProcessVersionsPage(
-						_process.getId())));
+				histogramMetricResource ->
+					histogramMetricResource.getProcessHistogramMetric(
+						_process.getId(), dateEnd, dateStart, unit));
+		}
+
+		private Process _process;
+
+	}
+
+	@GraphQLTypeExtension(Process.class)
+	public class GetProcessInstanceTypeExtension {
+
+		public GetProcessInstanceTypeExtension(Process process) {
+			_process = process;
+		}
+
+		@GraphQLField
+		public Instance instance(@GraphQLName("instanceId") Long instanceId)
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_instanceResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				instanceResource -> instanceResource.getProcessInstance(
+					_process.getId(), instanceId));
 		}
 
 		private Process _process;
@@ -826,36 +845,19 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Process.class)
-	public class GetProcessInstancesPageTypeExtension {
+	public class GetProcessTaskTypeExtension {
 
-		public GetProcessInstancesPageTypeExtension(Process process) {
+		public GetProcessTaskTypeExtension(Process process) {
 			_process = process;
 		}
 
 		@GraphQLField
-		public InstancePage instances(
-				@GraphQLName("assigneeIds") Long[] assigneeIds,
-				@GraphQLName("classPKs") Long[] classPKs,
-				@GraphQLName("dateEnd") Date dateEnd,
-				@GraphQLName("dateStart") Date dateStart,
-				@GraphQLName("slaStatuses") String[] slaStatuses,
-				@GraphQLName("statuses") String[] statuses,
-				@GraphQLName("taskNames") String[] taskNames,
-				@GraphQLName("pageSize") int pageSize,
-				@GraphQLName("page") int page,
-				@GraphQLName("sort") String sortsString)
-			throws Exception {
-
+		public Task task(@GraphQLName("taskId") Long taskId) throws Exception {
 			return _applyComponentServiceObjects(
-				_instanceResourceComponentServiceObjects,
+				_taskResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				instanceResource -> new InstancePage(
-					instanceResource.getProcessInstancesPage(
-						_process.getId(), assigneeIds, classPKs, dateEnd,
-						dateStart, slaStatuses, statuses, taskNames,
-						Pagination.of(page, pageSize),
-						_sortsBiFunction.apply(
-							instanceResource, sortsString))));
+				taskResource -> taskResource.getProcessTask(
+					_process.getId(), taskId));
 		}
 
 		private Process _process;
@@ -1386,6 +1388,10 @@ public class Query {
 		calendarResource.setContextUriInfo(_uriInfo);
 		calendarResource.setContextUser(_user);
 		calendarResource.setGroupLocalService(_groupLocalService);
+		calendarResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		calendarResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		calendarResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1402,6 +1408,10 @@ public class Query {
 		histogramMetricResource.setContextUriInfo(_uriInfo);
 		histogramMetricResource.setContextUser(_user);
 		histogramMetricResource.setGroupLocalService(_groupLocalService);
+		histogramMetricResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		histogramMetricResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		histogramMetricResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1415,6 +1425,10 @@ public class Query {
 		indexResource.setContextUriInfo(_uriInfo);
 		indexResource.setContextUser(_user);
 		indexResource.setGroupLocalService(_groupLocalService);
+		indexResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		indexResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		indexResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1428,6 +1442,10 @@ public class Query {
 		instanceResource.setContextUriInfo(_uriInfo);
 		instanceResource.setContextUser(_user);
 		instanceResource.setGroupLocalService(_groupLocalService);
+		instanceResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		instanceResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		instanceResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1441,6 +1459,9 @@ public class Query {
 		nodeResource.setContextUriInfo(_uriInfo);
 		nodeResource.setContextUser(_user);
 		nodeResource.setGroupLocalService(_groupLocalService);
+		nodeResource.setResourceActionLocalService(_resourceActionLocalService);
+		nodeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		nodeResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1454,6 +1475,10 @@ public class Query {
 		nodeMetricResource.setContextUriInfo(_uriInfo);
 		nodeMetricResource.setContextUser(_user);
 		nodeMetricResource.setGroupLocalService(_groupLocalService);
+		nodeMetricResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		nodeMetricResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		nodeMetricResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1467,6 +1492,10 @@ public class Query {
 		processResource.setContextUriInfo(_uriInfo);
 		processResource.setContextUser(_user);
 		processResource.setGroupLocalService(_groupLocalService);
+		processResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		processResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		processResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1482,6 +1511,10 @@ public class Query {
 		processMetricResource.setContextUriInfo(_uriInfo);
 		processMetricResource.setContextUser(_user);
 		processMetricResource.setGroupLocalService(_groupLocalService);
+		processMetricResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		processMetricResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		processMetricResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1498,6 +1531,10 @@ public class Query {
 		processVersionResource.setContextUriInfo(_uriInfo);
 		processVersionResource.setContextUser(_user);
 		processVersionResource.setGroupLocalService(_groupLocalService);
+		processVersionResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		processVersionResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		processVersionResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1513,6 +1550,10 @@ public class Query {
 		reindexStatusResource.setContextUriInfo(_uriInfo);
 		reindexStatusResource.setContextUser(_user);
 		reindexStatusResource.setGroupLocalService(_groupLocalService);
+		reindexStatusResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		reindexStatusResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		reindexStatusResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1526,6 +1567,9 @@ public class Query {
 		roleResource.setContextUriInfo(_uriInfo);
 		roleResource.setContextUser(_user);
 		roleResource.setGroupLocalService(_groupLocalService);
+		roleResource.setResourceActionLocalService(_resourceActionLocalService);
+		roleResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		roleResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1539,6 +1583,9 @@ public class Query {
 		slaResource.setContextUriInfo(_uriInfo);
 		slaResource.setContextUser(_user);
 		slaResource.setGroupLocalService(_groupLocalService);
+		slaResource.setResourceActionLocalService(_resourceActionLocalService);
+		slaResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		slaResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1552,6 +1599,10 @@ public class Query {
 		slaResultResource.setContextUriInfo(_uriInfo);
 		slaResultResource.setContextUser(_user);
 		slaResultResource.setGroupLocalService(_groupLocalService);
+		slaResultResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		slaResultResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		slaResultResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1565,6 +1616,9 @@ public class Query {
 		taskResource.setContextUriInfo(_uriInfo);
 		taskResource.setContextUser(_user);
 		taskResource.setGroupLocalService(_groupLocalService);
+		taskResource.setResourceActionLocalService(_resourceActionLocalService);
+		taskResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		taskResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1578,6 +1632,10 @@ public class Query {
 		timeRangeResource.setContextUriInfo(_uriInfo);
 		timeRangeResource.setContextUser(_user);
 		timeRangeResource.setGroupLocalService(_groupLocalService);
+		timeRangeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		timeRangeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		timeRangeResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1620,6 +1678,8 @@ public class Query {
 	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
+	private ResourceActionLocalService _resourceActionLocalService;
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 	private RoleLocalService _roleLocalService;
 	private BiFunction<Object, String, com.liferay.portal.kernel.search.Sort[]>
 		_sortsBiFunction;
@@ -1627,3 +1687,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1919214482

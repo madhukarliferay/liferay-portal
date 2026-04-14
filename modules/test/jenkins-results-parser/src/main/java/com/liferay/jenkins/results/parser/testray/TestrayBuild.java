@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -38,8 +39,20 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 	public static final String[] FIELD_NAMES = {
 		"dateCreated", "dateModified", "description", "dueDate",
-		"dueStatus {key name}", "githubCompareURLs", "gitHash", "id", "name",
-		"productVersionToBuilds", "projectToBuilds", "routineToBuilds"
+		"dueStatus {key name}", "githubCompareURLs", "gitHash", "id",
+		"importStatus {key name}", "name", "productVersionToBuilds",
+		"projectToBuilds", "routineToBuilds"
+	};
+
+	public static final String[] FIELD_NAMES_CASE_RESULT = {
+		"attachments", "caseToCaseResult", "componentToCaseResult",
+		"dateCreated", "dateModified", "dueStatus { key name }", "errors", "id",
+		"startDate"
+	};
+
+	public static final String[] FIELD_NAMES_CASE_RESULT_TESTRAY_REPORT = {
+		"caseToCaseResult", "componentToCaseResult", "dateCreated",
+		"dateModified", "dueStatus { key name }", "errors", "id", "startDate"
 	};
 
 	public int compareTo(TestrayBuild testrayBuild) {
@@ -83,6 +96,17 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 	public long getID() {
 		return _jsonObject.getLong("id");
+	}
+
+	public String getImportStatus() {
+		JSONObject importStatusJSONObject = _jsonObject.optJSONObject(
+			"importStatus");
+
+		if (importStatusJSONObject == null) {
+			return "UNKNOWN";
+		}
+
+		return importStatusJSONObject.optString("name", "UNKNOWN");
 	}
 
 	public JSONObject getJSONObject() {
@@ -171,8 +195,8 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 		try {
 			Set<JSONObject> entityJSONObjects = _testrayServer.requestGraphQL(
-				"caseResults", TestrayCaseResult.FIELD_NAMES, sb.toString(),
-				null, 1, 1);
+				"caseResults", TestrayBuild.FIELD_NAMES_CASE_RESULT,
+				sb.toString(), null, 1, 1);
 
 			if (entityJSONObjects.isEmpty()) {
 				return null;
@@ -198,6 +222,9 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 		List<TestrayCaseResult> testrayCaseResults = new ArrayList<>();
 
+		String[] fieldNames = TestrayBuild.FIELD_NAMES_CASE_RESULT;
+		int pageSize = 500;
+
 		StringBuilder sb = new StringBuilder();
 
 		if ((testrayRun != null) && (testrayRun.getID() > 0)) {
@@ -211,6 +238,9 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 		sb.append("'");
 
 		if (filterbyFailures) {
+			fieldNames = TestrayBuild.FIELD_NAMES_CASE_RESULT_TESTRAY_REPORT;
+			pageSize = 50;
+
 			sb.append(" ");
 			sb.append("and (dueStatus eq 'FAILED'");
 			sb.append(" ");
@@ -219,8 +249,8 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 		try {
 			Set<JSONObject> entityJSONObjects = _testrayServer.requestGraphQL(
-				true, "caseResults", TestrayCaseResult.FIELD_NAMES,
-				sb.toString(), null, 0, 1000);
+				true, "caseResults", fieldNames, sb.toString(), null, 0,
+				pageSize);
 
 			for (JSONObject entityJSONObject : entityJSONObjects) {
 				TestrayCaseResult testrayCaseResult =
@@ -271,6 +301,18 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 	public TestrayRoutine getTestrayRoutine() {
 		return _testrayRoutine;
+	}
+
+	public synchronized TestrayRun getTestrayRun(String name) {
+		for (TestrayRun testrayRun : getTestrayRuns()) {
+			String testrayRunIDString = testrayRun.getRunIDString();
+
+			if (testrayRunIDString.equals(name)) {
+				return testrayRun;
+			}
+		}
+
+		return null;
 	}
 
 	public synchronized List<TestrayRun> getTestrayRuns() {
@@ -449,8 +491,10 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 		}
 	}
 
-	protected List<TestrayCaseResult> getTestrayCaseResults(int maxCount) {
-		List<TestrayCaseResult> testrayCaseResults = new ArrayList<>();
+	private Matcher _getTestrayAttachmentURLMatcher() {
+		if (_testrayAttachmentURLMatcher != null) {
+			return _testrayAttachmentURLMatcher;
+		}
 
 		StringBuilder sb = new StringBuilder();
 
@@ -458,44 +502,45 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 		sb.append(getID());
 		sb.append("'");
 
-		try {
-			Set<JSONObject> entityJSONObjects = _testrayServer.requestGraphQL(
-				"caseResults", TestrayCaseResult.FIELD_NAMES, sb.toString(),
-				null, maxCount, 0);
+		Set<JSONObject> entityJSONObjects;
 
-			for (JSONObject entityJSONObject : entityJSONObjects) {
-				testrayCaseResults.add(
-					TestrayFactory.newJSONObjectTestrayCaseResult(
-						this, entityJSONObject));
-			}
+		try {
+			entityJSONObjects = _testrayServer.requestGraphQL(
+				"caseResults", new String[] {"attachments"}, sb.toString(),
+				null, 5, 0);
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);
 		}
 
-		return testrayCaseResults;
-	}
+		for (JSONObject entityJSONObject : entityJSONObjects) {
+			String attachments = entityJSONObject.getString("attachments");
 
-	private Matcher _getTestrayAttachmentURLMatcher() {
-		if (_testrayAttachmentURLMatcher != null) {
-			return _testrayAttachmentURLMatcher;
-		}
+			if (JenkinsResultsParserUtil.isNullOrEmpty(attachments)) {
+				continue;
+			}
 
-		for (TestrayCaseResult testrayCaseResult : getTestrayCaseResults(5)) {
-			if (testrayCaseResult != null) {
-				for (TestrayAttachment testrayAttachment :
-						testrayCaseResult.getTestrayAttachments()) {
+			JSONArray attachmentsJSONArray = null;
 
-					Matcher testrayAttachmentURLMatcher =
-						_testrayAttachmentURLPattern.matcher(
-							String.valueOf(testrayAttachment.getURL()));
+			try {
+				attachmentsJSONArray = new JSONArray(attachments);
+			}
+			catch (JSONException jsonException) {
+				continue;
+			}
 
-					if (testrayAttachmentURLMatcher.find()) {
-						_testrayAttachmentURLMatcher =
-							testrayAttachmentURLMatcher;
+			for (int i = 0; i < attachmentsJSONArray.length(); i++) {
+				JSONObject attachmentJSONObject =
+					attachmentsJSONArray.getJSONObject(i);
 
-						return _testrayAttachmentURLMatcher;
-					}
+				Matcher testrayAttachmentURLMatcher =
+					_testrayAttachmentURLPattern.matcher(
+						attachmentJSONObject.getString("url"));
+
+				if (testrayAttachmentURLMatcher.find()) {
+					_testrayAttachmentURLMatcher = testrayAttachmentURLMatcher;
+
+					return _testrayAttachmentURLMatcher;
 				}
 			}
 		}

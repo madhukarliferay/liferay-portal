@@ -6,6 +6,7 @@
 package com.liferay.site.cms.site.initializer.internal.display.context;
 
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.configuration.DLConfiguration;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
@@ -20,6 +21,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterRegistry;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -34,19 +36,22 @@ public class ViewHomeRecentAssetsSectionDisplayContext
 
 	public ViewHomeRecentAssetsSectionDisplayContext(
 		DepotEntryLocalService depotEntryLocalService,
-		GroupLocalService groupLocalService,
+		DLConfiguration dlConfiguration, GroupLocalService groupLocalService,
 		HttpServletRequest httpServletRequest, Language language,
 		ObjectDefinitionService objectDefinitionService,
 		ObjectDefinitionSettingLocalService objectDefinitionSettingLocalService,
 		ModelResourcePermission<ObjectEntryFolder>
 			objectEntryFolderModelResourcePermission,
-		Portal portal) {
+		Portal portal,
+		TranslationInfoItemFieldValuesExporterRegistry
+			translationInfoItemFieldValuesExporterRegistry) {
 
 		super(
-			depotEntryLocalService, null, groupLocalService, httpServletRequest,
-			language, objectDefinitionService,
+			depotEntryLocalService, dlConfiguration, groupLocalService,
+			httpServletRequest, language, objectDefinitionService,
 			objectDefinitionSettingLocalService,
-			objectEntryFolderModelResourcePermission, portal);
+			objectEntryFolderModelResourcePermission, portal,
+			translationInfoItemFieldValuesExporterRegistry);
 	}
 
 	@Override
@@ -65,6 +70,8 @@ public class ViewHomeRecentAssetsSectionDisplayContext
 	@Override
 	public Map<String, Object> getEmptyState() {
 		return HashMapBuilder.<String, Object>put(
+			"description", ""
+		).put(
 			"image", "/states/cms_empty_state.svg"
 		).put(
 			"title", LanguageUtil.get(httpServletRequest, "no-assets-yet")
@@ -89,8 +96,9 @@ public class ViewHomeRecentAssetsSectionDisplayContext
 	@Override
 	protected String getCMSSectionFilterString() {
 		return appendStatus(
-			"cmsKind eq 'object' and (cmsSection eq 'contents' or cmsSection " +
-				"eq 'files')");
+			appendGroupIds(
+				"cmsKind eq 'object' and (cmsSection eq 'contents' or " +
+					"cmsSection eq 'files')"));
 	}
 
 }

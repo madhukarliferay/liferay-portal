@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutPrototypeLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
@@ -75,8 +76,8 @@ public class DepotAssetRendererFactoryWrapper<T>
 	}
 
 	@Override
-	public AssetEntry getAssetEntry(T entry) throws PortalException {
-		return _assetRendererFactory.getAssetEntry(entry);
+	public long getAssetEntryClassPK(T entry) {
+		return _assetRendererFactory.getAssetEntryClassPK(entry);
 	}
 
 	@Override
@@ -311,25 +312,34 @@ public class DepotAssetRendererFactoryWrapper<T>
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
-		if (serviceContext == null) {
-			Group group = _groupLocalService.fetchGroup(
-				GroupThreadLocal.getGroupId());
+		if (serviceContext != null) {
+			long scopeGroupId = GetterUtil.getLong(
+				serviceContext.getAttribute("scopeGroupId"));
 
-			if (group != null) {
-				return group;
+			if (scopeGroupId != 0) {
+				return _groupLocalService.fetchGroup(scopeGroupId);
 			}
 
-			return fallbackGroup;
+			ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
+
+			if (themeDisplay != null) {
+				return themeDisplay.getScopeGroup();
+			}
+
+			if (serviceContext.getScopeGroupId() != 0) {
+				return _groupLocalService.fetchGroup(
+					serviceContext.getScopeGroupId());
+			}
 		}
 
-		long scopeGroupId = GetterUtil.getLong(
-			serviceContext.getAttribute("scopeGroupId"));
+		Group group = _groupLocalService.fetchGroup(
+			GroupThreadLocal.getGroupId());
 
-		if (scopeGroupId != 0) {
-			return _groupLocalService.fetchGroup(scopeGroupId);
+		if (group != null) {
+			return group;
 		}
 
-		return _groupLocalService.fetchGroup(serviceContext.getScopeGroupId());
+		return fallbackGroup;
 	}
 
 	private long _getGroupId(long groupId) throws PortalException {

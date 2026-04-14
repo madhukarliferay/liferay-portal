@@ -62,9 +62,7 @@ public class TrendSerDes {
 			sb.append("\"trendClassification\": ");
 
 			sb.append("\"");
-
 			sb.append(trend.getTrendClassification());
-
 			sb.append("\"");
 		}
 
@@ -232,3 +230,4 @@ public class TrendSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1413178082

@@ -211,54 +211,6 @@ public class SXPBlueprintUtil {
 	}
 
 	/**
-	 * Returns the last sxp blueprint in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a matching sxp blueprint could not be found
-	 */
-	public static SXPBlueprint findByUuid_Last(
-			String uuid, OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sxp blueprint in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sxp blueprint, or <code>null</code> if a matching sxp blueprint could not be found
-	 */
-	public static SXPBlueprint fetchByUuid_Last(
-		String uuid, OrderByComparator<SXPBlueprint> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the sxp blueprints before and after the current sxp blueprint in the ordered set where uuid = &#63;.
-	 *
-	 * @param sxpBlueprintId the primary key of the current sxp blueprint
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a sxp blueprint with the primary key could not be found
-	 */
-	public static SXPBlueprint[] findByUuid_PrevAndNext(
-			long sxpBlueprintId, String uuid,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			sxpBlueprintId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sxp blueprints that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -305,25 +257,6 @@ public class SXPBlueprintUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sxp blueprints before and after the current sxp blueprint in the ordered set of sxp blueprints that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param sxpBlueprintId the primary key of the current sxp blueprint
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a sxp blueprint with the primary key could not be found
-	 */
-	public static SXPBlueprint[] filterFindByUuid_PrevAndNext(
-			long sxpBlueprintId, String uuid,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			sxpBlueprintId, uuid, orderByComparator);
 	}
 
 	/**
@@ -467,61 +400,6 @@ public class SXPBlueprintUtil {
 	}
 
 	/**
-	 * Returns the last sxp blueprint in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a matching sxp blueprint could not be found
-	 */
-	public static SXPBlueprint findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sxp blueprint in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sxp blueprint, or <code>null</code> if a matching sxp blueprint could not be found
-	 */
-	public static SXPBlueprint fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SXPBlueprint> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sxp blueprints before and after the current sxp blueprint in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sxpBlueprintId the primary key of the current sxp blueprint
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a sxp blueprint with the primary key could not be found
-	 */
-	public static SXPBlueprint[] findByUuid_C_PrevAndNext(
-			long sxpBlueprintId, String uuid, long companyId,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			sxpBlueprintId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sxp blueprints that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -573,26 +451,6 @@ public class SXPBlueprintUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sxp blueprints before and after the current sxp blueprint in the ordered set of sxp blueprints that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param sxpBlueprintId the primary key of the current sxp blueprint
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a sxp blueprint with the primary key could not be found
-	 */
-	public static SXPBlueprint[] filterFindByUuid_C_PrevAndNext(
-			long sxpBlueprintId, String uuid, long companyId,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			sxpBlueprintId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -731,56 +589,6 @@ public class SXPBlueprintUtil {
 	}
 
 	/**
-	 * Returns the last sxp blueprint in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a matching sxp blueprint could not be found
-	 */
-	public static SXPBlueprint findByCompanyId_Last(
-			long companyId, OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last sxp blueprint in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching sxp blueprint, or <code>null</code> if a matching sxp blueprint could not be found
-	 */
-	public static SXPBlueprint fetchByCompanyId_Last(
-		long companyId, OrderByComparator<SXPBlueprint> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the sxp blueprints before and after the current sxp blueprint in the ordered set where companyId = &#63;.
-	 *
-	 * @param sxpBlueprintId the primary key of the current sxp blueprint
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a sxp blueprint with the primary key could not be found
-	 */
-	public static SXPBlueprint[] findByCompanyId_PrevAndNext(
-			long sxpBlueprintId, long companyId,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			sxpBlueprintId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the sxp blueprints that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -827,25 +635,6 @@ public class SXPBlueprintUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the sxp blueprints before and after the current sxp blueprint in the ordered set of sxp blueprints that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param sxpBlueprintId the primary key of the current sxp blueprint
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next sxp blueprint
-	 * @throws NoSuchSXPBlueprintException if a sxp blueprint with the primary key could not be found
-	 */
-	public static SXPBlueprint[] filterFindByCompanyId_PrevAndNext(
-			long sxpBlueprintId, long companyId,
-			OrderByComparator<SXPBlueprint> orderByComparator)
-		throws com.liferay.search.experiences.exception.
-			NoSuchSXPBlueprintException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			sxpBlueprintId, companyId, orderByComparator);
 	}
 
 	/**
@@ -1109,3 +898,4 @@ public class SXPBlueprintUtil {
 	private static volatile SXPBlueprintPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1790953776

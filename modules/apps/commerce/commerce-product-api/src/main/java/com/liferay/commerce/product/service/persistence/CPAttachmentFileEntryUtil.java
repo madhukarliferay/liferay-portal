@@ -217,56 +217,6 @@ public class CPAttachmentFileEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp attachment file entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByUuid_Last(
-			String uuid,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByUuid_PrevAndNext(
-			long CPAttachmentFileEntryId, String uuid,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CPAttachmentFileEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp attachment file entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -467,61 +417,6 @@ public class CPAttachmentFileEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp attachment file entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByUuid_C_PrevAndNext(
-			long CPAttachmentFileEntryId, String uuid, long companyId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPAttachmentFileEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp attachment file entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -647,58 +542,6 @@ public class CPAttachmentFileEntryUtil {
 
 		return getPersistence().fetchByFileEntryId_First(
 			fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where fileEntryId = &#63;.
-	 *
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByFileEntryId_Last(
-			long fileEntryId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByFileEntryId_Last(
-			fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where fileEntryId = &#63;.
-	 *
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByFileEntryId_Last(
-		long fileEntryId,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByFileEntryId_Last(
-			fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where fileEntryId = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByFileEntryId_PrevAndNext(
-			long CPAttachmentFileEntryId, long fileEntryId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByFileEntryId_PrevAndNext(
-			CPAttachmentFileEntryId, fileEntryId, orderByComparator);
 	}
 
 	/**
@@ -835,61 +678,6 @@ public class CPAttachmentFileEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_Last(
-			long classNameId, long classPK,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_Last(
-		long classNameId, long classPK,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp attachment file entries where classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -1021,61 +809,6 @@ public class CPAttachmentFileEntryUtil {
 
 		return getPersistence().fetchByLtD_S_First(
 			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByLtD_S_Last(
-			Date displayDate, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByLtD_S_Last(
-			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByLtD_S_Last(
-		Date displayDate, int status,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByLtD_S_Last(
-			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByLtD_S_PrevAndNext(
-			long CPAttachmentFileEntryId, Date displayDate, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByLtD_S_PrevAndNext(
-			CPAttachmentFileEntryId, displayDate, status, orderByComparator);
 	}
 
 	/**
@@ -1218,66 +951,6 @@ public class CPAttachmentFileEntryUtil {
 
 		return getPersistence().fetchByG_C_F_First(
 			groupId, classNameId, fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where groupId = &#63; and classNameId = &#63; and fileEntryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByG_C_F_Last(
-			long groupId, long classNameId, long fileEntryId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByG_C_F_Last(
-			groupId, classNameId, fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where groupId = &#63; and classNameId = &#63; and fileEntryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByG_C_F_Last(
-		long groupId, long classNameId, long fileEntryId,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_C_F_Last(
-			groupId, classNameId, fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where groupId = &#63; and classNameId = &#63; and fileEntryId = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByG_C_F_PrevAndNext(
-			long CPAttachmentFileEntryId, long groupId, long classNameId,
-			long fileEntryId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByG_C_F_PrevAndNext(
-			CPAttachmentFileEntryId, groupId, classNameId, fileEntryId,
-			orderByComparator);
 	}
 
 	/**
@@ -1429,66 +1102,6 @@ public class CPAttachmentFileEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and fileEntryId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_F_Last(
-			long classNameId, long classPK, long fileEntryId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_F_Last(
-			classNameId, classPK, fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and fileEntryId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_F_Last(
-		long classNameId, long classPK, long fileEntryId,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_F_Last(
-			classNameId, classPK, fileEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and fileEntryId = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_F_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			long fileEntryId,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_F_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, fileEntryId,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp attachment file entries where classNameId = &#63; and classPK = &#63; and fileEntryId = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -1634,66 +1247,6 @@ public class CPAttachmentFileEntryUtil {
 
 		return getPersistence().fetchByC_C_C_First(
 			classNameId, classPK, cdnURL, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and cdnURL = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param cdnURL the cdn url
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_C_Last(
-			long classNameId, long classPK, String cdnURL,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_C_Last(
-			classNameId, classPK, cdnURL, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and cdnURL = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param cdnURL the cdn url
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_C_Last(
-		long classNameId, long classPK, String cdnURL,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_Last(
-			classNameId, classPK, cdnURL, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and cdnURL = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param cdnURL the cdn url
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_C_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			String cdnURL,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_C_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, cdnURL,
-			orderByComparator);
 	}
 
 	/**
@@ -1851,69 +1404,6 @@ public class CPAttachmentFileEntryUtil {
 
 		return getPersistence().fetchByC_C_LtD_S_First(
 			classNameId, classPK, displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_LtD_S_Last(
-			long classNameId, long classPK, Date displayDate, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_LtD_S_Last(
-			classNameId, classPK, displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_LtD_S_Last(
-		long classNameId, long classPK, Date displayDate, int status,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_LtD_S_Last(
-			classNameId, classPK, displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_LtD_S_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			Date displayDate, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_LtD_S_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, displayDate, status,
-			orderByComparator);
 	}
 
 	/**
@@ -2077,69 +1567,6 @@ public class CPAttachmentFileEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_T_ST_Last(
-			long classNameId, long classPK, int type, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_T_ST_Last(
-			classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_T_ST_Last(
-		long classNameId, long classPK, int type, int status,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_T_ST_Last(
-			classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_T_ST_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			int type, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_T_ST_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, type, status,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp attachment file entries where classNameId = &#63; and classPK = &#63; and type = &#63; and status = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -2296,69 +1723,6 @@ public class CPAttachmentFileEntryUtil {
 
 		return getPersistence().fetchByC_C_T_NotST_First(
 			classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and status &ne; &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_T_NotST_Last(
-			long classNameId, long classPK, int type, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_T_NotST_Last(
-			classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and status &ne; &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_T_NotST_Last(
-		long classNameId, long classPK, int type, int status,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_T_NotST_Last(
-			classNameId, classPK, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and type = &#63; and status &ne; &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_T_NotST_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			int type, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_T_NotST_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, type, status,
-			orderByComparator);
 	}
 
 	/**
@@ -2533,76 +1897,6 @@ public class CPAttachmentFileEntryUtil {
 		return getPersistence().fetchByC_C_G_T_ST_First(
 			classNameId, classPK, galleryEnabled, type, status,
 			orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and galleryEnabled = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param galleryEnabled the gallery enabled
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_G_T_ST_Last(
-			long classNameId, long classPK, boolean galleryEnabled, int type,
-			int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_G_T_ST_Last(
-			classNameId, classPK, galleryEnabled, type, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and galleryEnabled = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param galleryEnabled the gallery enabled
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_G_T_ST_Last(
-		long classNameId, long classPK, boolean galleryEnabled, int type,
-		int status,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_G_T_ST_Last(
-			classNameId, classPK, galleryEnabled, type, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and galleryEnabled = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param galleryEnabled the gallery enabled
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_G_T_ST_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			boolean galleryEnabled, int type, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_G_T_ST_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, galleryEnabled, type,
-			status, orderByComparator);
 	}
 
 	/**
@@ -2781,76 +2075,6 @@ public class CPAttachmentFileEntryUtil {
 		return getPersistence().fetchByC_C_G_T_NotST_First(
 			classNameId, classPK, galleryEnabled, type, status,
 			orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and galleryEnabled = &#63; and type = &#63; and status &ne; &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param galleryEnabled the gallery enabled
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry findByC_C_G_T_NotST_Last(
-			long classNameId, long classPK, boolean galleryEnabled, int type,
-			int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_G_T_NotST_Last(
-			classNameId, classPK, galleryEnabled, type, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and galleryEnabled = &#63; and type = &#63; and status &ne; &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param galleryEnabled the gallery enabled
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp attachment file entry, or <code>null</code> if a matching cp attachment file entry could not be found
-	 */
-	public static CPAttachmentFileEntry fetchByC_C_G_T_NotST_Last(
-		long classNameId, long classPK, boolean galleryEnabled, int type,
-		int status,
-		OrderByComparator<CPAttachmentFileEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_G_T_NotST_Last(
-			classNameId, classPK, galleryEnabled, type, status,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the cp attachment file entries before and after the current cp attachment file entry in the ordered set where classNameId = &#63; and classPK = &#63; and galleryEnabled = &#63; and type = &#63; and status &ne; &#63;.
-	 *
-	 * @param CPAttachmentFileEntryId the primary key of the current cp attachment file entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param galleryEnabled the gallery enabled
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp attachment file entry
-	 * @throws NoSuchCPAttachmentFileEntryException if a cp attachment file entry with the primary key could not be found
-	 */
-	public static CPAttachmentFileEntry[] findByC_C_G_T_NotST_PrevAndNext(
-			long CPAttachmentFileEntryId, long classNameId, long classPK,
-			boolean galleryEnabled, int type, int status,
-			OrderByComparator<CPAttachmentFileEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPAttachmentFileEntryException {
-
-		return getPersistence().findByC_C_G_T_NotST_PrevAndNext(
-			CPAttachmentFileEntryId, classNameId, classPK, galleryEnabled, type,
-			status, orderByComparator);
 	}
 
 	/**
@@ -3133,3 +2357,4 @@ public class CPAttachmentFileEntryUtil {
 	private static volatile CPAttachmentFileEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-15320660

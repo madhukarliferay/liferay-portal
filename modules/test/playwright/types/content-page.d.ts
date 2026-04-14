@@ -57,6 +57,7 @@ type FormConfig = {
 
 type Layout = {
 	companyId: string;
+	externalReferenceCode: string;
 	friendlyURL: string;
 	friendlyUrlPath: string;
 	groupId: string;
@@ -76,6 +77,7 @@ type Layout = {
 };
 
 type LayoutPageTemplateEntry = {
+	externalReferenceCode: string;
 	groupId: string;
 	layoutPageTemplateEntryId: string;
 	plid: string;

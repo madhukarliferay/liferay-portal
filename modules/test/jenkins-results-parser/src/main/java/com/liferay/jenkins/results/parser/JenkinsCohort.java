@@ -5,17 +5,21 @@
 
 package com.liferay.jenkins.results.parser;
 
+import com.liferay.jenkins.results.parser.aws.AWSFleetCloud;
+
 import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeoutException;
@@ -37,6 +41,13 @@ public class JenkinsCohort {
 		}
 
 		return _jenkinsCohorts.get(cohortName);
+	}
+
+	public Set<String> getASGPrimaryLabels() {
+		Map<String, List<AWSFleetCloud>> awsFleetCloudsMap =
+			_getAWSFleetCloudsMap();
+
+		return awsFleetCloudsMap.keySet();
 	}
 
 	public int getIdleJenkinsSlaveCount() {
@@ -170,6 +181,42 @@ public class JenkinsCohort {
 		}
 
 		return runningBuildCount;
+	}
+
+	public int getStartedDownstreamBuildCountAfter(Date date) {
+		int buildCount = 0;
+
+		if (_jenkinsCohortJobsMap.isEmpty()) {
+			update();
+		}
+
+		for (JenkinsMaster jenkinsMaster : _jenkinsMastersMap.values()) {
+			if (jenkinsMaster.isBlackListed() || !jenkinsMaster.isAvailable()) {
+				continue;
+			}
+
+			buildCount += jenkinsMaster.getStartedBuildCountAfter(date, false);
+		}
+
+		return buildCount;
+	}
+
+	public int getStartedTopLevelBuildCountAfter(Date date) {
+		int buildCount = 0;
+
+		if (_jenkinsCohortJobsMap.isEmpty()) {
+			update();
+		}
+
+		for (JenkinsMaster jenkinsMaster : _jenkinsMastersMap.values()) {
+			if (jenkinsMaster.isBlackListed() || !jenkinsMaster.isAvailable()) {
+				continue;
+			}
+
+			buildCount += jenkinsMaster.getStartedBuildCountAfter(date, true);
+		}
+
+		return buildCount;
 	}
 
 	public void update() {
@@ -396,64 +443,113 @@ public class JenkinsCohort {
 	public void writeNodeDataJSONFile(String filePath) throws IOException {
 		File file = new File(filePath);
 
-		JSONObject jsonObject = null;
+		JSONObject jsonObject = new JSONObject();
 
 		if (file.exists()) {
 			String fileContent = JenkinsResultsParserUtil.read(file);
 
 			jsonObject = new JSONObject(fileContent);
 		}
-		else {
-			jsonObject = new JSONObject();
 
-			jsonObject.put(
-				"idle_nodes", new JSONArray()
-			).put(
-				"occupied_nodes", new JSONArray()
-			).put(
-				"offline_nodes", new JSONArray()
-			).put(
-				"online_nodes", new JSONArray()
-			).put(
-				"queued_builds", new JSONArray()
-			).put(
-				"timestamps", new JSONArray()
-			);
+		long currentTimestamp = System.currentTimeMillis();
+
+		JSONArray timestampsJSONArray = jsonObject.optJSONArray(
+			"timestamps", new JSONArray());
+
+		int timestampCount = timestampsJSONArray.length();
+
+		long previousTimestamp = currentTimestamp;
+
+		if (timestampCount > 0) {
+			previousTimestamp = timestampsJSONArray.getLong(
+				timestampsJSONArray.length() - 1);
 		}
 
-		JSONArray idleNodesJSONArray = jsonObject.getJSONArray("idle_nodes");
+		Date previousDate = new Date(previousTimestamp);
 
-		idleNodesJSONArray.put(getIdleJenkinsSlaveCount());
+		_addNodeData(
+			jsonObject, timestampCount, "downstream_started_builds",
+			getStartedDownstreamBuildCountAfter(previousDate));
 
-		JSONArray occupiedNodesJSONArray = jsonObject.getJSONArray(
-			"occupied_nodes");
+		_addNodeData(
+			jsonObject, timestampCount, "idle_nodes",
+			getIdleJenkinsSlaveCount());
+		_addNodeData(
+			jsonObject, timestampCount, "occupied_nodes",
+			getRunningBuildCount());
+		_addNodeData(
+			jsonObject, timestampCount, "offline_nodes",
+			getOfflineJenkinsSlaveCount());
+		_addNodeData(
+			jsonObject, timestampCount, "online_nodes",
+			getOnlineJenkinsSlaveCount());
+		_addNodeData(
+			jsonObject, timestampCount, "queued_builds", getQueuedBuildCount());
+		_addNodeData(
+			jsonObject, timestampCount, "timestamps", currentTimestamp);
+		_addNodeData(
+			jsonObject, timestampCount, "top_level_started_builds",
+			getStartedTopLevelBuildCountAfter(previousDate));
 
-		occupiedNodesJSONArray.put(getRunningBuildCount());
+		if (JenkinsResultsParserUtil.isCloudCINode()) {
+			jsonObject.put("asg_primary_labels", getASGPrimaryLabels());
 
-		JSONArray offlineNodesJSONArray = jsonObject.getJSONArray(
-			"offline_nodes");
+			Map<String, List<AWSFleetCloud>> awsFleetCloudsMap =
+				_getAWSFleetCloudsMap();
 
-		offlineNodesJSONArray.put(getOfflineJenkinsSlaveCount());
+			for (Map.Entry<String, List<AWSFleetCloud>> awsFleetCloudsEntry :
+					awsFleetCloudsMap.entrySet()) {
 
-		JSONArray onlineNodesJSONArray = jsonObject.getJSONArray(
-			"online_nodes");
+				String asgPrimaryLabel = awsFleetCloudsEntry.getKey();
 
-		onlineNodesJSONArray.put(getOnlineJenkinsSlaveCount());
+				long idleNodes = 0L;
+				long occupiedNodes = 0L;
+				long offlineNodes = 0L;
+				long queuedBuilds = 0L;
 
-		JSONArray queuedBuildsJSONArray = jsonObject.getJSONArray(
-			"queued_builds");
+				for (AWSFleetCloud awsFleetCloud :
+						awsFleetCloudsEntry.getValue()) {
 
-		queuedBuildsJSONArray.put(getQueuedBuildCount());
+					idleNodes += awsFleetCloud.getIdleNodes();
+					occupiedNodes += awsFleetCloud.getOccupiedNodes();
+					offlineNodes += awsFleetCloud.getOfflineNodes();
+					queuedBuilds += awsFleetCloud.getQueuedBuilds();
+				}
 
-		JSONArray timestampsJSONArray = jsonObject.getJSONArray("timestamps");
-
-		timestampsJSONArray.put(System.currentTimeMillis());
+				_addNodeData(
+					jsonObject, timestampCount,
+					"idle_nodes__" + asgPrimaryLabel, idleNodes);
+				_addNodeData(
+					jsonObject, timestampCount,
+					"occupied_nodes__" + asgPrimaryLabel, occupiedNodes);
+				_addNodeData(
+					jsonObject, timestampCount,
+					"offline_nodes__" + asgPrimaryLabel, offlineNodes);
+				_addNodeData(
+					jsonObject, timestampCount,
+					"queued_builds__" + asgPrimaryLabel, queuedBuilds);
+			}
+		}
 
 		JenkinsResultsParserUtil.write(filePath, jsonObject.toString());
 	}
 
 	protected JenkinsCohort(String name) {
 		_name = name;
+	}
+
+	private void _addNodeData(
+		JSONObject jsonObject, int recordCount, String key, long value) {
+
+		JSONArray jsonArray = jsonObject.optJSONArray(key, new JSONArray());
+
+		while (jsonArray.length() < recordCount) {
+			jsonArray.put(0);
+		}
+
+		jsonArray.put(value);
+
+		jsonObject.put(key, jsonArray);
 	}
 
 	private JSONArray _createJSONArray(Object... items) {
@@ -521,6 +617,36 @@ public class JenkinsCohort {
 		int buildCount, String buildPercentage) {
 
 		return buildCount + " (" + buildPercentage + ")";
+	}
+
+	private synchronized Map<String, List<AWSFleetCloud>>
+		_getAWSFleetCloudsMap() {
+
+		if (!JenkinsResultsParserUtil.isCloudCINode()) {
+			_awsFleetCloudsMap = new HashMap<>();
+
+			return _awsFleetCloudsMap;
+		}
+
+		_awsFleetCloudsMap = new TreeMap<>();
+
+		for (JenkinsMaster jenkinsMaster : getJenkinsMasters()) {
+			for (AWSFleetCloud awsFleetCloud :
+					jenkinsMaster.getAWSFleetClouds()) {
+
+				String primaryLabel = awsFleetCloud.getPrimaryLabel();
+
+				List<AWSFleetCloud> awsFleetClouds =
+					_awsFleetCloudsMap.getOrDefault(
+						primaryLabel, new ArrayList<>());
+
+				awsFleetClouds.add(awsFleetCloud);
+
+				_awsFleetCloudsMap.put(primaryLabel, awsFleetClouds);
+			}
+		}
+
+		return _awsFleetCloudsMap;
 	}
 
 	private void _loadBuildURL(String buildURL) {
@@ -631,10 +757,11 @@ public class JenkinsCohort {
 		}
 	}
 
+	private Map<String, List<AWSFleetCloud>> _awsFleetCloudsMap;
 	private final Map<String, JenkinsCohortJob> _jenkinsCohortJobsMap =
 		new HashMap<>();
 	private final Map<String, JenkinsMaster> _jenkinsMastersMap =
-		new HashMap<>();
+		new TreeMap<>();
 	private final String _name;
 
 	private class JenkinsCohortJob {

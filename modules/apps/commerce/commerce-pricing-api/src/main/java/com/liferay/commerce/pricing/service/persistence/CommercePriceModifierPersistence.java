@@ -124,47 +124,6 @@ public interface CommercePriceModifierPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce price modifier in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where uuid = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByUuid_PrevAndNext(
-			long commercePriceModifierId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
 	 * Removes all the commerce price modifiers where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -324,50 +283,6 @@ public interface CommercePriceModifierPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce price modifier in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByUuid_C_PrevAndNext(
-			long commercePriceModifierId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
 	 * Removes all the commerce price modifiers where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -473,47 +388,6 @@ public interface CommercePriceModifierPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce price modifier in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where companyId = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByCompanyId_PrevAndNext(
-			long commercePriceModifierId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
 	 * Removes all the commerce price modifiers where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -615,47 +489,6 @@ public interface CommercePriceModifierPersistence
 		long commercePriceListId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where commercePriceListId = &#63;.
-	 *
-	 * @param commercePriceListId the commerce price list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByCommercePriceListId_Last(
-			long commercePriceListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where commercePriceListId = &#63;.
-	 *
-	 * @param commercePriceListId the commerce price list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByCommercePriceListId_Last(
-		long commercePriceListId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where commercePriceListId = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param commercePriceListId the commerce price list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByCommercePriceListId_PrevAndNext(
-			long commercePriceModifierId, long commercePriceListId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
 
 	/**
 	 * Removes all the commerce price modifiers where commercePriceListId = &#63; from the database.
@@ -765,50 +598,6 @@ public interface CommercePriceModifierPersistence
 		long companyId, String target,
 		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where companyId = &#63; and target = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param target the target
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByC_T_Last(
-			long companyId, String target,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where companyId = &#63; and target = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param target the target
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByC_T_Last(
-		long companyId, String target,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where companyId = &#63; and target = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param companyId the company ID
-	 * @param target the target
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByC_T_PrevAndNext(
-			long commercePriceModifierId, long companyId, String target,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
 
 	/**
 	 * Removes all the commerce price modifiers where companyId = &#63; and target = &#63; from the database.
@@ -922,50 +711,6 @@ public interface CommercePriceModifierPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce price modifier in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByLtD_S_Last(
-			Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByLtD_S_Last(
-		Date displayDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByLtD_S_PrevAndNext(
-			long commercePriceModifierId, Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
 	 * Removes all the commerce price modifiers where displayDate &lt; &#63; and status = &#63; from the database.
 	 *
 	 * @param displayDate the display date
@@ -1075,50 +820,6 @@ public interface CommercePriceModifierPersistence
 		Date expirationDate, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByLtE_S_Last(
-			Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByLtE_S_Last(
-		Date expirationDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where expirationDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param expirationDate the expiration date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByLtE_S_PrevAndNext(
-			long commercePriceModifierId, Date expirationDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
 
 	/**
 	 * Removes all the commerce price modifiers where expirationDate &lt; &#63; and status = &#63; from the database.
@@ -1236,54 +937,6 @@ public interface CommercePriceModifierPersistence
 		long groupId, long companyId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where groupId = &#63; and companyId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByG_C_S_Last(
-			long groupId, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where groupId = &#63; and companyId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByG_C_S_Last(
-		long groupId, long companyId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where groupId = &#63; and companyId = &#63; and status = &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByG_C_S_PrevAndNext(
-			long commercePriceModifierId, long groupId, long companyId,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
 
 	/**
 	 * Returns all the commerce price modifiers where groupId = any &#63; and companyId = &#63; and status = &#63;.
@@ -1487,54 +1140,6 @@ public interface CommercePriceModifierPersistence
 		long groupId, long companyId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where groupId = &#63; and companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier
-	 * @throws NoSuchPriceModifierException if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier findByG_C_NotS_Last(
-			long groupId, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
-
-	/**
-	 * Returns the last commerce price modifier in the ordered set where groupId = &#63; and companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce price modifier, or <code>null</code> if a matching commerce price modifier could not be found
-	 */
-	public CommercePriceModifier fetchByG_C_NotS_Last(
-		long groupId, long companyId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<CommercePriceModifier>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce price modifiers before and after the current commerce price modifier in the ordered set where groupId = &#63; and companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param commercePriceModifierId the primary key of the current commerce price modifier
-	 * @param groupId the group ID
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce price modifier
-	 * @throws NoSuchPriceModifierException if a commerce price modifier with the primary key could not be found
-	 */
-	public CommercePriceModifier[] findByG_C_NotS_PrevAndNext(
-			long commercePriceModifierId, long groupId, long companyId,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommercePriceModifier> orderByComparator)
-		throws NoSuchPriceModifierException;
 
 	/**
 	 * Returns all the commerce price modifiers where groupId = any &#63; and companyId = &#63; and status &ne; &#63;.
@@ -1816,3 +1421,4 @@ public interface CommercePriceModifierPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2103395763

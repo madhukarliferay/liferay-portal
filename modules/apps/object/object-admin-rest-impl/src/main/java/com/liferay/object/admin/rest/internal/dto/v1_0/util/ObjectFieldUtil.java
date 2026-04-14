@@ -16,12 +16,16 @@ import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectFilterLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -31,8 +35,10 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -74,10 +80,15 @@ public class ObjectFieldUtil {
 			return listTypeDefinition.getListTypeDefinitionId();
 		}
 
-		listTypeDefinition =
-			listTypeDefinitionLocalService.addListTypeDefinition(
-				objectField.getListTypeDefinitionExternalReferenceCode(),
-				userId, GetterUtil.getBoolean(objectField.getSystem()));
+		try (SafeCloseable safeCloseable =
+				LazyReferencingThreadLocal.setEnabledWithSafeCloseable(true)) {
+
+			listTypeDefinition =
+				listTypeDefinitionLocalService.getOrAddEmptyListTypeDefinition(
+					objectField.getListTypeDefinitionExternalReferenceCode(),
+					companyId, userId,
+					GetterUtil.getBoolean(objectField.getSystem()));
+		}
 
 		Map<String, ListTypeEntry> listTypeEntries = new HashMap<>();
 
@@ -208,7 +219,7 @@ public class ObjectFieldUtil {
 	}
 
 	public static com.liferay.object.model.ObjectField toObjectField(
-		String defaultLanguageId,
+		String defaultLanguageId, GroupLocalService groupLocalService,
 		ListTypeDefinitionLocalService listTypeDefinitionLocalService,
 		ObjectField objectField,
 		ObjectFieldLocalService objectFieldLocalService,
@@ -267,7 +278,7 @@ public class ObjectFieldUtil {
 		serviceBuilderObjectField.setName(objectField.getName());
 		serviceBuilderObjectField.setObjectFieldSettings(
 			ObjectFieldSettingUtil.toObjectFieldSettings(
-				listTypeDefinitionId, objectField,
+				groupLocalService, listTypeDefinitionId, objectField,
 				objectFieldSettingLocalService, objectFilterLocalService));
 		serviceBuilderObjectField.setReadOnly(
 			objectField.getReadOnlyAsString());
@@ -284,6 +295,35 @@ public class ObjectFieldUtil {
 			GetterUtil.getBoolean(objectField.getSystem()));
 
 		return serviceBuilderObjectField;
+	}
+
+	public static List<com.liferay.object.model.ObjectField> toObjectFields(
+		String defaultLanguageId, GroupLocalService groupLocalService,
+		ListTypeDefinitionLocalService listTypeDefinitionLocalService,
+		ObjectFieldLocalService objectFieldLocalService,
+		ObjectField[] objectFields,
+		ObjectFieldSettingLocalService objectFieldSettingLocalService,
+		ObjectFilterLocalService objectFilterLocalService) {
+
+		if (objectFields == null) {
+			return new ArrayList<>();
+		}
+
+		return TransformUtil.transformToList(
+			objectFields,
+			objectField -> {
+				com.liferay.object.model.ObjectField serviceBuilderObjectField =
+					toObjectField(
+						defaultLanguageId, groupLocalService,
+						listTypeDefinitionLocalService, objectField,
+						objectFieldLocalService, objectFieldSettingLocalService,
+						objectFilterLocalService);
+
+				serviceBuilderObjectField.setObjectFieldId(
+					GetterUtil.getLong(objectField.getId()));
+
+				return serviceBuilderObjectField;
+			});
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

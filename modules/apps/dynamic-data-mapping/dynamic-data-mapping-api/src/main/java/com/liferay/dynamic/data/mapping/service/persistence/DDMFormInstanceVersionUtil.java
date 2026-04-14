@@ -224,58 +224,6 @@ public class DDMFormInstanceVersionUtil {
 	}
 
 	/**
-	 * Returns the last ddm form instance version in the ordered set where formInstanceId = &#63;.
-	 *
-	 * @param formInstanceId the form instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm form instance version
-	 * @throws NoSuchFormInstanceVersionException if a matching ddm form instance version could not be found
-	 */
-	public static DDMFormInstanceVersion findByFormInstanceId_Last(
-			long formInstanceId,
-			OrderByComparator<DDMFormInstanceVersion> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchFormInstanceVersionException {
-
-		return getPersistence().findByFormInstanceId_Last(
-			formInstanceId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm form instance version in the ordered set where formInstanceId = &#63;.
-	 *
-	 * @param formInstanceId the form instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm form instance version, or <code>null</code> if a matching ddm form instance version could not be found
-	 */
-	public static DDMFormInstanceVersion fetchByFormInstanceId_Last(
-		long formInstanceId,
-		OrderByComparator<DDMFormInstanceVersion> orderByComparator) {
-
-		return getPersistence().fetchByFormInstanceId_Last(
-			formInstanceId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm form instance versions before and after the current ddm form instance version in the ordered set where formInstanceId = &#63;.
-	 *
-	 * @param formInstanceVersionId the primary key of the current ddm form instance version
-	 * @param formInstanceId the form instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm form instance version
-	 * @throws NoSuchFormInstanceVersionException if a ddm form instance version with the primary key could not be found
-	 */
-	public static DDMFormInstanceVersion[] findByFormInstanceId_PrevAndNext(
-			long formInstanceVersionId, long formInstanceId,
-			OrderByComparator<DDMFormInstanceVersion> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchFormInstanceVersionException {
-
-		return getPersistence().findByFormInstanceId_PrevAndNext(
-			formInstanceVersionId, formInstanceId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm form instance versions where formInstanceId = &#63; from the database.
 	 *
 	 * @param formInstanceId the form instance ID
@@ -479,61 +427,6 @@ public class DDMFormInstanceVersionUtil {
 	}
 
 	/**
-	 * Returns the last ddm form instance version in the ordered set where formInstanceId = &#63; and status = &#63;.
-	 *
-	 * @param formInstanceId the form instance ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm form instance version
-	 * @throws NoSuchFormInstanceVersionException if a matching ddm form instance version could not be found
-	 */
-	public static DDMFormInstanceVersion findByF_S_Last(
-			long formInstanceId, int status,
-			OrderByComparator<DDMFormInstanceVersion> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchFormInstanceVersionException {
-
-		return getPersistence().findByF_S_Last(
-			formInstanceId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm form instance version in the ordered set where formInstanceId = &#63; and status = &#63;.
-	 *
-	 * @param formInstanceId the form instance ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm form instance version, or <code>null</code> if a matching ddm form instance version could not be found
-	 */
-	public static DDMFormInstanceVersion fetchByF_S_Last(
-		long formInstanceId, int status,
-		OrderByComparator<DDMFormInstanceVersion> orderByComparator) {
-
-		return getPersistence().fetchByF_S_Last(
-			formInstanceId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm form instance versions before and after the current ddm form instance version in the ordered set where formInstanceId = &#63; and status = &#63;.
-	 *
-	 * @param formInstanceVersionId the primary key of the current ddm form instance version
-	 * @param formInstanceId the form instance ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm form instance version
-	 * @throws NoSuchFormInstanceVersionException if a ddm form instance version with the primary key could not be found
-	 */
-	public static DDMFormInstanceVersion[] findByF_S_PrevAndNext(
-			long formInstanceVersionId, long formInstanceId, int status,
-			OrderByComparator<DDMFormInstanceVersion> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchFormInstanceVersionException {
-
-		return getPersistence().findByF_S_PrevAndNext(
-			formInstanceVersionId, formInstanceId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm form instance versions where formInstanceId = &#63; and status = &#63; from the database.
 	 *
 	 * @param formInstanceId the form instance ID
@@ -727,3 +620,4 @@ public class DDMFormInstanceVersionUtil {
 	private static volatile DDMFormInstanceVersionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-127658620

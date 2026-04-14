@@ -7,11 +7,11 @@ package com.liferay.portal.tools.java.parser;
 
 import antlr.CommonHiddenStreamToken;
 
+import com.liferay.petra.io.unsync.UnsyncBufferedReader;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -1172,32 +1172,32 @@ public class JavaParser {
 			}
 		}
 		else if (detailAST.getType() == TokenTypes.LITERAL_SWITCH) {
-			List<DetailAST> caseGroupDetailASTList =
+			List<DetailAST> caseGroupDetailASTs =
 				DetailASTUtil.getAllChildTokens(
 					detailAST, false, TokenTypes.CASE_GROUP);
 
-			for (DetailAST caseGroupDetailAST : caseGroupDetailASTList) {
+			for (DetailAST caseGroupDetailAST : caseGroupDetailASTs) {
 				parsedJavaClass = _parseDetailAST(
 					parsedJavaClass, caseGroupDetailAST, fileContents,
 					maxLineLength);
 			}
 
-			List<DetailAST> switchRuleDetailASTList =
+			List<DetailAST> switchRuleDetailASTs =
 				DetailASTUtil.getAllChildTokens(
 					detailAST, false, TokenTypes.SWITCH_RULE);
 
-			for (DetailAST switchRuleDetailAST : switchRuleDetailASTList) {
+			for (DetailAST switchRuleDetailAST : switchRuleDetailASTs) {
 				parsedJavaClass = _parseDetailAST(
 					parsedJavaClass, switchRuleDetailAST, fileContents,
 					maxLineLength);
 			}
 		}
 		else if (detailAST.getType() == TokenTypes.LITERAL_TRY) {
-			List<DetailAST> literalCatchDetailASTList =
+			List<DetailAST> literalCatchDetailASTs =
 				DetailASTUtil.getAllChildTokens(
 					detailAST, false, TokenTypes.LITERAL_CATCH);
 
-			for (DetailAST literalCatchDetailAST : literalCatchDetailASTList) {
+			for (DetailAST literalCatchDetailAST : literalCatchDetailASTs) {
 				parsedJavaClass = _parseDetailAST(
 					parsedJavaClass, literalCatchDetailAST, fileContents,
 					maxLineLength);

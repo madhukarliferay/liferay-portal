@@ -5,10 +5,8 @@
 
 package com.liferay.portal.kernel.frontend.esm;
 
-import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Iván Zaera Avellón
@@ -18,11 +16,9 @@ public class FrontendESMUtil {
 	public static String buildExportsURL(
 		ThemeDisplay themeDisplay, String contextPath, String exportModule) {
 
-		exportModule = exportModule.replaceAll("/", "\\$");
-
-		return StringBundler.concat(
-			themeDisplay.getPathContext(), "/o/", contextPath,
-			"/__liferay__/exports/", exportModule, ".js");
+		return buildURL(
+			themeDisplay, contextPath,
+			"exports/" + exportModule.replaceAll("/", "\\$"));
 	}
 
 	public static String buildURL(
@@ -34,20 +30,12 @@ public class FrontendESMUtil {
 	public static String buildURL(
 		ThemeDisplay themeDisplay, String contextPath, String submodule) {
 
-		return StringBundler.concat(
-			themeDisplay.getPathContext(), "/o/", contextPath, "/__liferay__/",
-			submodule, ".js");
+		FrontendESM frontendESM = _frontendESMSnapshot.get();
+
+		return frontendESM.buildURL(themeDisplay, contextPath, submodule);
 	}
 
-	public static String getScriptType() {
-		return _scriptType.get();
-	}
-
-	public static void setScriptType(String scriptType) {
-		_scriptType.set(scriptType);
-	}
-
-	private static final AtomicReference<String> _scriptType =
-		new AtomicReference<>("module");
+	private static final Snapshot<FrontendESM> _frontendESMSnapshot =
+		new Snapshot<>(FrontendESMUtil.class, FrontendESM.class);
 
 }

@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.model.role;
 
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -19,12 +20,17 @@ import java.util.Locale;
  */
 public class RoleConstants {
 
+	public static final String ACCOUNT_MANAGER = "Account Manager";
+
 	public static final String ADMINISTRATOR = "Administrator";
 
 	public static final String ANALYTICS_ADMINISTRATOR =
 		"Analytics Administrator";
 
 	public static final String CMS_ADMINISTRATOR = "CMS Administrator";
+
+	public static final String EXTERNAL_REFERENCE_CODE_PREFIX_SYSTEM_ROLE =
+		"L_";
 
 	public static final String GUEST = "Guest";
 
@@ -175,6 +181,14 @@ public class RoleConstants {
 		}
 
 		return TYPE_REGULAR_LABEL;
+	}
+
+	public static String toSystemRoleExternalReferenceCode(String roleName) {
+		roleName = StringUtil.toUpperCase(
+			StringUtil.replace(roleName, CharPool.SPACE, CharPool.UNDERLINE));
+
+		return RoleConstants.EXTERNAL_REFERENCE_CODE_PREFIX_SYSTEM_ROLE +
+			roleName;
 	}
 
 }

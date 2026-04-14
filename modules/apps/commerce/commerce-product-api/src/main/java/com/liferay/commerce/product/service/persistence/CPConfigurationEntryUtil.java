@@ -216,56 +216,6 @@ public class CPConfigurationEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry findByUuid_Last(
-			String uuid,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<CPConfigurationEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public static CPConfigurationEntry[] findByUuid_PrevAndNext(
-			long CPConfigurationEntryId, String uuid,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CPConfigurationEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp configuration entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -465,61 +415,6 @@ public class CPConfigurationEntryUtil {
 	}
 
 	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CPConfigurationEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public static CPConfigurationEntry[] findByUuid_C_PrevAndNext(
-			long CPConfigurationEntryId, String uuid, long companyId,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPConfigurationEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp configuration entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -643,58 +538,6 @@ public class CPConfigurationEntryUtil {
 
 		return getPersistence().fetchByCompanyId_First(
 			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry fetchByCompanyId_Last(
-		long companyId,
-		OrderByComparator<CPConfigurationEntry> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public static CPConfigurationEntry[] findByCompanyId_PrevAndNext(
-			long CPConfigurationEntryId, long companyId,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			CPConfigurationEntryId, companyId, orderByComparator);
 	}
 
 	/**
@@ -824,59 +667,6 @@ public class CPConfigurationEntryUtil {
 
 		return getPersistence().fetchByCPConfigurationListId_First(
 			CPConfigurationListId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry findByCPConfigurationListId_Last(
-			long CPConfigurationListId,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByCPConfigurationListId_Last(
-			CPConfigurationListId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry fetchByCPConfigurationListId_Last(
-		long CPConfigurationListId,
-		OrderByComparator<CPConfigurationEntry> orderByComparator) {
-
-		return getPersistence().fetchByCPConfigurationListId_Last(
-			CPConfigurationListId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where CPConfigurationListId = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param CPConfigurationListId the cp configuration list ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public static CPConfigurationEntry[]
-			findByCPConfigurationListId_PrevAndNext(
-				long CPConfigurationEntryId, long CPConfigurationListId,
-				OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByCPConfigurationListId_PrevAndNext(
-			CPConfigurationEntryId, CPConfigurationListId, orderByComparator);
 	}
 
 	/**
@@ -1013,61 +803,6 @@ public class CPConfigurationEntryUtil {
 
 		return getPersistence().fetchByC_C_First(
 			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry findByC_C_Last(
-			long classNameId, long classPK,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp configuration entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp configuration entry, or <code>null</code> if a matching cp configuration entry could not be found
-	 */
-	public static CPConfigurationEntry fetchByC_C_Last(
-		long classNameId, long classPK,
-		OrderByComparator<CPConfigurationEntry> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp configuration entries before and after the current cp configuration entry in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param CPConfigurationEntryId the primary key of the current cp configuration entry
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp configuration entry
-	 * @throws NoSuchCPConfigurationEntryException if a cp configuration entry with the primary key could not be found
-	 */
-	public static CPConfigurationEntry[] findByC_C_PrevAndNext(
-			long CPConfigurationEntryId, long classNameId, long classPK,
-			OrderByComparator<CPConfigurationEntry> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPConfigurationEntryException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			CPConfigurationEntryId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -1416,3 +1151,4 @@ public class CPConfigurationEntryUtil {
 	private static volatile CPConfigurationEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-186407146

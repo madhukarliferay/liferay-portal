@@ -6,15 +6,16 @@
 package com.liferay.object.rest.internal.util;
 
 import com.liferay.asset.kernel.model.AssetCategory;
-import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
+import com.liferay.asset.kernel.service.AssetCategoryServiceUtil;
+import com.liferay.object.comment.ObjectEntryComment;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
-import com.liferay.object.rest.dto.v1_0.Scope;
+import com.liferay.object.rest.dto.v1_0.ParentTaxonomyCategory;
+import com.liferay.object.rest.dto.v1_0.ParentTaxonomyVocabulary;
 import com.liferay.object.rest.dto.v1_0.Status;
 import com.liferay.object.rest.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.object.service.ObjectEntryLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -26,11 +27,13 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.vulcan.scope.Scope;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.io.Serializable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -62,20 +65,19 @@ public class ServiceContextUtil {
 	public static ServiceContext createServiceContext(
 		long companyId, long groupId, Locale locale,
 		ModelPermissions modelPermissions, ObjectEntry objectEntry,
-		long userId) {
+		List<ObjectEntryComment> objectEntryComments, long userId) {
 
 		ServiceContext serviceContext = createServiceContext(
 			companyId, groupId, objectEntry, userId);
 
-		if (FeatureFlagManagerUtil.isEnabled("LPD-21926")) {
-			serviceContext.setAttribute(
-				"friendlyUrlMap",
-				(Serializable)LocalizedMapUtil.populateI18nMap(
-					LocaleUtil.toLanguageId(locale),
-					objectEntry.getFriendlyUrlPath_i18n(),
-					objectEntry.getFriendlyUrlPath()));
-		}
-
+		serviceContext.setAttribute(
+			"friendlyUrlMap",
+			(Serializable)LocalizedMapUtil.populateI18nMap(
+				LocaleUtil.toLanguageId(locale),
+				objectEntry.getFriendlyUrlPath_i18n(),
+				objectEntry.getFriendlyUrlPath()));
+		serviceContext.setAttribute(
+			"objectEntryComments", (Serializable)objectEntryComments);
 		serviceContext.setCompanyId(companyId);
 		serviceContext.setLanguageId(LocaleUtil.toLanguageId(locale));
 		serviceContext.setModelPermissions(modelPermissions);
@@ -92,8 +94,7 @@ public class ServiceContextUtil {
 		serviceContext.setAddGuestPermissions(true);
 
 		if (objectEntry.getTaxonomyCategoryIds() == null) {
-			_setObjectEntryTaxonomyCategoryIds(
-				companyId, groupId, userId, objectEntry);
+			_setObjectEntryTaxonomyCategoryIds(companyId, groupId, objectEntry);
 		}
 
 		if (objectEntry.getTaxonomyCategoryIds() != null) {
@@ -105,6 +106,8 @@ public class ServiceContextUtil {
 			serviceContext.setAssetTagNames(objectEntry.getKeywords());
 		}
 
+		serviceContext.setAttribute(
+			"status", _getStatusCode(objectEntry.getStatus()));
 		serviceContext.setUserId(userId);
 
 		if (_isObjectEntryDraft(objectEntry.getStatus())) {
@@ -147,6 +150,14 @@ public class ServiceContextUtil {
 		return group.getGroupId();
 	}
 
+	private static int _getStatusCode(Status status) {
+		if (status == null) {
+			return WorkflowConstants.STATUS_APPROVED;
+		}
+
+		return status.getCode();
+	}
+
 	private static boolean _isObjectEntryDraft(Status status) {
 		if ((status != null) &&
 			(status.getCode() == WorkflowConstants.STATUS_DRAFT)) {
@@ -158,14 +169,12 @@ public class ServiceContextUtil {
 	}
 
 	private static void _setObjectEntryTaxonomyCategoryIds(
-		long companyId, long groupId, long userId, ObjectEntry objectEntry) {
+		long companyId, long groupId, ObjectEntry objectEntry) {
 
 		TaxonomyCategoryBrief[] taxonomyCategoryBriefs =
 			objectEntry.getTaxonomyCategoryBriefs();
 
-		if ((taxonomyCategoryBriefs == null) ||
-			!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-
+		if (taxonomyCategoryBriefs == null) {
 			return;
 		}
 
@@ -187,9 +196,31 @@ public class ServiceContextUtil {
 				taxonomyCategoryBrief);
 
 			try {
+				String parentTaxonomyCategoryExternalReferenceCode = null;
+
+				ParentTaxonomyCategory parentTaxonomyCategory =
+					taxonomyCategoryBrief.getParentTaxonomyCategory();
+
+				if (parentTaxonomyCategory != null) {
+					parentTaxonomyCategoryExternalReferenceCode =
+						parentTaxonomyCategory.getExternalReferenceCode();
+				}
+
+				String parentTaxonomyVocabularyExternalReferenceCode = null;
+
+				ParentTaxonomyVocabulary parentTaxonomyVocabulary =
+					taxonomyCategoryBrief.getParentTaxonomyVocabulary();
+
+				if (parentTaxonomyVocabulary != null) {
+					parentTaxonomyVocabularyExternalReferenceCode =
+						parentTaxonomyVocabulary.getExternalReferenceCode();
+				}
+
 				AssetCategory assetCategory =
-					AssetCategoryLocalServiceUtil.getOrAddEmptyCategory(
-						externalReferenceCode, userId, groupId);
+					AssetCategoryServiceUtil.getOrAddEmptyCategoryWithAncestors(
+						externalReferenceCode, groupId,
+						parentTaxonomyCategoryExternalReferenceCode,
+						parentTaxonomyVocabularyExternalReferenceCode);
 
 				assetCategoryIds.add(assetCategory.getCategoryId());
 			}

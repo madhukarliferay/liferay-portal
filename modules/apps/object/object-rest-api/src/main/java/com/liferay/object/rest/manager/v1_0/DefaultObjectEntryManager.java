@@ -49,9 +49,9 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 			long primaryKey2)
 		throws Exception;
 
-	public ObjectEntry copyObjectEntryByVersion(
-			DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, long objectEntryId, int version)
+	public ObjectEntry copyObjectEntry(
+			DTOConverterContext dtoConverterContext, long objectEntryId,
+			long objectEntryFolderId, boolean replace)
 		throws Exception;
 
 	public ObjectEntry copyObjectEntryByVersion(
@@ -61,12 +61,7 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 		throws Exception;
 
 	public void deleteObjectEntry(
-			DTOConverterContext dtoConverterContext,
 			ObjectDefinition objectDefinition, long objectEntryId)
-		throws Exception;
-
-	public void deleteObjectEntryByVersion(
-			ObjectDefinition objectDefinition, long objectEntryId, int version)
 		throws Exception;
 
 	public void deleteObjectEntryByVersion(
@@ -103,18 +98,9 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 		throws Exception;
 
 	public ObjectEntry expireObjectEntry(
-			DTOConverterContext dtoConverterContext, long objectEntryId)
-		throws Exception;
-
-	public ObjectEntry expireObjectEntry(
 			DTOConverterContext dtoConverterContext,
 			String externalReferenceCode, ObjectDefinition objectDefinition,
 			String scopeKey)
-		throws Exception;
-
-	public ObjectEntry expireObjectEntryByVersion(
-			DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, long objectEntryId, int version)
 		throws Exception;
 
 	public ObjectEntry expireObjectEntryByVersion(
@@ -134,6 +120,19 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 			String objectRelationshipName)
 		throws Exception;
 
+	public Page<ObjectEntry> getApprovedObjectEntries(
+			long companyId, ObjectDefinition objectDefinition, String scopeKey,
+			Aggregation aggregation, DTOConverterContext dtoConverterContext,
+			String filterString, Pagination pagination, String search,
+			Sort[] sorts)
+		throws Exception;
+
+	public ObjectEntry getApprovedObjectEntry(
+			long companyId, DTOConverterContext dtoConverterContext,
+			String externalReferenceCode, ObjectDefinition objectDefinition,
+			String scopeKey)
+		throws Exception;
+
 	public Page<ObjectEntry> getObjectEntries(
 			long companyId, ObjectDefinition objectDefinition, String scopeKey,
 			Aggregation aggregation, DTOConverterContext dtoConverterContext,
@@ -150,11 +149,6 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 	public ObjectEntry getObjectEntry(
 			DTOConverterContext dtoConverterContext,
 			ObjectDefinition objectDefinition, long objectEntryId)
-		throws Exception;
-
-	public ObjectEntry getObjectEntryByVersion(
-			DTOConverterContext dtoConverterContext, Long objectEntryId,
-			int version)
 		throws Exception;
 
 	public ObjectEntry getObjectEntryByVersion(
@@ -198,14 +192,13 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 
 	public Page<ObjectEntry> getVersionedObjectEntries(
 			DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, long objectEntryId,
-			Pagination pagination)
+			String externalReferenceCode, ObjectDefinition objectDefinition,
+			String scopeKey, Pagination pagination, Sort[] sorts)
 		throws Exception;
 
-	public Page<ObjectEntry> getVersionedObjectEntries(
-			DTOConverterContext dtoConverterContext,
-			String externalReferenceCode, ObjectDefinition objectDefinition,
-			String scopeKey, Pagination pagination)
+	public ObjectEntry moveObjectEntry(
+			DTOConverterContext dtoConverterContext, long objectEntryId,
+			long objectEntryFolderId, boolean replace)
 		throws Exception;
 
 	public ObjectEntry partialUpdateObjectEntry(
@@ -235,23 +228,18 @@ public interface DefaultObjectEntryManager extends ObjectEntryManager {
 
 	public ObjectEntry restoreObjectEntryByVersion(
 			DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, long objectEntryId, int version)
-		throws Exception;
-
-	public ObjectEntry restoreObjectEntryByVersion(
-			DTOConverterContext dtoConverterContext,
 			String externalReferenceCode, ObjectDefinition objectDefinition,
 			String scopeKey, int version)
 		throws Exception;
 
 	public void subscribeObjectEntry(
 			String externalReferenceCode, ObjectDefinition objectDefinition,
-			String scopeKey, long userId)
+			String scopeKey)
 		throws Exception;
 
 	public void unsubscribeObjectEntry(
 			String externalReferenceCode, ObjectDefinition objectDefinition,
-			String scopeKey, long userId)
+			String scopeKey)
 		throws Exception;
 
 	public ObjectEntry updateObjectEntry(

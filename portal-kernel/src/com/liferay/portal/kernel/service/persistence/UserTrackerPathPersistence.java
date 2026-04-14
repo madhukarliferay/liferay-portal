@@ -120,47 +120,6 @@ public interface UserTrackerPathPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last user tracker path in the ordered set where userTrackerId = &#63;.
-	 *
-	 * @param userTrackerId the user tracker ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching user tracker path
-	 * @throws NoSuchUserTrackerPathException if a matching user tracker path could not be found
-	 */
-	public UserTrackerPath findByUserTrackerId_Last(
-			long userTrackerId,
-			com.liferay.portal.kernel.util.OrderByComparator<UserTrackerPath>
-				orderByComparator)
-		throws NoSuchUserTrackerPathException;
-
-	/**
-	 * Returns the last user tracker path in the ordered set where userTrackerId = &#63;.
-	 *
-	 * @param userTrackerId the user tracker ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching user tracker path, or <code>null</code> if a matching user tracker path could not be found
-	 */
-	public UserTrackerPath fetchByUserTrackerId_Last(
-		long userTrackerId,
-		com.liferay.portal.kernel.util.OrderByComparator<UserTrackerPath>
-			orderByComparator);
-
-	/**
-	 * Returns the user tracker paths before and after the current user tracker path in the ordered set where userTrackerId = &#63;.
-	 *
-	 * @param userTrackerPathId the primary key of the current user tracker path
-	 * @param userTrackerId the user tracker ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next user tracker path
-	 * @throws NoSuchUserTrackerPathException if a user tracker path with the primary key could not be found
-	 */
-	public UserTrackerPath[] findByUserTrackerId_PrevAndNext(
-			long userTrackerPathId, long userTrackerId,
-			com.liferay.portal.kernel.util.OrderByComparator<UserTrackerPath>
-				orderByComparator)
-		throws NoSuchUserTrackerPathException;
-
-	/**
 	 * Removes all the user tracker paths where userTrackerId = &#63; from the database.
 	 *
 	 * @param userTrackerId the user tracker ID
@@ -296,3 +255,4 @@ public interface UserTrackerPathPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1596424932

@@ -120,45 +120,46 @@ public interface CommerceAvailabilityEstimatePersistence
 			<CommerceAvailabilityEstimate> orderByComparator);
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63;.
+	 * Returns all the commerce availability estimates that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a matching commerce availability estimate could not be found
+	 * @return the matching commerce availability estimates that the user has permission to view
 	 */
-	public CommerceAvailabilityEstimate findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException;
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByUuid(
+		String uuid);
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63;.
+	 * Returns a range of all the commerce availability estimates that the user has permission to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate, or <code>null</code> if a matching commerce availability estimate could not be found
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @return the range of matching commerce availability estimates that the user has permission to view
 	 */
-	public CommerceAvailabilityEstimate fetchByUuid_Last(
-		String uuid,
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByUuid(
+		String uuid, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the commerce availability estimates that the user has permissions to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching commerce availability estimates that the user has permission to view
+	 */
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByUuid(
+		String uuid, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceAvailabilityEstimate> orderByComparator);
-
-	/**
-	 * Returns the commerce availability estimates before and after the current commerce availability estimate in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceAvailabilityEstimateId the primary key of the current commerce availability estimate
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a commerce availability estimate with the primary key could not be found
-	 */
-	public CommerceAvailabilityEstimate[] findByUuid_PrevAndNext(
-			long commerceAvailabilityEstimateId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException;
 
 	/**
 	 * Removes all the commerce availability estimates where uuid = &#63; from the database.
@@ -174,6 +175,14 @@ public interface CommerceAvailabilityEstimatePersistence
 	 * @return the number of matching commerce availability estimates
 	 */
 	public int countByUuid(String uuid);
+
+	/**
+	 * Returns the number of commerce availability estimates that the user has permission to view where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @return the number of matching commerce availability estimates that the user has permission to view
+	 */
+	public int filterCountByUuid(String uuid);
 
 	/**
 	 * Returns all the commerce availability estimates where uuid = &#63; and companyId = &#63;.
@@ -270,48 +279,49 @@ public interface CommerceAvailabilityEstimatePersistence
 			<CommerceAvailabilityEstimate> orderByComparator);
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns all the commerce availability estimates that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a matching commerce availability estimate could not be found
+	 * @return the matching commerce availability estimates that the user has permission to view
 	 */
-	public CommerceAvailabilityEstimate findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException;
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByUuid_C(
+		String uuid, long companyId);
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns a range of all the commerce availability estimates that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate, or <code>null</code> if a matching commerce availability estimate could not be found
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @return the range of matching commerce availability estimates that the user has permission to view
 	 */
-	public CommerceAvailabilityEstimate fetchByUuid_C_Last(
-		String uuid, long companyId,
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the commerce availability estimates that the user has permissions to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching commerce availability estimates that the user has permission to view
+	 */
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceAvailabilityEstimate> orderByComparator);
-
-	/**
-	 * Returns the commerce availability estimates before and after the current commerce availability estimate in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceAvailabilityEstimateId the primary key of the current commerce availability estimate
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a commerce availability estimate with the primary key could not be found
-	 */
-	public CommerceAvailabilityEstimate[] findByUuid_C_PrevAndNext(
-			long commerceAvailabilityEstimateId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException;
 
 	/**
 	 * Removes all the commerce availability estimates where uuid = &#63; and companyId = &#63; from the database.
@@ -329,6 +339,15 @@ public interface CommerceAvailabilityEstimatePersistence
 	 * @return the number of matching commerce availability estimates
 	 */
 	public int countByUuid_C(String uuid, long companyId);
+
+	/**
+	 * Returns the number of commerce availability estimates that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @return the number of matching commerce availability estimates that the user has permission to view
+	 */
+	public int filterCountByUuid_C(String uuid, long companyId);
 
 	/**
 	 * Returns all the commerce availability estimates where companyId = &#63;.
@@ -419,45 +438,46 @@ public interface CommerceAvailabilityEstimatePersistence
 			<CommerceAvailabilityEstimate> orderByComparator);
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where companyId = &#63;.
+	 * Returns all the commerce availability estimates that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a matching commerce availability estimate could not be found
+	 * @return the matching commerce availability estimates that the user has permission to view
 	 */
-	public CommerceAvailabilityEstimate findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException;
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByCompanyId(
+		long companyId);
 
 	/**
-	 * Returns the last commerce availability estimate in the ordered set where companyId = &#63;.
+	 * Returns a range of all the commerce availability estimates that the user has permission to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce availability estimate, or <code>null</code> if a matching commerce availability estimate could not be found
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @return the range of matching commerce availability estimates that the user has permission to view
 	 */
-	public CommerceAvailabilityEstimate fetchByCompanyId_Last(
-		long companyId,
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByCompanyId(
+		long companyId, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the commerce availability estimates that the user has permissions to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CommerceAvailabilityEstimateModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of commerce availability estimates
+	 * @param end the upper bound of the range of commerce availability estimates (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching commerce availability estimates that the user has permission to view
+	 */
+	public java.util.List<CommerceAvailabilityEstimate> filterFindByCompanyId(
+		long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceAvailabilityEstimate> orderByComparator);
-
-	/**
-	 * Returns the commerce availability estimates before and after the current commerce availability estimate in the ordered set where companyId = &#63;.
-	 *
-	 * @param commerceAvailabilityEstimateId the primary key of the current commerce availability estimate
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce availability estimate
-	 * @throws NoSuchAvailabilityEstimateException if a commerce availability estimate with the primary key could not be found
-	 */
-	public CommerceAvailabilityEstimate[] findByCompanyId_PrevAndNext(
-			long commerceAvailabilityEstimateId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceAvailabilityEstimate> orderByComparator)
-		throws NoSuchAvailabilityEstimateException;
 
 	/**
 	 * Removes all the commerce availability estimates where companyId = &#63; from the database.
@@ -473,6 +493,14 @@ public interface CommerceAvailabilityEstimatePersistence
 	 * @return the number of matching commerce availability estimates
 	 */
 	public int countByCompanyId(long companyId);
+
+	/**
+	 * Returns the number of commerce availability estimates that the user has permission to view where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching commerce availability estimates that the user has permission to view
+	 */
+	public int filterCountByCompanyId(long companyId);
 
 	/**
 	 * Caches the commerce availability estimate in the entity cache if it is enabled.
@@ -604,3 +632,4 @@ public interface CommerceAvailabilityEstimatePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1918540093

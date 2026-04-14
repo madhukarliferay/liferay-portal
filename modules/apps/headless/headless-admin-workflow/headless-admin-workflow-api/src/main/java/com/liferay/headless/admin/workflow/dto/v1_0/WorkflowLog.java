@@ -935,9 +935,7 @@ public class WorkflowLog implements Serializable {
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -969,8 +967,9 @@ public class WorkflowLog implements Serializable {
 	public static enum Type {
 
 		INSTANCE_FAIL("InstanceFail"), NODE_ENTRY("NodeEntry"),
-		TASK_ASSIGN("TaskAssign"), TASK_COMPLETION("TaskCompletion"),
-		TASK_UPDATE("TaskUpdate"), TRANSITION("Transition");
+		NODE_USAGE_METADATA("NodeUsageMetadata"), TASK_ASSIGN("TaskAssign"),
+		TASK_COMPLETION("TaskCompletion"), TASK_UPDATE("TaskUpdate"),
+		TRANSITION("Transition");
 
 		@JsonCreator
 		public static Type create(String value) {
@@ -1094,3 +1093,4 @@ public class WorkflowLog implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1414434513

@@ -17,7 +17,6 @@ import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalSer
 import com.liferay.exportimport.kernel.service.ExportImportLocalService;
 import com.liferay.exportimport.test.util.lar.BasePortletDataHandlerTestCase;
 import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Role;
@@ -30,7 +29,6 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
-import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -38,8 +36,6 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.test.rule.FeatureFlag;
-import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -54,9 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -65,11 +59,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Zoltan Csaszi
  */
-@FeatureFlags(
-	featureFlags = {
-		@FeatureFlag(value = "LPD-35914"), @FeatureFlag(value = "LPD-47858")
-	}
-)
 @RunWith(Arquillian.class)
 public class RolesAdminPortletDataHandlerTest
 	extends BasePortletDataHandlerTestCase {
@@ -80,18 +69,6 @@ public class RolesAdminPortletDataHandlerTest
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
-
-	@BeforeClass
-	public static void setUpClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, true, "LPD-35914");
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, false, "LPD-35914");
-	}
 
 	@Test
 	public void testExportImportRole() throws Exception {
@@ -189,8 +166,11 @@ public class RolesAdminPortletDataHandlerTest
 
 		Set<String> classNames = new HashSet<>();
 
-		classNames.add(StagedModelType.REFERRER_CLASS_NAME_ALL);
 		classNames.add(Role.class.getName());
+		classNames.add(StagedModelType.REFERRER_CLASS_NAME_ALL);
+		classNames.add(
+			"com.liferay.headless.admin.user.internal.resource.v1_0." +
+				"RoleResourceImpl");
 
 		for (RoleTypeContributor roleTypeContributor :
 				_roleTypeContributorProvider.getRoleTypeContributors()) {

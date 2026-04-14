@@ -14,6 +14,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.relationship.util.ObjectRelationshipUtil;
+import com.liferay.object.rest.dto.v1_0.Assignee;
 import com.liferay.object.rest.dto.v1_0.FileEntry;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
 import com.liferay.object.rest.internal.vulcan.openapi.contributor.util.OpenAPIContributorUtil;
@@ -94,6 +95,10 @@ public class ObjectEntryOpenAPIContributor extends BaseOpenAPIContributor {
 	public void contribute(OpenAPI openAPI, OpenAPIContext openAPIContext)
 		throws Exception {
 
+		ObjectField assigneeObjectField =
+			_objectFieldLocalService.fetchObjectFieldByBusinessType(
+				_objectDefinition.getObjectDefinitionId(),
+				ObjectFieldConstants.BUSINESS_TYPE_ASSIGNEE, null);
 		List<ObjectAction> objectActions =
 			_objectActionLocalService.getObjectActions(
 				_objectDefinition.getObjectDefinitionId(),
@@ -112,6 +117,26 @@ public class ObjectEntryOpenAPIContributor extends BaseOpenAPIContributor {
 		Paths paths = openAPI.getPaths();
 
 		for (String key : ListUtil.fromMapKeys(paths)) {
+			if ((assigneeObjectField != null) &&
+				(key.equals("/") || key.equals("/scopes/{scopeKey}"))) {
+
+				PathItem pathItem = paths.get(key);
+
+				Operation operation = pathItem.getGet();
+
+				List<Parameter> parameters = operation.getParameters();
+
+				parameters.add(
+					1,
+					new Parameter() {
+						{
+							in("query");
+							name("assigneeUserExternalReferenceCode");
+							schema(new StringSchema());
+						}
+					});
+			}
+
 			if (!key.contains("objectActionName") &&
 				!key.contains("objectRelationshipName")) {
 
@@ -295,6 +320,14 @@ public class ObjectEntryOpenAPIContributor extends BaseOpenAPIContributor {
 		OpenAPIContributorUtil.copySchemas(
 			schemaName, sourceSchemas,
 			objectDefinition.isUnmodifiableSystemObject(), openAPI);
+	}
+
+	private void _addSchema(
+		Class<?> entityClass, Schema schema, Map<String, Schema> schemas) {
+
+		_addSchemas(entityClass, schemas);
+
+		schema.$ref(entityClass.getSimpleName());
 	}
 
 	private void _addSchemas(
@@ -781,23 +814,21 @@ public class ObjectEntryOpenAPIContributor extends BaseOpenAPIContributor {
 
 			if (Objects.equals(
 					objectField.getBusinessType(),
-					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+					ObjectFieldConstants.BUSINESS_TYPE_ASSIGNEE)) {
 
-				_addSchemas(FileEntry.class, schemas);
+				_addSchema(Assignee.class, entry.getValue(), schemas);
+			}
+			else if (Objects.equals(
+						objectField.getBusinessType(),
+						ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
 
-				Schema schema = entry.getValue();
-
-				schema.$ref(FileEntry.class.getSimpleName());
+				_addSchema(FileEntry.class, entry.getValue(), schemas);
 			}
 			else if (Objects.equals(
 						objectField.getBusinessType(),
 						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
 
-				_addSchemas(ListEntry.class, schemas);
-
-				Schema schema = entry.getValue();
-
-				schema.$ref(ListEntry.class.getSimpleName());
+				_addSchema(ListEntry.class, entry.getValue(), schemas);
 			}
 			else if (Objects.equals(
 						objectField.getBusinessType(),

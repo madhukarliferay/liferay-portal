@@ -263,6 +263,13 @@ public class SegmentsEntryLocalServiceUtil {
 		return getService().fetchSegmentsEntry(groupId, segmentsEntryKey);
 	}
 
+	public static SegmentsEntry fetchSegmentsEntryByExternalReferenceCode(
+		String externalReferenceCode, long groupId) {
+
+		return getService().fetchSegmentsEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the segments entry matching the UUID and group.
 	 *
@@ -418,6 +425,14 @@ public class SegmentsEntryLocalServiceUtil {
 		return getService().getSegmentsEntry(segmentsEntryId);
 	}
 
+	public static SegmentsEntry getSegmentsEntryByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		return getService().getSegmentsEntryByExternalReferenceCode(
+			externalReferenceCode, groupId);
+	}
+
 	/**
 	 * Returns the segments entry matching the UUID and group.
 	 *
@@ -491,3 +506,4 @@ public class SegmentsEntryLocalServiceUtil {
 			SegmentsEntryLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1718748102

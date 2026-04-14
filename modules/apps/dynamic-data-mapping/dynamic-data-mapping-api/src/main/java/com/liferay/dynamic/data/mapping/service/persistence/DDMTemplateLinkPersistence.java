@@ -121,47 +121,6 @@ public interface DDMTemplateLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last ddm template link in the ordered set where templateId = &#63;.
-	 *
-	 * @param templateId the template ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm template link
-	 * @throws NoSuchTemplateLinkException if a matching ddm template link could not be found
-	 */
-	public DDMTemplateLink findByTemplateId_Last(
-			long templateId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMTemplateLink>
-				orderByComparator)
-		throws NoSuchTemplateLinkException;
-
-	/**
-	 * Returns the last ddm template link in the ordered set where templateId = &#63;.
-	 *
-	 * @param templateId the template ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm template link, or <code>null</code> if a matching ddm template link could not be found
-	 */
-	public DDMTemplateLink fetchByTemplateId_Last(
-		long templateId,
-		com.liferay.portal.kernel.util.OrderByComparator<DDMTemplateLink>
-			orderByComparator);
-
-	/**
-	 * Returns the ddm template links before and after the current ddm template link in the ordered set where templateId = &#63;.
-	 *
-	 * @param templateLinkId the primary key of the current ddm template link
-	 * @param templateId the template ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm template link
-	 * @throws NoSuchTemplateLinkException if a ddm template link with the primary key could not be found
-	 */
-	public DDMTemplateLink[] findByTemplateId_PrevAndNext(
-			long templateLinkId, long templateId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMTemplateLink>
-				orderByComparator)
-		throws NoSuchTemplateLinkException;
-
-	/**
 	 * Removes all the ddm template links where templateId = &#63; from the database.
 	 *
 	 * @param templateId the template ID
@@ -347,3 +306,4 @@ public interface DDMTemplateLinkPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1438788956

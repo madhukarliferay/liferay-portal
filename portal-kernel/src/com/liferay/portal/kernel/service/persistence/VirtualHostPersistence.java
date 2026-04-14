@@ -120,47 +120,6 @@ public interface VirtualHostPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last virtual host in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching virtual host
-	 * @throws NoSuchVirtualHostException if a matching virtual host could not be found
-	 */
-	public VirtualHost findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-				orderByComparator)
-		throws NoSuchVirtualHostException;
-
-	/**
-	 * Returns the last virtual host in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching virtual host, or <code>null</code> if a matching virtual host could not be found
-	 */
-	public VirtualHost fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-			orderByComparator);
-
-	/**
-	 * Returns the virtual hosts before and after the current virtual host in the ordered set where companyId = &#63;.
-	 *
-	 * @param virtualHostId the primary key of the current virtual host
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next virtual host
-	 * @throws NoSuchVirtualHostException if a virtual host with the primary key could not be found
-	 */
-	public VirtualHost[] findByCompanyId_PrevAndNext(
-			long virtualHostId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-				orderByComparator)
-		throws NoSuchVirtualHostException;
-
-	/**
 	 * Removes all the virtual hosts where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -314,50 +273,6 @@ public interface VirtualHostPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last virtual host in the ordered set where companyId = &#63; and layoutSetId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param layoutSetId the layout set ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching virtual host
-	 * @throws NoSuchVirtualHostException if a matching virtual host could not be found
-	 */
-	public VirtualHost findByC_L_Last(
-			long companyId, long layoutSetId,
-			com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-				orderByComparator)
-		throws NoSuchVirtualHostException;
-
-	/**
-	 * Returns the last virtual host in the ordered set where companyId = &#63; and layoutSetId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param layoutSetId the layout set ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching virtual host, or <code>null</code> if a matching virtual host could not be found
-	 */
-	public VirtualHost fetchByC_L_Last(
-		long companyId, long layoutSetId,
-		com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-			orderByComparator);
-
-	/**
-	 * Returns the virtual hosts before and after the current virtual host in the ordered set where companyId = &#63; and layoutSetId = &#63;.
-	 *
-	 * @param virtualHostId the primary key of the current virtual host
-	 * @param companyId the company ID
-	 * @param layoutSetId the layout set ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next virtual host
-	 * @throws NoSuchVirtualHostException if a virtual host with the primary key could not be found
-	 */
-	public VirtualHost[] findByC_L_PrevAndNext(
-			long virtualHostId, long companyId, long layoutSetId,
-			com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-				orderByComparator)
-		throws NoSuchVirtualHostException;
-
-	/**
 	 * Removes all the virtual hosts where companyId = &#63; and layoutSetId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -467,50 +382,6 @@ public interface VirtualHostPersistence
 		long layoutSetId, String hostname,
 		com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
 			orderByComparator);
-
-	/**
-	 * Returns the last virtual host in the ordered set where layoutSetId &ne; &#63; and hostname = &#63;.
-	 *
-	 * @param layoutSetId the layout set ID
-	 * @param hostname the hostname
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching virtual host
-	 * @throws NoSuchVirtualHostException if a matching virtual host could not be found
-	 */
-	public VirtualHost findByNotL_H_Last(
-			long layoutSetId, String hostname,
-			com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-				orderByComparator)
-		throws NoSuchVirtualHostException;
-
-	/**
-	 * Returns the last virtual host in the ordered set where layoutSetId &ne; &#63; and hostname = &#63;.
-	 *
-	 * @param layoutSetId the layout set ID
-	 * @param hostname the hostname
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching virtual host, or <code>null</code> if a matching virtual host could not be found
-	 */
-	public VirtualHost fetchByNotL_H_Last(
-		long layoutSetId, String hostname,
-		com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-			orderByComparator);
-
-	/**
-	 * Returns the virtual hosts before and after the current virtual host in the ordered set where layoutSetId &ne; &#63; and hostname = &#63;.
-	 *
-	 * @param virtualHostId the primary key of the current virtual host
-	 * @param layoutSetId the layout set ID
-	 * @param hostname the hostname
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next virtual host
-	 * @throws NoSuchVirtualHostException if a virtual host with the primary key could not be found
-	 */
-	public VirtualHost[] findByNotL_H_PrevAndNext(
-			long virtualHostId, long layoutSetId, String hostname,
-			com.liferay.portal.kernel.util.OrderByComparator<VirtualHost>
-				orderByComparator)
-		throws NoSuchVirtualHostException;
 
 	/**
 	 * Returns all the virtual hosts where layoutSetId &ne; &#63; and hostname = any &#63;.
@@ -729,3 +600,4 @@ public interface VirtualHostPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1570706408

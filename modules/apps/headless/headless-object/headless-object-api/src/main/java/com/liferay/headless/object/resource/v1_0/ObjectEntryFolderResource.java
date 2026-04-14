@@ -90,6 +90,24 @@ public interface ObjectEntryFolderResource {
 				ObjectEntryFolder objectEntryFolder)
 		throws Exception;
 
+	public ObjectEntryFolder postObjectEntryFolderByParentObjectEntryFolderCopy(
+			Long objectEntryFolderId, Long parentObjectEntryFolderId)
+		throws Exception;
+
+	public ObjectEntryFolder
+			postObjectEntryFolderByParentObjectEntryFolderCopyReplace(
+				Long objectEntryFolderId, Long parentObjectEntryFolderId)
+		throws Exception;
+
+	public ObjectEntryFolder postObjectEntryFolderByParentObjectEntryFolderMove(
+			Long objectEntryFolderId, Long parentObjectEntryFolderId)
+		throws Exception;
+
+	public ObjectEntryFolder
+			postObjectEntryFolderByParentObjectEntryFolderMoveReplace(
+				Long objectEntryFolderId, Long parentObjectEntryFolderId)
+		throws Exception;
+
 	public ObjectEntryFolder postScopeScopeKeyObjectEntryFolder(
 			String scopeKey, ObjectEntryFolder objectEntryFolder)
 		throws Exception;
@@ -224,3 +242,4 @@ public interface ObjectEntryFolderResource {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-339454853

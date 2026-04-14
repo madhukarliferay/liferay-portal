@@ -218,56 +218,6 @@ public class DDMDataProviderInstanceUtil {
 	}
 
 	/**
-	 * Returns the last ddm data provider instance in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance findByUuid_Last(
-			String uuid,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm data provider instance in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance, or <code>null</code> if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<DDMDataProviderInstance> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm data provider instances before and after the current ddm data provider instance in the ordered set where uuid = &#63;.
-	 *
-	 * @param dataProviderInstanceId the primary key of the current ddm data provider instance
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a ddm data provider instance with the primary key could not be found
-	 */
-	public static DDMDataProviderInstance[] findByUuid_PrevAndNext(
-			long dataProviderInstanceId, String uuid,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			dataProviderInstanceId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm data provider instances where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,61 +419,6 @@ public class DDMDataProviderInstanceUtil {
 	}
 
 	/**
-	 * Returns the last ddm data provider instance in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm data provider instance in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance, or <code>null</code> if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<DDMDataProviderInstance> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm data provider instances before and after the current ddm data provider instance in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param dataProviderInstanceId the primary key of the current ddm data provider instance
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a ddm data provider instance with the primary key could not be found
-	 */
-	public static DDMDataProviderInstance[] findByUuid_C_PrevAndNext(
-			long dataProviderInstanceId, String uuid, long companyId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			dataProviderInstanceId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm data provider instances where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -649,56 +544,6 @@ public class DDMDataProviderInstanceUtil {
 	}
 
 	/**
-	 * Returns the last ddm data provider instance in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance findByGroupId_Last(
-			long groupId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm data provider instance in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance, or <code>null</code> if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance fetchByGroupId_Last(
-		long groupId,
-		OrderByComparator<DDMDataProviderInstance> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm data provider instances before and after the current ddm data provider instance in the ordered set where groupId = &#63;.
-	 *
-	 * @param dataProviderInstanceId the primary key of the current ddm data provider instance
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a ddm data provider instance with the primary key could not be found
-	 */
-	public static DDMDataProviderInstance[] findByGroupId_PrevAndNext(
-			long dataProviderInstanceId, long groupId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			dataProviderInstanceId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the ddm data provider instances that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -747,25 +592,6 @@ public class DDMDataProviderInstanceUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm data provider instances before and after the current ddm data provider instance in the ordered set of ddm data provider instances that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param dataProviderInstanceId the primary key of the current ddm data provider instance
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a ddm data provider instance with the primary key could not be found
-	 */
-	public static DDMDataProviderInstance[] filterFindByGroupId_PrevAndNext(
-			long dataProviderInstanceId, long groupId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			dataProviderInstanceId, groupId, orderByComparator);
 	}
 
 	/**
@@ -1052,58 +878,6 @@ public class DDMDataProviderInstanceUtil {
 	}
 
 	/**
-	 * Returns the last ddm data provider instance in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last ddm data provider instance in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddm data provider instance, or <code>null</code> if a matching ddm data provider instance could not be found
-	 */
-	public static DDMDataProviderInstance fetchByCompanyId_Last(
-		long companyId,
-		OrderByComparator<DDMDataProviderInstance> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the ddm data provider instances before and after the current ddm data provider instance in the ordered set where companyId = &#63;.
-	 *
-	 * @param dataProviderInstanceId the primary key of the current ddm data provider instance
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddm data provider instance
-	 * @throws NoSuchDataProviderInstanceException if a ddm data provider instance with the primary key could not be found
-	 */
-	public static DDMDataProviderInstance[] findByCompanyId_PrevAndNext(
-			long dataProviderInstanceId, long companyId,
-			OrderByComparator<DDMDataProviderInstance> orderByComparator)
-		throws com.liferay.dynamic.data.mapping.exception.
-			NoSuchDataProviderInstanceException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			dataProviderInstanceId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the ddm data provider instances where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -1295,3 +1069,4 @@ public class DDMDataProviderInstanceUtil {
 	private static volatile DDMDataProviderInstancePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1611705185

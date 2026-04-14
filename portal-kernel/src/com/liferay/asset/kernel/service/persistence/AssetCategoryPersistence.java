@@ -121,47 +121,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where uuid = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByUuid_PrevAndNext(
-			long categoryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Removes all the asset categories where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByUuid_C_PrevAndNext(
-			long categoryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Removes all the asset categories where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByGroupId_PrevAndNext(
-			long categoryId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -549,21 +423,6 @@ public interface AssetCategoryPersistence
 		long groupId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] filterFindByGroupId_PrevAndNext(
-			long categoryId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Removes all the asset categories where groupId = &#63; from the database.
@@ -677,47 +536,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where parentCategoryId = &#63;.
-	 *
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByParentCategoryId_Last(
-			long parentCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where parentCategoryId = &#63;.
-	 *
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByParentCategoryId_Last(
-		long parentCategoryId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where parentCategoryId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByParentCategoryId_PrevAndNext(
-			long categoryId, long parentCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Removes all the asset categories where parentCategoryId = &#63; from the database.
 	 *
 	 * @param parentCategoryId the parent category ID
@@ -818,47 +636,6 @@ public interface AssetCategoryPersistence
 		long vocabularyId,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset category in the ordered set where vocabularyId = &#63;.
-	 *
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByVocabularyId_Last(
-			long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where vocabularyId = &#63;.
-	 *
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByVocabularyId_Last(
-		long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByVocabularyId_PrevAndNext(
-			long categoryId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Removes all the asset categories where vocabularyId = &#63; from the database.
@@ -970,50 +747,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByG_P_Last(
-			long groupId, long parentCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByG_P_Last(
-		long groupId, long parentCategoryId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByG_P_PrevAndNext(
-			long categoryId, long groupId, long parentCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1057,22 +790,6 @@ public interface AssetCategoryPersistence
 		long groupId, long parentCategoryId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] filterFindByG_P_PrevAndNext(
-			long categoryId, long groupId, long parentCategoryId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Removes all the asset categories where groupId = &#63; and parentCategoryId = &#63; from the database.
@@ -1195,50 +912,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByG_V_Last(
-			long groupId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByG_V_Last(
-		long groupId, long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByG_V_PrevAndNext(
-			long categoryId, long groupId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = &#63; and vocabularyId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1282,22 +955,6 @@ public interface AssetCategoryPersistence
 		long groupId, long vocabularyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] filterFindByG_V_PrevAndNext(
-			long categoryId, long groupId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = any &#63; and vocabularyId = any &#63;.
@@ -1553,50 +1210,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where parentCategoryId = &#63; and name = &#63;.
-	 *
-	 * @param parentCategoryId the parent category ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByP_N_Last(
-			long parentCategoryId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where parentCategoryId = &#63; and name = &#63;.
-	 *
-	 * @param parentCategoryId the parent category ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByP_N_Last(
-		long parentCategoryId, String name,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where parentCategoryId = &#63; and name = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param parentCategoryId the parent category ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByP_N_PrevAndNext(
-			long categoryId, long parentCategoryId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Removes all the asset categories where parentCategoryId = &#63; and name = &#63; from the database.
 	 *
 	 * @param parentCategoryId the parent category ID
@@ -1708,50 +1321,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByP_V_Last(
-			long parentCategoryId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByP_V_Last(
-		long parentCategoryId, long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByP_V_PrevAndNext(
-			long categoryId, long parentCategoryId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Removes all the asset categories where parentCategoryId = &#63; and vocabularyId = &#63; from the database.
 	 *
 	 * @param parentCategoryId the parent category ID
@@ -1861,50 +1430,6 @@ public interface AssetCategoryPersistence
 		String name, long vocabularyId,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset category in the ordered set where name = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByN_V_Last(
-			String name, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where name = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByN_V_Last(
-		String name, long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where name = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByN_V_PrevAndNext(
-			long categoryId, String name, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Removes all the asset categories where name = &#63; and vocabularyId = &#63; from the database.
@@ -2027,54 +1552,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByG_P_V_Last(
-			long groupId, long parentCategoryId, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByG_P_V_Last(
-		long groupId, long parentCategoryId, long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByG_P_V_PrevAndNext(
-			long categoryId, long groupId, long parentCategoryId,
-			long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2123,24 +1600,6 @@ public interface AssetCategoryPersistence
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param parentCategoryId the parent category ID
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] filterFindByG_P_V_PrevAndNext(
-			long categoryId, long groupId, long parentCategoryId,
-			long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Removes all the asset categories where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63; from the database.
@@ -2275,53 +1734,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and treePath LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param treePath the tree path
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByG_LikeT_V_Last(
-			long groupId, String treePath, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and treePath LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param treePath the tree path
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByG_LikeT_V_Last(
-		long groupId, String treePath, long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63; and treePath LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param treePath the tree path
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByG_LikeT_V_PrevAndNext(
-			long categoryId, long groupId, String treePath, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = &#63; and treePath LIKE &#63; and vocabularyId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2368,23 +1780,6 @@ public interface AssetCategoryPersistence
 		long groupId, String treePath, long vocabularyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63; and treePath LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param treePath the tree path
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] filterFindByG_LikeT_V_PrevAndNext(
-			long categoryId, long groupId, String treePath, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Removes all the asset categories where groupId = &#63; and treePath LIKE &#63; and vocabularyId = &#63; from the database.
@@ -2519,53 +1914,6 @@ public interface AssetCategoryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and name LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category
-	 * @throws NoSuchCategoryException if a matching asset category could not be found
-	 */
-	public AssetCategory findByG_LikeN_V_Last(
-			long groupId, String name, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
-	 * Returns the last asset category in the ordered set where groupId = &#63; and name LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
-	 */
-	public AssetCategory fetchByG_LikeN_V_Last(
-		long groupId, String name, long vocabularyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63; and name LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] findByG_LikeN_V_PrevAndNext(
-			long categoryId, long groupId, String name, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
-
-	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = &#63; and name LIKE &#63; and vocabularyId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2612,23 +1960,6 @@ public interface AssetCategoryPersistence
 		long groupId, String name, long vocabularyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
 			orderByComparator);
-
-	/**
-	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63; and name LIKE &#63; and vocabularyId = &#63;.
-	 *
-	 * @param categoryId the primary key of the current asset category
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param vocabularyId the vocabulary ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset category
-	 * @throws NoSuchCategoryException if a asset category with the primary key could not be found
-	 */
-	public AssetCategory[] filterFindByG_LikeN_V_PrevAndNext(
-			long categoryId, long groupId, String name, long vocabularyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetCategory>
-				orderByComparator)
-		throws NoSuchCategoryException;
 
 	/**
 	 * Returns all the asset categories that the user has permission to view where groupId = any &#63; and name LIKE &#63; and vocabularyId = any &#63;.
@@ -3036,3 +2367,4 @@ public interface AssetCategoryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1321674478

@@ -14,9 +14,9 @@ import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.upgrade.data.cleanup.util.OrphanReferencesDataCleanupUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.upgrade.internal.recorder.UpgradeRecorder;
 import com.liferay.portal.upgrade.internal.report.UpgradeReport;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.Serializable;
 
@@ -76,13 +76,6 @@ public class UpgradeLogAppender implements Appender {
 			}
 		}
 		else if (logEvent.getLevel() == Level.WARN) {
-			if (_isDataCleanupMessage(logEvent.getLoggerName())) {
-				_upgradeRecorder.recordDataCleanupMessage(
-					logEvent.getLoggerName(), formattedMessage);
-
-				return;
-			}
-
 			_upgradeRecorder.recordWarningMessage(
 				logEvent.getLoggerName(), message.getFormattedMessage());
 		}
@@ -166,6 +159,10 @@ public class UpgradeLogAppender implements Appender {
 	}
 
 	private boolean _isDataCleanupMessage(String loggerName) {
+		if (loggerName.startsWith("com.liferay.data.cleanup.internal.verify")) {
+			return true;
+		}
+
 		try {
 			ClassLoader classLoader = PortalClassLoaderUtil.getClassLoader();
 

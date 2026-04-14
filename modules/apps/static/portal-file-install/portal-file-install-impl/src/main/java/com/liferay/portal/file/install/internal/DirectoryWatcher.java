@@ -17,8 +17,8 @@ import com.liferay.portal.file.install.FileInstaller;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ModuleFrameworkPropsValues;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -575,6 +575,7 @@ public class DirectoryWatcher extends Thread implements BundleListener {
 				String location = url.toString();
 
 				try (InputStream inputStream = url.openStream();
+
 					BufferedInputStream bufferedInputStream =
 						new BufferedInputStream(inputStream)) {
 

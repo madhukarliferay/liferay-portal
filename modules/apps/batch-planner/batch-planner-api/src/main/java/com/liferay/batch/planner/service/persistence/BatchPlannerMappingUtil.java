@@ -221,56 +221,6 @@ public class BatchPlannerMappingUtil {
 	}
 
 	/**
-	 * Returns the last batch planner mapping in the ordered set where batchPlannerPlanId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the batch planner plan ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner mapping
-	 * @throws NoSuchMappingException if a matching batch planner mapping could not be found
-	 */
-	public static BatchPlannerMapping findByBatchPlannerPlanId_Last(
-			long batchPlannerPlanId,
-			OrderByComparator<BatchPlannerMapping> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchMappingException {
-
-		return getPersistence().findByBatchPlannerPlanId_Last(
-			batchPlannerPlanId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last batch planner mapping in the ordered set where batchPlannerPlanId = &#63;.
-	 *
-	 * @param batchPlannerPlanId the batch planner plan ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching batch planner mapping, or <code>null</code> if a matching batch planner mapping could not be found
-	 */
-	public static BatchPlannerMapping fetchByBatchPlannerPlanId_Last(
-		long batchPlannerPlanId,
-		OrderByComparator<BatchPlannerMapping> orderByComparator) {
-
-		return getPersistence().fetchByBatchPlannerPlanId_Last(
-			batchPlannerPlanId, orderByComparator);
-	}
-
-	/**
-	 * Returns the batch planner mappings before and after the current batch planner mapping in the ordered set where batchPlannerPlanId = &#63;.
-	 *
-	 * @param batchPlannerMappingId the primary key of the current batch planner mapping
-	 * @param batchPlannerPlanId the batch planner plan ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next batch planner mapping
-	 * @throws NoSuchMappingException if a batch planner mapping with the primary key could not be found
-	 */
-	public static BatchPlannerMapping[] findByBatchPlannerPlanId_PrevAndNext(
-			long batchPlannerMappingId, long batchPlannerPlanId,
-			OrderByComparator<BatchPlannerMapping> orderByComparator)
-		throws com.liferay.batch.planner.exception.NoSuchMappingException {
-
-		return getPersistence().findByBatchPlannerPlanId_PrevAndNext(
-			batchPlannerMappingId, batchPlannerPlanId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the batch planner mappings where batchPlannerPlanId = &#63; from the database.
 	 *
 	 * @param batchPlannerPlanId the batch planner plan ID
@@ -543,3 +493,4 @@ public class BatchPlannerMappingUtil {
 	private static volatile BatchPlannerMappingPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1453161165

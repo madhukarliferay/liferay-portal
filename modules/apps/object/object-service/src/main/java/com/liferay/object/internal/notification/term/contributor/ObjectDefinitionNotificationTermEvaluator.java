@@ -8,6 +8,7 @@ package com.liferay.object.internal.notification.term.contributor;
 import com.liferay.notification.context.NotificationContext;
 import com.liferay.notification.term.evaluator.NotificationTermEvaluator;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.definition.notification.term.util.ObjectDefinitionNotificationTermUtil;
 import com.liferay.object.internal.notification.term.evaluator.util.ObjectDefinitionNotificationTermEvaluatorUtil;
 import com.liferay.object.model.ObjectDefinition;
@@ -245,7 +246,7 @@ public class ObjectDefinitionNotificationTermEvaluator
 				return null;
 			}
 
-			return _getObjectFieldValue(objectField, termValues);
+			return _getObjectFieldValue(context, objectField, termValues);
 		}
 		else if (termName.equals("[%OBJECT_ENTRY_VERSION%]")) {
 			return String.valueOf(objectEntry.getVersion());
@@ -269,7 +270,7 @@ public class ObjectDefinitionNotificationTermEvaluator
 				continue;
 			}
 
-			return _getObjectFieldValue(objectField, termValues);
+			return _getObjectFieldValue(context, objectField, termValues);
 		}
 
 		return null;
@@ -395,7 +396,7 @@ public class ObjectDefinitionNotificationTermEvaluator
 			return StringPool.BLANK;
 		}
 
-		if (parentObjectDefinition.isSystem()) {
+		if (parentObjectDefinition.isUnmodifiableSystemObject()) {
 			return MapUtil.getString(
 				_objectEntryLocalService.getSystemModelAttributes(
 					parentObjectDefinition, primaryKey),
@@ -421,7 +422,8 @@ public class ObjectDefinitionNotificationTermEvaluator
 
 		return String.valueOf(
 			ObjectDefinitionNotificationTermEvaluatorUtil.getTermValue(
-				parentObjectField, values.get(parentObjectField.getName())));
+				null, parentObjectField,
+				values.get(parentObjectField.getName())));
 	}
 
 	private String _format(Date date, Locale locale) {
@@ -432,7 +434,41 @@ public class ObjectDefinitionNotificationTermEvaluator
 	}
 
 	private String _getObjectFieldValue(
-		ObjectField objectField, Map<String, Object> termValues) {
+		Context context, ObjectField objectField,
+		Map<String, Object> termValues) {
+
+		if (objectField.compareBusinessType(
+				ObjectFieldConstants.BUSINESS_TYPE_ASSIGNEE)) {
+
+			Map<String, Object> entryDTO = (Map<String, Object>)termValues.get(
+				"entryDTO");
+
+			Map<String, Object> properties = (Map<String, Object>)entryDTO.get(
+				"properties");
+
+			Map<String, Object> assigneeMap =
+				(Map<String, Object>)properties.get(objectField.getName());
+
+			if (MapUtil.isEmpty(assigneeMap)) {
+				return null;
+			}
+
+			if (!context.equals(Context.RECIPIENT)) {
+				return GetterUtil.getString(assigneeMap.get("name"));
+			}
+
+			String type = GetterUtil.getString(assigneeMap.get("type"));
+
+			if (StringUtil.equalsIgnoreCase("Role", type) ||
+				StringUtil.equalsIgnoreCase("User", type)) {
+
+				return MapUtil.getString(
+					(Map<String, Object>)termValues.get(objectField.getName()),
+					"classPK");
+			}
+
+			return null;
+		}
 
 		Object termValue = termValues.get(objectField.getName());
 

@@ -9,24 +9,54 @@ import {openModal} from 'frontend-js-components-web';
 import {fetch} from 'frontend-js-web';
 
 import CustomAuthorTableCell from './CustomAuthorTableCell';
+import CustomListTitle from './CustomListTitle';
 import SampleInfoPanel from './SampleInfoPanel';
 import dummyUploader from './dummyUploader';
+import {advancedFDSAtom} from './utils/atoms';
 
 import type {
 	ICardSchema,
 	IFileDropSettings,
 	IInternalRenderer,
+	IItemsActions,
+	IListSchema,
 	IView,
 } from '@liferay/frontend-data-set-web';
 
+function applyStyles(itemsActions: Array<IItemsActions>): Array<IItemsActions> {
+	return itemsActions.map((action: IItemsActions) => {
+		const newItems = action.items ? applyStyles(action.items) : undefined;
+		const itemsChanged = newItems !== action.items;
+
+		const needsStyling = action?.data?.id === 'sampleDeleteMessage';
+
+		if (!itemsChanged && !needsStyling) {
+			return action;
+		}
+
+		return {
+			...action,
+			...(itemsChanged && {items: newItems}),
+			...(needsStyling && {className: 'text-danger'}),
+		};
+	});
+}
+
 export default function propsTransformer({
 	additionalProps: {greeting},
+	itemsActions,
 	selectedItemsKey,
 	...otherProps
 }: any) {
 	const customAuthorTableCellRenderer: IInternalRenderer = {
 		component: CustomAuthorTableCell,
 		name: 'customAuthorTableCellRenderer',
+		type: 'internal',
+	};
+
+	const customListTitleRenderer: IInternalRenderer = {
+		component: CustomListTitle,
+		name: 'customListTitleRenderer',
 		type: 'internal',
 	};
 
@@ -69,6 +99,8 @@ export default function propsTransformer({
 
 	const listView = views.find((view) => view.name === 'list')!;
 
+	const listSchema = listView.schema as IListSchema;
+
 	listView.setItemComponentProps = ({
 		item,
 		props,
@@ -76,17 +108,30 @@ export default function propsTransformer({
 		item: any;
 		props: any;
 	}) => {
+		const updatedProps = {
+			...props,
+			schema: {
+				...listSchema,
+				titleRendererName: 'customListTitleRenderer',
+			},
+		};
+
 		if (item.title === 'Sample1') {
 			return {
-				...props,
-				className: classNames('sample-css-class', props.className),
+				...updatedProps,
+				className: classNames(
+					'sample-css-class',
+					updatedProps.className
+				),
 			};
 		}
 
-		return props;
+		return updatedProps;
 	};
 
-	const tableView = views.find((view) => view.name === 'customizedTable')!;
+	const tableView = views.find((view) =>
+		view.name?.toLowerCase().includes('table')
+	)!;
 
 	tableView.setItemComponentProps = ({
 		item,
@@ -107,11 +152,14 @@ export default function propsTransformer({
 
 	return {
 		...otherProps,
+		atom: advancedFDSAtom,
 		customRenderers: {
+			listSection: [customListTitleRenderer],
 			tableCell: [customAuthorTableCellRenderer],
 		},
 		fileDropSettings,
 		infoPanelComponent: SampleInfoPanel,
+		itemsActions: applyStyles(itemsActions),
 		onActionDropdownItemClick({
 			action,
 			itemData,

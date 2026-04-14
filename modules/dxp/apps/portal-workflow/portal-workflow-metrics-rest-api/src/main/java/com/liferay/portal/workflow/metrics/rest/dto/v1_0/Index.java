@@ -220,9 +220,7 @@ public class Index implements Serializable {
 			sb.append("\"group\": ");
 
 			sb.append("\"");
-
 			sb.append(group);
-
 			sb.append("\"");
 		}
 
@@ -397,3 +395,4 @@ public class Index implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-488575800

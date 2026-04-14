@@ -220,56 +220,6 @@ public class AssetAutoTaggerEntryUtil {
 	}
 
 	/**
-	 * Returns the last asset auto tagger entry in the ordered set where assetEntryId = &#63;.
-	 *
-	 * @param assetEntryId the asset entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset auto tagger entry
-	 * @throws NoSuchEntryException if a matching asset auto tagger entry could not be found
-	 */
-	public static AssetAutoTaggerEntry findByAssetEntryId_Last(
-			long assetEntryId,
-			OrderByComparator<AssetAutoTaggerEntry> orderByComparator)
-		throws com.liferay.asset.auto.tagger.exception.NoSuchEntryException {
-
-		return getPersistence().findByAssetEntryId_Last(
-			assetEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last asset auto tagger entry in the ordered set where assetEntryId = &#63;.
-	 *
-	 * @param assetEntryId the asset entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset auto tagger entry, or <code>null</code> if a matching asset auto tagger entry could not be found
-	 */
-	public static AssetAutoTaggerEntry fetchByAssetEntryId_Last(
-		long assetEntryId,
-		OrderByComparator<AssetAutoTaggerEntry> orderByComparator) {
-
-		return getPersistence().fetchByAssetEntryId_Last(
-			assetEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the asset auto tagger entries before and after the current asset auto tagger entry in the ordered set where assetEntryId = &#63;.
-	 *
-	 * @param assetAutoTaggerEntryId the primary key of the current asset auto tagger entry
-	 * @param assetEntryId the asset entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset auto tagger entry
-	 * @throws NoSuchEntryException if a asset auto tagger entry with the primary key could not be found
-	 */
-	public static AssetAutoTaggerEntry[] findByAssetEntryId_PrevAndNext(
-			long assetAutoTaggerEntryId, long assetEntryId,
-			OrderByComparator<AssetAutoTaggerEntry> orderByComparator)
-		throws com.liferay.asset.auto.tagger.exception.NoSuchEntryException {
-
-		return getPersistence().findByAssetEntryId_PrevAndNext(
-			assetAutoTaggerEntryId, assetEntryId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the asset auto tagger entries where assetEntryId = &#63; from the database.
 	 *
 	 * @param assetEntryId the asset entry ID
@@ -390,56 +340,6 @@ public class AssetAutoTaggerEntryUtil {
 
 		return getPersistence().fetchByAssetTagId_First(
 			assetTagId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last asset auto tagger entry in the ordered set where assetTagId = &#63;.
-	 *
-	 * @param assetTagId the asset tag ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset auto tagger entry
-	 * @throws NoSuchEntryException if a matching asset auto tagger entry could not be found
-	 */
-	public static AssetAutoTaggerEntry findByAssetTagId_Last(
-			long assetTagId,
-			OrderByComparator<AssetAutoTaggerEntry> orderByComparator)
-		throws com.liferay.asset.auto.tagger.exception.NoSuchEntryException {
-
-		return getPersistence().findByAssetTagId_Last(
-			assetTagId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last asset auto tagger entry in the ordered set where assetTagId = &#63;.
-	 *
-	 * @param assetTagId the asset tag ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset auto tagger entry, or <code>null</code> if a matching asset auto tagger entry could not be found
-	 */
-	public static AssetAutoTaggerEntry fetchByAssetTagId_Last(
-		long assetTagId,
-		OrderByComparator<AssetAutoTaggerEntry> orderByComparator) {
-
-		return getPersistence().fetchByAssetTagId_Last(
-			assetTagId, orderByComparator);
-	}
-
-	/**
-	 * Returns the asset auto tagger entries before and after the current asset auto tagger entry in the ordered set where assetTagId = &#63;.
-	 *
-	 * @param assetAutoTaggerEntryId the primary key of the current asset auto tagger entry
-	 * @param assetTagId the asset tag ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset auto tagger entry
-	 * @throws NoSuchEntryException if a asset auto tagger entry with the primary key could not be found
-	 */
-	public static AssetAutoTaggerEntry[] findByAssetTagId_PrevAndNext(
-			long assetAutoTaggerEntryId, long assetTagId,
-			OrderByComparator<AssetAutoTaggerEntry> orderByComparator)
-		throws com.liferay.asset.auto.tagger.exception.NoSuchEntryException {
-
-		return getPersistence().findByAssetTagId_PrevAndNext(
-			assetAutoTaggerEntryId, assetTagId, orderByComparator);
 	}
 
 	/**
@@ -698,3 +598,4 @@ public class AssetAutoTaggerEntryUtil {
 	private static volatile AssetAutoTaggerEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:265179401

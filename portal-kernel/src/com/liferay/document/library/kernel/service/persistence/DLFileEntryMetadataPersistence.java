@@ -122,47 +122,6 @@ public interface DLFileEntryMetadataPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last document library file entry metadata in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
-	 * Returns the last document library file entry metadata in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata, or <code>null</code> if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntryMetadata>
-			orderByComparator);
-
-	/**
-	 * Returns the document library file entry metadatas before and after the current document library file entry metadata in the ordered set where uuid = &#63;.
-	 *
-	 * @param fileEntryMetadataId the primary key of the current document library file entry metadata
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a document library file entry metadata with the primary key could not be found
-	 */
-	public DLFileEntryMetadata[] findByUuid_PrevAndNext(
-			long fileEntryMetadataId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
 	 * Removes all the document library file entry metadatas where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -272,50 +231,6 @@ public interface DLFileEntryMetadataPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last document library file entry metadata in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
-	 * Returns the last document library file entry metadata in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata, or <code>null</code> if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntryMetadata>
-			orderByComparator);
-
-	/**
-	 * Returns the document library file entry metadatas before and after the current document library file entry metadata in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param fileEntryMetadataId the primary key of the current document library file entry metadata
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a document library file entry metadata with the primary key could not be found
-	 */
-	public DLFileEntryMetadata[] findByUuid_C_PrevAndNext(
-			long fileEntryMetadataId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
 	 * Removes all the document library file entry metadatas where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -421,47 +336,6 @@ public interface DLFileEntryMetadataPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last document library file entry metadata in the ordered set where fileEntryId = &#63;.
-	 *
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata findByFileEntryId_Last(
-			long fileEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
-	 * Returns the last document library file entry metadata in the ordered set where fileEntryId = &#63;.
-	 *
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata, or <code>null</code> if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata fetchByFileEntryId_Last(
-		long fileEntryId,
-		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntryMetadata>
-			orderByComparator);
-
-	/**
-	 * Returns the document library file entry metadatas before and after the current document library file entry metadata in the ordered set where fileEntryId = &#63;.
-	 *
-	 * @param fileEntryMetadataId the primary key of the current document library file entry metadata
-	 * @param fileEntryId the file entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a document library file entry metadata with the primary key could not be found
-	 */
-	public DLFileEntryMetadata[] findByFileEntryId_PrevAndNext(
-			long fileEntryMetadataId, long fileEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
 	 * Removes all the document library file entry metadatas where fileEntryId = &#63; from the database.
 	 *
 	 * @param fileEntryId the file entry ID
@@ -563,47 +437,6 @@ public interface DLFileEntryMetadataPersistence
 		long fileVersionId,
 		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntryMetadata>
 			orderByComparator);
-
-	/**
-	 * Returns the last document library file entry metadata in the ordered set where fileVersionId = &#63;.
-	 *
-	 * @param fileVersionId the file version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata findByFileVersionId_Last(
-			long fileVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
-
-	/**
-	 * Returns the last document library file entry metadata in the ordered set where fileVersionId = &#63;.
-	 *
-	 * @param fileVersionId the file version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching document library file entry metadata, or <code>null</code> if a matching document library file entry metadata could not be found
-	 */
-	public DLFileEntryMetadata fetchByFileVersionId_Last(
-		long fileVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<DLFileEntryMetadata>
-			orderByComparator);
-
-	/**
-	 * Returns the document library file entry metadatas before and after the current document library file entry metadata in the ordered set where fileVersionId = &#63;.
-	 *
-	 * @param fileEntryMetadataId the primary key of the current document library file entry metadata
-	 * @param fileVersionId the file version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next document library file entry metadata
-	 * @throws NoSuchFileEntryMetadataException if a document library file entry metadata with the primary key could not be found
-	 */
-	public DLFileEntryMetadata[] findByFileVersionId_PrevAndNext(
-			long fileEntryMetadataId, long fileVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<DLFileEntryMetadata> orderByComparator)
-		throws NoSuchFileEntryMetadataException;
 
 	/**
 	 * Removes all the document library file entry metadatas where fileVersionId = &#63; from the database.
@@ -849,3 +682,4 @@ public interface DLFileEntryMetadataPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1857981518

@@ -174,9 +174,7 @@ public class NavigationMenuSerDes {
 			sb.append("\"navigationType\": ");
 
 			sb.append("\"");
-
 			sb.append(navigationMenu.getNavigationType());
-
 			sb.append("\"");
 		}
 
@@ -563,3 +561,4 @@ public class NavigationMenuSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1568795186

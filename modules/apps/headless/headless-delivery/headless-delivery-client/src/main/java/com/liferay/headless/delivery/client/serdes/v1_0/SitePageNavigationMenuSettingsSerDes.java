@@ -86,9 +86,7 @@ public class SitePageNavigationMenuSettingsSerDes {
 			sb.append("\"targetType\": ");
 
 			sb.append("\"");
-
 			sb.append(sitePageNavigationMenuSettings.getTargetType());
-
 			sb.append("\"");
 		}
 
@@ -278,3 +276,4 @@ public class SitePageNavigationMenuSettingsSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:995754605

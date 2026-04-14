@@ -121,47 +121,6 @@ public interface KaleoNodePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last kaleo node in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo node
-	 * @throws NoSuchNodeException if a matching kaleo node could not be found
-	 */
-	public KaleoNode findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-				orderByComparator)
-		throws NoSuchNodeException;
-
-	/**
-	 * Returns the last kaleo node in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo node, or <code>null</code> if a matching kaleo node could not be found
-	 */
-	public KaleoNode fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-			orderByComparator);
-
-	/**
-	 * Returns the kaleo nodes before and after the current kaleo node in the ordered set where companyId = &#63;.
-	 *
-	 * @param kaleoNodeId the primary key of the current kaleo node
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo node
-	 * @throws NoSuchNodeException if a kaleo node with the primary key could not be found
-	 */
-	public KaleoNode[] findByCompanyId_PrevAndNext(
-			long kaleoNodeId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-				orderByComparator)
-		throws NoSuchNodeException;
-
-	/**
 	 * Removes all the kaleo nodes where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -263,47 +222,6 @@ public interface KaleoNodePersistence
 		long kaleoDefinitionVersionId,
 		com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
 			orderByComparator);
-
-	/**
-	 * Returns the last kaleo node in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo node
-	 * @throws NoSuchNodeException if a matching kaleo node could not be found
-	 */
-	public KaleoNode findByKaleoDefinitionVersionId_Last(
-			long kaleoDefinitionVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-				orderByComparator)
-		throws NoSuchNodeException;
-
-	/**
-	 * Returns the last kaleo node in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo node, or <code>null</code> if a matching kaleo node could not be found
-	 */
-	public KaleoNode fetchByKaleoDefinitionVersionId_Last(
-		long kaleoDefinitionVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-			orderByComparator);
-
-	/**
-	 * Returns the kaleo nodes before and after the current kaleo node in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoNodeId the primary key of the current kaleo node
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo node
-	 * @throws NoSuchNodeException if a kaleo node with the primary key could not be found
-	 */
-	public KaleoNode[] findByKaleoDefinitionVersionId_PrevAndNext(
-			long kaleoNodeId, long kaleoDefinitionVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-				orderByComparator)
-		throws NoSuchNodeException;
 
 	/**
 	 * Removes all the kaleo nodes where kaleoDefinitionVersionId = &#63; from the database.
@@ -413,50 +331,6 @@ public interface KaleoNodePersistence
 		long companyId, long kaleoDefinitionVersionId,
 		com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
 			orderByComparator);
-
-	/**
-	 * Returns the last kaleo node in the ordered set where companyId = &#63; and kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo node
-	 * @throws NoSuchNodeException if a matching kaleo node could not be found
-	 */
-	public KaleoNode findByC_KDVI_Last(
-			long companyId, long kaleoDefinitionVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-				orderByComparator)
-		throws NoSuchNodeException;
-
-	/**
-	 * Returns the last kaleo node in the ordered set where companyId = &#63; and kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo node, or <code>null</code> if a matching kaleo node could not be found
-	 */
-	public KaleoNode fetchByC_KDVI_Last(
-		long companyId, long kaleoDefinitionVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-			orderByComparator);
-
-	/**
-	 * Returns the kaleo nodes before and after the current kaleo node in the ordered set where companyId = &#63; and kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoNodeId the primary key of the current kaleo node
-	 * @param companyId the company ID
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo node
-	 * @throws NoSuchNodeException if a kaleo node with the primary key could not be found
-	 */
-	public KaleoNode[] findByC_KDVI_PrevAndNext(
-			long kaleoNodeId, long companyId, long kaleoDefinitionVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoNode>
-				orderByComparator)
-		throws NoSuchNodeException;
 
 	/**
 	 * Removes all the kaleo nodes where companyId = &#63; and kaleoDefinitionVersionId = &#63; from the database.
@@ -595,3 +469,4 @@ public interface KaleoNodePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1420641028

@@ -17,6 +17,9 @@ type Invoice = {
 
 export const productPurchaseStore = createStore({
 	context: {
+		account: {
+			taxId: '',
+		},
 		licenseType: null as unknown as LicenseType,
 		payment: {
 			billingAddress: {
@@ -35,11 +38,19 @@ export const productPurchaseStore = createStore({
 				email: '',
 				purchaseOrderNumber: '',
 			} as Invoice,
+			taxId: '',
 			type: PaymentMethodType.PAY_NOW,
 		},
 		project: null as unknown as ConsoleUserProject,
+		salesforceProject: null as SalesforceProject | null,
 	},
 	on: {
+		setAccountTaxId: {
+			payment: (context, event: {taxId: string}) => ({
+				...context.payment,
+				taxId: event.taxId,
+			}),
+		},
 		setBillingAddress: {
 			payment: (
 				context,
@@ -79,6 +90,13 @@ export const productPurchaseStore = createStore({
 
 		setProject: {
 			project: (_, event: {project: ConsoleUserProject}) => event.project,
+		},
+
+		setSalesforceProject: {
+			salesforceProject: (
+				_,
+				event: {salesforceProject: SalesforceProject}
+			) => event.salesforceProject,
 		},
 
 		toggleEulaAgreement: {

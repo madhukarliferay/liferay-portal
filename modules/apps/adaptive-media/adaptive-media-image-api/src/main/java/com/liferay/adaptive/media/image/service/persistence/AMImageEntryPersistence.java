@@ -121,47 +121,6 @@ public interface AMImageEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last am image entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByUuid_PrevAndNext(
-			long amImageEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
 	 * Removes all the am image entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface AMImageEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last am image entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByUuid_C_PrevAndNext(
-			long amImageEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
 	 * Removes all the am image entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface AMImageEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last am image entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByGroupId_PrevAndNext(
-			long amImageEntryId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
 	 * Removes all the am image entries where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -610,47 +484,6 @@ public interface AMImageEntryPersistence
 		long companyId,
 		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last am image entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByCompanyId_PrevAndNext(
-			long amImageEntryId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
 
 	/**
 	 * Removes all the am image entries where companyId = &#63; from the database.
@@ -756,47 +589,6 @@ public interface AMImageEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last am image entry in the ordered set where configurationUuid = &#63;.
-	 *
-	 * @param configurationUuid the configuration uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByConfigurationUuid_Last(
-			String configurationUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where configurationUuid = &#63;.
-	 *
-	 * @param configurationUuid the configuration uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByConfigurationUuid_Last(
-		String configurationUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where configurationUuid = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param configurationUuid the configuration uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByConfigurationUuid_PrevAndNext(
-			long amImageEntryId, String configurationUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
 	 * Removes all the am image entries where configurationUuid = &#63; from the database.
 	 *
 	 * @param configurationUuid the configuration uuid
@@ -897,47 +689,6 @@ public interface AMImageEntryPersistence
 		long fileVersionId,
 		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last am image entry in the ordered set where fileVersionId = &#63;.
-	 *
-	 * @param fileVersionId the file version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByFileVersionId_Last(
-			long fileVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where fileVersionId = &#63;.
-	 *
-	 * @param fileVersionId the file version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByFileVersionId_Last(
-		long fileVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where fileVersionId = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param fileVersionId the file version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByFileVersionId_PrevAndNext(
-			long amImageEntryId, long fileVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
 
 	/**
 	 * Removes all the am image entries where fileVersionId = &#63; from the database.
@@ -1047,50 +798,6 @@ public interface AMImageEntryPersistence
 		long companyId, String configurationUuid,
 		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last am image entry in the ordered set where companyId = &#63; and configurationUuid = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param configurationUuid the configuration uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry
-	 * @throws NoSuchAMImageEntryException if a matching am image entry could not be found
-	 */
-	public AMImageEntry findByC_C_Last(
-			long companyId, String configurationUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
-
-	/**
-	 * Returns the last am image entry in the ordered set where companyId = &#63; and configurationUuid = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param configurationUuid the configuration uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching am image entry, or <code>null</code> if a matching am image entry could not be found
-	 */
-	public AMImageEntry fetchByC_C_Last(
-		long companyId, String configurationUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the am image entries before and after the current am image entry in the ordered set where companyId = &#63; and configurationUuid = &#63;.
-	 *
-	 * @param amImageEntryId the primary key of the current am image entry
-	 * @param companyId the company ID
-	 * @param configurationUuid the configuration uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next am image entry
-	 * @throws NoSuchAMImageEntryException if a am image entry with the primary key could not be found
-	 */
-	public AMImageEntry[] findByC_C_PrevAndNext(
-			long amImageEntryId, long companyId, String configurationUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AMImageEntry>
-				orderByComparator)
-		throws NoSuchAMImageEntryException;
 
 	/**
 	 * Removes all the am image entries where companyId = &#63; and configurationUuid = &#63; from the database.
@@ -1282,3 +989,4 @@ public interface AMImageEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:820579966

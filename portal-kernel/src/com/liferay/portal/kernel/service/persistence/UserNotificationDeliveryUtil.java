@@ -220,56 +220,6 @@ public class UserNotificationDeliveryUtil {
 	}
 
 	/**
-	 * Returns the last user notification delivery in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching user notification delivery
-	 * @throws NoSuchUserNotificationDeliveryException if a matching user notification delivery could not be found
-	 */
-	public static UserNotificationDelivery findByUserId_Last(
-			long userId,
-			OrderByComparator<UserNotificationDelivery> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchUserNotificationDeliveryException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last user notification delivery in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching user notification delivery, or <code>null</code> if a matching user notification delivery could not be found
-	 */
-	public static UserNotificationDelivery fetchByUserId_Last(
-		long userId,
-		OrderByComparator<UserNotificationDelivery> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the user notification deliveries before and after the current user notification delivery in the ordered set where userId = &#63;.
-	 *
-	 * @param userNotificationDeliveryId the primary key of the current user notification delivery
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next user notification delivery
-	 * @throws NoSuchUserNotificationDeliveryException if a user notification delivery with the primary key could not be found
-	 */
-	public static UserNotificationDelivery[] findByUserId_PrevAndNext(
-			long userNotificationDeliveryId, long userId,
-			OrderByComparator<UserNotificationDelivery> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchUserNotificationDeliveryException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			userNotificationDeliveryId, userId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the user notification deliveries where userId = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -561,3 +511,4 @@ public class UserNotificationDeliveryUtil {
 	private static volatile UserNotificationDeliveryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:367410910

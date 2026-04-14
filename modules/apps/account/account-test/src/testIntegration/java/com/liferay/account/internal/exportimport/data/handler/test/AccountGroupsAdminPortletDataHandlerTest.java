@@ -26,12 +26,10 @@ import com.liferay.exportimport.portlet.data.handler.provider.PortletDataHandler
 import com.liferay.exportimport.report.constants.ExportImportReportEntryConstants;
 import com.liferay.exportimport.report.model.ExportImportReportEntry;
 import com.liferay.exportimport.report.service.ExportImportReportEntryLocalService;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -39,8 +37,6 @@ import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlag;
-import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -53,9 +49,7 @@ import java.util.Objects;
 
 import org.hamcrest.CoreMatchers;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,11 +58,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Balazs Breier
  */
-@FeatureFlags(
-	featureFlags = {
-		@FeatureFlag(value = "LPD-35914"), @FeatureFlag(value = "LPD-47858")
-	}
-)
 @RunWith(Arquillian.class)
 public class AccountGroupsAdminPortletDataHandlerTest {
 
@@ -78,18 +67,6 @@ public class AccountGroupsAdminPortletDataHandlerTest {
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
-
-	@BeforeClass
-	public static void setUpClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, true, "LPD-35914");
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-		FeatureFlagTestUtil.invokeFeatureFlagListeners(
-			CompanyConstants.SYSTEM, false, "LPD-35914");
-	}
 
 	@Test
 	public void testExportImportAccountGroups() throws Exception {
@@ -208,10 +185,12 @@ public class AccountGroupsAdminPortletDataHandlerTest {
 		Assert.assertThat(
 			ClassUtil.getClassName(portletDataHandler),
 			CoreMatchers.containsString("BatchEnginePortletDataHandler"));
-		Assert.assertThat(
-			portletDataHandler.getName(),
-			CoreMatchers.containsString(
-				"com.liferay.headless.admin.user.dto.v1_0.AccountGroup"));
+		Assert.assertEquals(
+			AccountGroup.class.getName(),
+			portletDataHandler.getClassNames()[0]);
+		Assert.assertEquals(
+			AccountPortletKeys.ACCOUNT_GROUPS_ADMIN,
+			portletDataHandler.getPortletId());
 	}
 
 	@Inject

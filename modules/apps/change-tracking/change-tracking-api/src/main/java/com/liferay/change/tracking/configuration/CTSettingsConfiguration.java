@@ -7,6 +7,7 @@ package com.liferay.change.tracking.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.portal.configuration.metatype.annotations.ExtendedAttributeDefinition;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 
 /**
@@ -22,6 +23,12 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 	name = "publications-settings-configuration-name"
 )
 public interface CTSettingsConfiguration {
+
+	@Meta.AD(
+		deflt = "false", description = "clean-up-cts-content-data-description",
+		name = "clean-up-cts-content-data", required = false
+	)
+	public boolean cleanUpCTSContentData();
 
 	@Meta.AD(
 		deflt = "0", name = "default-ct-collection-template-id",
@@ -48,22 +55,20 @@ public interface CTSettingsConfiguration {
 	)
 	public boolean modificationDeletionConflictCheckEnabled();
 
-	@Meta.AD(deflt = "false", name = "remote-enabled", required = false)
-	public boolean remoteEnabled();
-
+	@ExtendedAttributeDefinition(featureFlagKey = "LPS-186360")
 	@Meta.AD(name = "remote-client-id", required = false)
 	public String remoteClientId();
 
+	@ExtendedAttributeDefinition(featureFlagKey = "LPS-186360")
 	@Meta.AD(name = "remote-client-secret", required = false)
 	public String remoteClientSecret();
 
+	@ExtendedAttributeDefinition(featureFlagKey = "LPS-186360")
+	@Meta.AD(deflt = "false", name = "remote-enabled", required = false)
+	public boolean remoteEnabled();
+
 	@Meta.AD(deflt = "false", name = "sandbox-enabled", required = false)
 	public boolean sandboxEnabled();
-
-	@Meta.AD(
-		deflt = "false", name = "allow-unapproved-changes", required = false
-	)
-	public boolean unapprovedChangesAllowed();
 
 	@Meta.AD(
 		deflt = "false",
@@ -71,5 +76,10 @@ public interface CTSettingsConfiguration {
 		name = "schema-version-check-enabled", required = false
 	)
 	public boolean schemaVersionCheckEnabled();
+
+	@Meta.AD(
+		deflt = "false", name = "allow-unapproved-changes", required = false
+	)
+	public boolean unapprovedChangesAllowed();
 
 }

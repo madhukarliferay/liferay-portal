@@ -7,13 +7,8 @@ package com.liferay.exportimport.report.internal.util;
 
 import com.liferay.batch.engine.thread.local.BatchEngineThreadLocal;
 import com.liferay.exportimport.report.constants.ExportImportReportEntryConstants;
-import com.liferay.object.constants.ObjectDefinitionConstants;
-import com.liferay.object.model.ObjectDefinition;
-import com.liferay.object.model.ObjectEntry;
-import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
-import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.staging.StagingGroupHelper;
 import com.liferay.staging.StagingGroupHelperUtil;
 
@@ -21,28 +16,6 @@ import com.liferay.staging.StagingGroupHelperUtil;
  * @author Petteri Karttunen
  */
 public class ExportImportReportEntryUtil {
-
-	public static String getModelName(Object object) {
-		if (object instanceof Class<?> clazz) {
-			return clazz.getName();
-		}
-		else if (object instanceof ObjectEntry objectEntry) {
-			ObjectDefinition objectDefinition =
-				ObjectDefinitionLocalServiceUtil.fetchObjectDefinition(
-					objectEntry.getObjectDefinitionId());
-
-			if (objectDefinition != null) {
-				return objectDefinition.getName();
-			}
-		}
-		else if (object instanceof BaseModel<?> baseModel) {
-			return baseModel.getModelClassName();
-		}
-
-		Class<?> clazz = object.getClass();
-
-		return clazz.getName();
-	}
 
 	public static int getOrigin() {
 		if (BatchEngineThreadLocal.isBatchImportInProcess()) {
@@ -52,43 +25,25 @@ public class ExportImportReportEntryUtil {
 		return ExportImportReportEntryConstants.ORIGIN_STAGING;
 	}
 
-	public static String getScope(Group group) {
-		if ((group == null) || group.isCompany()) {
-			return ObjectDefinitionConstants.SCOPE_COMPANY;
+	public static boolean isCompanyScoped(
+		long groupId, GroupLocalService groupLocalService) {
+
+		if (groupId == 0) {
+			return true;
 		}
+
+		Group group = groupLocalService.fetchGroup(groupId);
 
 		StagingGroupHelper stagingGroupHelper =
 			StagingGroupHelperUtil.getStagingGroupHelper();
 
-		if (stagingGroupHelper.isCompanyGroup(group)) {
-			return ObjectDefinitionConstants.SCOPE_COMPANY;
+		if ((group == null) || group.isCompany() ||
+			stagingGroupHelper.isCompanyGroup(group)) {
+
+			return true;
 		}
 
-		return ObjectDefinitionConstants.SCOPE_SITE;
-	}
-
-	public static String getScope(long groupId) {
-		if (groupId == 0) {
-			return ObjectDefinitionConstants.SCOPE_COMPANY;
-		}
-
-		return getScope(GroupLocalServiceUtil.fetchGroup(groupId));
-	}
-
-	public static String getScopeKey(Group group) {
-		if (group == null) {
-			return null;
-		}
-
-		return group.getExternalReferenceCode();
-	}
-
-	public static String getScopeKey(long groupId) {
-		if (groupId == 0) {
-			return null;
-		}
-
-		return getScopeKey(GroupLocalServiceUtil.fetchGroup(groupId));
+		return false;
 	}
 
 }

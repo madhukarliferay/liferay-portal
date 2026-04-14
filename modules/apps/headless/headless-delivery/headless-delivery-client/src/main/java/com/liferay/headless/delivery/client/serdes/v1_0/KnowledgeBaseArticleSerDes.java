@@ -430,9 +430,7 @@ public class KnowledgeBaseArticleSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(knowledgeBaseArticle.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -1109,3 +1107,4 @@ public class KnowledgeBaseArticleSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:2014881968

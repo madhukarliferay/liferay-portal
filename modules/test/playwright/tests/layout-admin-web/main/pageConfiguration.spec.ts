@@ -8,6 +8,7 @@ import path from 'path';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {instanceSettingsPagesTest} from '../../../fixtures/instanceSettingsPagesTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {masterPagesPagesTest} from '../../../fixtures/masterPagesPagesTest';
@@ -27,8 +28,10 @@ import {pagesPagesTest} from './fixtures/pagesPagesTest';
 const test = mergeTests(
 	apiHelpersTest,
 	featureFlagsTest({
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
+	instanceSettingsPagesTest,
 	isolatedSiteTest,
 	loginTest(),
 	masterPagesPagesTest,
@@ -54,7 +57,7 @@ test.describe('General configuration', () => {
 	}) => {
 		await page.goto('/');
 
-		await page.getByLabel('Configure Page').click();
+		await page.getByLabel('Configure Page', {exact: true}).click();
 
 		await expect(page).toHaveURL(/edit_layout/);
 
@@ -186,7 +189,8 @@ test.describe('General configuration', () => {
 
 			await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage.externalReferenceCode,
 				title: layoutTitle,
 			});
 
@@ -369,7 +373,8 @@ test.describe('Design configuration', () => {
 
 			await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage.externalReferenceCode,
 				title: layoutTitle,
 			});
 
@@ -564,7 +569,8 @@ test.describe('Design configuration', () => {
 
 			await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage.externalReferenceCode,
 				title: layoutTitle,
 			});
 
@@ -872,7 +878,8 @@ test.describe('Design configuration', () => {
 
 			await apiHelpers.jsonWebServicesLayout.addLayout({
 				groupId: site.id,
-				masterLayoutPlid: masterPage.plid,
+				masterLayoutPageTemplateEntryERC:
+					masterPage.externalReferenceCode,
 				title: layoutTitle,
 			});
 
@@ -941,9 +948,7 @@ test.describe('Design configuration', () => {
 			await pageConfigurationPage.goToSection(pageName, 'Design');
 
 			await expect(async () => {
-				await page
-					.getByText('Define a custom theme for this page')
-					.click();
+				await pagesAdminPage.defineCustomThemeRadio.click();
 
 				await expect(
 					page.getByRole('checkbox', {name: 'Show Footer'})
@@ -972,9 +977,7 @@ test.describe('Design configuration', () => {
 
 			await pageConfigurationPage.goToSection(pageName, 'Design');
 
-			await page
-				.getByText('Define a custom theme for this page')
-				.waitFor();
+			await pagesAdminPage.defineCustomThemeRadio.waitFor();
 
 			await expect(
 				page.getByText(
@@ -1035,6 +1038,50 @@ test.describe('Design configuration', () => {
 			).toBeVisible();
 		}
 	);
+
+	test('Logo section is not visible when disabled from instance settings', async ({
+		instanceSettingsPage,
+		page,
+		pagesAdminPage,
+		site,
+	}) => {
+
+		// Don't allow site administrators to use their own logo
+
+		await instanceSettingsPage.goToInstanceSetting(
+			'Instance Configuration',
+			'Appearance'
+		);
+
+		await page
+			.getByLabel('Allow site administrators to use their own logo?')
+			.uncheck();
+
+		await instanceSettingsPage.saveAndWaitForAlert();
+
+		// Assert logo section is not visible
+
+		await pagesAdminPage.gotoPagesConfiguration(site.friendlyUrlPath);
+
+		await expect(
+			page.getByText(
+				'Upload a logo for pages that is used instead of the default enterprise logo.'
+			)
+		).not.toBeVisible();
+
+		await instanceSettingsPage.goToInstanceSetting(
+			'Instance Configuration',
+			'Appearance'
+		);
+
+		// Revert change in instance settings
+
+		await page
+			.getByLabel('Allow site administrators to use their own logo?')
+			.check();
+
+		await instanceSettingsPage.saveAndWaitForAlert();
+	});
 });
 
 test.describe('SEO configuration', () => {
@@ -1134,7 +1181,7 @@ test.describe('SEO configuration', () => {
 		await page.goto(`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`);
 
 		expect(await page.title()).toBe(
-			`${HTMLTitle} - ${site.name} - Liferay DXP`
+			`${HTMLTitle} - ${site.name} - Liferay`
 		);
 
 		// Check SEO HTML title is not shown in view mode
@@ -1142,7 +1189,7 @@ test.describe('SEO configuration', () => {
 		await pageEditorPage.goto(layout, site.friendlyUrlPath);
 
 		expect(await page.title()).toBe(
-			`${pageName} - ${site.name} - Liferay DXP (Editing)`
+			`${pageName} - ${site.name} - Liferay (Editing)`
 		);
 	});
 

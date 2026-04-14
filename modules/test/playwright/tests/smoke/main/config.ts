@@ -4,7 +4,11 @@
  */
 
 export const config = {
+	dependencies: ['site-cms-site.main'],
 	name: 'smoke.main',
 	testDir: 'tests/smoke/main',
 	timeout: 100 * 1000,
+	use: {
+		testIdAttribute: 'data-qa-id',
+	},
 };

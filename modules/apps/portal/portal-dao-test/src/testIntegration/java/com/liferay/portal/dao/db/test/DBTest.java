@@ -237,15 +237,16 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select nilColumn from " + TABLE_NAME_1 + " order by id");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			resultSet.next();
 
-			Assert.assertEquals("test", resultSet.getString(1));
+			Assert.assertEquals("test", resultSet.getString("nilColumn"));
 
 			resultSet.next();
 
-			Assert.assertEquals("nil", resultSet.getString(1));
+			Assert.assertEquals("nil", resultSet.getString("nilColumn"));
 		}
 	}
 
@@ -282,11 +283,12 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select typeString from " + TABLE_NAME_1);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			resultSet.next();
 
-			Assert.assertEquals("testValue", resultSet.getString(1));
+			Assert.assertEquals("testValue", resultSet.getString("typeString"));
 		}
 	}
 
@@ -366,11 +368,12 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select testColumn from " + TABLE_NAME_1);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			resultSet.next();
 
-			Assert.assertEquals(2, resultSet.getLong(1));
+			Assert.assertEquals(2, resultSet.getLong("testColumn"));
 		}
 
 		Assert.assertTrue(
@@ -392,11 +395,13 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select testColumn from " + TABLE_NAME_1);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			resultSet.next();
 
-			Assert.assertEquals("test value", resultSet.getString(1));
+			Assert.assertEquals(
+				"test value", resultSet.getString("testColumn"));
 		}
 
 		Assert.assertTrue(
@@ -489,6 +494,7 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from " + _TABLE_NAME_2 + " order by id asc");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -522,7 +528,7 @@ public class DBTest {
 				"typeDate2 DATE null, typeDouble2 DOUBLE, typeInteger2 ",
 				"INTEGER, typeLong2 LONG null, typeSBlob2 SBLOB, typeString2 ",
 				"STRING null, typeText2 TEXT null, typeVarchar2 VARCHAR(75) ",
-				"null);"));
+				"null)"));
 
 		db.runSQL(
 			StringBundler.concat(
@@ -561,6 +567,7 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from " + _TABLE_NAME_2 + " order by id2 asc");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -740,6 +747,7 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from " + _TABLE_NAME_2 + " order by id");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -768,7 +776,7 @@ public class DBTest {
 				"10 not null, typeSBlob2 SBLOB, typeString2 STRING null, ",
 				"typeText2 TEXT null, typeVarchar2 VARCHAR(75) null,",
 				"typeVarcharDefault2 VARCHAR(10) default 'testValue' not ",
-				"null);"));
+				"null)"));
 
 		db.runSQL(
 			StringBundler.concat(
@@ -814,6 +822,7 @@ public class DBTest {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select * from " + _TABLE_NAME_2 + " order by id2");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -942,7 +951,7 @@ public class DBTest {
 				"null, typeLongDefault LONG default 10 not null, typeSBlob ",
 				"SBLOB, typeString STRING null, typeText TEXT null, ",
 				"typeVarchar VARCHAR(75) null, typeVarcharDefault VARCHAR(10) ",
-				"default 'testValue' not null);"));
+				"default 'testValue' not null)"));
 	}
 
 	private List<IndexMetadata> _getIndexMetadatas(

@@ -6,6 +6,9 @@
 package com.liferay.layout.page.template.internal.importer.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.document.library.kernel.model.DLFileEntryType;
+import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
+import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.DefaultFragmentRendererContext;
@@ -123,14 +126,15 @@ public class DisplayPagesImporterTest {
 						ObjectFieldUtil.createObjectField(
 							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 							ObjectFieldConstants.DB_TYPE_STRING, "First Name",
-							"firstName")));
+							"firstName")),
+					false);
 
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 					null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
 					null,
-					_portal.getClassNameId(objectDefinition.getClassName()), 0,
-					RandomTestUtil.randomString(),
+					_portal.getClassNameId(objectDefinition.getClassName()),
+					null, RandomTestUtil.randomString(),
 					LayoutPageTemplateEntryTypeConstants.DISPLAY_PAGE, 0,
 					WorkflowConstants.STATUS_APPROVED, serviceContext);
 
@@ -221,14 +225,15 @@ public class DisplayPagesImporterTest {
 						ObjectFieldUtil.createObjectField(
 							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 							ObjectFieldConstants.DB_TYPE_STRING, "First Name",
-							"firstName")));
+							"firstName")),
+					false);
 
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 					null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
 					null,
-					_portal.getClassNameId(objectDefinition.getClassName()), 0,
-					RandomTestUtil.randomString(),
+					_portal.getClassNameId(objectDefinition.getClassName()),
+					null, RandomTestUtil.randomString(),
 					LayoutPageTemplateEntryTypeConstants.DISPLAY_PAGE, 0,
 					WorkflowConstants.STATUS_APPROVED, serviceContext);
 
@@ -248,8 +253,9 @@ public class DisplayPagesImporterTest {
 			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 				_fragmentEntryLinkLocalService.addFragmentEntryLink(
 					null, TestPropsValues.getUserId(), draftLayout.getGroupId(),
-					0, 0, segmentsExperienceId, draftLayout.getPlid(),
-					StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+					null, null, null, segmentsExperienceId,
+					draftLayout.getPlid(), StringPool.BLANK, StringPool.BLANK,
+					StringPool.BLANK,
 					JSONFactoryUtil.toString(
 						fragmentRenderer.getConfigurationJSONObject(
 							new DefaultFragmentRendererContext(null))),
@@ -331,6 +337,10 @@ public class DisplayPagesImporterTest {
 		try {
 			ServiceContextThreadLocal.pushServiceContext(serviceContext);
 
+			DLFileEntryType dlFileEntryType =
+				_dlFileEntryTypeLocalService.fetchDLFileEntryType(
+					DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_BASIC_DOCUMENT);
+
 			LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
 				_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 					null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
@@ -343,7 +353,8 @@ public class DisplayPagesImporterTest {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 					null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-					null, _portal.getClassNameId(FileEntry.class.getName()), 0,
+					null, _portal.getClassNameId(FileEntry.class.getName()),
+					dlFileEntryType.getFileEntryTypeKey(),
 					RandomTestUtil.randomString(),
 					LayoutPageTemplateEntryTypeConstants.DISPLAY_PAGE,
 					masterLayoutPageTemplateEntry.getPlid(),
@@ -739,6 +750,9 @@ public class DisplayPagesImporterTest {
 
 	private static final String _BASE_PATH =
 		"com/liferay/layout/page/template/internal/importer/test/dependencies/";
+
+	@Inject
+	private DLFileEntryTypeLocalService _dlFileEntryTypeLocalService;
 
 	@Inject
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;

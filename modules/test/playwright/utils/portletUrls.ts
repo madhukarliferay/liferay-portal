@@ -6,6 +6,8 @@
 export const PORTLET_URLS = {
 	accountAdmin:
 		'group/control_panel/manage?p_p_id=com_liferay_account_admin_web_internal_portlet_AccountEntriesAdminPortlet',
+	analyticsCloudConnection:
+		'/group/control_panel/manage?p_p_id=com_liferay_configuration_admin_web_portlet_InstanceSettingsPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_configuration_admin_web_portlet_InstanceSettingsPortlet_mvcRenderCommandName=%2Fconfiguration_admin%2Fview_configuration_screen&_com_liferay_configuration_admin_web_portlet_InstanceSettingsPortlet_configurationScreenKey=analytics-cloud-connection',
 	announcements:
 		'/~/control_panel/manage?p_p_id=com_liferay_announcements_web_portlet_AnnouncementsAdminPortlet',
 	batchExportImport:
@@ -14,8 +16,11 @@ export const PORTLET_URLS = {
 	bookmarks:
 		'/~/control_panel/manage?p_p_id=com_liferay_bookmarks_web_portlet_BookmarksAdminPortlet',
 	categoriesAdmin: '/~/control_panel/manage/-/categories_admin/vocabularies',
+	cmpProjects: 'web/cms/projects',
+	cmpTasks: 'web/cms/tasks',
 	cms: 'web/cms/home',
 	cmsAll: 'web/cms/all',
+	cmsAllSpaces: 'web/cms/all-spaces',
 	cmsCategories: 'web/cms/categorization/view-categories',
 	cmsContents: 'web/cms/contents',
 	cmsEditCategory: 'web/cms/categorization/edit-category',
@@ -25,6 +30,7 @@ export const PORTLET_URLS = {
 	cmsNewVocabulary: 'web/cms/categorization/new-vocabulary',
 	cmsPicklistBuilder: 'web/cms/picklist-builder',
 	cmsRecycleBin: 'web/cms/recycle-bin',
+	cmsSharedWithMe: 'web/cms/shared-with-me',
 	cmsStructureBuilder: 'web/cms/structure-builder',
 	cmsStructures: 'web/cms/structures',
 	cmsTags: 'web/cms/categorization/view-tags',
@@ -79,6 +85,8 @@ export const PORTLET_URLS = {
 	pageTemplates:
 		'/~/control_panel/manage?p_p_id=com_liferay_layout_page_template_admin_web_portlet_LayoutPageTemplatesPortlet&_com_liferay_layout_page_template_admin_web_portlet_LayoutPageTemplatesPortlet_tabs1=page-templates',
 	pages: '/~/control_panel/manage?p_p_id=com_liferay_layout_admin_web_portlet_GroupPagesPortlet',
+	picklists:
+		'/~/control_panel/manage?p_p_id=com_liferay_object_web_internal_list_type_portlet_portlet_ListTypeDefinitionsPortlet',
 	processBuilder:
 		'/~/control_panel/manage?p_p_id=com_liferay_portal_workflow_web_portlet_ControlPanelWorkflowPortlet',
 	publications:

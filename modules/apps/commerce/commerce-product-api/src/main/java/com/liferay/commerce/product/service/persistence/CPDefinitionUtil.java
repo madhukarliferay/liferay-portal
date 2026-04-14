@@ -212,54 +212,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByUuid_Last(
-			String uuid, OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByUuid_Last(
-		String uuid, OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where uuid = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByUuid_PrevAndNext(
-			long CPDefinitionId, String uuid,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			CPDefinitionId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp definitions where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -455,61 +407,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByUuid_C_PrevAndNext(
-			long CPDefinitionId, String uuid, long companyId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPDefinitionId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp definitions where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -633,54 +530,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByGroupId_Last(
-			long groupId, OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByGroupId_Last(
-		long groupId, OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where groupId = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByGroupId_PrevAndNext(
-			long CPDefinitionId, long groupId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			CPDefinitionId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp definitions that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -727,25 +576,6 @@ public class CPDefinitionUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set of cp definitions that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] filterFindByGroupId_PrevAndNext(
-			long CPDefinitionId, long groupId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			CPDefinitionId, groupId, orderByComparator);
 	}
 
 	/**
@@ -881,56 +711,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByCompanyId_Last(
-			long companyId, OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where companyId = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByCompanyId_PrevAndNext(
-			long CPDefinitionId, long companyId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			CPDefinitionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp definitions where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -1050,56 +830,6 @@ public class CPDefinitionUtil {
 
 		return getPersistence().fetchByCProductId_First(
 			CProductId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByCProductId_Last(
-			long CProductId, OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByCProductId_Last(
-			CProductId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByCProductId_Last(
-		long CProductId, OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByCProductId_Last(
-			CProductId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByCProductId_PrevAndNext(
-			long CPDefinitionId, long CProductId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByCProductId_PrevAndNext(
-			CPDefinitionId, CProductId, orderByComparator);
 	}
 
 	/**
@@ -1227,58 +957,6 @@ public class CPDefinitionUtil {
 
 		return getPersistence().fetchByCPTaxCategoryId_First(
 			CPTaxCategoryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where CPTaxCategoryId = &#63;.
-	 *
-	 * @param CPTaxCategoryId the cp tax category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByCPTaxCategoryId_Last(
-			long CPTaxCategoryId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByCPTaxCategoryId_Last(
-			CPTaxCategoryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where CPTaxCategoryId = &#63;.
-	 *
-	 * @param CPTaxCategoryId the cp tax category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByCPTaxCategoryId_Last(
-		long CPTaxCategoryId,
-		OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByCPTaxCategoryId_Last(
-			CPTaxCategoryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where CPTaxCategoryId = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param CPTaxCategoryId the cp tax category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByCPTaxCategoryId_PrevAndNext(
-			long CPDefinitionId, long CPTaxCategoryId,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByCPTaxCategoryId_PrevAndNext(
-			CPDefinitionId, CPTaxCategoryId, orderByComparator);
 	}
 
 	/**
@@ -1416,61 +1094,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where groupId = &#63; and subscriptionEnabled = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param subscriptionEnabled the subscription enabled
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByG_SE_Last(
-			long groupId, boolean subscriptionEnabled,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByG_SE_Last(
-			groupId, subscriptionEnabled, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where groupId = &#63; and subscriptionEnabled = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param subscriptionEnabled the subscription enabled
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByG_SE_Last(
-		long groupId, boolean subscriptionEnabled,
-		OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByG_SE_Last(
-			groupId, subscriptionEnabled, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where groupId = &#63; and subscriptionEnabled = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param groupId the group ID
-	 * @param subscriptionEnabled the subscription enabled
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByG_SE_PrevAndNext(
-			long CPDefinitionId, long groupId, boolean subscriptionEnabled,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByG_SE_PrevAndNext(
-			CPDefinitionId, groupId, subscriptionEnabled, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp definitions that the user has permission to view where groupId = &#63; and subscriptionEnabled = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1523,26 +1146,6 @@ public class CPDefinitionUtil {
 
 		return getPersistence().filterFindByG_SE(
 			groupId, subscriptionEnabled, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set of cp definitions that the user has permission to view where groupId = &#63; and subscriptionEnabled = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param groupId the group ID
-	 * @param subscriptionEnabled the subscription enabled
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] filterFindByG_SE_PrevAndNext(
-			long CPDefinitionId, long groupId, boolean subscriptionEnabled,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().filterFindByG_SE_PrevAndNext(
-			CPDefinitionId, groupId, subscriptionEnabled, orderByComparator);
 	}
 
 	/**
@@ -1691,61 +1294,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByG_S_Last(
-			long groupId, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByG_S_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByG_S_Last(
-		long groupId, int status,
-		OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByG_S_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByG_S_PrevAndNext(
-			long CPDefinitionId, long groupId, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByG_S_PrevAndNext(
-			CPDefinitionId, groupId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the cp definitions that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1795,26 +1343,6 @@ public class CPDefinitionUtil {
 
 		return getPersistence().filterFindByG_S(
 			groupId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set of cp definitions that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] filterFindByG_S_PrevAndNext(
-			long CPDefinitionId, long groupId, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().filterFindByG_S_PrevAndNext(
-			CPDefinitionId, groupId, status, orderByComparator);
 	}
 
 	/**
@@ -2026,61 +1554,6 @@ public class CPDefinitionUtil {
 	}
 
 	/**
-	 * Returns the last cp definition in the ordered set where CProductId = &#63; and status = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByC_S_Last(
-			long CProductId, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByC_S_Last(
-			CProductId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where CProductId = &#63; and status = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByC_S_Last(
-		long CProductId, int status,
-		OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByC_S_Last(
-			CProductId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where CProductId = &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param CProductId the c product ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByC_S_PrevAndNext(
-			long CPDefinitionId, long CProductId, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByC_S_PrevAndNext(
-			CPDefinitionId, CProductId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cp definitions where CProductId = &#63; and status = &#63; from the database.
 	 *
 	 * @param CProductId the c product ID
@@ -2210,61 +1683,6 @@ public class CPDefinitionUtil {
 
 		return getPersistence().fetchByLtD_S_First(
 			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition
-	 * @throws NoSuchCPDefinitionException if a matching cp definition could not be found
-	 */
-	public static CPDefinition findByLtD_S_Last(
-			Date displayDate, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByLtD_S_Last(
-			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cp definition in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp definition, or <code>null</code> if a matching cp definition could not be found
-	 */
-	public static CPDefinition fetchByLtD_S_Last(
-		Date displayDate, int status,
-		OrderByComparator<CPDefinition> orderByComparator) {
-
-		return getPersistence().fetchByLtD_S_Last(
-			displayDate, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp definitions before and after the current cp definition in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param CPDefinitionId the primary key of the current cp definition
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp definition
-	 * @throws NoSuchCPDefinitionException if a cp definition with the primary key could not be found
-	 */
-	public static CPDefinition[] findByLtD_S_PrevAndNext(
-			long CPDefinitionId, Date displayDate, int status,
-			OrderByComparator<CPDefinition> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPDefinitionException {
-
-		return getPersistence().findByLtD_S_PrevAndNext(
-			CPDefinitionId, displayDate, status, orderByComparator);
 	}
 
 	/**
@@ -2448,3 +1866,4 @@ public class CPDefinitionUtil {
 	private static volatile CPDefinitionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-410646578

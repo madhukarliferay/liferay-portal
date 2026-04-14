@@ -212,52 +212,6 @@ public class SubscriptionUtil {
 	}
 
 	/**
-	 * Returns the last subscription in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription
-	 * @throws NoSuchSubscriptionException if a matching subscription could not be found
-	 */
-	public static Subscription findByGroupId_Last(
-			long groupId, OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription, or <code>null</code> if a matching subscription could not be found
-	 */
-	public static Subscription fetchByGroupId_Last(
-		long groupId, OrderByComparator<Subscription> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the subscriptions before and after the current subscription in the ordered set where groupId = &#63;.
-	 *
-	 * @param subscriptionId the primary key of the current subscription
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next subscription
-	 * @throws NoSuchSubscriptionException if a subscription with the primary key could not be found
-	 */
-	public static Subscription[] findByGroupId_PrevAndNext(
-			long subscriptionId, long groupId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			subscriptionId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the subscriptions where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -374,52 +328,6 @@ public class SubscriptionUtil {
 		long userId, OrderByComparator<Subscription> orderByComparator) {
 
 		return getPersistence().fetchByUserId_First(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription
-	 * @throws NoSuchSubscriptionException if a matching subscription could not be found
-	 */
-	public static Subscription findByUserId_Last(
-			long userId, OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription, or <code>null</code> if a matching subscription could not be found
-	 */
-	public static Subscription fetchByUserId_Last(
-		long userId, OrderByComparator<Subscription> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the subscriptions before and after the current subscription in the ordered set where userId = &#63;.
-	 *
-	 * @param subscriptionId the primary key of the current subscription
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next subscription
-	 * @throws NoSuchSubscriptionException if a subscription with the primary key could not be found
-	 */
-	public static Subscription[] findByUserId_PrevAndNext(
-			long subscriptionId, long userId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			subscriptionId, userId, orderByComparator);
 	}
 
 	/**
@@ -549,59 +457,6 @@ public class SubscriptionUtil {
 
 		return getPersistence().fetchByG_U_First(
 			groupId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription
-	 * @throws NoSuchSubscriptionException if a matching subscription could not be found
-	 */
-	public static Subscription findByG_U_Last(
-			long groupId, long userId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByG_U_Last(
-			groupId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription, or <code>null</code> if a matching subscription could not be found
-	 */
-	public static Subscription fetchByG_U_Last(
-		long groupId, long userId,
-		OrderByComparator<Subscription> orderByComparator) {
-
-		return getPersistence().fetchByG_U_Last(
-			groupId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the subscriptions before and after the current subscription in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param subscriptionId the primary key of the current subscription
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next subscription
-	 * @throws NoSuchSubscriptionException if a subscription with the primary key could not be found
-	 */
-	public static Subscription[] findByG_U_PrevAndNext(
-			long subscriptionId, long groupId, long userId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByG_U_PrevAndNext(
-			subscriptionId, groupId, userId, orderByComparator);
 	}
 
 	/**
@@ -739,59 +594,6 @@ public class SubscriptionUtil {
 	}
 
 	/**
-	 * Returns the last subscription in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription
-	 * @throws NoSuchSubscriptionException if a matching subscription could not be found
-	 */
-	public static Subscription findByC_C_Last(
-			long companyId, long classNameId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByC_C_Last(
-			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription, or <code>null</code> if a matching subscription could not be found
-	 */
-	public static Subscription fetchByC_C_Last(
-		long companyId, long classNameId,
-		OrderByComparator<Subscription> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			companyId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the subscriptions before and after the current subscription in the ordered set where companyId = &#63; and classNameId = &#63;.
-	 *
-	 * @param subscriptionId the primary key of the current subscription
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next subscription
-	 * @throws NoSuchSubscriptionException if a subscription with the primary key could not be found
-	 */
-	public static Subscription[] findByC_C_PrevAndNext(
-			long subscriptionId, long companyId, long classNameId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			subscriptionId, companyId, classNameId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the subscriptions where companyId = &#63; and classNameId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -920,59 +722,6 @@ public class SubscriptionUtil {
 
 		return getPersistence().fetchByU_C_First(
 			userId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription
-	 * @throws NoSuchSubscriptionException if a matching subscription could not be found
-	 */
-	public static Subscription findByU_C_Last(
-			long userId, long classNameId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByU_C_Last(
-			userId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription, or <code>null</code> if a matching subscription could not be found
-	 */
-	public static Subscription fetchByU_C_Last(
-		long userId, long classNameId,
-		OrderByComparator<Subscription> orderByComparator) {
-
-		return getPersistence().fetchByU_C_Last(
-			userId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the subscriptions before and after the current subscription in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param subscriptionId the primary key of the current subscription
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next subscription
-	 * @throws NoSuchSubscriptionException if a subscription with the primary key could not be found
-	 */
-	public static Subscription[] findByU_C_PrevAndNext(
-			long subscriptionId, long userId, long classNameId,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByU_C_PrevAndNext(
-			subscriptionId, userId, classNameId, orderByComparator);
 	}
 
 	/**
@@ -1114,62 +863,6 @@ public class SubscriptionUtil {
 
 		return getPersistence().fetchByC_C_C_First(
 			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription
-	 * @throws NoSuchSubscriptionException if a matching subscription could not be found
-	 */
-	public static Subscription findByC_C_C_Last(
-			long companyId, long classNameId, long classPK,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last subscription in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching subscription, or <code>null</code> if a matching subscription could not be found
-	 */
-	public static Subscription fetchByC_C_C_Last(
-		long companyId, long classNameId, long classPK,
-		OrderByComparator<Subscription> orderByComparator) {
-
-		return getPersistence().fetchByC_C_C_Last(
-			companyId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the subscriptions before and after the current subscription in the ordered set where companyId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param subscriptionId the primary key of the current subscription
-	 * @param companyId the company ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next subscription
-	 * @throws NoSuchSubscriptionException if a subscription with the primary key could not be found
-	 */
-	public static Subscription[] findByC_C_C_PrevAndNext(
-			long subscriptionId, long companyId, long classNameId, long classPK,
-			OrderByComparator<Subscription> orderByComparator)
-		throws com.liferay.subscription.exception.NoSuchSubscriptionException {
-
-		return getPersistence().findByC_C_C_PrevAndNext(
-			subscriptionId, companyId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -1553,3 +1246,4 @@ public class SubscriptionUtil {
 	private static volatile SubscriptionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1396256567

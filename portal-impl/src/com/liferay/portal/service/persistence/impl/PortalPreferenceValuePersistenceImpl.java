@@ -22,12 +22,14 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.persistence.PortalPreferenceValuePersistence;
 import com.liferay.portal.kernel.service.persistence.PortalPreferenceValueUtil;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.impl.PortalPreferenceValueImpl;
 import com.liferay.portal.model.impl.PortalPreferenceValueModelImpl;
 
@@ -75,6 +77,7 @@ public class PortalPreferenceValuePersistenceImpl
 	private FinderPath _finderPathWithPaginationFindByPortalPreferencesId;
 	private FinderPath _finderPathWithoutPaginationFindByPortalPreferencesId;
 	private FinderPath _finderPathCountByPortalPreferencesId;
+	private FinderPath _finderPathWithPaginationCountByPortalPreferencesId;
 
 	/**
 	 * Returns all the portal preference values where portalPreferencesId = &#63;.
@@ -302,221 +305,194 @@ public class PortalPreferenceValuePersistenceImpl
 	}
 
 	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63;.
+	 * Returns all the portal preference values where portalPreferencesId = any &#63;.
 	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value
-	 * @throws NoSuchPreferenceValueException if a matching portal preference value could not be found
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PortalPreferenceValueModelImpl</code>.
+	 * </p>
+	 *
+	 * @param portalPreferencesIds the portal preferences IDs
+	 * @return the matching portal preference values
 	 */
 	@Override
-	public PortalPreferenceValue findByPortalPreferencesId_Last(
-			long portalPreferencesId,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
+	public List<PortalPreferenceValue> findByPortalPreferencesId(
+		long[] portalPreferencesIds) {
 
-		PortalPreferenceValue portalPreferenceValue =
-			fetchByPortalPreferencesId_Last(
-				portalPreferencesId, orderByComparator);
-
-		if (portalPreferenceValue != null) {
-			return portalPreferenceValue;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("portalPreferencesId=");
-		sb.append(portalPreferencesId);
-
-		sb.append("}");
-
-		throw new NoSuchPreferenceValueException(sb.toString());
+		return findByPortalPreferencesId(
+			portalPreferencesIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
 	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63;.
+	 * Returns a range of all the portal preference values where portalPreferencesId = any &#63;.
 	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value, or <code>null</code> if a matching portal preference value could not be found
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PortalPreferenceValueModelImpl</code>.
+	 * </p>
+	 *
+	 * @param portalPreferencesIds the portal preferences IDs
+	 * @param start the lower bound of the range of portal preference values
+	 * @param end the upper bound of the range of portal preference values (not inclusive)
+	 * @return the range of matching portal preference values
 	 */
 	@Override
-	public PortalPreferenceValue fetchByPortalPreferencesId_Last(
-		long portalPreferencesId,
+	public List<PortalPreferenceValue> findByPortalPreferencesId(
+		long[] portalPreferencesIds, int start, int end) {
+
+		return findByPortalPreferencesId(
+			portalPreferencesIds, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the portal preference values where portalPreferencesId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PortalPreferenceValueModelImpl</code>.
+	 * </p>
+	 *
+	 * @param portalPreferencesIds the portal preferences IDs
+	 * @param start the lower bound of the range of portal preference values
+	 * @param end the upper bound of the range of portal preference values (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching portal preference values
+	 */
+	@Override
+	public List<PortalPreferenceValue> findByPortalPreferencesId(
+		long[] portalPreferencesIds, int start, int end,
 		OrderByComparator<PortalPreferenceValue> orderByComparator) {
 
-		int count = countByPortalPreferencesId(portalPreferencesId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<PortalPreferenceValue> list = findByPortalPreferencesId(
-			portalPreferencesId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
+		return findByPortalPreferencesId(
+			portalPreferencesIds, start, end, orderByComparator, true);
 	}
 
 	/**
-	 * Returns the portal preference values before and after the current portal preference value in the ordered set where portalPreferencesId = &#63;.
+	 * Returns an ordered range of all the portal preference values where portalPreferencesId = &#63;, optionally using the finder cache.
 	 *
-	 * @param portalPreferenceValueId the primary key of the current portal preference value
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next portal preference value
-	 * @throws NoSuchPreferenceValueException if a portal preference value with the primary key could not be found
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PortalPreferenceValueModelImpl</code>.
+	 * </p>
+	 *
+	 * @param portalPreferencesIds the portal preferences IDs
+	 * @param start the lower bound of the range of portal preference values
+	 * @param end the upper bound of the range of portal preference values (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching portal preference values
 	 */
 	@Override
-	public PortalPreferenceValue[] findByPortalPreferencesId_PrevAndNext(
-			long portalPreferenceValueId, long portalPreferencesId,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		PortalPreferenceValue portalPreferenceValue = findByPrimaryKey(
-			portalPreferenceValueId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			PortalPreferenceValue[] array = new PortalPreferenceValueImpl[3];
-
-			array[0] = getByPortalPreferencesId_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId,
-				orderByComparator, true);
-
-			array[1] = portalPreferenceValue;
-
-			array[2] = getByPortalPreferencesId_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected PortalPreferenceValue getByPortalPreferencesId_PrevAndNext(
-		Session session, PortalPreferenceValue portalPreferenceValue,
-		long portalPreferencesId,
+	public List<PortalPreferenceValue> findByPortalPreferencesId(
+		long[] portalPreferencesIds, int start, int end,
 		OrderByComparator<PortalPreferenceValue> orderByComparator,
-		boolean previous) {
+		boolean useFinderCache) {
 
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
+		if (portalPreferencesIds == null) {
+			portalPreferencesIds = new long[0];
 		}
-		else {
-			sb = new StringBundler(3);
+		else if (portalPreferencesIds.length > 1) {
+			portalPreferencesIds = ArrayUtil.sortedUnique(portalPreferencesIds);
 		}
 
-		sb.append(_SQL_SELECT_PORTALPREFERENCEVALUE_WHERE);
+		if (portalPreferencesIds.length == 1) {
+			return findByPortalPreferencesId(
+				portalPreferencesIds[0], start, end, orderByComparator);
+		}
 
-		sb.append(_FINDER_COLUMN_PORTALPREFERENCESID_PORTALPREFERENCESID_2);
+		Object[] finderArgs = null;
 
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			(orderByComparator == null)) {
 
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
+			if (useFinderCache) {
+				finderArgs = new Object[] {
+					StringUtil.merge(portalPreferencesIds)
+				};
 			}
+		}
+		else if (useFinderCache) {
+			finderArgs = new Object[] {
+				StringUtil.merge(portalPreferencesIds), start, end,
+				orderByComparator
+			};
+		}
 
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
+		List<PortalPreferenceValue> list = null;
 
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
+		if (useFinderCache) {
+			list = (List<PortalPreferenceValue>)dummyFinderCache.getResult(
+				_finderPathWithPaginationFindByPortalPreferencesId, finderArgs,
+				this);
 
-			sb.append(ORDER_BY_CLAUSE);
+			if ((list != null) && !list.isEmpty()) {
+				for (PortalPreferenceValue portalPreferenceValue : list) {
+					if (!ArrayUtil.contains(
+							portalPreferencesIds,
+							portalPreferenceValue.getPortalPreferencesId())) {
 
-			String[] orderByFields = orderByComparator.getOrderByFields();
+						list = null;
 
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
+						break;
 					}
 				}
 			}
 		}
-		else {
-			sb.append(PortalPreferenceValueModelImpl.ORDER_BY_JPQL);
-		}
 
-		String sql = sb.toString();
+		if (list == null) {
+			StringBundler sb = new StringBundler();
 
-		Query query = session.createQuery(sql);
+			sb.append(_SQL_SELECT_PORTALPREFERENCEVALUE_WHERE);
 
-		query.setFirstResult(0);
-		query.setMaxResults(2);
+			if (portalPreferencesIds.length > 0) {
+				sb.append("(");
 
-		QueryPos queryPos = QueryPos.getInstance(query);
+				sb.append(
+					_FINDER_COLUMN_PORTALPREFERENCESID_PORTALPREFERENCESID_7);
 
-		queryPos.add(portalPreferencesId);
+				sb.append(StringUtil.merge(portalPreferencesIds));
 
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						portalPreferenceValue)) {
+				sb.append(")");
 
-				queryPos.add(orderByConditionValue);
+				sb.append(")");
+			}
+
+			sb.setStringAt(
+				removeConjunction(sb.stringAt(sb.index() - 1)), sb.index() - 1);
+
+			if (orderByComparator != null) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+			}
+			else {
+				sb.append(PortalPreferenceValueModelImpl.ORDER_BY_JPQL);
+			}
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				list = (List<PortalPreferenceValue>)QueryUtil.list(
+					query, getDialect(), start, end);
+
+				cacheResult(list);
+
+				if (useFinderCache) {
+					dummyFinderCache.putResult(
+						_finderPathWithPaginationFindByPortalPreferencesId,
+						finderArgs, list);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
 			}
 		}
 
-		List<PortalPreferenceValue> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
+		return list;
 	}
 
 	/**
@@ -585,9 +561,83 @@ public class PortalPreferenceValuePersistenceImpl
 		return count.intValue();
 	}
 
+	/**
+	 * Returns the number of portal preference values where portalPreferencesId = any &#63;.
+	 *
+	 * @param portalPreferencesIds the portal preferences IDs
+	 * @return the number of matching portal preference values
+	 */
+	@Override
+	public int countByPortalPreferencesId(long[] portalPreferencesIds) {
+		if (portalPreferencesIds == null) {
+			portalPreferencesIds = new long[0];
+		}
+		else if (portalPreferencesIds.length > 1) {
+			portalPreferencesIds = ArrayUtil.sortedUnique(portalPreferencesIds);
+		}
+
+		Object[] finderArgs = new Object[] {
+			StringUtil.merge(portalPreferencesIds)
+		};
+
+		Long count = (Long)dummyFinderCache.getResult(
+			_finderPathWithPaginationCountByPortalPreferencesId, finderArgs,
+			this);
+
+		if (count == null) {
+			StringBundler sb = new StringBundler();
+
+			sb.append(_SQL_COUNT_PORTALPREFERENCEVALUE_WHERE);
+
+			if (portalPreferencesIds.length > 0) {
+				sb.append("(");
+
+				sb.append(
+					_FINDER_COLUMN_PORTALPREFERENCESID_PORTALPREFERENCESID_7);
+
+				sb.append(StringUtil.merge(portalPreferencesIds));
+
+				sb.append(")");
+
+				sb.append(")");
+			}
+
+			sb.setStringAt(
+				removeConjunction(sb.stringAt(sb.index() - 1)), sb.index() - 1);
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				count = (Long)query.uniqueResult();
+
+				dummyFinderCache.putResult(
+					_finderPathWithPaginationCountByPortalPreferencesId,
+					finderArgs, count);
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
 	private static final String
 		_FINDER_COLUMN_PORTALPREFERENCESID_PORTALPREFERENCESID_2 =
 			"portalPreferenceValue.portalPreferencesId = ?";
+
+	private static final String
+		_FINDER_COLUMN_PORTALPREFERENCESID_PORTALPREFERENCESID_7 =
+			"portalPreferenceValue.portalPreferencesId IN (";
 
 	private FinderPath _finderPathWithPaginationFindByP_N;
 	private FinderPath _finderPathWithoutPaginationFindByP_N;
@@ -844,248 +894,6 @@ public class PortalPreferenceValuePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63; and namespace = &#63;.
-	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param namespace the namespace
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value
-	 * @throws NoSuchPreferenceValueException if a matching portal preference value could not be found
-	 */
-	@Override
-	public PortalPreferenceValue findByP_N_Last(
-			long portalPreferencesId, String namespace,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		PortalPreferenceValue portalPreferenceValue = fetchByP_N_Last(
-			portalPreferencesId, namespace, orderByComparator);
-
-		if (portalPreferenceValue != null) {
-			return portalPreferenceValue;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("portalPreferencesId=");
-		sb.append(portalPreferencesId);
-
-		sb.append(", namespace=");
-		sb.append(namespace);
-
-		sb.append("}");
-
-		throw new NoSuchPreferenceValueException(sb.toString());
-	}
-
-	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63; and namespace = &#63;.
-	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param namespace the namespace
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value, or <code>null</code> if a matching portal preference value could not be found
-	 */
-	@Override
-	public PortalPreferenceValue fetchByP_N_Last(
-		long portalPreferencesId, String namespace,
-		OrderByComparator<PortalPreferenceValue> orderByComparator) {
-
-		int count = countByP_N(portalPreferencesId, namespace);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<PortalPreferenceValue> list = findByP_N(
-			portalPreferencesId, namespace, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the portal preference values before and after the current portal preference value in the ordered set where portalPreferencesId = &#63; and namespace = &#63;.
-	 *
-	 * @param portalPreferenceValueId the primary key of the current portal preference value
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param namespace the namespace
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next portal preference value
-	 * @throws NoSuchPreferenceValueException if a portal preference value with the primary key could not be found
-	 */
-	@Override
-	public PortalPreferenceValue[] findByP_N_PrevAndNext(
-			long portalPreferenceValueId, long portalPreferencesId,
-			String namespace,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		namespace = Objects.toString(namespace, "");
-
-		PortalPreferenceValue portalPreferenceValue = findByPrimaryKey(
-			portalPreferenceValueId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			PortalPreferenceValue[] array = new PortalPreferenceValueImpl[3];
-
-			array[0] = getByP_N_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId, namespace,
-				orderByComparator, true);
-
-			array[1] = portalPreferenceValue;
-
-			array[2] = getByP_N_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId, namespace,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected PortalPreferenceValue getByP_N_PrevAndNext(
-		Session session, PortalPreferenceValue portalPreferenceValue,
-		long portalPreferencesId, String namespace,
-		OrderByComparator<PortalPreferenceValue> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_PORTALPREFERENCEVALUE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_N_PORTALPREFERENCESID_2);
-
-		boolean bindNamespace = false;
-
-		if (namespace.isEmpty()) {
-			sb.append(_FINDER_COLUMN_P_N_NAMESPACE_3);
-		}
-		else {
-			bindNamespace = true;
-
-			sb.append(_FINDER_COLUMN_P_N_NAMESPACE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(PortalPreferenceValueModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(portalPreferencesId);
-
-		if (bindNamespace) {
-			queryPos.add(namespace);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						portalPreferenceValue)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<PortalPreferenceValue> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -1466,270 +1274,6 @@ public class PortalPreferenceValuePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63; and key = &#63; and namespace = &#63;.
-	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param key the key
-	 * @param namespace the namespace
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value
-	 * @throws NoSuchPreferenceValueException if a matching portal preference value could not be found
-	 */
-	@Override
-	public PortalPreferenceValue findByP_K_N_Last(
-			long portalPreferencesId, String key, String namespace,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		PortalPreferenceValue portalPreferenceValue = fetchByP_K_N_Last(
-			portalPreferencesId, key, namespace, orderByComparator);
-
-		if (portalPreferenceValue != null) {
-			return portalPreferenceValue;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("portalPreferencesId=");
-		sb.append(portalPreferencesId);
-
-		sb.append(", key=");
-		sb.append(key);
-
-		sb.append(", namespace=");
-		sb.append(namespace);
-
-		sb.append("}");
-
-		throw new NoSuchPreferenceValueException(sb.toString());
-	}
-
-	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63; and key = &#63; and namespace = &#63;.
-	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param key the key
-	 * @param namespace the namespace
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value, or <code>null</code> if a matching portal preference value could not be found
-	 */
-	@Override
-	public PortalPreferenceValue fetchByP_K_N_Last(
-		long portalPreferencesId, String key, String namespace,
-		OrderByComparator<PortalPreferenceValue> orderByComparator) {
-
-		int count = countByP_K_N(portalPreferencesId, key, namespace);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<PortalPreferenceValue> list = findByP_K_N(
-			portalPreferencesId, key, namespace, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the portal preference values before and after the current portal preference value in the ordered set where portalPreferencesId = &#63; and key = &#63; and namespace = &#63;.
-	 *
-	 * @param portalPreferenceValueId the primary key of the current portal preference value
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param key the key
-	 * @param namespace the namespace
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next portal preference value
-	 * @throws NoSuchPreferenceValueException if a portal preference value with the primary key could not be found
-	 */
-	@Override
-	public PortalPreferenceValue[] findByP_K_N_PrevAndNext(
-			long portalPreferenceValueId, long portalPreferencesId, String key,
-			String namespace,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		key = Objects.toString(key, "");
-		namespace = Objects.toString(namespace, "");
-
-		PortalPreferenceValue portalPreferenceValue = findByPrimaryKey(
-			portalPreferenceValueId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			PortalPreferenceValue[] array = new PortalPreferenceValueImpl[3];
-
-			array[0] = getByP_K_N_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId, key,
-				namespace, orderByComparator, true);
-
-			array[1] = portalPreferenceValue;
-
-			array[2] = getByP_K_N_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId, key,
-				namespace, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected PortalPreferenceValue getByP_K_N_PrevAndNext(
-		Session session, PortalPreferenceValue portalPreferenceValue,
-		long portalPreferencesId, String key, String namespace,
-		OrderByComparator<PortalPreferenceValue> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		sb.append(_SQL_SELECT_PORTALPREFERENCEVALUE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_K_N_PORTALPREFERENCESID_2);
-
-		boolean bindKey = false;
-
-		if (key.isEmpty()) {
-			sb.append(_FINDER_COLUMN_P_K_N_KEY_3);
-		}
-		else {
-			bindKey = true;
-
-			sb.append(_FINDER_COLUMN_P_K_N_KEY_2);
-		}
-
-		boolean bindNamespace = false;
-
-		if (namespace.isEmpty()) {
-			sb.append(_FINDER_COLUMN_P_K_N_NAMESPACE_3);
-		}
-		else {
-			bindNamespace = true;
-
-			sb.append(_FINDER_COLUMN_P_K_N_NAMESPACE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(PortalPreferenceValueModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(portalPreferencesId);
-
-		if (bindKey) {
-			queryPos.add(key);
-		}
-
-		if (bindNamespace) {
-			queryPos.add(namespace);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						portalPreferenceValue)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<PortalPreferenceValue> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -2435,296 +1979,6 @@ public class PortalPreferenceValuePersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63; and key = &#63; and namespace = &#63; and smallValue = &#63;.
-	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param key the key
-	 * @param namespace the namespace
-	 * @param smallValue the small value
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value
-	 * @throws NoSuchPreferenceValueException if a matching portal preference value could not be found
-	 */
-	@Override
-	public PortalPreferenceValue findByP_K_N_SV_Last(
-			long portalPreferencesId, String key, String namespace,
-			String smallValue,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		PortalPreferenceValue portalPreferenceValue = fetchByP_K_N_SV_Last(
-			portalPreferencesId, key, namespace, smallValue, orderByComparator);
-
-		if (portalPreferenceValue != null) {
-			return portalPreferenceValue;
-		}
-
-		StringBundler sb = new StringBundler(10);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("portalPreferencesId=");
-		sb.append(portalPreferencesId);
-
-		sb.append(", key=");
-		sb.append(key);
-
-		sb.append(", namespace=");
-		sb.append(namespace);
-
-		sb.append(", smallValue=");
-		sb.append(smallValue);
-
-		sb.append("}");
-
-		throw new NoSuchPreferenceValueException(sb.toString());
-	}
-
-	/**
-	 * Returns the last portal preference value in the ordered set where portalPreferencesId = &#63; and key = &#63; and namespace = &#63; and smallValue = &#63;.
-	 *
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param key the key
-	 * @param namespace the namespace
-	 * @param smallValue the small value
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching portal preference value, or <code>null</code> if a matching portal preference value could not be found
-	 */
-	@Override
-	public PortalPreferenceValue fetchByP_K_N_SV_Last(
-		long portalPreferencesId, String key, String namespace,
-		String smallValue,
-		OrderByComparator<PortalPreferenceValue> orderByComparator) {
-
-		int count = countByP_K_N_SV(
-			portalPreferencesId, key, namespace, smallValue);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<PortalPreferenceValue> list = findByP_K_N_SV(
-			portalPreferencesId, key, namespace, smallValue, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the portal preference values before and after the current portal preference value in the ordered set where portalPreferencesId = &#63; and key = &#63; and namespace = &#63; and smallValue = &#63;.
-	 *
-	 * @param portalPreferenceValueId the primary key of the current portal preference value
-	 * @param portalPreferencesId the portal preferences ID
-	 * @param key the key
-	 * @param namespace the namespace
-	 * @param smallValue the small value
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next portal preference value
-	 * @throws NoSuchPreferenceValueException if a portal preference value with the primary key could not be found
-	 */
-	@Override
-	public PortalPreferenceValue[] findByP_K_N_SV_PrevAndNext(
-			long portalPreferenceValueId, long portalPreferencesId, String key,
-			String namespace, String smallValue,
-			OrderByComparator<PortalPreferenceValue> orderByComparator)
-		throws NoSuchPreferenceValueException {
-
-		key = Objects.toString(key, "");
-		namespace = Objects.toString(namespace, "");
-		smallValue = Objects.toString(smallValue, "");
-
-		PortalPreferenceValue portalPreferenceValue = findByPrimaryKey(
-			portalPreferenceValueId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			PortalPreferenceValue[] array = new PortalPreferenceValueImpl[3];
-
-			array[0] = getByP_K_N_SV_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId, key,
-				namespace, smallValue, orderByComparator, true);
-
-			array[1] = portalPreferenceValue;
-
-			array[2] = getByP_K_N_SV_PrevAndNext(
-				session, portalPreferenceValue, portalPreferencesId, key,
-				namespace, smallValue, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected PortalPreferenceValue getByP_K_N_SV_PrevAndNext(
-		Session session, PortalPreferenceValue portalPreferenceValue,
-		long portalPreferencesId, String key, String namespace,
-		String smallValue,
-		OrderByComparator<PortalPreferenceValue> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				7 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(6);
-		}
-
-		sb.append(_SQL_SELECT_PORTALPREFERENCEVALUE_WHERE);
-
-		sb.append(_FINDER_COLUMN_P_K_N_SV_PORTALPREFERENCESID_2);
-
-		boolean bindKey = false;
-
-		if (key.isEmpty()) {
-			sb.append(_FINDER_COLUMN_P_K_N_SV_KEY_3);
-		}
-		else {
-			bindKey = true;
-
-			sb.append(_FINDER_COLUMN_P_K_N_SV_KEY_2);
-		}
-
-		boolean bindNamespace = false;
-
-		if (namespace.isEmpty()) {
-			sb.append(_FINDER_COLUMN_P_K_N_SV_NAMESPACE_3);
-		}
-		else {
-			bindNamespace = true;
-
-			sb.append(_FINDER_COLUMN_P_K_N_SV_NAMESPACE_2);
-		}
-
-		boolean bindSmallValue = false;
-
-		if (smallValue.isEmpty()) {
-			sb.append(_FINDER_COLUMN_P_K_N_SV_SMALLVALUE_3);
-		}
-		else {
-			bindSmallValue = true;
-
-			sb.append(_FINDER_COLUMN_P_K_N_SV_SMALLVALUE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(PortalPreferenceValueModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(portalPreferencesId);
-
-		if (bindKey) {
-			queryPos.add(key);
-		}
-
-		if (bindNamespace) {
-			queryPos.add(namespace);
-		}
-
-		if (bindSmallValue) {
-			queryPos.add(smallValue);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						portalPreferenceValue)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<PortalPreferenceValue> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -3475,6 +2729,11 @@ public class PortalPreferenceValuePersistenceImpl
 			"countByPortalPreferencesId", new String[] {Long.class.getName()},
 			new String[] {"portalPreferencesId"}, false);
 
+		_finderPathWithPaginationCountByPortalPreferencesId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+			"countByPortalPreferencesId", new String[] {Long.class.getName()},
+			new String[] {"portalPreferencesId"}, false);
+
 		_finderPathWithPaginationFindByP_N = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByP_N",
 			new String[] {
@@ -3605,3 +2864,4 @@ public class PortalPreferenceValuePersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:455394452

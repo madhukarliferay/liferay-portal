@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {ClayButtonWithIcon} from '@clayui/button';
 import DropDown from '@clayui/drop-down';
 import {useNavigate} from 'react-router-dom';
 
+import ButtonWithIcon from '../../../components/ButtonWithIcon';
 import {DashboardEmptyTable} from '../../../components/DashboardTable/DashboardEmptyTable';
 import OrderStatus from '../../../components/OrderStatus';
 import Table from '../../../components/Table/Table';
-import {OrderTypes, orderTypeLabel} from '../../../enums/Order';
+import {orderTypeLabel} from '../../../enums/Order';
 import {ProductImageFallbackCategories} from '../../../enums/Product';
 import i18n from '../../../i18n';
 import {getProductImageFallback} from '../../../utils/productUtils';
@@ -29,7 +29,9 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 				description1={i18n.translate(
 					'purchase-and-install-new-apps-and-they-will-show-up-here'
 				)}
-				description2={i18n.translate('click-on-add-apps-to-start')}
+				description2={i18n.translate(
+					'click-on-browse-catalog-to-start'
+				)}
 				icon="grid"
 				title={i18n.translate('no-apps-yet')}
 			/>
@@ -87,11 +89,10 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 				},
 				{
 					key: 'orderTypeExternalReferenceCode',
-					render: (orderTypeExternalReferenceCode) => {
-						return orderTypeLabel[
-							orderTypeExternalReferenceCode as OrderTypes
-						];
-					},
+					render: (orderTypeExternalReferenceCode) =>
+						orderTypeLabel[
+							orderTypeExternalReferenceCode as keyof typeof orderTypeLabel
+						],
 					title: i18n.translate('app-type'),
 				},
 				{
@@ -100,10 +101,8 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 				},
 				{
 					key: 'orderStatusInfo',
-					render: (orderStatusInfo) => (
-						<OrderStatus orderStatus={orderStatusInfo?.label}>
-							{orderStatusInfo?.label}
-						</OrderStatus>
+					render: (_, placedOrder) => (
+						<OrderStatus placedOrder={placedOrder} />
 					),
 					title: i18n.translate('order-status'),
 				},
@@ -117,7 +116,7 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 							<div onClick={(event) => event.stopPropagation()}>
 								<DropDown
 									trigger={
-										<ClayButtonWithIcon
+										<ButtonWithIcon
 											aria-label="Kebab Button"
 											displayType={null}
 											symbol="ellipsis-v"

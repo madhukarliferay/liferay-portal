@@ -1,5 +1,5 @@
 {
-	"@generated": "63359d6dcc2a09f8b3eaec3ec51e9c6fe790a3b5",
+	"@generated": "21a42015122c8a9de394195f24d52e0c566c7ee4",
 	"@readonly": "** AUTO-GENERATED: DO NOT EDIT **",
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
@@ -14,6 +14,12 @@
 			"@liferay/frontend-data-set-web": [
 				"../../../../../../../frontend-data-set/frontend-data-set-web/src/main/resources/META-INF/resources/index.ts"
 			],
+			"@liferay/frontend-js-react-web": [
+				"../../../../../../frontend-js-react-web/src/main/resources/META-INF/resources/js/index.ts"
+			],
+			"frontend-js-components-web": [
+				"../../../../../../frontend-js-components-web/src/main/resources/META-INF/resources/index.ts"
+			],
 			"frontend-js-web": [
 				"../../../../../../frontend-js-web/src/main/resources/META-INF/resources/main/index.d.ts"
 			],
@@ -26,7 +32,7 @@
 		"sourceMap": false,
 		"strict": true,
 		"target": "esnext",
-		"tsBuildInfoFile": "../../../../../../../../.tsc/buildinfo/frontend-js-item-selector-web.tsbuildinfo",
+		"tsBuildInfoFile": "../../../../../../../../.tsc/buildinfo/@liferay/frontend-js-item-selector-web.tsbuildinfo",
 		"typeRoots": [
 			"../../../../../../../../node_modules/@types"
 		]
@@ -39,6 +45,12 @@
 	"references": [
 		{
 			"path": "../../../../../../../frontend-data-set/frontend-data-set-web/src/main/resources/META-INF/resources/tsconfig.json"
+		},
+		{
+			"path": "../../../../../../frontend-js-react-web/src/main/resources/META-INF/resources/tsconfig.json"
+		},
+		{
+			"path": "../../../../../../frontend-js-components-web/src/main/resources/META-INF/resources/tsconfig.json"
 		},
 		{
 			"path": "../../../../../../frontend-js-web/src/main/resources/META-INF/resources/tsconfig.json"

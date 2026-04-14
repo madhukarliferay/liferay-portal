@@ -199,6 +199,16 @@ public class ObjectDefinitionSerDes {
 			sb.append(objectDefinition.getEnableComments());
 		}
 
+		if (objectDefinition.getEnableFormContainer() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"enableFormContainer\": ");
+
+			sb.append(objectDefinition.getEnableFormContainer());
+		}
+
 		if (objectDefinition.getEnableFriendlyURLCustomization() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -573,6 +583,26 @@ public class ObjectDefinitionSerDes {
 			sb.append(objectDefinition.getParameterRequired());
 		}
 
+		if (objectDefinition.getPermissions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"permissions\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < objectDefinition.getPermissions().length; i++) {
+				sb.append(objectDefinition.getPermissions()[i]);
+
+				if ((i + 1) < objectDefinition.getPermissions().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		if (objectDefinition.getPluralLabel() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -835,6 +865,15 @@ public class ObjectDefinitionSerDes {
 				String.valueOf(objectDefinition.getEnableComments()));
 		}
 
+		if (objectDefinition.getEnableFormContainer() == null) {
+			map.put("enableFormContainer", null);
+		}
+		else {
+			map.put(
+				"enableFormContainer",
+				String.valueOf(objectDefinition.getEnableFormContainer()));
+		}
+
 		if (objectDefinition.getEnableFriendlyURLCustomization() == null) {
 			map.put("enableFriendlyURLCustomization", null);
 		}
@@ -1058,6 +1097,15 @@ public class ObjectDefinitionSerDes {
 				String.valueOf(objectDefinition.getParameterRequired()));
 		}
 
+		if (objectDefinition.getPermissions() == null) {
+			map.put("permissions", null);
+		}
+		else {
+			map.put(
+				"permissions",
+				String.valueOf(objectDefinition.getPermissions()));
+		}
+
 		if (objectDefinition.getPluralLabel() == null) {
 			map.put("pluralLabel", null);
 		}
@@ -1201,6 +1249,11 @@ public class ObjectDefinitionSerDes {
 				return false;
 			}
 			else if (Objects.equals(
+						jsonParserFieldName, "enableFormContainer")) {
+
+				return false;
+			}
+			else if (Objects.equals(
 						jsonParserFieldName,
 						"enableFriendlyURLCustomization")) {
 
@@ -1301,6 +1354,9 @@ public class ObjectDefinitionSerDes {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "parameterRequired")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "permissions")) {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "pluralLabel")) {
@@ -1415,6 +1471,14 @@ public class ObjectDefinitionSerDes {
 			else if (Objects.equals(jsonParserFieldName, "enableComments")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setEnableComments(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "enableFormContainer")) {
+
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setEnableFormContainer(
 						(Boolean)jsonParserFieldValue);
 				}
 			}
@@ -1676,6 +1740,26 @@ public class ObjectDefinitionSerDes {
 						(Boolean)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "permissions")) {
+				if (jsonParserFieldValue != null) {
+					Object[] jsonParserFieldValues =
+						(Object[])jsonParserFieldValue;
+
+					com.liferay.object.admin.rest.client.permission.Permission[]
+						permissionsArray = new
+						com.liferay.object.admin.rest.client.permission.
+							Permission[jsonParserFieldValues.length];
+
+					for (int i = 0; i < permissionsArray.length; i++) {
+						permissionsArray[i] =
+							com.liferay.object.admin.rest.client.permission.
+								Permission.toDTO(
+									(String)jsonParserFieldValues[i]);
+					}
+
+					objectDefinition.setPermissions(permissionsArray);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "pluralLabel")) {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setPluralLabel(
@@ -1837,3 +1921,4 @@ public class ObjectDefinitionSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-439278130

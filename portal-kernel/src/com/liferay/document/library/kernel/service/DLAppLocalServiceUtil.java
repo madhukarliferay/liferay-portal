@@ -409,6 +409,13 @@ public class DLAppLocalServiceUtil {
 		getService().deleteFolder(folderId);
 	}
 
+	public static com.liferay.portal.kernel.repository.model.FileEntry
+			fetchFileEntry(long fileEntryId)
+		throws PortalException {
+
+		return getService().fetchFileEntry(fileEntryId);
+	}
+
 	/**
 	 * Returns the document library file entry with the matching external
 	 * reference code and group.
@@ -1025,3 +1032,4 @@ public class DLAppLocalServiceUtil {
 	private static volatile DLAppLocalService _service;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1812234655

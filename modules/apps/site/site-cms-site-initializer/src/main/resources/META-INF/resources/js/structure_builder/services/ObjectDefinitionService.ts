@@ -4,7 +4,11 @@
  */
 
 import ApiHelper from '../../common/services/ApiHelper';
-import {ObjectDefinition, ObjectDefinitions} from '../types/ObjectDefinition';
+import {
+	ObjectDefinition,
+	ObjectDefinitions,
+	ObjectRelationship,
+} from '../../common/types/ObjectDefinition';
 
 async function getObjectDefinitions(): Promise<ObjectDefinitions> {
 	const filter =
@@ -13,24 +17,37 @@ async function getObjectDefinitions(): Promise<ObjectDefinitions> {
 		"(objectFolderExternalReferenceCode eq 'L_CMS_FILE_TYPES') or " +
 		"(objectFolderExternalReferenceCode eq 'L_CMS_STRUCTURE_REPEATABLE_GROUPS'))";
 
-	const {data, error} = await ApiHelper.get<{items: ObjectDefinition[]}>(
-		`/o/object-admin/v1.0/object-definitions?filter=${filter}`
-	);
+	const items = await ApiHelper.getAll<ObjectDefinition>({
+		filter,
+		url: '/o/object-admin/v1.0/object-definitions',
+	});
 
-	if (data) {
-		const objectDefinitions: ObjectDefinitions = {};
+	const objectDefinitions: ObjectDefinitions = {};
 
-		for (const objectDefinition of data.items) {
-			objectDefinitions[objectDefinition.externalReferenceCode] =
-				objectDefinition;
-		}
-
-		return objectDefinitions;
+	for (const objectDefinition of items) {
+		objectDefinitions[objectDefinition.externalReferenceCode] =
+			objectDefinition;
 	}
 
-	throw new Error(error);
+	return objectDefinitions;
+}
+
+async function getRelatedObjectDefinitions({
+	objectRelationships,
+}: {
+	objectRelationships: ObjectRelationship[];
+}) {
+	const names = objectRelationships.map((rel) => rel.objectDefinitionName2!);
+
+	return await ApiHelper.getAll<ObjectDefinition>({
+		filter: names
+			.map((n) => `name eq '${n.replace(/'/g, "''")}'`)
+			.join(' or '),
+		url: '/o/object-admin/v1.0/object-definitions',
+	});
 }
 
 export default {
 	getObjectDefinitions,
+	getRelatedObjectDefinitions,
 };

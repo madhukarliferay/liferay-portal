@@ -210,52 +210,6 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
-	 * Returns the last segments entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByUuid_Last(
-			String uuid, OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByUuid_PrevAndNext(
-			long segmentsEntryId, String uuid,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			segmentsEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the segments entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -450,59 +404,6 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
-	 * Returns the last segments entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByUuid_C_PrevAndNext(
-			long segmentsEntryId, String uuid, long companyId,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			segmentsEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the segments entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -627,38 +528,6 @@ public class SegmentsEntryUtil {
 		OrderByComparator<SegmentsEntry> orderByComparator) {
 
 		return getPersistence().fetchBySegmentsEntryId_First(
-			segmentsEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where segmentsEntryId = &#63;.
-	 *
-	 * @param segmentsEntryId the segments entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findBySegmentsEntryId_Last(
-			long segmentsEntryId,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findBySegmentsEntryId_Last(
-			segmentsEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where segmentsEntryId = &#63;.
-	 *
-	 * @param segmentsEntryId the segments entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchBySegmentsEntryId_Last(
-		long segmentsEntryId,
-		OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchBySegmentsEntryId_Last(
 			segmentsEntryId, orderByComparator);
 	}
 
@@ -872,52 +741,6 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
-	 * Returns the last segments entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByGroupId_Last(
-			long groupId, OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByGroupId_Last(
-		long groupId, OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByGroupId_PrevAndNext(
-			long segmentsEntryId, long groupId,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			segmentsEntryId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the segments entries that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -964,24 +787,6 @@ public class SegmentsEntryUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set of segments entries that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] filterFindByGroupId_PrevAndNext(
-			long segmentsEntryId, long groupId,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			segmentsEntryId, groupId, orderByComparator);
 	}
 
 	/**
@@ -1159,261 +964,6 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
-	 * Returns all the segments entries where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @return the matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(long companyId) {
-		return getPersistence().findByCompanyId(companyId);
-	}
-
-	/**
-	 * Returns a range of all the segments entries where companyId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param start the lower bound of the range of segments entries
-	 * @param end the upper bound of the range of segments entries (not inclusive)
-	 * @return the range of matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(
-		long companyId, int start, int end) {
-
-		return getPersistence().findByCompanyId(companyId, start, end);
-	}
-
-	/**
-	 * Returns an ordered range of all the segments entries where companyId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param start the lower bound of the range of segments entries
-	 * @param end the upper bound of the range of segments entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(
-		long companyId, int start, int end,
-		OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().findByCompanyId(
-			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the segments entries where companyId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param start the lower bound of the range of segments entries
-	 * @param end the upper bound of the range of segments entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(
-		long companyId, int start, int end,
-		OrderByComparator<SegmentsEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return getPersistence().findByCompanyId(
-			companyId, start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first segments entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByCompanyId_First(
-			long companyId, OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByCompanyId_First(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the first segments entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByCompanyId_First(
-		long companyId, OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_First(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByCompanyId_Last(
-			long companyId, OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByCompanyId_Last(
-		long companyId, OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByCompanyId_PrevAndNext(
-			long segmentsEntryId, long companyId,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			segmentsEntryId, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns all the segments entries where companyId = any &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyIds the company IDs
-	 * @return the matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(long[] companyIds) {
-		return getPersistence().findByCompanyId(companyIds);
-	}
-
-	/**
-	 * Returns a range of all the segments entries where companyId = any &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyIds the company IDs
-	 * @param start the lower bound of the range of segments entries
-	 * @param end the upper bound of the range of segments entries (not inclusive)
-	 * @return the range of matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(
-		long[] companyIds, int start, int end) {
-
-		return getPersistence().findByCompanyId(companyIds, start, end);
-	}
-
-	/**
-	 * Returns an ordered range of all the segments entries where companyId = any &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyIds the company IDs
-	 * @param start the lower bound of the range of segments entries
-	 * @param end the upper bound of the range of segments entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(
-		long[] companyIds, int start, int end,
-		OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().findByCompanyId(
-			companyIds, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the segments entries where companyId = &#63;, optionally using the finder cache.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>SegmentsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyIds the company IDs
-	 * @param start the lower bound of the range of segments entries
-	 * @param end the upper bound of the range of segments entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching segments entries
-	 */
-	public static List<SegmentsEntry> findByCompanyId(
-		long[] companyIds, int start, int end,
-		OrderByComparator<SegmentsEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return getPersistence().findByCompanyId(
-			companyIds, start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Removes all the segments entries where companyId = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 */
-	public static void removeByCompanyId(long companyId) {
-		getPersistence().removeByCompanyId(companyId);
-	}
-
-	/**
-	 * Returns the number of segments entries where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @return the number of matching segments entries
-	 */
-	public static int countByCompanyId(long companyId) {
-		return getPersistence().countByCompanyId(companyId);
-	}
-
-	/**
-	 * Returns the number of segments entries where companyId = any &#63;.
-	 *
-	 * @param companyIds the company IDs
-	 * @return the number of matching segments entries
-	 */
-	public static int countByCompanyId(long[] companyIds) {
-		return getPersistence().countByCompanyId(companyIds);
-	}
-
-	/**
 	 * Returns all the segments entries where active = &#63;.
 	 *
 	 * @param active the active
@@ -1511,52 +1061,6 @@ public class SegmentsEntryUtil {
 		boolean active, OrderByComparator<SegmentsEntry> orderByComparator) {
 
 		return getPersistence().fetchByActive_First(active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where active = &#63;.
-	 *
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByActive_Last(
-			boolean active, OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByActive_Last(active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where active = &#63;.
-	 *
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByActive_Last(
-		boolean active, OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByActive_Last(active, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where active = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByActive_PrevAndNext(
-			long segmentsEntryId, boolean active,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByActive_PrevAndNext(
-			segmentsEntryId, active, orderByComparator);
 	}
 
 	/**
@@ -1676,52 +1180,6 @@ public class SegmentsEntryUtil {
 		String source, OrderByComparator<SegmentsEntry> orderByComparator) {
 
 		return getPersistence().fetchBySource_First(source, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where source = &#63;.
-	 *
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findBySource_Last(
-			String source, OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findBySource_Last(source, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where source = &#63;.
-	 *
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchBySource_Last(
-		String source, OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchBySource_Last(source, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where source = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findBySource_PrevAndNext(
-			long segmentsEntryId, String source,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findBySource_PrevAndNext(
-			segmentsEntryId, source, orderByComparator);
 	}
 
 	/**
@@ -1921,59 +1379,6 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
-	 * Returns the last segments entry in the ordered set where groupId = &#63; and active = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByG_A_Last(
-			long groupId, boolean active,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_A_Last(
-			groupId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where groupId = &#63; and active = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByG_A_Last(
-		long groupId, boolean active,
-		OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_A_Last(
-			groupId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where groupId = &#63; and active = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByG_A_PrevAndNext(
-			long segmentsEntryId, long groupId, boolean active,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_A_PrevAndNext(
-			segmentsEntryId, groupId, active, orderByComparator);
-	}
-
-	/**
 	 * Returns all the segments entries that the user has permission to view where groupId = &#63; and active = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2025,25 +1430,6 @@ public class SegmentsEntryUtil {
 
 		return getPersistence().filterFindByG_A(
 			groupId, active, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set of segments entries that the user has permission to view where groupId = &#63; and active = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param groupId the group ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] filterFindByG_A_PrevAndNext(
-			long segmentsEntryId, long groupId, boolean active,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().filterFindByG_A_PrevAndNext(
-			segmentsEntryId, groupId, active, orderByComparator);
 	}
 
 	/**
@@ -2347,59 +1733,6 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
-	 * Returns the last segments entry in the ordered set where groupId = &#63; and source = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry
-	 * @throws NoSuchEntryException if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry findByG_SRC_Last(
-			long groupId, String source,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_SRC_Last(
-			groupId, source, orderByComparator);
-	}
-
-	/**
-	 * Returns the last segments entry in the ordered set where groupId = &#63; and source = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching segments entry, or <code>null</code> if a matching segments entry could not be found
-	 */
-	public static SegmentsEntry fetchByG_SRC_Last(
-		long groupId, String source,
-		OrderByComparator<SegmentsEntry> orderByComparator) {
-
-		return getPersistence().fetchByG_SRC_Last(
-			groupId, source, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set where groupId = &#63; and source = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param groupId the group ID
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] findByG_SRC_PrevAndNext(
-			long segmentsEntryId, long groupId, String source,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().findByG_SRC_PrevAndNext(
-			segmentsEntryId, groupId, source, orderByComparator);
-	}
-
-	/**
 	 * Returns all the segments entries that the user has permission to view where groupId = &#63; and source = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2451,25 +1784,6 @@ public class SegmentsEntryUtil {
 
 		return getPersistence().filterFindByG_SRC(
 			groupId, source, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the segments entries before and after the current segments entry in the ordered set of segments entries that the user has permission to view where groupId = &#63; and source = &#63;.
-	 *
-	 * @param segmentsEntryId the primary key of the current segments entry
-	 * @param groupId the group ID
-	 * @param source the source
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next segments entry
-	 * @throws NoSuchEntryException if a segments entry with the primary key could not be found
-	 */
-	public static SegmentsEntry[] filterFindByG_SRC_PrevAndNext(
-			long segmentsEntryId, long groupId, String source,
-			OrderByComparator<SegmentsEntry> orderByComparator)
-		throws com.liferay.segments.exception.NoSuchEntryException {
-
-		return getPersistence().filterFindByG_SRC_PrevAndNext(
-			segmentsEntryId, groupId, source, orderByComparator);
 	}
 
 	/**
@@ -2663,6 +1977,74 @@ public class SegmentsEntryUtil {
 	}
 
 	/**
+	 * Returns the segments entry where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchEntryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching segments entry
+	 * @throws NoSuchEntryException if a matching segments entry could not be found
+	 */
+	public static SegmentsEntry findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.segments.exception.NoSuchEntryException {
+
+		return getPersistence().findByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the segments entry where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching segments entry, or <code>null</code> if a matching segments entry could not be found
+	 */
+	public static SegmentsEntry fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return getPersistence().fetchByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the segments entry where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching segments entry, or <code>null</code> if a matching segments entry could not be found
+	 */
+	public static SegmentsEntry fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G(
+			externalReferenceCode, groupId, useFinderCache);
+	}
+
+	/**
+	 * Removes the segments entry where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the segments entry that was removed
+	 */
+	public static SegmentsEntry removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.segments.exception.NoSuchEntryException {
+
+		return getPersistence().removeByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the number of segments entries where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching segments entries
+	 */
+	public static int countByERC_G(String externalReferenceCode, long groupId) {
+		return getPersistence().countByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
 	 * Caches the segments entry in the entity cache if it is enabled.
 	 *
 	 * @param segmentsEntry the segments entry
@@ -2821,3 +2203,4 @@ public class SegmentsEntryUtil {
 	private static volatile SegmentsEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1850251245

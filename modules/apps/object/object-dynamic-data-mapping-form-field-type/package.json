@@ -1,22 +1,30 @@
 {
 	"dependencies": {
-		"@clayui/autocomplete": "3.145.0",
-		"@clayui/button": "3.144.1",
-		"@clayui/drop-down": "3.145.0",
-		"@clayui/form": "3.145.0",
-		"@clayui/icon": "3.144.1",
-		"@clayui/loading-indicator": "3.144.1",
-		"@clayui/shared": "3.145.0",
+		"@clayui/autocomplete": "^3.159.0",
+		"@clayui/button": "^3.159.0",
+		"@clayui/data-provider": "^3.159.0",
+		"@clayui/drop-down": "^3.159.0",
+		"@clayui/form": "^3.159.0",
+		"@clayui/icon": "^3.159.0",
+		"@clayui/loading-indicator": "^3.159.0",
+		"@clayui/modal": "^3.159.0",
+		"@clayui/shared": "^3.159.0",
 		"@liferay/frontend-data-set-web": "*",
+		"@liferay/frontend-js-item-selector-web": "*",
 		"@liferay/object-js-components-web": "*",
+		"classnames": "2.3.1",
 		"data-engine-js-components-web": "*",
 		"dynamic-data-mapping-form-field-type": "*",
 		"frontend-js-components-web": "*",
 		"frontend-js-web": "*",
 		"react": "18.2.0",
-		"react-dom": "18.2.0"
+		"react-dom": "18.2.0",
+		"uuid": "9.0.0"
 	},
 	"jest": {
+		"setupFiles": [
+			"<rootDir>/jest-setup.config.ts"
+		],
 		"testMatch": [
 			"<rootDir>/src/main/resources/META-INF/resources/tests/**/*.spec.*"
 		]
@@ -30,5 +38,5 @@
 		"format": "node-scripts format",
 		"test": "node-scripts test"
 	},
-	"version": "1.0.73"
+	"version": "1.0.86"
 }

@@ -124,47 +124,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByResourcePrimKey_Last(
-			long resourcePrimKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByResourcePrimKey_Last(
-		long resourcePrimKey,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where resourcePrimKey = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param resourcePrimKey the resource prim key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByResourcePrimKey_PrevAndNext(
-			long id, long resourcePrimKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where resourcePrimKey = &#63; from the database.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -265,47 +224,6 @@ public interface JournalArticlePersistence
 		String uuid,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where uuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByUuid_PrevAndNext(
-			long id, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where uuid = &#63; from the database.
@@ -467,50 +385,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByUuid_C_PrevAndNext(
-			long id, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -615,47 +489,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByGroupId_PrevAndNext(
-			long id, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -695,21 +528,6 @@ public interface JournalArticlePersistence
 		long groupId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByGroupId_PrevAndNext(
-			long id, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; from the database.
@@ -822,47 +640,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where companyId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByCompanyId_PrevAndNext(
-			long id, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -964,47 +741,6 @@ public interface JournalArticlePersistence
 		long DDMStructureId,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where DDMStructureId = &#63;.
-	 *
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByDDMStructureId_Last(
-			long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where DDMStructureId = &#63;.
-	 *
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByDDMStructureId_Last(
-		long DDMStructureId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where DDMStructureId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByDDMStructureId_PrevAndNext(
-			long id, long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where DDMStructureId = &#63; from the database.
@@ -1110,47 +846,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where DDMTemplateKey = &#63;.
-	 *
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByDDMTemplateKey_Last(
-			String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where DDMTemplateKey = &#63;.
-	 *
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByDDMTemplateKey_Last(
-		String DDMTemplateKey,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where DDMTemplateKey = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByDDMTemplateKey_PrevAndNext(
-			long id, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where DDMTemplateKey = &#63; from the database.
 	 *
 	 * @param DDMTemplateKey the ddm template key
@@ -1253,47 +948,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where layoutUuid = &#63;.
-	 *
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByLayoutUuid_Last(
-			String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where layoutUuid = &#63;.
-	 *
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByLayoutUuid_Last(
-		String layoutUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where layoutUuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByLayoutUuid_PrevAndNext(
-			long id, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where layoutUuid = &#63; from the database.
 	 *
 	 * @param layoutUuid the layout uuid
@@ -1394,47 +1048,6 @@ public interface JournalArticlePersistence
 		long smallImageId,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where smallImageId = &#63;.
-	 *
-	 * @param smallImageId the small image ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findBySmallImageId_Last(
-			long smallImageId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where smallImageId = &#63;.
-	 *
-	 * @param smallImageId the small image ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchBySmallImageId_Last(
-		long smallImageId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where smallImageId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param smallImageId the small image ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findBySmallImageId_PrevAndNext(
-			long id, long smallImageId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where smallImageId = &#63; from the database.
@@ -1546,50 +1159,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63; and indexable = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param indexable the indexable
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByR_I_Last(
-			long resourcePrimKey, boolean indexable,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63; and indexable = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param indexable the indexable
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByR_I_Last(
-		long resourcePrimKey, boolean indexable,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where resourcePrimKey = &#63; and indexable = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param resourcePrimKey the resource prim key
-	 * @param indexable the indexable
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByR_I_PrevAndNext(
-			long id, long resourcePrimKey, boolean indexable,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where resourcePrimKey = &#63; and indexable = &#63; from the database.
 	 *
 	 * @param resourcePrimKey the resource prim key
@@ -1699,50 +1268,6 @@ public interface JournalArticlePersistence
 		long resourcePrimKey, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByR_ST_Last(
-			long resourcePrimKey, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByR_ST_Last(
-		long resourcePrimKey, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where resourcePrimKey = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param resourcePrimKey the resource prim key
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByR_ST_PrevAndNext(
-			long id, long resourcePrimKey, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Returns all the journal articles where resourcePrimKey = &#63; and status = any &#63;.
@@ -1934,50 +1459,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_U_Last(
-			long groupId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_U_Last(
-		long groupId, long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_U_PrevAndNext(
-			long id, long groupId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and userId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2021,22 +1502,6 @@ public interface JournalArticlePersistence
 		long groupId, long userId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_U_PrevAndNext(
-			long id, long groupId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and userId = &#63; from the database.
@@ -2159,50 +1624,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_ERC_Last(
-			long groupId, String externalReferenceCode,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_ERC_Last(
-		long groupId, String externalReferenceCode,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_ERC_PrevAndNext(
-			long id, long groupId, String externalReferenceCode,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2246,22 +1667,6 @@ public interface JournalArticlePersistence
 		long groupId, String externalReferenceCode, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_ERC_PrevAndNext(
-			long id, long groupId, String externalReferenceCode,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and externalReferenceCode = &#63; from the database.
@@ -2384,50 +1789,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_F_Last(
-			long groupId, long folderId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_F_Last(
-		long groupId, long folderId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_F_PrevAndNext(
-			long id, long groupId, long folderId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and folderId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2471,22 +1832,6 @@ public interface JournalArticlePersistence
 		long groupId, long folderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and folderId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_F_PrevAndNext(
-			long id, long groupId, long folderId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and folderId = any &#63;.
@@ -2742,50 +2087,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and articleId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_A_Last(
-			long groupId, String articleId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and articleId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_A_Last(
-		long groupId, String articleId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and articleId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_A_PrevAndNext(
-			long id, long groupId, String articleId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and articleId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2829,22 +2130,6 @@ public interface JournalArticlePersistence
 		long groupId, String articleId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and articleId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_A_PrevAndNext(
-			long id, long groupId, String articleId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and articleId = &#63; from the database.
@@ -2967,50 +2252,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_UT_Last(
-			long groupId, String urlTitle,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_UT_Last(
-		long groupId, String urlTitle,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_UT_PrevAndNext(
-			long id, long groupId, String urlTitle,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and urlTitle = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3054,22 +2295,6 @@ public interface JournalArticlePersistence
 		long groupId, String urlTitle, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and urlTitle = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_UT_PrevAndNext(
-			long id, long groupId, String urlTitle,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and urlTitle = &#63; from the database.
@@ -3192,50 +2417,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and DDMStructureId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_DDMSI_Last(
-			long groupId, long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and DDMStructureId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_DDMSI_Last(
-		long groupId, long DDMStructureId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and DDMStructureId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_DDMSI_PrevAndNext(
-			long id, long groupId, long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and DDMStructureId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3279,22 +2460,6 @@ public interface JournalArticlePersistence
 		long groupId, long DDMStructureId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and DDMStructureId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_DDMSI_PrevAndNext(
-			long id, long groupId, long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and DDMStructureId = &#63; from the database.
@@ -3417,50 +2582,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_DDMTK_Last(
-			long groupId, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_DDMTK_Last(
-		long groupId, String DDMTemplateKey,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_DDMTK_PrevAndNext(
-			long id, long groupId, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and DDMTemplateKey = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3504,22 +2625,6 @@ public interface JournalArticlePersistence
 		long groupId, String DDMTemplateKey, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_DDMTK_PrevAndNext(
-			long id, long groupId, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and DDMTemplateKey = &#63; from the database.
@@ -3642,50 +2747,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_L_Last(
-			long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_L_Last(
-		long groupId, String layoutUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_L_PrevAndNext(
-			long id, long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and layoutUuid = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -3731,22 +2792,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_L_PrevAndNext(
-			long id, long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where groupId = &#63; and layoutUuid = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -3771,364 +2816,6 @@ public interface JournalArticlePersistence
 	 * @return the number of matching journal articles that the user has permission to view
 	 */
 	public int filterCountByG_L(long groupId, String layoutUuid);
-
-	/**
-	 * Returns all the journal articles where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @return the matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String layoutUuid);
-
-	/**
-	 * Returns a range of all the journal articles where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @return the range of matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String layoutUuid, int start, int end);
-
-	/**
-	 * Returns an ordered range of all the journal articles where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String layoutUuid, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns an ordered range of all the journal articles where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String layoutUuid, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator,
-		boolean useFinderCache);
-
-	/**
-	 * Returns the first journal article in the ordered set where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_NotL_First(
-			long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the first journal article in the ordered set where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_NotL_First(
-		long groupId, String layoutUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_NotL_Last(
-			long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_NotL_Last(
-		long groupId, String layoutUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_NotL_PrevAndNext(
-			long id, long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @return the matching journal articles that the user has permission to view
-	 */
-	public java.util.List<JournalArticle> filterFindByG_NotL(
-		long groupId, String layoutUuid);
-
-	/**
-	 * Returns a range of all the journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @return the range of matching journal articles that the user has permission to view
-	 */
-	public java.util.List<JournalArticle> filterFindByG_NotL(
-		long groupId, String layoutUuid, int start, int end);
-
-	/**
-	 * Returns an ordered range of all the journal articles that the user has permissions to view where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching journal articles that the user has permission to view
-	 */
-	public java.util.List<JournalArticle> filterFindByG_NotL(
-		long groupId, String layoutUuid, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_NotL_PrevAndNext(
-			long id, long groupId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @return the matching journal articles that the user has permission to view
-	 */
-	public java.util.List<JournalArticle> filterFindByG_NotL(
-		long groupId, String[] layoutUuids);
-
-	/**
-	 * Returns a range of all the journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @return the range of matching journal articles that the user has permission to view
-	 */
-	public java.util.List<JournalArticle> filterFindByG_NotL(
-		long groupId, String[] layoutUuids, int start, int end);
-
-	/**
-	 * Returns an ordered range of all the journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching journal articles that the user has permission to view
-	 */
-	public java.util.List<JournalArticle> filterFindByG_NotL(
-		long groupId, String[] layoutUuids, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns all the journal articles where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @return the matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String[] layoutUuids);
-
-	/**
-	 * Returns a range of all the journal articles where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @return the range of matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String[] layoutUuids, int start, int end);
-
-	/**
-	 * Returns an ordered range of all the journal articles where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String[] layoutUuids, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns an ordered range of all the journal articles where groupId = &#63; and layoutUuid &ne; &#63;, optionally using the finder cache.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @param start the lower bound of the range of journal articles
-	 * @param end the upper bound of the range of journal articles (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching journal articles
-	 */
-	public java.util.List<JournalArticle> findByG_NotL(
-		long groupId, String[] layoutUuids, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator,
-		boolean useFinderCache);
-
-	/**
-	 * Removes all the journal articles where groupId = &#63; and layoutUuid &ne; &#63; from the database.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 */
-	public void removeByG_NotL(long groupId, String layoutUuid);
-
-	/**
-	 * Returns the number of journal articles where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @return the number of matching journal articles
-	 */
-	public int countByG_NotL(long groupId, String layoutUuid);
-
-	/**
-	 * Returns the number of journal articles where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @return the number of matching journal articles
-	 */
-	public int countByG_NotL(long groupId, String[] layoutUuids);
-
-	/**
-	 * Returns the number of journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuid the layout uuid
-	 * @return the number of matching journal articles that the user has permission to view
-	 */
-	public int filterCountByG_NotL(long groupId, String layoutUuid);
-
-	/**
-	 * Returns the number of journal articles that the user has permission to view where groupId = &#63; and layoutUuid &ne; all &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param layoutUuids the layout uuids
-	 * @return the number of matching journal articles that the user has permission to view
-	 */
-	public int filterCountByG_NotL(long groupId, String[] layoutUuids);
 
 	/**
 	 * Returns all the journal articles where groupId = &#63; and status = &#63;.
@@ -4224,50 +2911,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_ST_Last(
-			long groupId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_ST_Last(
-		long groupId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_ST_PrevAndNext(
-			long id, long groupId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -4311,22 +2954,6 @@ public interface JournalArticlePersistence
 		long groupId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_ST_PrevAndNext(
-			long id, long groupId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and status = &#63; from the database.
@@ -4449,50 +3076,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and version = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByC_V_Last(
-			long companyId, double version,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and version = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByC_V_Last(
-		long companyId, double version,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where companyId = &#63; and version = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByC_V_PrevAndNext(
-			long id, long companyId, double version,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where companyId = &#63; and version = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -4602,50 +3185,6 @@ public interface JournalArticlePersistence
 		long companyId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByC_ST_Last(
-			long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByC_ST_Last(
-		long companyId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByC_ST_PrevAndNext(
-			long id, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where companyId = &#63; and status = &#63; from the database.
@@ -4759,50 +3298,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByC_NotST_Last(
-			long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByC_NotST_Last(
-		long companyId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByC_NotST_PrevAndNext(
-			long id, long companyId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where companyId = &#63; and status &ne; &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -4912,50 +3407,6 @@ public interface JournalArticlePersistence
 		Date displayDate, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByLtD_S_Last(
-			Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByLtD_S_Last(
-		Date displayDate, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where displayDate &lt; &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param displayDate the display date
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByLtD_S_PrevAndNext(
-			long id, Date displayDate, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where displayDate &lt; &#63; and status = &#63; from the database.
@@ -5074,53 +3525,6 @@ public interface JournalArticlePersistence
 		long resourcePrimKey, boolean indexable, int status,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63; and indexable = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param indexable the indexable
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByR_I_S_Last(
-			long resourcePrimKey, boolean indexable, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where resourcePrimKey = &#63; and indexable = &#63; and status = &#63;.
-	 *
-	 * @param resourcePrimKey the resource prim key
-	 * @param indexable the indexable
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByR_I_S_Last(
-		long resourcePrimKey, boolean indexable, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where resourcePrimKey = &#63; and indexable = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param resourcePrimKey the resource prim key
-	 * @param indexable the indexable
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByR_I_S_PrevAndNext(
-			long id, long resourcePrimKey, boolean indexable, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Returns all the journal articles where resourcePrimKey = &#63; and indexable = &#63; and status = any &#63;.
@@ -5332,53 +3736,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_U_C_Last(
-			long groupId, long userId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_U_C_Last(
-		long groupId, long userId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_U_C_PrevAndNext(
-			long id, long groupId, long userId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and userId = &#63; and classNameId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -5425,23 +3782,6 @@ public interface JournalArticlePersistence
 		long groupId, long userId, long classNameId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_U_C_PrevAndNext(
-			long id, long groupId, long userId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and userId = &#63; and classNameId = &#63; from the database.
@@ -5636,53 +3976,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_ERC_ST_Last(
-			long groupId, String externalReferenceCode, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_ERC_ST_Last(
-		long groupId, String externalReferenceCode, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_ERC_ST_PrevAndNext(
-			long id, long groupId, String externalReferenceCode, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -5731,23 +4024,6 @@ public interface JournalArticlePersistence
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_ERC_ST_PrevAndNext(
-			long id, long groupId, String externalReferenceCode, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and externalReferenceCode = &#63; and status = any &#63;.
@@ -6031,53 +4307,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_F_ST_Last(
-			long groupId, long folderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_F_ST_Last(
-		long groupId, long folderId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_F_ST_PrevAndNext(
-			long id, long groupId, long folderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and folderId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6124,23 +4353,6 @@ public interface JournalArticlePersistence
 		long groupId, long folderId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and folderId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_F_ST_PrevAndNext(
-			long id, long groupId, long folderId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and folderId = &#63; and status = any &#63;.
@@ -6414,53 +4626,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_C_C_Last(
-			long groupId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_C_C_Last(
-		long groupId, long classNameId, long classPK,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_C_C_PrevAndNext(
-			long id, long groupId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6507,23 +4672,6 @@ public interface JournalArticlePersistence
 		long groupId, long classNameId, long classPK, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_C_C_PrevAndNext(
-			long id, long groupId, long classNameId, long classPK,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
@@ -6718,53 +4866,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and classNameId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_C_DDMTK_Last(
-			long groupId, long classNameId, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and classNameId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_C_DDMTK_Last(
-		long groupId, long classNameId, String DDMTemplateKey,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and classNameId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_C_DDMTK_PrevAndNext(
-			long id, long groupId, long classNameId, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and DDMTemplateKey = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6813,23 +4914,6 @@ public interface JournalArticlePersistence
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and DDMTemplateKey = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param DDMTemplateKey the ddm template key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_C_DDMTK_PrevAndNext(
-			long id, long groupId, long classNameId, String DDMTemplateKey,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and classNameId = &#63; and DDMTemplateKey = &#63; from the database.
@@ -6964,53 +5048,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and classNameId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_C_L_Last(
-			long groupId, long classNameId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and classNameId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_C_L_Last(
-		long groupId, long classNameId, String layoutUuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and classNameId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_C_L_PrevAndNext(
-			long id, long groupId, long classNameId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7059,23 +5096,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param layoutUuid the layout uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_C_L_PrevAndNext(
-			long id, long groupId, long classNameId, String layoutUuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -7105,6 +5125,335 @@ public interface JournalArticlePersistence
 	 */
 	public int filterCountByG_C_L(
 		long groupId, long classNameId, String layoutUuid);
+
+	/**
+	 * Returns all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @return the matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid);
+
+	/**
+	 * Returns a range of all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @return the range of matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first journal article in the ordered set where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching journal article
+	 * @throws NoSuchArticleException if a matching journal article could not be found
+	 */
+	public JournalArticle findByG_C_NotL_First(
+			long groupId, long classNameId, String layoutUuid,
+			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+				orderByComparator)
+		throws NoSuchArticleException;
+
+	/**
+	 * Returns the first journal article in the ordered set where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching journal article, or <code>null</code> if a matching journal article could not be found
+	 */
+	public JournalArticle fetchByG_C_NotL_First(
+		long groupId, long classNameId, String layoutUuid,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator);
+
+	/**
+	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @return the matching journal articles that the user has permission to view
+	 */
+	public java.util.List<JournalArticle> filterFindByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid);
+
+	/**
+	 * Returns a range of all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @return the range of matching journal articles that the user has permission to view
+	 */
+	public java.util.List<JournalArticle> filterFindByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the journal articles that the user has permissions to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching journal articles that the user has permission to view
+	 */
+	public java.util.List<JournalArticle> filterFindByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator);
+
+	/**
+	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @return the matching journal articles that the user has permission to view
+	 */
+	public java.util.List<JournalArticle> filterFindByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids);
+
+	/**
+	 * Returns a range of all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @return the range of matching journal articles that the user has permission to view
+	 */
+	public java.util.List<JournalArticle> filterFindByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids, int start,
+		int end);
+
+	/**
+	 * Returns an ordered range of all the journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching journal articles that the user has permission to view
+	 */
+	public java.util.List<JournalArticle> filterFindByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator);
+
+	/**
+	 * Returns all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @return the matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids);
+
+	/**
+	 * Returns a range of all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @return the range of matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids, int start,
+		int end);
+
+	/**
+	 * Returns an ordered range of all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalArticleModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @param start the lower bound of the range of journal articles
+	 * @param end the upper bound of the range of journal articles (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching journal articles
+	 */
+	public java.util.List<JournalArticle> findByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids, int start,
+		int end,
+		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Removes all the journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 */
+	public void removeByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid);
+
+	/**
+	 * Returns the number of journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @return the number of matching journal articles
+	 */
+	public int countByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid);
+
+	/**
+	 * Returns the number of journal articles where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @return the number of matching journal articles
+	 */
+	public int countByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids);
+
+	/**
+	 * Returns the number of journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuid the layout uuid
+	 * @return the number of matching journal articles that the user has permission to view
+	 */
+	public int filterCountByG_C_NotL(
+		long groupId, long classNameId, String layoutUuid);
+
+	/**
+	 * Returns the number of journal articles that the user has permission to view where groupId = &#63; and classNameId = &#63; and layoutUuid &ne; all &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param classNameId the class name ID
+	 * @param layoutUuids the layout uuids
+	 * @return the number of matching journal articles that the user has permission to view
+	 */
+	public int filterCountByG_C_NotL(
+		long groupId, long classNameId, String[] layoutUuids);
 
 	/**
 	 * Returns the journal article where groupId = &#63; and articleId = &#63; and version = &#63; or throws a <code>NoSuchArticleException</code> if it could not be found.
@@ -7265,53 +5614,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and articleId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_A_ST_Last(
-			long groupId, String articleId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and articleId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_A_ST_Last(
-		long groupId, String articleId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and articleId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_A_ST_PrevAndNext(
-			long id, long groupId, String articleId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and articleId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7358,23 +5660,6 @@ public interface JournalArticlePersistence
 		long groupId, String articleId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and articleId = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_A_ST_PrevAndNext(
-			long id, long groupId, String articleId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and articleId = &#63; and status = any &#63;.
@@ -7649,53 +5934,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and articleId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_A_NotST_Last(
-			long groupId, String articleId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and articleId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_A_NotST_Last(
-		long groupId, String articleId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and articleId = &#63; and status &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_A_NotST_PrevAndNext(
-			long id, long groupId, String articleId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and articleId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7742,23 +5980,6 @@ public interface JournalArticlePersistence
 		long groupId, String articleId, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and articleId = &#63; and status &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param articleId the article ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_A_NotST_PrevAndNext(
-			long id, long groupId, String articleId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and articleId = &#63; and status &ne; &#63; from the database.
@@ -7891,53 +6112,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_UT_ST_Last(
-			long groupId, String urlTitle, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_UT_ST_Last(
-		long groupId, String urlTitle, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_UT_ST_PrevAndNext(
-			long id, long groupId, String urlTitle, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and urlTitle = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -7984,23 +6158,6 @@ public interface JournalArticlePersistence
 		long groupId, String urlTitle, int status, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and urlTitle = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param urlTitle the url title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_UT_ST_PrevAndNext(
-			long id, long groupId, String urlTitle, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and urlTitle = &#63; and status = &#63; from the database.
@@ -8132,53 +6289,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and version = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByC_V_ST_Last(
-			long companyId, double version, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where companyId = &#63; and version = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByC_V_ST_Last(
-		long companyId, double version, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where companyId = &#63; and version = &#63; and status = &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByC_V_ST_PrevAndNext(
-			long id, long companyId, double version, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Removes all the journal articles where companyId = &#63; and version = &#63; and status = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -8307,56 +6417,6 @@ public interface JournalArticlePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and folderId = &#63; and classNameId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article
-	 * @throws NoSuchArticleException if a matching journal article could not be found
-	 */
-	public JournalArticle findByG_F_C_NotST_Last(
-			long groupId, long folderId, long classNameId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
-	 * Returns the last journal article in the ordered set where groupId = &#63; and folderId = &#63; and classNameId = &#63; and status &ne; &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal article, or <code>null</code> if a matching journal article could not be found
-	 */
-	public JournalArticle fetchByG_F_C_NotST_Last(
-		long groupId, long folderId, long classNameId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set where groupId = &#63; and folderId = &#63; and classNameId = &#63; and status &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] findByG_F_C_NotST_PrevAndNext(
-			long id, long groupId, long folderId, long classNameId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
-
-	/**
 	 * Returns all the journal articles that the user has permission to view where groupId = &#63; and folderId = &#63; and classNameId = &#63; and status &ne; &#63;.
 	 *
 	 * @param groupId the group ID
@@ -8408,24 +6468,6 @@ public interface JournalArticlePersistence
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
 			orderByComparator);
-
-	/**
-	 * Returns the journal articles before and after the current journal article in the ordered set of journal articles that the user has permission to view where groupId = &#63; and folderId = &#63; and classNameId = &#63; and status &ne; &#63;.
-	 *
-	 * @param id the primary key of the current journal article
-	 * @param groupId the group ID
-	 * @param folderId the folder ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal article
-	 * @throws NoSuchArticleException if a journal article with the primary key could not be found
-	 */
-	public JournalArticle[] filterFindByG_F_C_NotST_PrevAndNext(
-			long id, long groupId, long folderId, long classNameId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalArticle>
-				orderByComparator)
-		throws NoSuchArticleException;
 
 	/**
 	 * Removes all the journal articles where groupId = &#63; and folderId = &#63; and classNameId = &#63; and status &ne; &#63; from the database.
@@ -8582,3 +6624,4 @@ public interface JournalArticlePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-439287866

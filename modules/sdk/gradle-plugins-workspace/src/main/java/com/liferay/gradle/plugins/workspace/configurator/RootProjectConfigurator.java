@@ -33,6 +33,7 @@ import com.liferay.gradle.plugins.workspace.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.workspace.internal.util.StringUtil;
 import com.liferay.gradle.plugins.workspace.task.CreateTokenTask;
 import com.liferay.gradle.plugins.workspace.task.InitBundleTask;
+import com.liferay.gradle.plugins.workspace.task.UpgradeSourceCodeTask;
 import com.liferay.gradle.plugins.workspace.task.VerifyBundleTask;
 import com.liferay.gradle.plugins.workspace.task.VerifyProductTask;
 import com.liferay.gradle.util.ArrayUtil;
@@ -154,9 +155,6 @@ public class RootProjectConfigurator implements Plugin<Project> {
 
 	public static final String DOWNLOAD_BUNDLE_TASK_NAME = "downloadBundle";
 
-	public static final String FORMAT_SOURCE_UPGRADE_TASK_NAME =
-		"formatSourceUpgrade";
-
 	public static final String INIT_BUNDLE_TASK_NAME = "initBundle";
 
 	public static final String LIFERAY_CONFIGS_DIR_NAME = "configs";
@@ -189,6 +187,9 @@ public class RootProjectConfigurator implements Plugin<Project> {
 	public static final String TAG_DOCKER_IMAGE_TASK_NAME = "tagDockerImage";
 
 	public static final String UPGRADE_JAKARTA_TASK_NAME = "upgradeJakarta";
+
+	public static final String UPGRADE_SOURCE_CODE_TASK_NAME =
+		"upgradeSourceCode";
 
 	public static final String VERIFY_BUNDLE_TASK_NAME = "verifyBundle";
 
@@ -274,9 +275,13 @@ public class RootProjectConfigurator implements Plugin<Project> {
 			project, workspaceExtension, providedModulesConfiguration,
 			verifyProductTask);
 
-		_addTaskUpgradeJakarta(project);
+		UpgradeSourceCodeTask upgradeSourceCodeTask = _addTaskUpgradeSourceCode(
+			project);
 
-		_addTaskFormatSourceUpgrade(project);
+		_configureTaskUpgradeSourceCode(
+			upgradeSourceCodeTask, workspaceExtension);
+
+		_addTaskUpgradeJakarta(project);
 	}
 
 	public boolean isDefaultRepositoryEnabled() {
@@ -413,7 +418,7 @@ public class RootProjectConfigurator implements Plugin<Project> {
 		}
 
 		dockerBuildImage.setDescription(
-			"Builds a child docker image from Liferay base image with all " +
+			"Builds a child Docker image from Liferay base image with all " +
 				"configs deployed.");
 		dockerBuildImage.setGroup(DOCKER_GROUP);
 
@@ -619,7 +624,13 @@ public class RootProjectConfigurator implements Plugin<Project> {
 		File file = project.file("Dockerfile.ext");
 
 		if (file.exists()) {
-			dockerfile.instructionsFromTemplate(file);
+			try {
+				dockerfile.instructionsFromTemplate(file);
+			}
+			catch (IOException ioException) {
+				throw new GradleException(
+					ioException.getMessage(), ioException);
+			}
 		}
 
 		dockerfile.setDescription(
@@ -843,7 +854,7 @@ public class RootProjectConfigurator implements Plugin<Project> {
 
 		copy.setDescription(
 			"Copy the Liferay configs and provided configurations to the " +
-				"docker build directory.");
+				"Docker build directory.");
 		copy.setGroup(DOCKER_GROUP);
 
 		copy.setDestinationDir(workspaceExtension.getDockerDir());
@@ -1033,19 +1044,6 @@ public class RootProjectConfigurator implements Plugin<Project> {
 			});
 
 		return download;
-	}
-
-	private FormatSourceTask _addTaskFormatSourceUpgrade(Project project) {
-		FormatSourceTask formatSourceTask = GradleUtil.addTask(
-			project, FORMAT_SOURCE_UPGRADE_TASK_NAME, FormatSourceTask.class);
-
-		formatSourceTask.onlyIf(_skipIfExecutingParentTaskSpec);
-		formatSourceTask.setCheckCategoryNames("Upgrade");
-		formatSourceTask.setDescription(
-			"Runs Liferay Source Formatter to perform Upgrade SF checks.");
-		formatSourceTask.setGroup("formatting");
-
-		return formatSourceTask;
 	}
 
 	private InitBundleTask _addTaskInitBundle(
@@ -1529,6 +1527,21 @@ public class RootProjectConfigurator implements Plugin<Project> {
 		return formatSourceTask;
 	}
 
+	private UpgradeSourceCodeTask _addTaskUpgradeSourceCode(Project project) {
+		UpgradeSourceCodeTask upgradeSourceCodeTask = GradleUtil.addTask(
+			project, UPGRADE_SOURCE_CODE_TASK_NAME,
+			UpgradeSourceCodeTask.class);
+
+		upgradeSourceCodeTask.onlyIf(_skipIfExecutingParentTaskSpec);
+		upgradeSourceCodeTask.setCheckCategoryNames("Upgrade");
+		upgradeSourceCodeTask.setDescription(
+			"Runs source code upgrade for breaking changes in the new " +
+				"Liferay version.");
+		upgradeSourceCodeTask.setGroup("build");
+
+		return upgradeSourceCodeTask;
+	}
+
 	private VerifyBundleTask _addTaskVerifyBundle(
 		Project project, Download downloadBundleTask,
 		WorkspaceExtension workspaceExtension) {
@@ -1869,6 +1882,17 @@ public class RootProjectConfigurator implements Plugin<Project> {
 				}
 
 			});
+	}
+
+	private void _configureTaskUpgradeSourceCode(
+		UpgradeSourceCodeTask upgradeSourceCodeTask,
+		WorkspaceExtension workspaceExtension) {
+
+		Property<String> toVersionProperty =
+			upgradeSourceCodeTask.getToVersion();
+
+		toVersionProperty.convention(
+			workspaceExtension.getTargetPlatformVersion());
 	}
 
 	private void _configureWorkspaceExtension(

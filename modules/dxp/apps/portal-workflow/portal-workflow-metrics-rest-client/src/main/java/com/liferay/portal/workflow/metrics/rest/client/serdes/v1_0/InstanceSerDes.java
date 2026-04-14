@@ -292,9 +292,7 @@ public class InstanceSerDes {
 			sb.append("\"slaStatus\": ");
 
 			sb.append("\"");
-
 			sb.append(instance.getSLAStatus());
-
 			sb.append("\"");
 		}
 
@@ -836,3 +834,4 @@ public class InstanceSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1738951674

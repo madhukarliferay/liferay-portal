@@ -147,9 +147,7 @@ public class ContextReference implements Serializable {
 			sb.append("\"contextSource\": ");
 
 			sb.append("\"");
-
 			sb.append(contextSource);
-
 			sb.append("\"");
 		}
 
@@ -292,3 +290,4 @@ public class ContextReference implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1484454315

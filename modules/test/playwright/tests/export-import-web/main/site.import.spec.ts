@@ -4,83 +4,77 @@
  */
 
 import {ObjectDefinitionAPI} from '@liferay/object-admin-rest-client-js';
-import {Page, expect, mergeTests} from '@playwright/test';
-import fs from 'fs/promises';
+import {expect, mergeTests} from '@playwright/test';
 import * as path from 'path';
-import {getComparator} from 'playwright-core/lib/utils';
 
 import {accountSettingsPagesTest} from '../../../fixtures/accountSettingsPagesTest';
 import {accountsPagesTest} from '../../../fixtures/accountsPagesTest';
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {depotAdminPageTest} from '../../../fixtures/depotAdminPageTest';
 import {documentLibraryPagesTest} from '../../../fixtures/documentLibraryPages.fixtures';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {objectPagesTest} from '../../../fixtures/objectPagesTest';
 import {pageTemplatesPagesTest} from '../../../fixtures/pageTemplatesPagesTest';
 import {pageViewModePagesTest} from '../../../fixtures/pageViewModePagesTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
+import {styleBookPageTest} from '../../../fixtures/styleBookPageTest';
 import {uiElementsPageTest} from '../../../fixtures/uiElementsTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 import {wikiPagesTest} from '../../../fixtures/wikiPagesTest';
+import {DataApiHelpers} from '../../../helpers/ApiHelpers';
 import {HomePage} from '../../../pages/portal-web/HomePage';
+import {getRandomInt} from '../../../utils/getRandomInt';
 import getRandomString from '../../../utils/getRandomString';
+import {normalizeRestPath} from '../../../utils/normalizeRestPath';
 import {openFieldset} from '../../../utils/openFieldset';
-import {getTempDir} from '../../../utils/temp';
+import {performLoginViaApi} from '../../../utils/performLogin';
+import {PORTLET_URLS} from '../../../utils/portletUrls';
 import {readFileFromZip} from '../../../utils/zip';
 import {companyExportImportPageTest} from './fixtures/companyExportImportPagesTest';
 import {exportImportPagesTest} from './fixtures/exportImportPagesTest';
 import {stagingPageTest} from './fixtures/stagingPageTest';
-import {objectDefitionRequestData} from './utils/objectDefitionRequestData';
 import {openImportFieldset} from './utils/openImportFieldset';
 
 export const test = mergeTests(
 	accountSettingsPagesTest,
 	accountsPagesTest,
-	applicationsMenuPageTest,
 	companyExportImportPageTest,
 	dataApiHelpersTest,
 	depotAdminPageTest,
 	documentLibraryPagesTest,
 	exportImportPagesTest,
 	featureFlagsTest({
+		'LPD-17564': {enabled: true},
 		'LPD-35013': {enabled: true},
-		'LPD-35914': {enabled: false, system: true},
+		'LPD-35443': {enabled: false},
+		'LPD-36105': {enabled: true},
 		'LPD-44307': {enabled: true},
 		'LPD-44771': {enabled: true},
+		'LPD-45276': {enabled: true},
 	}),
+	globalMenuPagesTest,
 	isolatedSiteTest,
 	loginTest(),
 	objectPagesTest,
-	pageViewModePagesTest,
 	pageTemplatesPagesTest,
+	pageViewModePagesTest,
 	productMenuPageTest,
 	stagingPageTest,
+	styleBookPageTest,
 	usersAndOrganizationsPagesTest,
+	uiElementsPageTest,
 	wikiPagesTest
-);
-
-export const testWithExportImportAtInstanceLevelFF = mergeTests(
-	applicationsMenuPageTest,
-	companyExportImportPageTest,
-	exportImportPagesTest,
-	dataApiHelpersTest,
-	featureFlagsTest({
-		'LPD-35914': {enabled: true, system: true},
-		'LPD-44307': {enabled: true},
-		'LPD-44771': {enabled: true},
-	}),
-	loginTest(),
-	uiElementsPageTest
 );
 
 const testWithDeprecationFFDisabled = mergeTests(
 	exportImportPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPD-35914': {enabled: true, system: true},
+		'LPD-35443': {enabled: false},
+		'LPD-36105': {enabled: true},
 		'LPD-44307': {enabled: false},
 		'LPD-44771': {enabled: false},
 	}),
@@ -92,7 +86,8 @@ const testWithDeprecationFF = mergeTests(
 	exportImportPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPD-35914': {enabled: true, system: true},
+		'LPD-35443': {enabled: false},
+		'LPD-36105': {enabled: true},
 		'LPD-44307': {enabled: true},
 		'LPD-44771': {enabled: true},
 	}),
@@ -100,143 +95,101 @@ const testWithDeprecationFF = mergeTests(
 	uiElementsPageTest
 );
 
-async function getSiteHomePageScreenshot(
-	page: Page,
-	siteKey: string,
-	{staging}: {staging: boolean}
-) {
-	await page.goto(`/web/${siteKey}${staging ? '-staging' : ''}`);
+test('Can export and import custom object entries at site level', async ({
+	apiHelpers,
+	exportImportPage,
+}) => {
+	const objectDefinition =
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			scope: 'site',
+			status: {code: 0},
+		});
 
-	const url = page.url();
-
-	await page.goto(`${url}?p_l_mode=preview`, {waitUntil: 'load'});
-
-	await page.waitForFunction(() => document.fonts.ready);
-
-	const screenshot = await page.screenshot({
-		fullPage: true,
-		mask: [page.getByTestId('notificationsCount')],
-		path: path.join(
-			getTempDir(),
-			`${siteKey}-${staging ? 'staging' : 'live'}.png`
-		),
+	apiHelpers.data.push({
+		id: objectDefinition.id,
+		type: 'objectDefinition',
 	});
 
-	await page.goto(url);
+	const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+		{externalReferenceCode: '', textField: objectDefinition.name},
+		`${normalizeRestPath(objectDefinition.restContextPath)}/scopes/Guest`
+	);
 
-	return screenshot;
-}
+	await exportImportPage.goToExport();
 
-testWithExportImportAtInstanceLevelFF(
-	'can export and import custom object entries at site level',
-	async ({apiHelpers, exportImportPage}) => {
-		const objectActionAPIClient =
-			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+	const exportFilePath = await exportImportPage.export({
+		portletLabels: [`${objectDefinition.name} 1 Items`],
+	});
 
-		const {body: objectDefinition} =
-			await objectActionAPIClient.postObjectDefinition(
-				objectDefitionRequestData({scope: 'site'})
-			);
+	const content = await readFileFromZip(
+		`${objectDefinition.externalReferenceCode}.json`,
+		exportFilePath
+	);
 
-		apiHelpers.data.push({
-			id: objectDefinition.id,
-			type: 'objectDefinition',
+	const json = JSON.parse(content);
+
+	expect(json.length).toBe(1);
+	expect(
+		await apiHelpers.delete(
+			`${apiHelpers.baseUrl}${normalizeRestPath(objectDefinition.restContextPath)}/${objectEntry.id}`
+		)
+	).toBeOK();
+
+	await exportImportPage.goToImport();
+
+	await exportImportPage.import({filePath: exportFilePath});
+
+	expect(
+		await apiHelpers.get(
+			`${apiHelpers.baseUrl}${normalizeRestPath(objectDefinition.restContextPath)}/scopes/Guest/by-external-reference-code/${objectEntry.externalReferenceCode}`
+		)
+	).toEqual(
+		expect.objectContaining({
+			externalReferenceCode: objectEntry.externalReferenceCode,
+			textField: objectEntry.textField,
+		})
+	);
+});
+
+test('Cannot import an instance scoped lar file', async ({
+	apiHelpers,
+	exportImportPage,
+	globalMenuPage,
+	page,
+}) => {
+	const objectDefinition =
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			status: {code: 0},
 		});
 
-		const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
-			{externalReferenceCode: '', name: 'test'},
-			'c/tests/scopes/Guest'
-		);
+	apiHelpers.data.push({
+		id: objectDefinition.id,
+		type: 'objectDefinition',
+	});
 
-		await exportImportPage.goToExport();
+	await apiHelpers.objectEntry.postObjectEntry(
+		{externalReferenceCode: '', textField: objectDefinition.name},
+		`${normalizeRestPath(objectDefinition.restContextPath)}`
+	);
 
-		const exportName = 'MyExport-' + getRandomString();
+	const homePage = new HomePage(page);
 
-		await exportImportPage.export(exportName, 'Tests 1 Items');
+	await globalMenuPage.goToApplications('Export');
 
-		await expect(
-			exportImportPage.page
-				.locator('//h2[span[normalize-space()="' + exportName + '"]]')
-				.first()
-				.locator('../..')
-				.getByText('Successful')
-		).toBeVisible();
+	const exportFilePath = await exportImportPage.export({
+		portletLabels: [`${objectDefinition.name} 1 Items`],
+	});
 
-		const exportFilePath =
-			await exportImportPage.downloadExportProcess(exportName);
+	await homePage.goto();
 
-		const content = await readFileFromZip('C_Test.json', exportFilePath);
+	await exportImportPage.goToImport();
 
-		const json = JSON.parse(content);
-
-		expect(json.length).toBe(1);
-
-		expect(
-			await apiHelpers.delete(
-				`${apiHelpers.baseUrl}c/tests/${objectEntry.id}`
-			)
-		).toBeOK();
-
-		await exportImportPage.goToImport();
-
-		await exportImportPage.import(exportFilePath);
-
-		await expect(
-			exportImportPage.page
-				.getByText(exportName)
-				.locator('../../..')
-				.getByText('Successful')
-		).toBeVisible();
-
-		expect(
-			await apiHelpers.get(
-				`${apiHelpers.baseUrl}c/tests/scopes/Guest/by-external-reference-code/${objectEntry.externalReferenceCode}`
-			)
-		).toEqual(
-			expect.objectContaining({
-				externalReferenceCode: objectEntry.externalReferenceCode,
-				name: objectEntry.name,
-			})
-		);
-	}
-);
-
-testWithExportImportAtInstanceLevelFF(
-	'cannot import an instance scoped lar file',
-	async ({apiHelpers, companyExportImportPage, exportImportPage, page}) => {
-		const objectActionAPIClient =
-			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
-
-		const {body: objectDefinition} =
-			await objectActionAPIClient.postObjectDefinition(
-				objectDefitionRequestData()
-			);
-
-		apiHelpers.data.push({
-			id: objectDefinition.id,
-			type: 'objectDefinition',
-		});
-
-		await apiHelpers.objectEntry.postObjectEntry(
-			{externalReferenceCode: '', name: 'test'},
-			'c/tests'
-		);
-
-		const homePage = new HomePage(page);
-
-		const exportFilePath =
-			await companyExportImportPage.export('Tests 1 Items');
-
-		await homePage.goto();
-
-		await exportImportPage.goToImport();
-
-		await exportImportPage.import(
-			exportFilePath,
-			'The LAR file contains one or more entities with a different scope.'
-		);
-	}
-);
+	await exportImportPage.import({
+		expectedUploadErrorMessage:
+			'The LAR file contains one or more entities with a different scope.',
+		filePath: exportFilePath,
+	});
+});
 
 test(
 	'Make sure we do not export-import wikiNodes if they are not selected in the export configuration screen',
@@ -287,20 +240,7 @@ test(
 
 		await exportImportPage.goToExport();
 
-		const exportName = 'MyExport-' + getRandomString();
-
-		await exportImportPage.export(exportName);
-
-		await expect(
-			exportImportPage.page
-				.locator('//h2[span[normalize-space()="' + exportName + '"]]')
-				.first()
-				.locator('../..')
-				.getByText('Successful')
-		).toBeVisible();
-
-		const exportFilePath =
-			await exportImportPage.downloadExportProcess(exportName);
+		const exportFilePath = await exportImportPage.export();
 
 		await exportImportPage.goToImport();
 
@@ -312,7 +252,7 @@ test(
 );
 
 test(
-	'can XSS with `searchContainerId` in Asset Libraries import',
+	'Can XSS with `searchContainerId` in Asset Libraries import',
 	{tag: '@LPS-195766'},
 	async ({apiHelpers, depotAdminPage, page}) => {
 		const depotName = getRandomString();
@@ -354,7 +294,7 @@ test(
 	}
 );
 
-test('can import a folder with document type restrictions and workflow', async ({
+test('Can import a folder with document type restrictions and workflow', async ({
 	apiHelpers,
 	documentLibraryEditFolderPage,
 	documentLibraryPage,
@@ -378,109 +318,120 @@ test('can import a folder with document type restrictions and workflow', async (
 	);
 });
 
-test('can import a lar file selecting some items to import', async ({
+test('Can import a lar file selecting some items to import', async ({
 	exportImportPage,
 }) => {
 	await exportImportPage.goToExport();
 
-	const exportName = 'MyExport-' + getRandomString();
-
-	await exportImportPage.export(exportName);
-
-	await expect(
-		exportImportPage.page
-			.locator('//h2[span[normalize-space()="' + exportName + '"]]')
-			.first()
-			.locator('../..')
-			.getByText('Successful')
-	).toBeVisible();
-
-	const exportFilePath =
-		await exportImportPage.downloadExportProcess(exportName);
+	const exportFilePath = await exportImportPage.export();
 
 	await exportImportPage.goToImport();
 
-	await exportImportPage.import(exportFilePath);
-
-	await expect(
-		exportImportPage.page
-			.getByText(exportName)
-			.locator('../../..')
-			.getByText('Successful')
-	).toBeVisible();
+	await exportImportPage.import({filePath: exportFilePath});
 });
 
-[
-	{name: 'com.liferay.site.initializer.masterclass', shouldFail: true},
-	{name: 'com.liferay.site.initializer.welcome'},
-].forEach(({name, shouldFail}) => {
-	test(`site initializer ${name} can be exported and imported`, async ({
-		apiHelpers,
-		page,
-		stagingPage,
-	}, testInfo) => {
-		testInfo.fail(shouldFail);
-
-		const site = await apiHelpers.headlessSite.createSite({
-			name,
-			templateKey: name,
-			templateType: 'site-initializer',
-		});
-
-		expect(site.name).toBeDefined();
-
-		apiHelpers.data.push({id: site.id, type: 'site'});
-
-		await stagingPage.goto(site.name);
-
-		await stagingPage.enableLocalStaging();
-
-		const comparator = getComparator('image/png');
-
-		const buffer = comparator(
-			await getSiteHomePageScreenshot(page, site.name, {staging: false}),
-			await getSiteHomePageScreenshot(page, site.name, {staging: true})
-		);
-
-		if (buffer !== null && buffer.diff !== undefined) {
-			const diffPath = path.join(getTempDir(), `${site.name}-diff.png`);
-			await fs.writeFile(diffPath, buffer.diff);
-			throw new Error(
-				`The live and staging pages differ. Check the screenshot diff at "${diffPath}".`
-			);
-		}
-	});
-});
-
-test('can see corresponding elements at site level', async ({
+test('Can only import site level custom object entries when their definitions are already in the system', async ({
 	apiHelpers,
 	exportImportPage,
 }) => {
-	const objectActionAPIClient =
-		await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+	const objectDefinitionExternalReferenceCode = `ObjectDefinition${getRandomInt()}`;
 
-	const {body: objectDefinition} =
-		await objectActionAPIClient.postObjectDefinition(
-			objectDefitionRequestData()
+	const objectDefinition =
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			className: `com.liferay.object.model.ObjectDefinition#${objectDefinitionExternalReferenceCode}`,
+			objectDefinitionExternalReferenceCode,
+			scope: 'site',
+			status: {code: 0},
+		});
+
+	const applicationName = `${normalizeRestPath(objectDefinition.restContextPath)}`;
+
+	let objectEntry: ObjectEntry;
+
+	try {
+		objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+			{externalReferenceCode: 'testERC', textField: 'test'},
+			`${applicationName}/scopes/Guest`
 		);
+	}
+	catch {
 
-	apiHelpers.data.push({id: objectDefinition.id, type: 'objectDefinition'});
+		// Ensure cleanup if test execution stops before removing the object definition.
+
+		apiHelpers.data.push({
+			id: objectDefinition.id,
+			type: 'objectDefinition',
+		});
+	}
 
 	await exportImportPage.goToExport();
 
-	const exportName = 'MyExport-' + getRandomString();
+	const exportFilePath = await exportImportPage.export({
+		portletLabels: [`${objectDefinitionExternalReferenceCode} 1 Items`],
+	});
 
-	await exportImportPage.export(exportName);
+	const objectDefinitionAPIClient =
+		await apiHelpers.buildRestClient(ObjectDefinitionAPI);
 
-	await expect(
-		exportImportPage.page
-			.getByText(exportName)
-			.locator('../..')
-			.getByText('Successful')
-	).toBeVisible();
+	await objectDefinitionAPIClient.deleteObjectDefinition(objectDefinition.id);
 
-	const exportFilePath =
-		await exportImportPage.downloadExportProcess(exportName);
+	await exportImportPage.goToImport();
+
+	await exportImportPage.import({
+		expectedUploadErrorMessage: `The Data Handler for the "${objectDefinitionExternalReferenceCode}" portlet is missing from the system.`,
+		filePath: exportFilePath,
+	});
+
+	await test.step('Recreate the object definition', async () => {
+		const objectDefinition2 =
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				className: `com.liferay.object.model.ObjectDefinition#${objectDefinitionExternalReferenceCode}`,
+				objectDefinitionExternalReferenceCode,
+				scope: 'site',
+				status: {code: 0},
+			});
+
+		apiHelpers.data.push({
+			id: objectDefinition2.id,
+			type: 'objectDefinition',
+		});
+	});
+
+	await exportImportPage.goToImport();
+
+	await exportImportPage.import({
+		filePath: exportFilePath,
+	});
+
+	expect(
+		await apiHelpers.get(
+			`${apiHelpers.baseUrl}${applicationName}/scopes/Guest/by-external-reference-code/${objectEntry.externalReferenceCode}`
+		)
+	).toEqual(
+		expect.objectContaining({
+			externalReferenceCode: objectEntry.externalReferenceCode,
+			textField: objectEntry.textField,
+		})
+	);
+});
+
+test('Can see corresponding elements at site level', async ({
+	apiHelpers,
+	exportImportPage,
+}) => {
+	const objectDefinition =
+		await apiHelpers.objectAdmin.postRandomObjectDefinition({
+			status: {code: 0},
+		});
+
+	apiHelpers.data.push({
+		id: objectDefinition.id,
+		type: 'objectDefinition',
+	});
+
+	await exportImportPage.goToExport();
+
+	const exportFilePath = await exportImportPage.export();
 
 	await exportImportPage.goToImport();
 
@@ -515,16 +466,13 @@ test('can see corresponding elements at site level', async ({
 });
 
 testWithDeprecationFFDisabled(
-	"hide 'Delete Application Data' checkbox and 'Copy as New' radio button when deprecation FF is false",
+	"Hide 'Delete Application Data' checkbox and 'Copy as New' radio button when deprecation FF is false",
 	{tag: ['@LPD-44771', '@LPD-44307']},
 	async ({apiHelpers, exportImportPage}) => {
-		const objectActionAPIClient =
-			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
-
-		const {body: objectDefinition} =
-			await objectActionAPIClient.postObjectDefinition(
-				objectDefitionRequestData()
-			);
+		const objectDefinition =
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -533,19 +481,7 @@ testWithDeprecationFFDisabled(
 
 		await exportImportPage.goToExport();
 
-		const exportName = 'MyExport-' + getRandomString();
-
-		await exportImportPage.export(exportName);
-
-		await expect(
-			exportImportPage.page
-				.getByText(exportName)
-				.locator('../..')
-				.getByText('Successful')
-		).toBeVisible();
-
-		const exportFilePath =
-			await exportImportPage.downloadExportProcess(exportName);
+		const exportFilePath = await exportImportPage.export();
 
 		await exportImportPage.goToImportOptions(exportFilePath);
 
@@ -560,16 +496,14 @@ testWithDeprecationFFDisabled(
 );
 
 testWithDeprecationFF(
-	'show modal warning at site level',
+	'Show modal warning at site level',
 	{tag: ['@LPD-54835', '@LPD-54836']},
 	async ({apiHelpers, exportImportPage, page, uiElementsPage}) => {
-		const objectActionAPIClient =
-			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
-
-		const {body: objectDefinition} =
-			await objectActionAPIClient.postObjectDefinition(
-				objectDefitionRequestData({scope: 'site'})
-			);
+		const objectDefinition =
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				scope: 'site',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -581,18 +515,14 @@ testWithDeprecationFF(
 		const exportName = 'MyExport-' + getRandomString();
 
 		await apiHelpers.objectEntry.postObjectEntry(
-			{externalReferenceCode: '', name: 'test'},
-			'c/tests/scopes/Guest'
+			{externalReferenceCode: '', textField: objectDefinition.name},
+			`${normalizeRestPath(objectDefinition.restContextPath)}/scopes/Guest`
 		);
 
-		await exportImportPage.export(exportName, 'Tests 1 Items');
-
-		await expect(
-			page.getByText(exportName).locator('../..').getByText('Successful')
-		).toBeVisible();
-
-		const exportFilePath =
-			await exportImportPage.downloadExportProcess(exportName);
+		const exportFilePath = await exportImportPage.export({
+			portletLabels: [`${objectDefinition.name} 1 Items`],
+			taskName: exportName,
+		});
 
 		await exportImportPage.goToImport();
 
@@ -630,53 +560,47 @@ testWithDeprecationFF(
 			}
 		);
 
-		await testWithExportImportAtInstanceLevelFF.step(
-			'object entry selected and "Mirror with overwriting" checked',
-			async () => {
-				await exportImportPage.deleteApplicationDataCheckbox.uncheck();
-				await exportImportPage.mirrorWithOverwritingRadioButton.click();
+		await test.step('object entry selected and "Mirror with overwriting" checked', async () => {
+			await exportImportPage.deleteApplicationDataCheckbox.uncheck();
+			await exportImportPage.mirrorWithOverwritingRadioButton.click();
 
-				await expect(
-					exportImportPage.deleteApplicationDataAlert
-				).not.toBeVisible();
-				await expect(exportImportPage.updateDataAlert).toBeVisible();
+			await expect(
+				exportImportPage.deleteApplicationDataAlert
+			).not.toBeVisible();
+			await expect(exportImportPage.updateDataAlert).toBeVisible();
 
-				await exportImportPage.importButton.click();
+			await exportImportPage.importButton.click();
 
-				await expect(
-					exportImportPage.deleteApplicationDataBeforeImportingWarningLabel
-				).not.toBeVisible();
-				await expect(
-					exportImportPage.updateDataMirrorWarningLabel
-				).toBeVisible();
+			await expect(
+				exportImportPage.deleteApplicationDataBeforeImportingWarningLabel
+			).not.toBeVisible();
+			await expect(
+				exportImportPage.updateDataMirrorWarningLabel
+			).toBeVisible();
 
-				await uiElementsPage.cancelButton.click();
-			}
-		);
+			await uiElementsPage.cancelButton.click();
+		});
 
-		await testWithExportImportAtInstanceLevelFF.step(
-			'object entry selected and "Copy as new" checked',
-			async () => {
-				await exportImportPage.copyAsNewRadioButton.click();
+		await test.step('object entry selected and "Copy as new" checked', async () => {
+			await exportImportPage.copyAsNewRadioButton.click();
 
-				await expect(
-					exportImportPage.deleteApplicationDataAlert
-				).not.toBeVisible();
-				await expect(exportImportPage.updateDataAlert).toBeVisible();
+			await expect(
+				exportImportPage.deleteApplicationDataAlert
+			).not.toBeVisible();
+			await expect(exportImportPage.updateDataAlert).toBeVisible();
 
-				await exportImportPage.importButton.click();
+			await exportImportPage.importButton.click();
 
-				await expect(
-					exportImportPage.deleteApplicationDataBeforeImportingWarningLabel
-				).not.toBeVisible();
-				await expect(
-					exportImportPage.updateDataMirrorWarningLabel
-				).toBeVisible();
+			await expect(
+				exportImportPage.deleteApplicationDataBeforeImportingWarningLabel
+			).not.toBeVisible();
+			await expect(
+				exportImportPage.updateDataMirrorWarningLabel
+			).toBeVisible();
 
-				await uiElementsPage.cancelButton.click();
-				await exportImportPage.copyAsNewRadioButton.click();
-			}
-		);
+			await uiElementsPage.cancelButton.click();
+			await exportImportPage.copyAsNewRadioButton.click();
+		});
 
 		await testWithDeprecationFF.step(
 			'object entry is selected and "Delete Application Data Before Importing" and "Copy as new" checked',
@@ -732,27 +656,22 @@ testWithDeprecationFF(
 			await exportImportPage.deleteApplicationDataCheckbox.check();
 			await exportImportPage.importButton.click();
 			await exportImportPage.importModalButton.click();
-			await expect(
-				page
-					.getByText(exportName)
-					.locator('../../..')
-					.getByText('Successful')
-			).toBeVisible();
+			await exportImportPage
+				.taskStatusLabel(exportName, 'success')
+				.waitFor();
 		});
 	}
 );
 
 testWithDeprecationFFDisabled(
-	'show modal warning at site level - FF disabled',
+	'Show modal warning at site level - FF disabled',
 	{tag: ['@LPD-54835', '@LPD-54836']},
 	async ({apiHelpers, exportImportPage, page, uiElementsPage}) => {
-		const objectActionAPIClient =
-			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
-
-		const {body: objectDefinition} =
-			await objectActionAPIClient.postObjectDefinition(
-				objectDefitionRequestData({scope: 'site'})
-			);
+		const objectDefinition =
+			await apiHelpers.objectAdmin.postRandomObjectDefinition({
+				scope: 'site',
+				status: {code: 0},
+			});
 
 		apiHelpers.data.push({
 			id: objectDefinition.id,
@@ -761,21 +680,14 @@ testWithDeprecationFFDisabled(
 
 		await exportImportPage.goToExport();
 
-		const exportName = 'MyExport-' + getRandomString();
-
 		await apiHelpers.objectEntry.postObjectEntry(
-			{externalReferenceCode: '', name: 'test'},
-			'c/tests/scopes/Guest'
+			{externalReferenceCode: '', textField: objectDefinition.name},
+			`${normalizeRestPath(objectDefinition.restContextPath)}/scopes/Guest`
 		);
 
-		await exportImportPage.export(exportName, 'Tests 1 Items');
-
-		await expect(
-			page.getByText(exportName).locator('../..').getByText('Successful')
-		).toBeVisible();
-
-		const exportFilePath =
-			await exportImportPage.downloadExportProcess(exportName);
+		const exportFilePath = await exportImportPage.export({
+			portletLabels: [`${objectDefinition.name} 1 Items`],
+		});
 
 		await exportImportPage.goToImport();
 
@@ -803,5 +715,56 @@ testWithDeprecationFFDisabled(
 				await uiElementsPage.cancelButton.click();
 			}
 		);
+	}
+);
+
+testWithDeprecationFF(
+	'Can import the default site on a new instance twice',
+	async ({apiHelpers, exportImportPage, featureFlags, page}) => {
+		test.slow();
+
+		await exportImportPage.goToExport();
+
+		const exportFilePath = await exportImportPage.export();
+
+		const virtualInstance =
+			await apiHelpers.headlessPortalInstance.addVirtualInstance({
+				domain: 'liferay.com',
+				portalInstanceId: 'www.able.com',
+				virtualHost: 'www.able.com',
+			});
+		apiHelpers.data.push({
+			id: virtualInstance.portalInstanceId,
+			type: 'virtual-instance',
+		});
+
+		await performLoginViaApi({
+			loginUrl: 'http://www.able.com:8080',
+			page,
+			screenName: 'test',
+		});
+
+		const virtualInstanceApiHelpers = new DataApiHelpers(
+			page,
+			'http://www.able.com:8080'
+		);
+
+		for (const featureFlag of featureFlags) {
+			await virtualInstanceApiHelpers.featureFlag.updateFeatureFlag(
+				featureFlag.key,
+				featureFlag.enabled,
+				'http://www.able.com:8080'
+			);
+		}
+
+		const site = await virtualInstanceApiHelpers.headlessSite.createSite({
+			name: getRandomString(),
+		});
+
+		await page.goto(
+			`http://www.able.com:8080/group${site.friendlyUrlPath}${PORTLET_URLS.import}`
+		);
+		await exportImportPage.importByDefault(exportFilePath);
+		await exportImportPage.importByDefault(exportFilePath);
 	}
 );

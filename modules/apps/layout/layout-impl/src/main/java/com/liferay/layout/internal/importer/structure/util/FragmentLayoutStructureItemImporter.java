@@ -61,6 +61,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.segments.model.SegmentsExperience;
@@ -69,6 +70,7 @@ import com.liferay.segments.service.SegmentsExperienceLocalService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -316,12 +318,6 @@ public class FragmentLayoutStructureItemImporter
 			return null;
 		}
 
-		long fragmentEntryId = 0;
-
-		if (fragmentEntry != null) {
-			fragmentEntryId = fragmentEntry.getFragmentEntryId();
-		}
-
 		long segmentsExperienceId =
 			layoutStructureItemImporterContext.getSegmentsExperienceId();
 
@@ -385,10 +381,16 @@ public class FragmentLayoutStructureItemImporter
 				freeMarkerFragmentEntryProcessorJSONObject);
 		}
 
+		String rendererKey = null;
+
 		if (fragmentEntry != null) {
 			FragmentCollection fragmentCollection =
 				_fragmentCollectionService.fetchFragmentCollection(
 					fragmentEntry.getFragmentCollectionId());
+
+			if (fragmentEntry.getFragmentEntryId() == 0) {
+				rendererKey = fragmentKey;
+			}
 
 			defaultEditableValuesJSONObject =
 				_fragmentEntryProcessorRegistry.
@@ -397,8 +399,11 @@ public class FragmentLayoutStructureItemImporter
 							layout.getCompanyId(), configuration,
 							fragmentEntryProcessorValuesJSONObject.toString(),
 							fragmentCollection, fragmentEntry.getHtml(),
-							fragmentKey, type),
+							rendererKey, type),
 						configurationJSONObject);
+		}
+		else {
+			rendererKey = fragmentRenderer.getKey();
 		}
 
 		Map<String, String> editableTypes =
@@ -446,12 +451,44 @@ public class FragmentLayoutStructureItemImporter
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
+		String fragmentEntryERC = null;
+		String fragmentEntryScopeERC = null;
+
+		if (fragmentEntry != null) {
+			fragmentEntryERC = fragmentEntry.getExternalReferenceCode();
+			fragmentEntryScopeERC = ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), layoutGroup.getGroupId());
+		}
+
+		String namespace = StringUtil.randomId();
+
+		JSONObject editableJSONObject = jsonObject.getJSONObject(
+			FragmentEntryProcessorConstants.
+				KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
+
+		if (editableJSONObject != null) {
+			List<String> namespaceKeys = new ArrayList<>();
+
+			for (String key : editableJSONObject.keySet()) {
+				if (key.contains(_NAMESPACE_PLACEHOLDER)) {
+					namespaceKeys.add(key);
+				}
+			}
+
+			for (String key : namespaceKeys) {
+				editableJSONObject.put(
+					StringUtil.replace(key, _NAMESPACE_PLACEHOLDER, namespace),
+					editableJSONObject.get(key));
+				editableJSONObject.remove(key);
+			}
+		}
+
 		FragmentEntryLink fragmentEntryLink =
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
-				null, serviceContext.getUserId(), layout.getGroupId(), 0,
-				fragmentEntryId, segmentsExperienceId, layout.getPlid(), css,
-				html, js, configuration, jsonObject.toString(),
-				StringUtil.randomId(), position, fragmentKey, type,
+				null, serviceContext.getUserId(), layout.getGroupId(), null,
+				fragmentEntryERC, fragmentEntryScopeERC, segmentsExperienceId,
+				layout.getPlid(), css, html, js, configuration,
+				jsonObject.toString(), namespace, position, rendererKey, type,
 				serviceContext);
 
 		List<Object> widgetInstances = (List<Object>)definitionMap.get(
@@ -852,6 +889,7 @@ public class FragmentLayoutStructureItemImporter
 		fragmentEntryLink.setHtml(processedHTML);
 		fragmentEntryLink.setConfiguration(configuration);
 		fragmentEntryLink.setEditableValues(editableValues);
+		fragmentEntryLink.setNamespace(_NAMESPACE_PLACEHOLDER);
 		fragmentEntryLink.setRendererKey(rendererKey);
 		fragmentEntryLink.setType(type);
 
@@ -880,9 +918,10 @@ public class FragmentLayoutStructureItemImporter
 
 		FragmentEntryProcessorContext fragmentEntryProcessorContext =
 			new DefaultFragmentEntryProcessorContext(
-				httpServletRequest, httpServletResponse,
+				companyId, httpServletRequest, httpServletResponse,
+				LocaleUtil.getMostRelevantLocale(),
 				FragmentEntryLinkConstants.EDIT,
-				LocaleUtil.getMostRelevantLocale());
+				serviceContext.getScopeGroupId());
 
 		return _fragmentEntryProcessorRegistry.processFragmentEntryLinkHTML(
 			fragmentEntryLink, fragmentEntryProcessorContext);
@@ -1275,14 +1314,49 @@ public class FragmentLayoutStructureItemImporter
 					layoutStructureItemImporterContext,
 					(Map<String, Object>)valueMap.get("text"));
 
-			if (Objects.equals(editableTypes.get(fragmentFieldId), "html")) {
+			if (Objects.equals(
+					editableTypes.get(fragmentFieldId), "date-time")) {
+
+				baseFragmentFieldJSONObject =
+					_createBaseFragmentFieldJSONObject(
+						layoutStructureItemImporterContext,
+						(Map<String, Object>)valueMap.get("date"));
+
+				Map<String, Object> dateFormatMap =
+					(Map<String, Object>)valueMap.get("dateFormat");
+
+				if (dateFormatMap != null) {
+					Map<String, Object> valueI18nMap =
+						(Map<String, Object>)dateFormatMap.get("value_i18n");
+
+					if (valueI18nMap != null) {
+						try {
+							editableFieldConfigJSONObject = JSONUtil.merge(
+								editableFieldConfigJSONObject,
+								JSONUtil.put(
+									"dateFormat",
+									JSONFactoryUtil.createJSONObject(
+										valueI18nMap)));
+						}
+						catch (JSONException jsonException) {
+							if (_log.isWarnEnabled()) {
+								_log.warn(jsonException);
+							}
+						}
+					}
+				}
+			}
+			else if (Objects.equals(
+						editableTypes.get(fragmentFieldId), "html")) {
+
 				baseFragmentFieldJSONObject =
 					_createBaseFragmentFieldJSONObject(
 						layoutStructureItemImporterContext,
 						(Map<String, Object>)valueMap.get("html"));
 			}
+			else if (Objects.equals(
+						editableTypes.get(fragmentFieldId), "image")) {
 
-			if (Objects.equals(editableTypes.get(fragmentFieldId), "image")) {
 				Map<String, Object> fragmentImageMap =
 					(Map<String, Object>)valueMap.get("fragmentImage");
 
@@ -1409,6 +1483,8 @@ public class FragmentLayoutStructureItemImporter
 
 		return jsonObject;
 	}
+
+	private static final String _NAMESPACE_PLACEHOLDER = "[$NAMESPACE$]";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		FragmentLayoutStructureItemImporter.class);

@@ -127,9 +127,7 @@ public class OptionSerDes {
 			sb.append("\"fieldType\": ");
 
 			sb.append("\"");
-
 			sb.append(option.getFieldType());
-
 			sb.append("\"");
 		}
 
@@ -592,3 +590,4 @@ public class OptionSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1570509258

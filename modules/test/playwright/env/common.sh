@@ -3,13 +3,13 @@
 function cluster_set_up {
 	default_set_up
 
-	prepare_additional_bundles ${1}
+	prepare_additional_bundles ${1} ${2}
 
 	local slave_home="${LIFERAY_HOME}-${1}"
 
-	cp "${CURRENT_DIR_NAME}/com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConfiguration.config" "${slave_home}/osgi/configs"
+	cp "${CURRENT_DIR_NAME}/com.liferay.portal.search.elasticsearch8.configuration.ElasticsearchConfiguration.config" "${slave_home}/osgi/configs"
 
-	sed -i "s/%LIFERAY_DOCKER_NETWORK_NAME%/${LIFERAY_DOCKER_NETWORK_NAME}/g" "${slave_home}/osgi/configs/com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConfiguration.config"
+	sed -i "s/%LIFERAY_DOCKER_NETWORK_NAME%/${LIFERAY_DOCKER_NETWORK_NAME}/g" "${slave_home}/osgi/configs/com.liferay.portal.search.elasticsearch8.configuration.ElasticsearchConfiguration.config"
 
 	rm -fr "${slave_home}/data"
 
@@ -300,7 +300,7 @@ function get_app_server_dir {
 }
 
 function get_client_extension_dir {
-	local clients_extension_name=${1}
+	local client_extension_name=${1}
 
 	local client_extension_dir=$(find ${_PORTAL_PROJECT_DIR}/workspaces -type d | grep "${client_extension_name}$" | grep -v .releng | grep -v .npmscripts | grep -v dist | grep -v node_modules)
 
@@ -330,7 +330,7 @@ function get_client_extension_dirs {
 	then
 		for client_extension_name in $(cat ${client_extensions_list_file})
 		do
-			client_extension_dirs+=($(get_client_extension_dir))
+			client_extension_dirs+=($(get_client_extension_dir ${client_extension_name}))
 		done
 	fi
 
@@ -505,6 +505,15 @@ function prepare_additional_bundles {
 		sed -i "s|liferay.home=${LIFERAY_HOME}|liferay.home=${liferay_home}|g" "${app_server_dir}/webapps/ROOT/WEB-INF/classes/portal-ext.properties"
 
 		chmod a+x ${app_server_dir}
+
+		if [[ ${2} == "true" ]]
+		then
+			sed -i "s/lportal/lportal${app_server_bundles_size}/g" "${app_server_dir}/webapps/ROOT/WEB-INF/classes/portal-ext.properties"
+
+			cd ${_PORTAL_PROJECT_DIR}
+
+			ant -f build-test.xml rebuild-database-playwright
+		fi
 	done
 }
 
@@ -559,6 +568,8 @@ function start_app_server {
 		/bin/bash catalina.sh run &
 	elif [[ "${APP_SERVER_TYPE}" == "weblogic" ]]
 	then
+		ant -f build-test-weblogic.xml setup-weblogic-playwright
+
 		cd ${app_server_dir}/domains/liferay
 
 		/bin/bash startWeblogic.sh
@@ -667,19 +678,13 @@ function stop_app_server {
 
 	cd $(get_app_server_dir ${liferay_home})/bin
 
-	if [[ "${APP_SERVER_TYPE}" == "jboss" || "${APP_SERVER_TYPE}" == "wildfly" ]]
+	if [[ "${APP_SERVER_TYPE}" == "tomcat" ]]
 	then
+		/bin/bash shutdown.sh &
+	else
 		cd ${_PORTAL_PROJECT_DIR}
 
 		ant -f build-test.xml stop-app-server
-	elif [[ "${APP_SERVER_TYPE}" == "tomcat" ]]
-	then
-		/bin/bash shutdown.sh &
-	elif [[ "${APP_SERVER_TYPE}" == "weblogic" ]]
-	then
-		cd ${app_server_dir}/domains/liferay
-
-		/bin/bash startWeblogic.sh
 	fi
 
 	local portal_url=${2}

@@ -88,9 +88,7 @@ public class ObjectViewSortColumnSerDes {
 			sb.append("\"sortOrder\": ");
 
 			sb.append("\"");
-
 			sb.append(objectViewSortColumn.getSortOrder());
-
 			sb.append("\"");
 		}
 
@@ -293,3 +291,4 @@ public class ObjectViewSortColumnSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-168616009

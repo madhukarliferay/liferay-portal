@@ -790,7 +790,7 @@ public class CommerceOrderItemLocalServiceWrapper
 	@Override
 	public com.liferay.commerce.model.CommerceOrderItem updateCommerceOrderItem(
 			long commerceOrderItemId, long commerceInventoryBookedQuantityId)
-		throws com.liferay.commerce.exception.NoSuchOrderItemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _commerceOrderItemLocalService.updateCommerceOrderItem(
 			commerceOrderItemId, commerceInventoryBookedQuantityId);
@@ -1043,3 +1043,4 @@ public class CommerceOrderItemLocalServiceWrapper
 	private CommerceOrderItemLocalService _commerceOrderItemLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1825659185

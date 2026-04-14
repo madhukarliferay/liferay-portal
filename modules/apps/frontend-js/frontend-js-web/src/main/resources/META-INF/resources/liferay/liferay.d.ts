@@ -40,6 +40,14 @@ declare module Liferay {
 		export function runTasks(node: any): void;
 	}
 
+	namespace FrontendESM {
+		export function buildURL(
+			callerScriptURL: string,
+			contextPath: string,
+			submodule: string
+		): string;
+	}
+
 	namespace Language {
 		type Direction = 'ltr' | 'rtl';
 
@@ -206,25 +214,6 @@ declare module Liferay {
 												}
 											: Readonly<T>;
 
-		const ATOM = 'Liferay.State.ATOM';
-		const SELECTOR = 'Liferay.State.SELECTOR';
-
-		type Atom<T> = Immutable<{
-			[ATOM]: true;
-			default: T;
-			key: string;
-		}>;
-
-		interface Getter {
-			<T>(atomOrSelector: Atom<T> | Selector<T>): Immutable<T>;
-		}
-
-		type Selector<T> = Immutable<{
-			[SELECTOR]: true;
-			deriveValue: (get: Getter) => T;
-			key: string;
-		}>;
-
 		export function atom<T>(key: string, value: T): Atom<T>;
 
 		export function read<T>(
@@ -255,18 +244,23 @@ declare module Liferay {
 
 	namespace ThemeDisplay {
 		export function getBCP47LanguageId(): string;
+		export function getCDNHost(): string;
 		export function getCompanyId(): string;
 		export function getDefaultLanguageId(): Language.Locale;
 		export function getLanguageId(): Language.Locale;
 		export function getLayoutRelativeControlPanelURL(): string;
 		export function getPathContext(): string;
+		export function getPathFriendlyURLPublic(): string;
 		export function getPathMain(): string;
 		export function getPathThemeImages(): string;
 		export function getPathThemeSpritemap(): string;
+		export function getPlid(): number;
 		export function getPortalURL(): string;
 		export function getRealUserId(): string;
+		export function getScopeGroupId(): number;
 		export function getSiteGroupId(): number;
 		export function getTimeZone(): string;
+		export function getUserEmailAddress(): string;
 		export function getUserId(): string;
 		export function isControlPanel(): boolean;
 		export function isImpersonated(): boolean;

@@ -67,8 +67,21 @@ public class GetLayoutActionsMVCResourceCommandTest {
 	@Test
 	@TestInfo("LPS-132422")
 	public void testGetActionDropdownItems() throws Exception {
+		_assertActionDropdownItems(
+			_layout.getPlid(), "Edit", "Translate", "View", "Preview Draft",
+			"Convert to Page Template", "Make a Copy", "Export for Translation",
+			"Import Translation", "Configure", "Permissions", "Delete");
+
+		Layout layout = LayoutTestUtil.addTypeEmptyLayout(_group);
+
+		_assertActionDropdownItems(layout.getPlid(), "Edit", "Delete");
+	}
+
+	private void _assertActionDropdownItems(long plid, String... actions)
+		throws Exception {
+
 		MockLiferayResourceRequest mockLiferayResourceRequest =
-			_getMockLiferayResourceRequest();
+			_getMockLiferayResourceRequest(plid);
 
 		MockLiferayResourceResponse mockLiferayResourceResponse =
 			new MockLiferayResourceResponse();
@@ -86,12 +99,6 @@ public class GetLayoutActionsMVCResourceCommandTest {
 		JSONArray actionDropdownItemsJSONArray =
 			_getActionDropdownItemsJSONArray(
 				jsonObject.getJSONArray("actions"));
-
-		String[] actions = {
-			"Edit", "Translate", "View", "Preview Draft",
-			"Convert to Page Template", "Make a Copy", "Export for Translation",
-			"Import Translation", "Configure", "Permissions", "Delete"
-		};
 
 		Assert.assertEquals(
 			actions.length, actionDropdownItemsJSONArray.length());
@@ -121,7 +128,7 @@ public class GetLayoutActionsMVCResourceCommandTest {
 		return allDropdownItemsJSONArray;
 	}
 
-	private MockLiferayResourceRequest _getMockLiferayResourceRequest()
+	private MockLiferayResourceRequest _getMockLiferayResourceRequest(long plid)
 		throws Exception {
 
 		MockLiferayResourceRequest mockLiferayResourceRequest =
@@ -141,8 +148,7 @@ public class GetLayoutActionsMVCResourceCommandTest {
 		mockLiferayResourceRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
-		mockLiferayResourceRequest.setParameter(
-			"plid", String.valueOf(_layout.getPlid()));
+		mockLiferayResourceRequest.setParameter("plid", String.valueOf(plid));
 
 		return mockLiferayResourceRequest;
 	}

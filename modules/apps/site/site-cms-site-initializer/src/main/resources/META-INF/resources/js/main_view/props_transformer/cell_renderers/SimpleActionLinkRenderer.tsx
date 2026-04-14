@@ -3,55 +3,147 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayIcon from '@clayui/icon';
 import ClayLink from '@clayui/link';
+import ClaySticker from '@clayui/sticker';
+import {findAction, replaceTokens} from '@liferay/frontend-data-set-web';
+import classNames from 'classnames';
 import React from 'react';
 
-import formatActionURL from '../../../common/utils/formatActionURL';
+import {OBJECT_ENTRY_FOLDER_CLASS_NAME} from '../../../common/utils/constants';
+import {getFileMimeTypeObjectDefinitionStickerValue} from '../utils/transformViewsItemProps';
 
-const OBJECT_ENTRY_FOLDER_CLASS_NAME =
-	'com.liferay.object.model.ObjectEntryFolder';
-
-interface ActionItem {
+export interface ActionItem {
 	data: {id: string};
 	href?: string;
 }
 
 export default function SimpleActionLinkRenderer({
 	actions,
+	additionalProps,
 	itemData,
+	onViewClick,
 	options,
 	value,
 }: {
 	actions: ActionItem[];
+	additionalProps?: {
+		fileMimeTypeCssClasses: Record<string, string>;
+		fileMimeTypeIcons: Record<string, string>;
+		objectDefinitionCssClasses: Record<string, string>;
+		objectDefinitionIcons: Record<string, string>;
+	};
 	itemData: any;
+	onViewClick?: (itemData: any) => void;
 	options: {actionId: string};
 	value: string;
 }) {
 	const {actionId} = options;
-
-	if (!actions.length || !actionId) {
-		return value ? <>{value}</> : null;
-	}
+	const title =
+		value && value !== '' ? value : Liferay.Language.get('untitled-asset');
 
 	const isFolder =
 		itemData?.entryClassName === OBJECT_ENTRY_FOLDER_CLASS_NAME;
 
-	const resolvedActionId = isFolder ? `${actionId}Folder` : actionId;
+	const hasUpdatePermission = Boolean(itemData?.actions?.update);
 
-	const selectedAction = actions.find(
-		({data}) => data?.id === resolvedActionId
-	);
+	let formattedHref = null;
+	let shouldOpenModal = false;
 
-	if (!selectedAction?.href) {
-		return value ? <>{value}</> : null;
+	if (actions.length && actionId) {
+		if (!isFolder && hasUpdatePermission) {
+			const selectedAction = findAction(actions, actionId);
+
+			if (selectedAction?.href) {
+				formattedHref = replaceTokens(selectedAction.href, itemData);
+			}
+		}
+		else if (isFolder) {
+			const selectedAction = findAction(actions, `${actionId}Folder`);
+
+			if (selectedAction?.href) {
+				formattedHref = replaceTokens(selectedAction.href, itemData);
+			}
+		}
+		else if (onViewClick) {
+			shouldOpenModal = true;
+		}
 	}
 
-	const formattedHref = formatActionURL(itemData, selectedAction.href);
+	const stickerElement = additionalProps && (
+		<ClaySticker
+			className={classNames(
+				'c-mr-2',
+				'flex-shrink-0',
+				'inline-item',
+				'inline-item-before',
+				isFolder
+					? 'file-icon-color-0'
+					: getFileMimeTypeObjectDefinitionStickerValue(
+							additionalProps.fileMimeTypeCssClasses,
+							additionalProps.objectDefinitionCssClasses,
+							itemData
+						)
+			)}
+		>
+			<ClayIcon
+				symbol={
+					isFolder
+						? 'folder'
+						: getFileMimeTypeObjectDefinitionStickerValue(
+								additionalProps.fileMimeTypeIcons,
+								additionalProps.objectDefinitionIcons,
+								itemData
+							)
+				}
+			/>
+		</ClaySticker>
+	);
+
+	const systemIcon = itemData.system && (
+		<ClayIcon
+			aria-label={Liferay.Language.get('system-default-structure')}
+			className="c-ml-2 lfr-portal-tooltip text-secondary"
+			data-title={Liferay.Language.get('system-default-structure')}
+			symbol="lock"
+		/>
+	);
+
+	if (shouldOpenModal) {
+		return (
+			<div className="align-items-center d-flex table-list-title">
+				{stickerElement}
+
+				<ClayLink
+					aria-label={title}
+					data-senna-off
+					href="#"
+					onClick={(event: React.MouseEvent) => {
+						event.preventDefault();
+
+						onViewClick!(itemData);
+					}}
+				>
+					{title}
+
+					{systemIcon}
+				</ClayLink>
+			</div>
+		);
+	}
+
+	if (!formattedHref) {
+		return <>{title}</>;
+	}
 
 	return (
-		<div className="table-list-title">
-			<ClayLink data-senna-off href={formattedHref}>
-				{value}
+		<div className="align-items-center d-flex table-list-title">
+			{stickerElement}
+
+			<ClayLink aria-label={title} data-senna-off href={formattedHref}>
+				{title}
+
+				{systemIcon}
 			</ClayLink>
 		</div>
 	);

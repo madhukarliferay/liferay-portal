@@ -17,6 +17,8 @@ public interface DestinationNames {
 	public static final String BACKGROUND_TASK_STATUS =
 		"liferay/background_task_status";
 
+	public static final String CMP_COMMENT_ADDED = "liferay/cmp_comment_added";
+
 	public static final String COMMERCE_BASE_PRICE_LIST =
 		"liferay/commerce_base_price_list";
 
@@ -86,5 +88,7 @@ public interface DestinationNames {
 
 	public static final String SUBSCRIPTION_SENDER =
 		"liferay/subscription_sender";
+
+	public static final String USER_LOGIN = "liferay/user_login";
 
 }

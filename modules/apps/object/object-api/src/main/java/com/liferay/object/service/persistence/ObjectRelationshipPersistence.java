@@ -120,47 +120,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where uuid = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByUuid_PrevAndNext(
-			long objectRelationshipId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByUuid_C_PrevAndNext(
-			long objectRelationshipId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -416,47 +331,6 @@ public interface ObjectRelationshipPersistence
 		long companyId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where companyId = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByCompanyId_PrevAndNext(
-			long objectRelationshipId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where companyId = &#63; from the database.
@@ -562,47 +436,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByObjectDefinitionId1_Last(
-			long objectDefinitionId1,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByObjectDefinitionId1_Last(
-		long objectDefinitionId1,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByObjectDefinitionId1_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; from the database.
 	 *
 	 * @param objectDefinitionId1 the object definition id1
@@ -704,47 +537,6 @@ public interface ObjectRelationshipPersistence
 		long objectDefinitionId2,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByObjectDefinitionId2_Last(
-			long objectDefinitionId2,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByObjectDefinitionId2_Last(
-		long objectDefinitionId2,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId2 = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByObjectDefinitionId2_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId2,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where objectDefinitionId2 = &#63; from the database.
@@ -895,47 +687,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where parameterObjectFieldId = &#63;.
-	 *
-	 * @param parameterObjectFieldId the parameter object field ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByParameterObjectFieldId_Last(
-			long parameterObjectFieldId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where parameterObjectFieldId = &#63;.
-	 *
-	 * @param parameterObjectFieldId the parameter object field ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByParameterObjectFieldId_Last(
-		long parameterObjectFieldId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where parameterObjectFieldId = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param parameterObjectFieldId the parameter object field ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByParameterObjectFieldId_PrevAndNext(
-			long objectRelationshipId, long parameterObjectFieldId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where parameterObjectFieldId = &#63; from the database.
 	 *
 	 * @param parameterObjectFieldId the parameter object field ID
@@ -1043,50 +794,6 @@ public interface ObjectRelationshipPersistence
 		long companyId, long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByC_U_Last(
-			long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByC_U_Last(
-		long companyId, long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByC_U_PrevAndNext(
-			long objectRelationshipId, long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where companyId = &#63; and userId = &#63; from the database.
@@ -1200,50 +907,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and edge = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param edge the edge
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_E_Last(
-			long objectDefinitionId1, boolean edge,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and edge = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param edge the edge
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_E_Last(
-		long objectDefinitionId1, boolean edge,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and edge = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param edge the edge
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_E_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1, boolean edge,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and edge = &#63; from the database.
 	 *
 	 * @param objectDefinitionId1 the object definition id1
@@ -1353,50 +1016,6 @@ public interface ObjectRelationshipPersistence
 		long objectDefinitionId1, String name,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and name = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_N_Last(
-			long objectDefinitionId1, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and name = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_N_Last(
-		long objectDefinitionId1, String name,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and name = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_N_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and name = &#63; from the database.
@@ -1510,51 +1129,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and reverse = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_R_Last(
-			long objectDefinitionId1, boolean reverse,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and reverse = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_R_Last(
-		long objectDefinitionId1, boolean reverse,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and reverse = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_R_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1,
-			boolean reverse,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and reverse = &#63; from the database.
 	 *
 	 * @param objectDefinitionId1 the object definition id1
@@ -1666,50 +1240,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63; and edge = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param edge the edge
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI2_E_Last(
-			long objectDefinitionId2, boolean edge,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63; and edge = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param edge the edge
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI2_E_Last(
-		long objectDefinitionId2, boolean edge,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId2 = &#63; and edge = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param edge the edge
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI2_E_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId2, boolean edge,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where objectDefinitionId2 = &#63; and edge = &#63; from the database.
 	 *
 	 * @param objectDefinitionId2 the object definition id2
@@ -1819,51 +1349,6 @@ public interface ObjectRelationshipPersistence
 		long objectDefinitionId2, boolean reverse,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63; and reverse = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI2_R_Last(
-			long objectDefinitionId2, boolean reverse,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63; and reverse = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI2_R_Last(
-		long objectDefinitionId2, boolean reverse,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId2 = &#63; and reverse = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI2_R_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId2,
-			boolean reverse,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where objectDefinitionId2 = &#63; and reverse = &#63; from the database.
@@ -2098,54 +1583,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_ODI2_T_Last(
-			long objectDefinitionId1, long objectDefinitionId2, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_ODI2_T_Last(
-		long objectDefinitionId1, long objectDefinitionId2, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and type = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_ODI2_T_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1,
-			long objectDefinitionId2, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and type = &#63; from the database.
 	 *
 	 * @param objectDefinitionId1 the object definition id1
@@ -2268,54 +1705,6 @@ public interface ObjectRelationshipPersistence
 		long objectDefinitionId1, String deletionType, boolean reverse,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and deletionType = &#63; and reverse = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param deletionType the deletion type
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_DT_R_Last(
-			long objectDefinitionId1, String deletionType, boolean reverse,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and deletionType = &#63; and reverse = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param deletionType the deletion type
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_DT_R_Last(
-		long objectDefinitionId1, String deletionType, boolean reverse,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and deletionType = &#63; and reverse = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param deletionType the deletion type
-	 * @param reverse the reverse
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_DT_R_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1,
-			String deletionType, boolean reverse,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and deletionType = &#63; and reverse = &#63; from the database.
@@ -2442,54 +1831,6 @@ public interface ObjectRelationshipPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and reverse = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param reverse the reverse
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_R_T_Last(
-			long objectDefinitionId1, boolean reverse, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and reverse = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param reverse the reverse
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_R_T_Last(
-		long objectDefinitionId1, boolean reverse, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and reverse = &#63; and type = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param reverse the reverse
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_R_T_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1,
-			boolean reverse, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and reverse = &#63; and type = &#63; from the database.
 	 *
 	 * @param objectDefinitionId1 the object definition id1
@@ -2612,54 +1953,6 @@ public interface ObjectRelationshipPersistence
 		long objectDefinitionId2, boolean reverse, String type,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63; and reverse = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param reverse the reverse
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI2_R_T_Last(
-			long objectDefinitionId2, boolean reverse, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId2 = &#63; and reverse = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param reverse the reverse
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI2_R_T_Last(
-		long objectDefinitionId2, boolean reverse, String type,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId2 = &#63; and reverse = &#63; and type = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param reverse the reverse
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI2_R_T_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId2,
-			boolean reverse, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where objectDefinitionId2 = &#63; and reverse = &#63; and type = &#63; from the database.
@@ -2793,59 +2086,6 @@ public interface ObjectRelationshipPersistence
 		String type,
 		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
 			orderByComparator);
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and name = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param name the name
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship
-	 * @throws NoSuchObjectRelationshipException if a matching object relationship could not be found
-	 */
-	public ObjectRelationship findByODI1_ODI2_N_T_Last(
-			long objectDefinitionId1, long objectDefinitionId2, String name,
-			String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
-
-	/**
-	 * Returns the last object relationship in the ordered set where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and name = &#63; and type = &#63;.
-	 *
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param name the name
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching object relationship, or <code>null</code> if a matching object relationship could not be found
-	 */
-	public ObjectRelationship fetchByODI1_ODI2_N_T_Last(
-		long objectDefinitionId1, long objectDefinitionId2, String name,
-		String type,
-		com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-			orderByComparator);
-
-	/**
-	 * Returns the object relationships before and after the current object relationship in the ordered set where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and name = &#63; and type = &#63;.
-	 *
-	 * @param objectRelationshipId the primary key of the current object relationship
-	 * @param objectDefinitionId1 the object definition id1
-	 * @param objectDefinitionId2 the object definition id2
-	 * @param name the name
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next object relationship
-	 * @throws NoSuchObjectRelationshipException if a object relationship with the primary key could not be found
-	 */
-	public ObjectRelationship[] findByODI1_ODI2_N_T_PrevAndNext(
-			long objectRelationshipId, long objectDefinitionId1,
-			long objectDefinitionId2, String name, String type,
-			com.liferay.portal.kernel.util.OrderByComparator<ObjectRelationship>
-				orderByComparator)
-		throws NoSuchObjectRelationshipException;
 
 	/**
 	 * Removes all the object relationships where objectDefinitionId1 = &#63; and objectDefinitionId2 = &#63; and name = &#63; and type = &#63; from the database.
@@ -3068,3 +2308,4 @@ public interface ObjectRelationshipPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:824428744

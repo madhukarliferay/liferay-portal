@@ -18,9 +18,11 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.Arrays;
@@ -47,9 +49,10 @@ public class ObjectDefinitionServiceImpl
 
 	@Override
 	public ObjectDefinition addCustomObjectDefinition(
-			long objectFolderId, String className, boolean enableComments,
-			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
-			boolean enableLocalization, boolean enableObjectEntryDraft,
+			String externalReferenceCode, long objectFolderId, String className,
+			boolean enableCategorization, boolean enableComments,
+			boolean enableFormContainer, boolean enableFriendlyURLCustomization,
+			boolean enableIndexSearch, boolean enableObjectEntryDraft,
 			boolean enableObjectEntrySchedule,
 			boolean enableObjectEntrySubscription,
 			boolean enableObjectEntryVersioning, String friendlyURLSeparator,
@@ -57,7 +60,9 @@ public class ObjectDefinitionServiceImpl
 			String panelCategoryKey, Map<Locale, String> pluralLabelMap,
 			boolean portlet, String scope, String storageType,
 			List<ObjectDefinitionSetting> objectDefinitionSettings,
-			List<ObjectField> objectFields)
+			List<ObjectField> objectFields,
+			List<WorkflowDefinitionLink> workflowDefinitionLinks,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_portletResourcePermission.check(
@@ -69,40 +74,24 @@ public class ObjectDefinitionServiceImpl
 			ObjectActionKeys.ADD_OBJECT_DEFINITION);
 
 		return objectDefinitionLocalService.addCustomObjectDefinition(
-			getUserId(), objectFolderId, className, enableComments,
+			externalReferenceCode, getUserId(), objectFolderId, className,
+			enableCategorization, enableComments, enableFormContainer,
 			enableFriendlyURLCustomization, enableIndexSearch,
-			enableLocalization, enableObjectEntryDraft,
-			enableObjectEntrySchedule, enableObjectEntrySubscription,
-			enableObjectEntryVersioning, friendlyURLSeparator, labelMap, name,
-			panelAppOrder, panelCategoryKey, pluralLabelMap, portlet, scope,
-			storageType, objectDefinitionSettings, objectFields);
-	}
-
-	@Override
-	public ObjectDefinition addObjectDefinition(
-			String externalReferenceCode, long objectFolderId,
-			boolean modifiable, String scope, boolean system)
-		throws PortalException {
-
-		_portletResourcePermission.check(
-			getPermissionChecker(), null,
-			ObjectActionKeys.ADD_OBJECT_DEFINITION);
-
-		_objectFolderModelResourcePermission.check(
-			getPermissionChecker(), objectFolderId,
-			ObjectActionKeys.ADD_OBJECT_DEFINITION);
-
-		return objectDefinitionLocalService.addObjectDefinition(
-			externalReferenceCode, getUserId(), objectFolderId, modifiable,
-			scope, system);
+			enableObjectEntryDraft, enableObjectEntrySchedule,
+			enableObjectEntrySubscription, enableObjectEntryVersioning,
+			friendlyURLSeparator, labelMap, name, panelAppOrder,
+			panelCategoryKey, pluralLabelMap, portlet, scope, storageType,
+			objectDefinitionSettings, objectFields, workflowDefinitionLinks,
+			serviceContext);
 	}
 
 	@Override
 	public ObjectDefinition addSystemObjectDefinition(
 			String externalReferenceCode, long userId, long objectFolderId,
-			String className, boolean enableComments,
+			String className, boolean enableCategorization,
+			boolean enableComments, boolean enableFormContainer,
 			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
-			boolean enableLocalization, boolean enableObjectEntryDraft,
+			boolean enableObjectEntryDraft, boolean enableObjectEntryHistory,
 			boolean enableObjectEntrySchedule,
 			boolean enableObjectEntrySubscription,
 			boolean enableObjectEntryVersioning, String friendlyURLSeparator,
@@ -110,7 +99,8 @@ public class ObjectDefinitionServiceImpl
 			String panelCategoryKey, Map<Locale, String> pluralLabelMap,
 			boolean portlet, String scope,
 			List<ObjectDefinitionSetting> objectDefinitionSettings,
-			List<ObjectField> objectFields)
+			List<ObjectField> objectFields,
+			List<WorkflowDefinitionLink> workflowDefinitionLinks)
 		throws PortalException {
 
 		_portletResourcePermission.check(
@@ -123,13 +113,14 @@ public class ObjectDefinitionServiceImpl
 
 		return objectDefinitionLocalService.addSystemObjectDefinition(
 			externalReferenceCode, userId, objectFolderId, className, null,
-			enableComments, enableFriendlyURLCustomization, enableIndexSearch,
-			enableLocalization, enableObjectEntryDraft,
+			enableCategorization, enableComments, enableFormContainer,
+			enableFriendlyURLCustomization, enableIndexSearch,
+			enableObjectEntryDraft, enableObjectEntryHistory,
 			enableObjectEntrySchedule, enableObjectEntrySubscription,
 			enableObjectEntryVersioning, friendlyURLSeparator, labelMap, true,
 			name, panelAppOrder, panelCategoryKey, null, null, pluralLabelMap,
 			portlet, scope, null, 1, WorkflowConstants.STATUS_DRAFT,
-			objectDefinitionSettings, objectFields);
+			objectDefinitionSettings, objectFields, workflowDefinitionLinks);
 	}
 
 	@Override
@@ -273,8 +264,8 @@ public class ObjectDefinitionServiceImpl
 			long descriptionObjectFieldId, long objectFolderId,
 			long titleObjectFieldId, boolean accountEntryRestricted,
 			boolean active, String className, boolean enableCategorization,
-			boolean enableComments, boolean enableFriendlyURLCustomization,
-			boolean enableIndexSearch, boolean enableLocalization,
+			boolean enableComments, boolean enableFormContainer,
+			boolean enableFriendlyURLCustomization, boolean enableIndexSearch,
 			boolean enableObjectEntryDraft, boolean enableObjectEntryHistory,
 			boolean enableObjectEntrySchedule,
 			boolean enableObjectEntrySubscription,
@@ -282,7 +273,10 @@ public class ObjectDefinitionServiceImpl
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, boolean portlet,
 			Map<Locale, String> pluralLabelMap, String scope, int status,
-			List<ObjectDefinitionSetting> objectDefinitionSettings)
+			List<ObjectDefinitionSetting> objectDefinitionSettings,
+			List<ObjectField> objectFields,
+			List<WorkflowDefinitionLink> workflowDefinitionLinks,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_objectDefinitionModelResourcePermission.check(
@@ -297,13 +291,13 @@ public class ObjectDefinitionServiceImpl
 			accountEntryRestrictedObjectFieldId, descriptionObjectFieldId,
 			objectFolderId, titleObjectFieldId, accountEntryRestricted, active,
 			className, enableCategorization, enableComments,
-			enableFriendlyURLCustomization, enableIndexSearch,
-			enableLocalization, enableObjectEntryDraft,
-			enableObjectEntryHistory, enableObjectEntrySchedule,
-			enableObjectEntrySubscription, enableObjectEntryVersioning,
-			friendlyURLSeparator, labelMap, name, panelAppOrder,
-			panelCategoryKey, portlet, pluralLabelMap, scope, status,
-			objectDefinitionSettings);
+			enableFormContainer, enableFriendlyURLCustomization,
+			enableIndexSearch, enableObjectEntryDraft, enableObjectEntryHistory,
+			enableObjectEntrySchedule, enableObjectEntrySubscription,
+			enableObjectEntryVersioning, friendlyURLSeparator, labelMap, name,
+			panelAppOrder, panelCategoryKey, portlet, pluralLabelMap, scope,
+			status, objectDefinitionSettings, objectFields,
+			workflowDefinitionLinks, serviceContext);
 	}
 
 	@Override
@@ -322,7 +316,9 @@ public class ObjectDefinitionServiceImpl
 	public ObjectDefinition updateSystemObjectDefinition(
 			String externalReferenceCode, long objectDefinitionId,
 			long objectFolderId, long titleObjectFieldId,
-			List<ObjectDefinitionSetting> objectDefinitionSettings)
+			List<ObjectDefinitionSetting> objectDefinitionSettings,
+			List<ObjectField> objectFields,
+			List<WorkflowDefinitionLink> workflowDefinitionLinks)
 		throws PortalException {
 
 		_objectDefinitionModelResourcePermission.check(
@@ -334,7 +330,8 @@ public class ObjectDefinitionServiceImpl
 
 		return objectDefinitionLocalService.updateSystemObjectDefinition(
 			externalReferenceCode, objectDefinitionId, objectFolderId,
-			titleObjectFieldId, objectDefinitionSettings);
+			titleObjectFieldId, objectDefinitionSettings, objectFields,
+			workflowDefinitionLinks);
 	}
 
 	@Override

@@ -475,9 +475,7 @@ public class SLAResult implements Serializable {
 			sb.append("\"status\": ");
 
 			sb.append("\"");
-
 			sb.append(status);
-
 			sb.append("\"");
 		}
 
@@ -620,3 +618,4 @@ public class SLAResult implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1962475772

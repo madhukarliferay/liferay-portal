@@ -5,14 +5,13 @@
 
 import ClayAlert from '@clayui/alert';
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import {useAppPropertiesContext} from '~/contexts/AppPropertiesContext';
 import {useGetMyUserAccount} from '~/services/liferay/graphql/user-accounts';
 import i18n from '~/utils/I18n';
 import {ROLE_TYPES} from '~/utils/constants';
 import {ALERT_DOWNLOAD_TYPE} from '~/features/project/utils/constants/alertDownloadType';
 import {ALERT_ACTIVATION_AGGREGATED_KEYS_DOWNLOAD_TEXT} from '../../utils/constants/alertAggregateKeysDownloadText';
 import {ALERT_ACTIVATION_MULTIPLE_KEYS_DOWNLOAD_TEXT} from '../../utils/constants/alertMultipleKeysDownloadText';
-import {DOWNLOADABLE_LICENSE_KEYS} from '../../utils/constants/downlodableLicenseKeys';
+import {DOWNLOADABLE_LICENSE_KEYS} from '../../utils/constants/downloadableLicenseKeys';
 import {hasAdminUserAccount} from '../../utils/hasAdminUserAccount';
 import {isBulkRenewAvailable} from '../../utils/isBulkRenewAvailable';
 import ActionButton from '../ActionButton';
@@ -62,8 +61,6 @@ const ActivationKeysTableHeader = ({
 			return hasAdminRoles;
 		}
 	}, [userAccounts]);
-
-	const {featureFlags} = useAppPropertiesContext();
 
 	const [status, setStatus] = useState({
 		deactivate: '',
@@ -190,8 +187,7 @@ const ActivationKeysTableHeader = ({
 								</>
 							)}
 
-						{featureFlags.includes('ISSD-78') &&
-							(isAdminUserAccount || isAdminOrPartnerManager) &&
+						{(isAdminUserAccount || isAdminOrPartnerManager) &&
 							allowSelfProvisioning &&
 							activationKeysByStatusPaginatedChecked.length >=
 								2 &&
@@ -299,7 +295,7 @@ const ActivationKeysTableHeader = ({
 						dangerouslySetInnerHTML={{
 							__html: i18n.sub(
 								'to-download-an-aggregate-key-select-keys-for-a-valid-liferay-version-with-identical-type-start-date-end-date-and-instance-size-to-learn-more-click-x-here-x',
-								['<a href="https://help.liferay.com/hc/articles/8835990270989-How-do-I-download-my-Liferay-DXP-Portal-Activation-Keys" target="_blank">', '</a>']
+								['<a href="https://support.liferay.com/w/how-do-i-download-my-liferay-dxp-portal-activation-keys" target="_blank">', '</a>']
 							)
 						}}
 					/>

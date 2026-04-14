@@ -6,7 +6,11 @@
 import {getObjectValueFromPath} from 'frontend-js-web';
 
 import {getLocalizedValue} from '../getLocalizedValue';
-import {IItemActionsDataFilter, IItemsActions} from '../types';
+import {
+	EItemActionsType,
+	IItemActionsDataFilter,
+	IItemsActions,
+} from '../types';
 import {ACTION_ITEM_TARGETS} from './constants';
 
 const hasPermission = (action: IItemsActions, itemData: any): boolean => {
@@ -116,6 +120,51 @@ const transformAction = ({
 	};
 };
 
+const addWorkflowActions = (
+	actions: Array<IItemsActions>,
+	itemData: any
+): Array<IItemsActions> => {
+	if (!actions) {
+		return [];
+	}
+
+	const itemActions = itemData?.actions;
+
+	if (!itemActions) {
+		return actions;
+	}
+
+	return actions.flatMap((action) => {
+		if (action.target !== ACTION_ITEM_TARGETS.MODAL_WORKFLOW_TRANSITION) {
+			return [action];
+		}
+
+		return [
+			...Object.keys(itemActions)
+				.filter((key) => key.startsWith('workflow_'))
+				.sort((a, b) => a.localeCompare(b))
+				.map((workflowKey) => {
+					const workflowAction = itemActions[workflowKey];
+
+					return {
+						data: {
+							requestBody: JSON.stringify({
+								transitionName: workflowAction.name,
+							}),
+							title: workflowAction.label,
+						},
+						href: workflowAction.href,
+						id: workflowKey,
+						label: workflowAction.label,
+						method: workflowAction.method,
+						target: ACTION_ITEM_TARGETS.MODAL_WORKFLOW_TRANSITION,
+						type: EItemActionsType.ITEM,
+					} as IItemsActions;
+				}),
+		];
+	});
+};
+
 const filterItemActions = ({
 	actions,
 	infoPanelOpen = false,
@@ -138,18 +187,45 @@ const filterItemActions = ({
 		);
 
 	return actions
-		? actions
+		? (addWorkflowActions(actions, itemData)
 				.filter((action: IItemsActions) =>
 					isVisible(action, itemData, selectable)
 				)
-				.map((action: IItemsActions) =>
-					transformAction({
+				.map((action: IItemsActions) => {
+					const transformedAction = transformAction({
 						action,
 						infoPanelOpen,
 						itemData,
 						selectedItem,
-					})
-				)
+					});
+
+					if (
+						(action.type === EItemActionsType.CONTEXTUAL ||
+							action.type === EItemActionsType.GROUP) &&
+						action.items
+					) {
+						const childrenActions = filterItemActions({
+							actions: action.items,
+							infoPanelOpen,
+							itemData,
+							selectable,
+							selectedItemsKey,
+							selectedItemsValue,
+						});
+
+						if (!childrenActions.length) {
+							return null;
+						}
+
+						return {
+							...transformedAction,
+							items: childrenActions,
+						};
+					}
+
+					return transformedAction;
+				})
+				.filter(Boolean) as Array<IItemsActions>)
 		: [];
 };
 

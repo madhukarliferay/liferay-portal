@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.taxonomy.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.Keyword;
 import com.liferay.headless.admin.taxonomy.resource.v1_0.KeywordResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -346,14 +347,14 @@ public abstract class BaseKeywordResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryKeywordPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryKeywordPermissionsPage", null, portletName,
 					assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryKeywordPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryKeywordPermissionsPage", null, portletName,
 					assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, roleNames);
@@ -470,70 +471,6 @@ public abstract class BaseKeywordResourceImpl
 		throws Exception {
 
 		return new Keyword();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/keywords'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "aggregationTerms"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "fields"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "filter"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "page"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "pageSize"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "restrictFields"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "search"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "sort"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "Keyword")}
-	)
-	@jakarta.ws.rs.GET
-	@jakarta.ws.rs.Path("/keywords")
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public Page<Keyword> getKeywordsPage(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("search")
-			String search,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.vulcan.aggregation.Aggregation aggregation,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.kernel.search.filter.Filter filter,
-			@jakarta.ws.rs.core.Context Pagination pagination,
-			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
-				sorts)
-		throws Exception {
-
-		return Page.of(Collections.emptyList());
 	}
 
 	/**
@@ -690,13 +627,13 @@ public abstract class BaseKeywordResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteKeywordPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteKeywordPermissionsPage", null, portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteKeywordPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteKeywordPermissionsPage", null, portletName, siteId)
 			).build(),
 			siteId, portletName, roleNames);
 	}
@@ -774,6 +711,101 @@ public abstract class BaseKeywordResourceImpl
 		throws Exception {
 
 		return Page.of(Collections.emptyList());
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/sites/{siteId}/keywords' -d $'{"assetLibraries": ___, "externalReferenceCode": ___, "name": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Updates only the fields received in the request body. Other fields are left untouched."
+	)
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "Keyword")}
+	)
+	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
+	@jakarta.ws.rs.PATCH
+	@jakarta.ws.rs.Path("/sites/{siteId}/keywords")
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public Keyword patchSiteKeyword(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteId")
+			Long siteId,
+			Keyword keyword)
+		throws Exception {
+
+		return new Keyword();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/sites/{siteId}/keywords/by-external-reference-code/{externalReferenceCode}' -d $'{"assetLibraries": ___, "externalReferenceCode": ___, "name": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Updates only the fields received in the request body. Other fields are left untouched."
+	)
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "Keyword")}
+	)
+	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
+	@jakarta.ws.rs.PATCH
+	@jakarta.ws.rs.Path(
+		"/sites/{siteId}/keywords/by-external-reference-code/{externalReferenceCode}"
+	)
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public Keyword patchSiteKeywordByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("siteId")
+			Long siteId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode,
+			Keyword keyword)
+		throws Exception {
+
+		Keyword existingKeyword = getSiteKeywordByExternalReferenceCode(
+			siteId, externalReferenceCode);
+
+		if (keyword.getExternalReferenceCode() != null) {
+			existingKeyword.setExternalReferenceCode(
+				keyword.getExternalReferenceCode());
+		}
+
+		if (keyword.getName() != null) {
+			existingKeyword.setName(keyword.getName());
+		}
+
+		preparePatch(keyword, existingKeyword);
+
+		return putSiteKeywordByExternalReferenceCode(
+			siteId, externalReferenceCode, existingKeyword);
 	}
 
 	/**
@@ -912,146 +944,6 @@ public abstract class BaseKeywordResourceImpl
 			@jakarta.validation.constraints.NotNull
 			@jakarta.ws.rs.PathParam("assetLibraryId")
 			Long assetLibraryId,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("search")
-			String search,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.kernel.search.filter.Filter filter,
-			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
-				sorts,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.DefaultValue("JSON")
-			@jakarta.ws.rs.QueryParam("contentType")
-			String contentType,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("fieldNames")
-			String fieldNames)
-		throws Exception {
-
-		vulcanBatchEngineExportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineExportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineExportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineExportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineExportTaskResource.setContextUser(contextUser);
-		vulcanBatchEngineExportTaskResource.setGroupLocalService(
-			groupLocalService);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineExportTaskResource.postExportTask(
-				Keyword.class.getName(), callbackURL, contentType, fieldNames)
-		).build();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/keywords' -d $'{"assetLibraries": ___, "externalReferenceCode": ___, "name": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "Keyword")}
-	)
-	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
-	@jakarta.ws.rs.Path("/keywords")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public Keyword postKeyword(Keyword keyword) throws Exception {
-		return new Keyword();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/keywords/batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "Keyword")}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path("/keywords/batch")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces("application/json")
-	@Override
-	public Response postKeywordBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			Object object)
-		throws Exception {
-
-		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineImportTaskResource.postImportTask(
-				Keyword.class.getName(), callbackURL, null, object)
-		).build();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-admin-taxonomy/v1.0/keywords/export-batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "filter"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "search"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "sort"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "contentType"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "fieldNames"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "Keyword")}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path("/keywords/export-batch")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces("application/json")
-	@Override
-	public Response postKeywordsPageExportBatch(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("search")
 			String search,
@@ -1385,14 +1277,14 @@ public abstract class BaseKeywordResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getAssetLibraryKeywordPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"getAssetLibraryKeywordPermissionsPage", null, portletName,
 					assetLibraryId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putAssetLibraryKeywordPermissionsPage", portletName,
+					ActionKeys.PERMISSIONS, assetLibraryId,
+					"putAssetLibraryKeywordPermissionsPage", null, portletName,
 					assetLibraryId)
 			).build(),
 			assetLibraryId, portletName, null);
@@ -1687,13 +1579,13 @@ public abstract class BaseKeywordResourceImpl
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS, "getSiteKeywordPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"getSiteKeywordPermissionsPage", null, portletName, siteId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS, "putSiteKeywordPermissionsPage",
-					portletName, siteId)
+					ActionKeys.PERMISSIONS, siteId,
+					"putSiteKeywordPermissionsPage", null, portletName, siteId)
 			).build(),
 			siteId, portletName, null);
 	}
@@ -1720,7 +1612,8 @@ public abstract class BaseKeywordResourceImpl
 					(Long)parameters.get("siteId"), keyword);
 			}
 			else {
-				keywordUnsafeFunction = keyword -> postKeyword(keyword);
+				throw new NotSupportedException(
+					"One of the following parameters must be specified: [assetLibraryId, siteId]");
 			}
 		}
 
@@ -1782,9 +1675,49 @@ public abstract class BaseKeywordResourceImpl
 
 		UnsafeFunction<Keyword, Keyword, Exception> keywordUnsafeFunction =
 			keyword -> {
-				deleteKeyword(keyword.getId());
+				if (keyword.getId() != null) {
+					try {
+						deleteKeyword(keyword.getId());
 
-				return keyword;
+						return keyword;
+					}
+					catch (Exception exception) {
+						if (keyword.getExternalReferenceCode() != null) {
+							if (parameters.containsKey("assetLibraryId")) {
+								deleteAssetLibraryKeywordByExternalReferenceCode(
+									(Long)parameters.get("assetLibraryId"),
+									keyword.getExternalReferenceCode());
+
+								return keyword;
+							}
+
+							if (parameters.containsKey("siteId")) {
+								deleteSiteKeywordByExternalReferenceCode(
+									(Long)parameters.get("siteId"),
+									keyword.getExternalReferenceCode());
+
+								return keyword;
+							}
+						}
+					}
+				}
+				else if (parameters.containsKey("assetLibraryId")) {
+					deleteAssetLibraryKeywordByExternalReferenceCode(
+						(Long)parameters.get("assetLibraryId"),
+						keyword.getExternalReferenceCode());
+
+					return keyword;
+				}
+				else if (parameters.containsKey("siteId")) {
+					deleteSiteKeywordByExternalReferenceCode(
+						(Long)parameters.get("siteId"),
+						keyword.getExternalReferenceCode());
+
+					return keyword;
+				}
+
+				throw new UnsupportedOperationException(
+					"Unable to delete by external reference code or ID");
 			};
 
 		if (contextBatchUnsafeBiConsumer != null) {
@@ -1845,7 +1778,8 @@ public abstract class BaseKeywordResourceImpl
 				pagination, sorts);
 		}
 		else {
-			return getKeywordsPage(search, null, filter, pagination, sorts);
+			throw new NotSupportedException(
+				"One of the following parameters must be specified: [assetLibraryId, siteId]");
 		}
 	}
 
@@ -1866,6 +1800,15 @@ public abstract class BaseKeywordResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -2076,6 +2019,9 @@ public abstract class BaseKeywordResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -2291,6 +2237,9 @@ public abstract class BaseKeywordResourceImpl
 
 		return addAction(
 			actionName, siteId, methodName, null, permissionName, siteId);
+	}
+
+	protected void preparePatch(Keyword keyword, Keyword existingKeyword) {
 	}
 
 	protected <T, R, E extends Throwable> List<R> transform(
@@ -2638,3 +2587,4 @@ public abstract class BaseKeywordResourceImpl
 		LogFactoryUtil.getLog(BaseKeywordResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-964143180

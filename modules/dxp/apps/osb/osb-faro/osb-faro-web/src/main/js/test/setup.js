@@ -1,7 +1,8 @@
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import 'jest-extended';
 import * as pedantic from './pedantic';
 import lang from './lang';
+import {TextDecoder, TextEncoder} from 'util';
 
 pedantic.enable();
 
@@ -29,6 +30,7 @@ global.AUI = () => ({
 });
 
 global.Liferay = {
+	FeatureFlags: {},
 	Language: {
 		get: lang
 	}
@@ -77,6 +79,9 @@ global.localStorage = (() => {
 global.pendo = {
 	initialize: () => {}
 };
+
+global.TextDecoder = TextDecoder;
+global.TextEncoder = TextEncoder;
 
 require('jest-extended');
 require('jest-canvas-mock');

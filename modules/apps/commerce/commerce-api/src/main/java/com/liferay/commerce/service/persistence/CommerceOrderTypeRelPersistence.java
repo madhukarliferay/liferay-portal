@@ -120,47 +120,6 @@ public interface CommerceOrderTypeRelPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce order type rel in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
-
-	/**
-	 * Returns the last commerce order type rel in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel, or <code>null</code> if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceOrderTypeRel>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce order type rels before and after the current commerce order type rel in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceOrderTypeRelId the primary key of the current commerce order type rel
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a commerce order type rel with the primary key could not be found
-	 */
-	public CommerceOrderTypeRel[] findByUuid_PrevAndNext(
-			long commerceOrderTypeRelId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
-
-	/**
 	 * Removes all the commerce order type rels where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface CommerceOrderTypeRelPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last commerce order type rel in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
-
-	/**
-	 * Returns the last commerce order type rel in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel, or <code>null</code> if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceOrderTypeRel>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce order type rels before and after the current commerce order type rel in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceOrderTypeRelId the primary key of the current commerce order type rel
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a commerce order type rel with the primary key could not be found
-	 */
-	public CommerceOrderTypeRel[] findByUuid_C_PrevAndNext(
-			long commerceOrderTypeRelId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
-
-	/**
 	 * Removes all the commerce order type rels where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -417,47 +332,6 @@ public interface CommerceOrderTypeRelPersistence
 		long commerceOrderTypeId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceOrderTypeRel>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce order type rel in the ordered set where commerceOrderTypeId = &#63;.
-	 *
-	 * @param commerceOrderTypeId the commerce order type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel findByCommerceOrderTypeId_Last(
-			long commerceOrderTypeId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
-
-	/**
-	 * Returns the last commerce order type rel in the ordered set where commerceOrderTypeId = &#63;.
-	 *
-	 * @param commerceOrderTypeId the commerce order type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel, or <code>null</code> if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel fetchByCommerceOrderTypeId_Last(
-		long commerceOrderTypeId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceOrderTypeRel>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce order type rels before and after the current commerce order type rel in the ordered set where commerceOrderTypeId = &#63;.
-	 *
-	 * @param commerceOrderTypeRelId the primary key of the current commerce order type rel
-	 * @param commerceOrderTypeId the commerce order type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a commerce order type rel with the primary key could not be found
-	 */
-	public CommerceOrderTypeRel[] findByCommerceOrderTypeId_PrevAndNext(
-			long commerceOrderTypeRelId, long commerceOrderTypeId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
 
 	/**
 	 * Removes all the commerce order type rels where commerceOrderTypeId = &#63; from the database.
@@ -567,51 +441,6 @@ public interface CommerceOrderTypeRelPersistence
 		long classNameId, long commerceOrderTypeId,
 		com.liferay.portal.kernel.util.OrderByComparator<CommerceOrderTypeRel>
 			orderByComparator);
-
-	/**
-	 * Returns the last commerce order type rel in the ordered set where classNameId = &#63; and commerceOrderTypeId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param commerceOrderTypeId the commerce order type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel findByC_C_Last(
-			long classNameId, long commerceOrderTypeId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
-
-	/**
-	 * Returns the last commerce order type rel in the ordered set where classNameId = &#63; and commerceOrderTypeId = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param commerceOrderTypeId the commerce order type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce order type rel, or <code>null</code> if a matching commerce order type rel could not be found
-	 */
-	public CommerceOrderTypeRel fetchByC_C_Last(
-		long classNameId, long commerceOrderTypeId,
-		com.liferay.portal.kernel.util.OrderByComparator<CommerceOrderTypeRel>
-			orderByComparator);
-
-	/**
-	 * Returns the commerce order type rels before and after the current commerce order type rel in the ordered set where classNameId = &#63; and commerceOrderTypeId = &#63;.
-	 *
-	 * @param commerceOrderTypeRelId the primary key of the current commerce order type rel
-	 * @param classNameId the class name ID
-	 * @param commerceOrderTypeId the commerce order type ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce order type rel
-	 * @throws NoSuchOrderTypeRelException if a commerce order type rel with the primary key could not be found
-	 */
-	public CommerceOrderTypeRel[] findByC_C_PrevAndNext(
-			long commerceOrderTypeRelId, long classNameId,
-			long commerceOrderTypeId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceOrderTypeRel> orderByComparator)
-		throws NoSuchOrderTypeRelException;
 
 	/**
 	 * Removes all the commerce order type rels where classNameId = &#63; and commerceOrderTypeId = &#63; from the database.
@@ -866,3 +695,4 @@ public interface CommerceOrderTypeRelPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1445330930

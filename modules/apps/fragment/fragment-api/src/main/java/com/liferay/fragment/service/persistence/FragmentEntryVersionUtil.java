@@ -221,56 +221,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where fragmentEntryId = &#63;.
-	 *
-	 * @param fragmentEntryId the fragment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByFragmentEntryId_Last(
-			long fragmentEntryId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByFragmentEntryId_Last(
-			fragmentEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where fragmentEntryId = &#63;.
-	 *
-	 * @param fragmentEntryId the fragment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByFragmentEntryId_Last(
-		long fragmentEntryId,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByFragmentEntryId_Last(
-			fragmentEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where fragmentEntryId = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param fragmentEntryId the fragment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByFragmentEntryId_PrevAndNext(
-			long fragmentEntryVersionId, long fragmentEntryId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByFragmentEntryId_PrevAndNext(
-			fragmentEntryVersionId, fragmentEntryId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where fragmentEntryId = &#63; from the database.
 	 *
 	 * @param fragmentEntryId the fragment entry ID
@@ -465,54 +415,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByUuid_Last(
-			String uuid,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByUuid_Last(
-		String uuid,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where uuid = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByUuid_PrevAndNext(
-			long fragmentEntryVersionId, String uuid,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			fragmentEntryVersionId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -641,59 +543,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByUuid_Version_First(
 			uuid, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and version = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByUuid_Version_Last(
-			String uuid, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_Version_Last(
-			uuid, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and version = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByUuid_Version_Last(
-		String uuid, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Version_Last(
-			uuid, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where uuid = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param uuid the uuid
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByUuid_Version_PrevAndNext(
-			long fragmentEntryVersionId, String uuid, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_Version_PrevAndNext(
-			fragmentEntryVersionId, uuid, version, orderByComparator);
 	}
 
 	/**
@@ -827,59 +676,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByUUID_G_First(
 			uuid, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and groupId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByUUID_G_Last(
-			String uuid, long groupId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUUID_G_Last(
-			uuid, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and groupId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByUUID_G_Last(
-		String uuid, long groupId,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByUUID_G_Last(
-			uuid, groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where uuid = &#63; and groupId = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param uuid the uuid
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByUUID_G_PrevAndNext(
-			long fragmentEntryVersionId, String uuid, long groupId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUUID_G_PrevAndNext(
-			fragmentEntryVersionId, uuid, groupId, orderByComparator);
 	}
 
 	/**
@@ -1091,59 +887,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByUuid_C_PrevAndNext(
-			long fragmentEntryVersionId, String uuid, long companyId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			fragmentEntryVersionId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1285,64 +1028,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and companyId = &#63; and version = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByUuid_C_Version_Last(
-			String uuid, long companyId, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_C_Version_Last(
-			uuid, companyId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where uuid = &#63; and companyId = &#63; and version = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByUuid_C_Version_Last(
-		String uuid, long companyId, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Version_Last(
-			uuid, companyId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where uuid = &#63; and companyId = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByUuid_C_Version_PrevAndNext(
-			long fragmentEntryVersionId, String uuid, long companyId,
-			int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByUuid_C_Version_PrevAndNext(
-			fragmentEntryVersionId, uuid, companyId, version,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where uuid = &#63; and companyId = &#63; and version = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1470,54 +1155,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByGroupId_First(
 			groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByGroupId_Last(
-			long groupId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByGroupId_Last(
-		long groupId,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByGroupId_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			fragmentEntryVersionId, groupId, orderByComparator);
 	}
 
 	/**
@@ -1653,59 +1290,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByGroupId_Version_Last(
-			long groupId, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByGroupId_Version_Last(
-			groupId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByGroupId_Version_Last(
-		long groupId, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Version_Last(
-			groupId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByGroupId_Version_PrevAndNext(
-			long fragmentEntryVersionId, long groupId, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByGroupId_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, version, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and version = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1833,56 +1417,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByFragmentCollectionId_First(
 			fragmentCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where fragmentCollectionId = &#63;.
-	 *
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByFragmentCollectionId_Last(
-			long fragmentCollectionId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByFragmentCollectionId_Last(
-			fragmentCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where fragmentCollectionId = &#63;.
-	 *
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByFragmentCollectionId_Last(
-		long fragmentCollectionId,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByFragmentCollectionId_Last(
-			fragmentCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where fragmentCollectionId = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByFragmentCollectionId_PrevAndNext(
-			long fragmentEntryVersionId, long fragmentCollectionId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByFragmentCollectionId_PrevAndNext(
-			fragmentEntryVersionId, fragmentCollectionId, orderByComparator);
 	}
 
 	/**
@@ -2022,62 +1556,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where fragmentCollectionId = &#63; and version = &#63;.
-	 *
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByFragmentCollectionId_Version_Last(
-			long fragmentCollectionId, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByFragmentCollectionId_Version_Last(
-			fragmentCollectionId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where fragmentCollectionId = &#63; and version = &#63;.
-	 *
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByFragmentCollectionId_Version_Last(
-		long fragmentCollectionId, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByFragmentCollectionId_Version_Last(
-			fragmentCollectionId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where fragmentCollectionId = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[]
-			findByFragmentCollectionId_Version_PrevAndNext(
-				long fragmentEntryVersionId, long fragmentCollectionId,
-				int version,
-				OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByFragmentCollectionId_Version_PrevAndNext(
-			fragmentEntryVersionId, fragmentCollectionId, version,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where fragmentCollectionId = &#63; and version = &#63; from the database.
 	 *
 	 * @param fragmentCollectionId the fragment collection ID
@@ -2201,52 +1679,6 @@ public class FragmentEntryVersionUtil {
 		int type, OrderByComparator<FragmentEntryVersion> orderByComparator) {
 
 		return getPersistence().fetchByType_First(type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where type = &#63;.
-	 *
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByType_Last(
-			int type, OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByType_Last(type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where type = &#63;.
-	 *
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByType_Last(
-		int type, OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByType_Last(type, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where type = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByType_PrevAndNext(
-			long fragmentEntryVersionId, int type,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByType_PrevAndNext(
-			fragmentEntryVersionId, type, orderByComparator);
 	}
 
 	/**
@@ -2378,59 +1810,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByType_Version_First(
 			type, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where type = &#63; and version = &#63;.
-	 *
-	 * @param type the type
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByType_Version_Last(
-			int type, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByType_Version_Last(
-			type, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where type = &#63; and version = &#63;.
-	 *
-	 * @param type the type
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByType_Version_Last(
-		int type, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByType_Version_Last(
-			type, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where type = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param type the type
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByType_Version_PrevAndNext(
-			long fragmentEntryVersionId, int type, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByType_Version_PrevAndNext(
-			fragmentEntryVersionId, type, version, orderByComparator);
 	}
 
 	/**
@@ -2566,61 +1945,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByG_FCI_First(
 			groupId, fragmentCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_Last(
-			long groupId, long fragmentCollectionId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_Last(
-			groupId, fragmentCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_Last(
-		long groupId, long fragmentCollectionId,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_Last(
-			groupId, fragmentCollectionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId,
-			orderByComparator);
 	}
 
 	/**
@@ -2768,64 +2092,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_Version_Last(
-			long groupId, long fragmentCollectionId, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_Version_Last(
-			groupId, fragmentCollectionId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_Version_Last(
-		long groupId, long fragmentCollectionId, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_Version_Last(
-			groupId, fragmentCollectionId, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_Version_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, version,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and fragmentCollectionId = &#63; and version = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -2966,60 +2232,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByG_FEK_First(
 			groupId, fragmentEntryKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentEntryKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentEntryKey the fragment entry key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FEK_Last(
-			long groupId, String fragmentEntryKey,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FEK_Last(
-			groupId, fragmentEntryKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentEntryKey = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentEntryKey the fragment entry key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FEK_Last(
-		long groupId, String fragmentEntryKey,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FEK_Last(
-			groupId, fragmentEntryKey, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentEntryKey = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentEntryKey the fragment entry key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FEK_PrevAndNext(
-			long fragmentEntryVersionId, long groupId, String fragmentEntryKey,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FEK_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentEntryKey,
-			orderByComparator);
 	}
 
 	/**
@@ -3246,64 +2458,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_LikeN_Last(
-			long groupId, long fragmentCollectionId, String name,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_Last(
-			groupId, fragmentCollectionId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_LikeN_Last(
-		long groupId, long fragmentCollectionId, String name,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_LikeN_Last(
-			groupId, fragmentCollectionId, name, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_LikeN_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, String name,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, name,
-			orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -3464,67 +2618,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_LikeN_Version_Last(
-			long groupId, long fragmentCollectionId, String name, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_Version_Last(
-			groupId, fragmentCollectionId, name, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_LikeN_Version_Last(
-		long groupId, long fragmentCollectionId, String name, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_LikeN_Version_Last(
-			groupId, fragmentCollectionId, name, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_LikeN_Version_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, String name, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, name,
-			version, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and version = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -3674,64 +2767,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByG_FCI_T_First(
 			groupId, fragmentCollectionId, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_T_Last(
-			long groupId, long fragmentCollectionId, int type,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_Last(
-			groupId, fragmentCollectionId, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_T_Last(
-		long groupId, long fragmentCollectionId, int type,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_T_Last(
-			groupId, fragmentCollectionId, type, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_T_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int type,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, type,
-			orderByComparator);
 	}
 
 	/**
@@ -3894,67 +2929,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_T_Version_Last(
-			long groupId, long fragmentCollectionId, int type, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_Version_Last(
-			groupId, fragmentCollectionId, type, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_T_Version_Last(
-		long groupId, long fragmentCollectionId, int type, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_T_Version_Last(
-			groupId, fragmentCollectionId, type, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_T_Version_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int type, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, type,
-			version, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and version = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -4106,64 +3080,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByG_FCI_S_First(
 			groupId, fragmentCollectionId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_S_Last(
-			long groupId, long fragmentCollectionId, int status,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_S_Last(
-			groupId, fragmentCollectionId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_S_Last(
-		long groupId, long fragmentCollectionId, int status,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_S_Last(
-			groupId, fragmentCollectionId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_S_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int status,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_S_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, status,
-			orderByComparator);
 	}
 
 	/**
@@ -4326,67 +3242,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_S_Version_Last(
-			long groupId, long fragmentCollectionId, int status, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_S_Version_Last(
-			groupId, fragmentCollectionId, status, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_S_Version_Last(
-		long groupId, long fragmentCollectionId, int status, int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_S_Version_Last(
-			groupId, fragmentCollectionId, status, version, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_S_Version_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int status, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_S_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, status,
-			version, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and fragmentCollectionId = &#63; and status = &#63; and version = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -4546,67 +3401,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByG_FCI_LikeN_S_First(
 			groupId, fragmentCollectionId, name, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_LikeN_S_Last(
-			long groupId, long fragmentCollectionId, String name, int status,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_S_Last(
-			groupId, fragmentCollectionId, name, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_LikeN_S_Last(
-		long groupId, long fragmentCollectionId, String name, int status,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_LikeN_S_Last(
-			groupId, fragmentCollectionId, name, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_LikeN_S_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, String name, int status,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_S_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, name, status,
-			orderByComparator);
 	}
 
 	/**
@@ -4783,75 +3577,6 @@ public class FragmentEntryVersionUtil {
 	}
 
 	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_LikeN_S_Version_Last(
-			long groupId, long fragmentCollectionId, String name, int status,
-			int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_S_Version_Last(
-			groupId, fragmentCollectionId, name, status, version,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_LikeN_S_Version_Last(
-		long groupId, long fragmentCollectionId, String name, int status,
-		int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_LikeN_S_Version_Last(
-			groupId, fragmentCollectionId, name, status, version,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param name the name
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[]
-			findByG_FCI_LikeN_S_Version_PrevAndNext(
-				long fragmentEntryVersionId, long groupId,
-				long fragmentCollectionId, String name, int status, int version,
-				OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_LikeN_S_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, name, status,
-			version, orderByComparator);
-	}
-
-	/**
 	 * Removes all the fragment entry versions where groupId = &#63; and fragmentCollectionId = &#63; and name = &#63; and status = &#63; and version = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -5015,67 +3740,6 @@ public class FragmentEntryVersionUtil {
 
 		return getPersistence().fetchByG_FCI_T_S_First(
 			groupId, fragmentCollectionId, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_T_S_Last(
-			long groupId, long fragmentCollectionId, int type, int status,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_S_Last(
-			groupId, fragmentCollectionId, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_T_S_Last(
-		long groupId, long fragmentCollectionId, int type, int status,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_T_S_Last(
-			groupId, fragmentCollectionId, type, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and status = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_T_S_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int type, int status,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_S_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, type, status,
-			orderByComparator);
 	}
 
 	/**
@@ -5249,74 +3913,6 @@ public class FragmentEntryVersionUtil {
 		return getPersistence().fetchByG_FCI_T_S_Version_First(
 			groupId, fragmentCollectionId, type, status, version,
 			orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version
-	 * @throws NoSuchEntryVersionException if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion findByG_FCI_T_S_Version_Last(
-			long groupId, long fragmentCollectionId, int type, int status,
-			int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_S_Version_Last(
-			groupId, fragmentCollectionId, type, status, version,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the last fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching fragment entry version, or <code>null</code> if a matching fragment entry version could not be found
-	 */
-	public static FragmentEntryVersion fetchByG_FCI_T_S_Version_Last(
-		long groupId, long fragmentCollectionId, int type, int status,
-		int version,
-		OrderByComparator<FragmentEntryVersion> orderByComparator) {
-
-		return getPersistence().fetchByG_FCI_T_S_Version_Last(
-			groupId, fragmentCollectionId, type, status, version,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the fragment entry versions before and after the current fragment entry version in the ordered set where groupId = &#63; and fragmentCollectionId = &#63; and type = &#63; and status = &#63; and version = &#63;.
-	 *
-	 * @param fragmentEntryVersionId the primary key of the current fragment entry version
-	 * @param groupId the group ID
-	 * @param fragmentCollectionId the fragment collection ID
-	 * @param type the type
-	 * @param status the status
-	 * @param version the version
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next fragment entry version
-	 * @throws NoSuchEntryVersionException if a fragment entry version with the primary key could not be found
-	 */
-	public static FragmentEntryVersion[] findByG_FCI_T_S_Version_PrevAndNext(
-			long fragmentEntryVersionId, long groupId,
-			long fragmentCollectionId, int type, int status, int version,
-			OrderByComparator<FragmentEntryVersion> orderByComparator)
-		throws com.liferay.fragment.exception.NoSuchEntryVersionException {
-
-		return getPersistence().findByG_FCI_T_S_Version_PrevAndNext(
-			fragmentEntryVersionId, groupId, fragmentCollectionId, type, status,
-			version, orderByComparator);
 	}
 
 	/**
@@ -5523,3 +4119,4 @@ public class FragmentEntryVersionUtil {
 	private static volatile FragmentEntryVersionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1358772181

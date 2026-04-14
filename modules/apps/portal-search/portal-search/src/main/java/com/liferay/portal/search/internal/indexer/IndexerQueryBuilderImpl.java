@@ -28,12 +28,12 @@ import com.liferay.portal.search.indexer.IndexerQueryBuilder;
 import com.liferay.portal.search.internal.expando.helper.ExpandoQueryContributorHelper;
 import com.liferay.portal.search.internal.indexer.helper.AddSearchKeywordsQueryContributorHelper;
 import com.liferay.portal.search.internal.indexer.helper.PreFilterContributorHelper;
-import com.liferay.portal.search.internal.util.SearchStringUtil;
 import com.liferay.portal.search.spi.model.query.contributor.KeywordQueryContributor;
 import com.liferay.portal.search.spi.model.query.contributor.SearchContextContributor;
 import com.liferay.portal.search.spi.model.query.contributor.helper.KeywordQueryContributorHelper;
 import com.liferay.portal.search.spi.model.query.contributor.helper.SearchContextContributorHelper;
 import com.liferay.portal.search.spi.model.registrar.ModelSearchSettings;
+import com.liferay.portal.search.util.SearchStringUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,14 +128,14 @@ public class IndexerQueryBuilderImpl<T extends BaseModel<?>>
 		if (searchContext.isIncludeAttachments() ||
 			searchContext.isIncludeDiscussions()) {
 
-			_contributeFilters(booleanQuery, searchContext);
+			_contributeClauses(booleanQuery, searchContext);
 
 			return;
 		}
 
 		BooleanQuery keywordsBooleanQuery = new BooleanQueryImpl();
 
-		_contributeFilters(keywordsBooleanQuery, searchContext);
+		_contributeClauses(keywordsBooleanQuery, searchContext);
 
 		if (!keywordsBooleanQuery.hasClauses()) {
 			return;
@@ -250,7 +250,7 @@ public class IndexerQueryBuilderImpl<T extends BaseModel<?>>
 			});
 	}
 
-	private void _contributeFilters(
+	private void _contributeClauses(
 		BooleanQuery booleanQuery, SearchContext searchContext) {
 
 		contribute(

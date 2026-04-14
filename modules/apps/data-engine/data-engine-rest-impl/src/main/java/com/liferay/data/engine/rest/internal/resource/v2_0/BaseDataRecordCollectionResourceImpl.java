@@ -7,6 +7,7 @@ package com.liferay.data.engine.rest.internal.resource.v2_0;
 
 import com.liferay.data.engine.rest.dto.v2_0.DataRecordCollection;
 import com.liferay.data.engine.rest.resource.v2_0.DataRecordCollectionResource;
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
@@ -365,28 +366,28 @@ public abstract class BaseDataRecordCollectionResourceImpl
 			String roleNames)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			dataRecordCollectionId);
+		Long groupId = getPermissionCheckerGroupId(dataRecordCollectionId);
 		Long resourceId = getPermissionCheckerResourceId(
+			dataRecordCollectionId);
+		String resourceName = getPermissionCheckerResourceName(
 			dataRecordCollectionId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(dataRecordCollectionId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getDataRecordCollectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDataRecordCollectionPermissionsPage", null,
+					resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putDataRecordCollectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDataRecordCollectionPermissionsPage", null,
+					resourceName, groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -733,14 +734,14 @@ public abstract class BaseDataRecordCollectionResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			dataRecordCollectionId);
+		Long groupId = getPermissionCheckerGroupId(dataRecordCollectionId);
 		Long resourceId = getPermissionCheckerResourceId(
+			dataRecordCollectionId);
+		String resourceName = getPermissionCheckerResourceName(
 			dataRecordCollectionId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(dataRecordCollectionId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -776,23 +777,22 @@ public abstract class BaseDataRecordCollectionResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(dataRecordCollectionId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getDataRecordCollectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getDataRecordCollectionPermissionsPage", null,
+					resourceName, groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putDataRecordCollectionPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putDataRecordCollectionPermissionsPage", null,
+					resourceName, groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -940,6 +940,15 @@ public abstract class BaseDataRecordCollectionResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1163,6 +1172,9 @@ public abstract class BaseDataRecordCollectionResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1730,3 +1742,4 @@ public abstract class BaseDataRecordCollectionResourceImpl
 		LogFactoryUtil.getLog(BaseDataRecordCollectionResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1568791528

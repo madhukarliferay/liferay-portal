@@ -16,11 +16,11 @@ import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.fragment.test.util.FragmentEntryTestUtil;
 import com.liferay.fragment.test.util.FragmentStagingTestUtil;
 import com.liferay.fragment.test.util.FragmentTestUtil;
+import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -28,9 +28,11 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,28 +65,18 @@ public class FragmentEntryLinkStagingTest {
 
 	@Test
 	public void testFragmentEntryLinkCopiedWhenLocalStagingActivated()
-		throws PortalException {
-
-		FragmentCollection fragmentCollection =
-			FragmentTestUtil.addFragmentCollection(_liveGroup.getGroupId());
-
-		FragmentEntry fragmentEntry = FragmentEntryTestUtil.addFragmentEntry(
-			fragmentCollection.getFragmentCollectionId());
+		throws Exception {
 
 		FragmentEntryLink liveFragmentEntryLink =
-			FragmentTestUtil.addFragmentEntryLink(
-				_liveGroup.getGroupId(), fragmentEntry.getFragmentEntryId(),
-				_layout.getPlid());
+			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
+				null, _layout,
+				SegmentsExperienceLocalServiceUtil.
+					fetchDefaultSegmentsExperienceId(_layout.getPlid()));
 
 		_stagingGroup = FragmentStagingTestUtil.enableLocalStaging(_liveGroup);
 
-		FragmentEntryLink stagingFragmentEntryLink =
-			_fragmentEntryLinkLocalService.
-				fetchFragmentEntryLinkByUuidAndGroupId(
-					liveFragmentEntryLink.getUuid(),
-					_stagingGroup.getGroupId());
-
-		Assert.assertNotNull(stagingFragmentEntryLink);
+		_fragmentEntryLinkLocalService.getFragmentEntryLinkByUuidAndGroupId(
+			liveFragmentEntryLink.getUuid(), _stagingGroup.getGroupId());
 	}
 
 	@Test
@@ -148,22 +140,22 @@ public class FragmentEntryLinkStagingTest {
 	}
 
 	@Test
-	public void testPublishFragmentEntryLink() throws PortalException {
+	public void testPublishFragmentEntryLink() throws Exception {
 		_stagingGroup = FragmentStagingTestUtil.enableLocalStaging(_liveGroup);
-
-		FragmentCollection fragmentCollection =
-			FragmentTestUtil.addFragmentCollection(_stagingGroup.getGroupId());
-
-		FragmentEntry fragmentEntry = FragmentEntryTestUtil.addFragmentEntry(
-			fragmentCollection.getFragmentCollectionId());
 
 		Layout stagingLayout = LayoutLocalServiceUtil.getLayoutByUuidAndGroupId(
 			_layout.getUuid(), _stagingGroup.getGroupId(), false);
 
+		Layout draftStagingLayout = stagingLayout.fetchDraftLayout();
+
 		FragmentEntryLink stagingFragmentEntryLink =
-			FragmentTestUtil.addFragmentEntryLink(
-				_stagingGroup.getGroupId(), fragmentEntry.getFragmentEntryId(),
-				stagingLayout.getPlid());
+			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
+				null, draftStagingLayout,
+				SegmentsExperienceLocalServiceUtil.
+					fetchDefaultSegmentsExperienceId(
+						draftStagingLayout.getPlid()));
+
+		ContentLayoutTestUtil.publishLayout(draftStagingLayout, stagingLayout);
 
 		FragmentStagingTestUtil.publishLayouts(_stagingGroup, _liveGroup);
 
@@ -195,9 +187,14 @@ public class FragmentEntryLinkStagingTest {
 			_fragmentEntryLinkLocalService.getFragmentEntryLinkByUuidAndGroupId(
 				liveFragmentEntryLink.getUuid(), _liveGroup.getGroupId());
 
+		Long groupId1 = ScopeUtil.getItemGroupId(
+			liveFragmentEntryLink.getCompanyId(),
+			liveFragmentEntryLink.getFragmentEntryScopeERC(),
+			liveFragmentEntryLink.getGroupId());
+
 		FragmentEntry liveFragmentEntry =
-			_fragmentEntryLocalService.getFragmentEntry(
-				liveFragmentEntryLink.getFragmentEntryId());
+			_fragmentEntryLocalService.getFragmentEntryByExternalReferenceCode(
+				liveFragmentEntryLink.getFragmentEntryERC(), groupId1);
 
 		Assert.assertEquals(
 			liveFragmentEntryLink.getGroupId(), liveFragmentEntry.getGroupId());
@@ -210,8 +207,12 @@ public class FragmentEntryLinkStagingTest {
 				liveFragmentEntryLink.getUuid(), _liveGroup.getGroupId());
 
 		Assert.assertNotNull(
-			_fragmentEntryLocalService.getFragmentEntry(
-				fragmentEntryLink.getFragmentEntryId()));
+			_fragmentEntryLocalService.getFragmentEntryByExternalReferenceCode(
+				fragmentEntryLink.getFragmentEntryERC(),
+				ScopeUtil.getItemGroupId(
+					fragmentEntryLink.getCompanyId(),
+					fragmentEntryLink.getFragmentEntryScopeERC(),
+					fragmentEntryLink.getGroupId())));
 	}
 
 	@Inject
@@ -221,9 +222,6 @@ public class FragmentEntryLinkStagingTest {
 	private FragmentEntryLocalService _fragmentEntryLocalService;
 
 	private Layout _layout;
-
-	@Inject
-	private LayoutLocalService _layoutLocalService;
 
 	@DeleteAfterTestRun
 	private Group _liveGroup;

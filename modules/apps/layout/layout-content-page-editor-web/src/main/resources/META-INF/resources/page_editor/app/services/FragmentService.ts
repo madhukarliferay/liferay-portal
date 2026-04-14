@@ -59,19 +59,20 @@ export default {
 		saveMappingConfiguration,
 		segmentsExperienceId,
 	}: {
-		description: string;
-		fileEntryId?: string;
-		fragmentCollectionId: string;
+		description?: string;
+		fileEntryId?: number | string;
+		fragmentCollectionId?: string;
 		itemId: string;
 		name: string;
 		onNetworkStatus: OnNetworkStatus;
-		saveInlineContent: boolean;
-		saveMappingConfiguration: boolean;
+		saveInlineContent?: boolean;
+		saveMappingConfiguration?: boolean;
 		segmentsExperienceId: string;
 	}) {
 		return draftServiceFetch<{
-			fragmentComposition: FragmentComposition;
+			fragmentComposition: FragmentComposition | null;
 			url: string;
+			valid: boolean;
 		}>(
 			config.addFragmentCompositionURL,
 			{
@@ -320,6 +321,50 @@ export default {
 		);
 	},
 
+	swapFragment({
+		editableValues,
+		fragmentEntryKey,
+		fragmentEntryLinkId,
+		groupId,
+		onNetworkStatus,
+		segmentsExperienceId,
+	}: {
+		editableValues: string;
+		fragmentEntryKey: FragmentEntry['fragmentEntryKey'];
+		fragmentEntryLinkId: FragmentEntryLink['fragmentEntryLinkId'];
+		groupId?: string;
+		onNetworkStatus: OnNetworkStatus;
+		segmentsExperienceId: string;
+	}) {
+		const body: {
+			editableValues: string;
+			fragmentEntryKey: FragmentEntry['fragmentEntryKey'];
+			fragmentEntryLinkId: FragmentEntryLink['fragmentEntryLinkId'];
+			groupId?: string;
+			segmentsExperienceId: string;
+		} = {
+			editableValues,
+			fragmentEntryKey,
+			fragmentEntryLinkId,
+			segmentsExperienceId,
+		};
+
+		if (groupId) {
+			body.groupId = groupId;
+		}
+
+		return draftServiceFetch<{
+			fragmentEntryLink: FragmentEntryLink;
+			layoutData: LayoutData;
+		}>(
+			config.swapFragmentEntryLinkURL,
+			{
+				body,
+			},
+			onNetworkStatus
+		);
+	},
+
 	toggleFragmentHighlighted({
 		fragmentEntryKey,
 		groupId = '0',
@@ -426,5 +471,22 @@ export default {
 			},
 			onNetworkStatus
 		);
+	},
+
+	validateFragmentComposition({
+		itemId,
+		segmentsExperienceId,
+	}: {
+		itemId: string;
+		segmentsExperienceId: string;
+	}) {
+		return serviceFetch<{
+			valid: boolean;
+		}>(config.validateFragmentCompositionURL, {
+			body: {
+				itemId,
+				segmentsExperienceId,
+			},
+		});
 	},
 };

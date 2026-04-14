@@ -121,47 +121,6 @@ public interface PatcherProjectVersionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last patcher project version in the ordered set where patcherProductVersionId = &#63;.
-	 *
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion findByPatcherProductVersionId_Last(
-			long patcherProductVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
-	 * Returns the last patcher project version in the ordered set where patcherProductVersionId = &#63;.
-	 *
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version, or <code>null</code> if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion fetchByPatcherProductVersionId_Last(
-		long patcherProductVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<PatcherProjectVersion>
-			orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set where patcherProductVersionId = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[] findByPatcherProductVersionId_PrevAndNext(
-			long patcherProjectVersionId, long patcherProductVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
 	 * Returns all the patcher project versions that the user has permission to view where patcherProductVersionId = &#63;.
 	 *
 	 * @param patcherProductVersionId the patcher product version ID
@@ -204,22 +163,6 @@ public interface PatcherProjectVersionPersistence
 			long patcherProductVersionId, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<PatcherProjectVersion> orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set of patcher project versions that the user has permission to view where patcherProductVersionId = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[]
-			filterFindByPatcherProductVersionId_PrevAndNext(
-				long patcherProjectVersionId, long patcherProductVersionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
 
 	/**
 	 * Removes all the patcher project versions where patcherProductVersionId = &#63; from the database.
@@ -337,48 +280,6 @@ public interface PatcherProjectVersionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last patcher project version in the ordered set where rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion findByRootPatcherProjectVersionId_Last(
-			long rootPatcherProjectVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
-	 * Returns the last patcher project version in the ordered set where rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version, or <code>null</code> if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion fetchByRootPatcherProjectVersionId_Last(
-		long rootPatcherProjectVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<PatcherProjectVersion>
-			orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set where rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[]
-			findByRootPatcherProjectVersionId_PrevAndNext(
-				long patcherProjectVersionId, long rootPatcherProjectVersionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
 	 * Returns all the patcher project versions that the user has permission to view where rootPatcherProjectVersionId = &#63;.
 	 *
 	 * @param rootPatcherProjectVersionId the root patcher project version ID
@@ -422,22 +323,6 @@ public interface PatcherProjectVersionPersistence
 			long rootPatcherProjectVersionId, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<PatcherProjectVersion> orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set of patcher project versions that the user has permission to view where rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[]
-			filterFindByRootPatcherProjectVersionId_PrevAndNext(
-				long patcherProjectVersionId, long rootPatcherProjectVersionId,
-				com.liferay.portal.kernel.util.OrderByComparator
-					<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
 
 	/**
 	 * Removes all the patcher project versions where rootPatcherProjectVersionId = &#63; from the database.
@@ -653,51 +538,6 @@ public interface PatcherProjectVersionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last patcher project version in the ordered set where patcherProductVersionId = &#63; and rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion findByP_R_Last(
-			long patcherProductVersionId, long rootPatcherProjectVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
-	 * Returns the last patcher project version in the ordered set where patcherProductVersionId = &#63; and rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version, or <code>null</code> if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion fetchByP_R_Last(
-		long patcherProductVersionId, long rootPatcherProjectVersionId,
-		com.liferay.portal.kernel.util.OrderByComparator<PatcherProjectVersion>
-			orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set where patcherProductVersionId = &#63; and rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[] findByP_R_PrevAndNext(
-			long patcherProjectVersionId, long patcherProductVersionId,
-			long rootPatcherProjectVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
 	 * Returns all the patcher project versions that the user has permission to view where patcherProductVersionId = &#63; and rootPatcherProjectVersionId = &#63;.
 	 *
 	 * @param patcherProductVersionId the patcher product version ID
@@ -743,23 +583,6 @@ public interface PatcherProjectVersionPersistence
 		int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<PatcherProjectVersion>
 			orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set of patcher project versions that the user has permission to view where patcherProductVersionId = &#63; and rootPatcherProjectVersionId = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param rootPatcherProjectVersionId the root patcher project version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[] filterFindByP_R_PrevAndNext(
-			long patcherProjectVersionId, long patcherProductVersionId,
-			long rootPatcherProjectVersionId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
 
 	/**
 	 * Removes all the patcher project versions where patcherProductVersionId = &#63; and rootPatcherProjectVersionId = &#63; from the database.
@@ -886,51 +709,6 @@ public interface PatcherProjectVersionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last patcher project version in the ordered set where patcherProductVersionId = &#63; and repositoryName = &#63;.
-	 *
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param repositoryName the repository name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion findByP_RN_Last(
-			long patcherProductVersionId, String repositoryName,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
-	 * Returns the last patcher project version in the ordered set where patcherProductVersionId = &#63; and repositoryName = &#63;.
-	 *
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param repositoryName the repository name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching patcher project version, or <code>null</code> if a matching patcher project version could not be found
-	 */
-	public PatcherProjectVersion fetchByP_RN_Last(
-		long patcherProductVersionId, String repositoryName,
-		com.liferay.portal.kernel.util.OrderByComparator<PatcherProjectVersion>
-			orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set where patcherProductVersionId = &#63; and repositoryName = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param repositoryName the repository name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[] findByP_RN_PrevAndNext(
-			long patcherProjectVersionId, long patcherProductVersionId,
-			String repositoryName,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
-
-	/**
 	 * Returns all the patcher project versions that the user has permission to view where patcherProductVersionId = &#63; and repositoryName = &#63;.
 	 *
 	 * @param patcherProductVersionId the patcher product version ID
@@ -975,23 +753,6 @@ public interface PatcherProjectVersionPersistence
 		long patcherProductVersionId, String repositoryName, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<PatcherProjectVersion>
 			orderByComparator);
-
-	/**
-	 * Returns the patcher project versions before and after the current patcher project version in the ordered set of patcher project versions that the user has permission to view where patcherProductVersionId = &#63; and repositoryName = &#63;.
-	 *
-	 * @param patcherProjectVersionId the primary key of the current patcher project version
-	 * @param patcherProductVersionId the patcher product version ID
-	 * @param repositoryName the repository name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next patcher project version
-	 * @throws NoSuchPatcherProjectVersionException if a patcher project version with the primary key could not be found
-	 */
-	public PatcherProjectVersion[] filterFindByP_RN_PrevAndNext(
-			long patcherProjectVersionId, long patcherProductVersionId,
-			String repositoryName,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<PatcherProjectVersion> orderByComparator)
-		throws NoSuchPatcherProjectVersionException;
 
 	/**
 	 * Removes all the patcher project versions where patcherProductVersionId = &#63; and repositoryName = &#63; from the database.
@@ -1145,3 +906,4 @@ public interface PatcherProjectVersionPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1924105626

@@ -36,10 +36,10 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.liveusers.LiveUsers;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -291,10 +291,15 @@ public class AuthenticatedSessionManagerUtil {
 		CookiesManagerUtil.deleteCookies(
 			domain, httpServletRequest, httpServletResponse,
 			CookiesConstants.NAME_COMPANY_ID,
+			CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL,
+			CookiesConstants.NAME_CONSENT_TYPE_NECESSARY,
+			CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
+			CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
 			CookiesConstants.NAME_GUEST_LANGUAGE_ID, CookiesConstants.NAME_ID,
 			CookiesConstants.NAME_PASSWORD, CookiesConstants.NAME_REMEMBER_ME,
 			CookiesConstants.NAME_REMEMBER_ME_TOKEN_ID,
-			CookiesConstants.NAME_REMEMBER_ME_TOKEN_VALUE);
+			CookiesConstants.NAME_REMEMBER_ME_TOKEN_VALUE,
+			CookiesConstants.NAME_USER_CONSENT_CONFIGURED);
 
 		try {
 			httpSession.invalidate();

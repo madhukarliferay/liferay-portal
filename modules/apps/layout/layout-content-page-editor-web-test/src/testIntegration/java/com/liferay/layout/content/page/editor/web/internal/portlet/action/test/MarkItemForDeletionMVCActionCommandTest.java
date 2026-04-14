@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -185,8 +186,10 @@ public class MarkItemForDeletionMVCActionCommandTest {
 				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
 		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
-			null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-			fragmentEntry.getFragmentEntryId(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), _group.getGroupId()),
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
 				_layout.getPlid()),
 			_layout.getPlid(), fragmentEntry.getCss(), fragmentEntry.getHtml(),

@@ -75,7 +75,7 @@ public class AddressServiceUtil {
 
 	public static Address getOrAddEmptyAddress(
 			String externalReferenceCode, String className, long classPK)
-		throws Exception {
+		throws PortalException {
 
 		return getService().getOrAddEmptyAddress(
 			externalReferenceCode, className, classPK);
@@ -131,3 +131,4 @@ public class AddressServiceUtil {
 	private static volatile AddressService _service;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1772352601

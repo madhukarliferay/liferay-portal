@@ -227,60 +227,6 @@ public class CommercePaymentEntryAuditUtil {
 	}
 
 	/**
-	 * Returns the last commerce payment entry audit in the ordered set where commercePaymentEntryId = &#63;.
-	 *
-	 * @param commercePaymentEntryId the commerce payment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce payment entry audit
-	 * @throws NoSuchPaymentEntryAuditException if a matching commerce payment entry audit could not be found
-	 */
-	public static CommercePaymentEntryAudit findByCommercePaymentEntryId_Last(
-			long commercePaymentEntryId,
-			OrderByComparator<CommercePaymentEntryAudit> orderByComparator)
-		throws com.liferay.commerce.payment.exception.
-			NoSuchPaymentEntryAuditException {
-
-		return getPersistence().findByCommercePaymentEntryId_Last(
-			commercePaymentEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce payment entry audit in the ordered set where commercePaymentEntryId = &#63;.
-	 *
-	 * @param commercePaymentEntryId the commerce payment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce payment entry audit, or <code>null</code> if a matching commerce payment entry audit could not be found
-	 */
-	public static CommercePaymentEntryAudit fetchByCommercePaymentEntryId_Last(
-		long commercePaymentEntryId,
-		OrderByComparator<CommercePaymentEntryAudit> orderByComparator) {
-
-		return getPersistence().fetchByCommercePaymentEntryId_Last(
-			commercePaymentEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce payment entry audits before and after the current commerce payment entry audit in the ordered set where commercePaymentEntryId = &#63;.
-	 *
-	 * @param commercePaymentEntryAuditId the primary key of the current commerce payment entry audit
-	 * @param commercePaymentEntryId the commerce payment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce payment entry audit
-	 * @throws NoSuchPaymentEntryAuditException if a commerce payment entry audit with the primary key could not be found
-	 */
-	public static CommercePaymentEntryAudit[]
-			findByCommercePaymentEntryId_PrevAndNext(
-				long commercePaymentEntryAuditId, long commercePaymentEntryId,
-				OrderByComparator<CommercePaymentEntryAudit> orderByComparator)
-		throws com.liferay.commerce.payment.exception.
-			NoSuchPaymentEntryAuditException {
-
-		return getPersistence().findByCommercePaymentEntryId_PrevAndNext(
-			commercePaymentEntryAuditId, commercePaymentEntryId,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the commerce payment entry audits that the user has permission to view where commercePaymentEntryId = &#63;.
 	 *
 	 * @param commercePaymentEntryId the commerce payment entry ID
@@ -333,27 +279,6 @@ public class CommercePaymentEntryAuditUtil {
 
 		return getPersistence().filterFindByCommercePaymentEntryId(
 			commercePaymentEntryId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce payment entry audits before and after the current commerce payment entry audit in the ordered set of commerce payment entry audits that the user has permission to view where commercePaymentEntryId = &#63;.
-	 *
-	 * @param commercePaymentEntryAuditId the primary key of the current commerce payment entry audit
-	 * @param commercePaymentEntryId the commerce payment entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce payment entry audit
-	 * @throws NoSuchPaymentEntryAuditException if a commerce payment entry audit with the primary key could not be found
-	 */
-	public static CommercePaymentEntryAudit[]
-			filterFindByCommercePaymentEntryId_PrevAndNext(
-				long commercePaymentEntryAuditId, long commercePaymentEntryId,
-				OrderByComparator<CommercePaymentEntryAudit> orderByComparator)
-		throws com.liferay.commerce.payment.exception.
-			NoSuchPaymentEntryAuditException {
-
-		return getPersistence().filterFindByCommercePaymentEntryId_PrevAndNext(
-			commercePaymentEntryAuditId, commercePaymentEntryId,
-			orderByComparator);
 	}
 
 	/**
@@ -569,3 +494,4 @@ public class CommercePaymentEntryAuditUtil {
 	private static volatile CommercePaymentEntryAuditPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1090985677

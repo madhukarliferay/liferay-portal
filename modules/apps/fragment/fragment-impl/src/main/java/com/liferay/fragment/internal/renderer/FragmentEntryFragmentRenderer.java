@@ -18,12 +18,10 @@ import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.renderer.constants.FragmentRendererConstants;
-import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
@@ -47,6 +45,8 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.ScopeUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
@@ -162,17 +162,14 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 	}
 
 	private String _getFragmentEntryName(FragmentEntryLink fragmentEntryLink) {
-		FragmentEntry fragmentEntry = null;
+		FragmentEntry fragmentEntry = fragmentEntryLink.fetchFragmentEntry();
 
-		if (Validator.isNotNull(fragmentEntryLink.getRendererKey())) {
+		if ((fragmentEntry == null) &&
+			Validator.isNotNull(fragmentEntryLink.getRendererKey())) {
+
 			fragmentEntry =
 				_fragmentCollectionContributorRegistry.getFragmentEntry(
 					fragmentEntryLink.getRendererKey());
-		}
-
-		if (fragmentEntry == null) {
-			fragmentEntry = _fragmentEntryLocalService.fetchFragmentEntry(
-				fragmentEntryLink.getFragmentEntryId());
 		}
 
 		if (fragmentEntry == null) {
@@ -219,10 +216,8 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 			}
 		}
 
-		FragmentEntry fragmentEntry = null;
-
 		if (Validator.isNotNull(fragmentEntryLink.getRendererKey())) {
-			fragmentEntry =
+			FragmentEntry fragmentEntry =
 				_fragmentCollectionContributorRegistry.getFragmentEntry(
 					fragmentEntryLink.getRendererKey());
 
@@ -231,10 +226,7 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 			}
 		}
 
-		if (fragmentEntry == null) {
-			fragmentEntry = _fragmentEntryLocalService.fetchFragmentEntry(
-				fragmentEntryLink.getFragmentEntryId());
-		}
+		FragmentEntry fragmentEntry = fragmentEntryLink.fetchFragmentEntry();
 
 		if (fragmentEntry == null) {
 			return fragmentEntryLink.isCacheable();
@@ -270,7 +262,7 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 		FragmentRendererContext fragmentRendererContext, String html,
 		HttpServletRequest httpServletRequest, String nonce) {
 
-		StringBundler sb = new StringBundler(29);
+		StringBundler sb = new StringBundler(35);
 
 		sb.append("<div id=\"");
 
@@ -294,8 +286,14 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 				sb.append("</style>");
 			}
 			else {
-				String outputKey =
-					fragmentEntryLink.getFragmentEntryId() + "_CSS";
+				Long groupId = ScopeUtil.getItemGroupId(
+					fragmentEntryLink.getCompanyId(),
+					fragmentEntryLink.getFragmentEntryScopeERC(),
+					fragmentEntryLink.getGroupId());
+
+				String outputKey = StringBundler.concat(
+					fragmentEntryLink.getFragmentEntryERC(), "_", groupId,
+					"_CSS");
 
 				OutputData outputData =
 					(OutputData)httpServletRequest.getAttribute(
@@ -357,7 +355,9 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 		sb.append(configuration);
 		sb.append("; const fragmentElement = document.querySelector('#");
 		sb.append(fragmentRendererContext.getFragmentElementId());
-		sb.append("'); const fragmentEntryLinkNamespace = '");
+		sb.append("'); const fragmentElementId = '");
+		sb.append(fragmentRendererContext.getFragmentElementId());
+		sb.append("'; const fragmentEntryLinkNamespace = '");
 		sb.append(fragmentEntryLink.getNamespace());
 		sb.append("'; const fragmentNamespace = '");
 		sb.append(fragmentEntryLink.getNamespace());
@@ -370,6 +370,10 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 					_getInputJSONObject(
 						fragmentEntryLink, fragmentRendererContext,
 						httpServletRequest)));
+			sb.append("; input.value = Liferay.Util.unescapeHTML(input.value");
+			sb.append("); Object.keys(input.valueI18n).forEach(function(key)");
+			sb.append("{ input.valueI18n[key] = Liferay.Util.unescapeHTML(");
+			sb.append("input.valueI18n[key]);})");
 		}
 
 		sb.append("; const layoutMode = '");
@@ -425,14 +429,17 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 		DefaultFragmentEntryProcessorContext
 			defaultFragmentEntryProcessorContext =
 				new DefaultFragmentEntryProcessorContext(
-					httpServletRequest, httpServletResponse,
+					fragmentEntryLink.getCompanyId(), httpServletRequest,
+					httpServletResponse, fragmentRendererContext.getLocale(),
 					fragmentRendererContext.getMode(),
-					fragmentRendererContext.getLocale());
+					fragmentEntryLink.getGroupId());
 
 		defaultFragmentEntryProcessorContext.setAttributes(
 			fragmentRendererContext.getAttributes());
 		defaultFragmentEntryProcessorContext.setContextInfoItemReference(
 			fragmentRendererContext.getContextInfoItemReference());
+		defaultFragmentEntryProcessorContext.setDisablePortletRender(
+			fragmentRendererContext.isDisablePortletRender());
 		defaultFragmentEntryProcessorContext.setFragmentElementId(
 			fragmentRendererContext.getFragmentElementId());
 		defaultFragmentEntryProcessorContext.setInfoForm(
@@ -569,9 +576,6 @@ public class FragmentEntryFragmentRenderer implements FragmentRenderer {
 
 	@Reference
 	private FragmentEntryLinkCache _fragmentEntryLinkCache;
-
-	@Reference
-	private FragmentEntryLocalService _fragmentEntryLocalService;
 
 	@Reference
 	private FragmentEntryProcessorRegistry _fragmentEntryProcessorRegistry;

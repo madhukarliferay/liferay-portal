@@ -166,7 +166,7 @@ public class CommerceChannelDisplayContext
 
 		return _workflowDefinitionManager.liberalGetActiveWorkflowDefinitions(
 			_commerceChannelRequestHelper.getCompanyId(), QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS, null);
+			null, QueryUtil.ALL_POS);
 	}
 
 	public String getAddChannelURL() throws Exception {
@@ -224,14 +224,14 @@ public class CommerceChannelDisplayContext
 	}
 
 	public CommerceChannel getCommerceChannel() throws PortalException {
-		long commerceChannelId = ParamUtil.getLong(
-			httpServletRequest, "commerceChannelId");
-
-		if (commerceChannelId == 0) {
-			return null;
+		if (_commerceChannel != null) {
+			return _commerceChannel;
 		}
 
-		return _commerceChannelService.fetchCommerceChannel(commerceChannelId);
+		_commerceChannel = _commerceChannelService.getCommerceChannel(
+			ParamUtil.getLong(httpServletRequest, "commerceChannelId"));
+
+		return _commerceChannel;
 	}
 
 	public long getCommerceChannelId() throws PortalException {
@@ -267,7 +267,7 @@ public class CommerceChannelDisplayContext
 	public CreationMenu getCreationMenu() throws Exception {
 		CreationMenu creationMenu = new CreationMenu();
 
-		if (hasAddChannelPermission()) {
+		if (hasAddCommerceChannelPermission()) {
 			creationMenu.addDropdownItem(
 				dropdownItem -> {
 					dropdownItem.setHref(getAddChannelURL());
@@ -327,6 +327,19 @@ public class CommerceChannelDisplayContext
 				fileItemSelectorCriterion));
 	}
 
+	public String getOpenOrdersVisibilityScope() throws PortalException {
+		CommerceChannel commerceChannel = getCommerceChannel();
+
+		CommerceOrderConfiguration commerceOrderConfiguration =
+			_configurationProvider.getConfiguration(
+				CommerceOrderConfiguration.class,
+				new GroupServiceSettingsLocator(
+					commerceChannel.getGroupId(),
+					CommerceConstants.SERVICE_NAME_COMMERCE_ORDER));
+
+		return commerceOrderConfiguration.openOrdersVisibilityScope();
+	}
+
 	public String getOrderImporterDateFormat() throws PortalException {
 		CommerceChannel commerceChannel = getCommerceChannel();
 
@@ -341,6 +354,19 @@ public class CommerceChannelDisplayContext
 
 		return commerceOrderImporterDateFormatConfiguration.
 			orderImporterDateFormat();
+	}
+
+	public String getPlacedOrdersVisibilityScope() throws PortalException {
+		CommerceChannel commerceChannel = getCommerceChannel();
+
+		CommerceOrderConfiguration commerceOrderConfiguration =
+			_configurationProvider.getConfiguration(
+				CommerceOrderConfiguration.class,
+				new GroupServiceSettingsLocator(
+					commerceChannel.getGroupId(),
+					CommerceConstants.SERVICE_NAME_COMMERCE_ORDER));
+
+		return commerceOrderConfiguration.placedOrdersVisibilityScope();
 	}
 
 	@Override
@@ -405,14 +431,14 @@ public class CommerceChannelDisplayContext
 			typePK, true);
 	}
 
-	public boolean hasAddChannelPermission() {
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
+	public boolean hasAddCommerceChannelPermission() {
 		PortletResourcePermission portletResourcePermission =
 			_commerceChannelModelResourcePermission.
 				getPortletResourcePermission();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		return portletResourcePermission.contains(
 			themeDisplay.getPermissionChecker(), null,
@@ -634,6 +660,19 @@ public class CommerceChannelDisplayContext
 		return commerceOrderConfiguration.undoCartItemDeletionDisabled();
 	}
 
+	public boolean isUserNotificationScopeEnabled() throws PortalException {
+		CommerceChannel commerceChannel = getCommerceChannel();
+
+		CommerceOrderConfiguration commerceOrderConfiguration =
+			_configurationProvider.getConfiguration(
+				CommerceOrderConfiguration.class,
+				new GroupServiceSettingsLocator(
+					commerceChannel.getGroupId(),
+					CommerceConstants.SERVICE_NAME_COMMERCE_ORDER));
+
+		return commerceOrderConfiguration.userNotificationScopeEnabled();
+	}
+
 	private CommerceAccountGroupServiceConfiguration
 			_getCommerceAccountGroupServiceConfiguration()
 		throws PortalException {
@@ -677,6 +716,7 @@ public class CommerceChannelDisplayContext
 	private final AccountEntryService _accountEntryService;
 	private CommerceAccountGroupServiceConfiguration
 		_commerceAccountGroupServiceConfiguration;
+	private CommerceChannel _commerceChannel;
 	private final CommerceChannelHealthStatusRegistry
 		_commerceChannelHealthStatusRegistry;
 	private final ModelResourcePermission<CommerceChannel>

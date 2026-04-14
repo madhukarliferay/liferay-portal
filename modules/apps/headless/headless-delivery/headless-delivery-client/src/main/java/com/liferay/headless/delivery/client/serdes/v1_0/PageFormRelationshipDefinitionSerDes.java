@@ -204,6 +204,16 @@ public class PageFormRelationshipDefinitionSerDes {
 			sb.append("\"");
 		}
 
+		if (pageFormRelationshipDefinition.getRepeatable() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"repeatable\": ");
+
+			sb.append(pageFormRelationshipDefinition.getRepeatable());
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -303,6 +313,15 @@ public class PageFormRelationshipDefinitionSerDes {
 				String.valueOf(pageFormRelationshipDefinition.getName()));
 		}
 
+		if (pageFormRelationshipDefinition.getRepeatable() == null) {
+			map.put("repeatable", null);
+		}
+		else {
+			map.put(
+				"repeatable",
+				String.valueOf(pageFormRelationshipDefinition.getRepeatable()));
+		}
+
 		return map;
 	}
 
@@ -345,6 +364,9 @@ public class PageFormRelationshipDefinitionSerDes {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "name")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "repeatable")) {
 				return false;
 			}
 
@@ -432,6 +454,12 @@ public class PageFormRelationshipDefinitionSerDes {
 						(String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(jsonParserFieldName, "repeatable")) {
+				if (jsonParserFieldValue != null) {
+					pageFormRelationshipDefinition.setRepeatable(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
 		}
 
 	}
@@ -513,3 +541,4 @@ public class PageFormRelationshipDefinitionSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1142094226

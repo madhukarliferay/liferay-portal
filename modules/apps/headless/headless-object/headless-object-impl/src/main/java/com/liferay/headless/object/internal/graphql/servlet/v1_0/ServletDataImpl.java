@@ -142,6 +142,26 @@ public class ServletDataImpl implements ServletData {
 							ObjectEntryFolderResourceImpl.class,
 							"patchScopeScopeKeyObjectEntryFolderByExternalReferenceCode"));
 					put(
+						"mutation#createObjectEntryFolderByParentObjectEntryFolderCopy",
+						new ObjectValuePair<>(
+							ObjectEntryFolderResourceImpl.class,
+							"postObjectEntryFolderByParentObjectEntryFolderCopy"));
+					put(
+						"mutation#createObjectEntryFolderByParentObjectEntryFolderCopyReplace",
+						new ObjectValuePair<>(
+							ObjectEntryFolderResourceImpl.class,
+							"postObjectEntryFolderByParentObjectEntryFolderCopyReplace"));
+					put(
+						"mutation#createObjectEntryFolderByParentObjectEntryFolderMove",
+						new ObjectValuePair<>(
+							ObjectEntryFolderResourceImpl.class,
+							"postObjectEntryFolderByParentObjectEntryFolderMove"));
+					put(
+						"mutation#createObjectEntryFolderByParentObjectEntryFolderMoveReplace",
+						new ObjectValuePair<>(
+							ObjectEntryFolderResourceImpl.class,
+							"postObjectEntryFolderByParentObjectEntryFolderMoveReplace"));
+					put(
 						"mutation#createScopeScopeKeyObjectEntryFolder",
 						new ObjectValuePair<>(
 							ObjectEntryFolderResourceImpl.class,
@@ -224,15 +244,15 @@ public class ServletDataImpl implements ServletData {
 							"getScopeScopeKeyObjectEntryFoldersPage"));
 
 					put(
-						"query#ObjectEntryFolder.collaboratorByTypeCollaborator",
-						new ObjectValuePair<>(
-							CollaboratorResourceImpl.class,
-							"getObjectEntryFolderCollaboratorByTypeCollaborator"));
-					put(
 						"query#ObjectEntryFolder.collaborators",
 						new ObjectValuePair<>(
 							CollaboratorResourceImpl.class,
 							"getObjectEntryFolderCollaboratorsPage"));
+					put(
+						"query#ObjectEntryFolder.collaboratorByTypeCollaborator",
+						new ObjectValuePair<>(
+							CollaboratorResourceImpl.class,
+							"getObjectEntryFolderCollaboratorByTypeCollaborator"));
 
 					put(
 						"query#ObjectEntryFolder.parentObjectEntryFolder",
@@ -251,3 +271,4 @@ public class ServletDataImpl implements ServletData {
 		_objectEntryFolderResourceComponentServiceObjects;
 
 }
+// LIFERAY-REST-BUILDER-HASH:2025660169

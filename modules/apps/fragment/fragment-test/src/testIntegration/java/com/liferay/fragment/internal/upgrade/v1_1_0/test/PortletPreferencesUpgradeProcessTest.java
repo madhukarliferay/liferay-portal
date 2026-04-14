@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.log.LogCapture;
@@ -320,9 +321,11 @@ public class PortletPreferencesUpgradeProcessTest {
 
 		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
-				null, TestPropsValues.getUserId(), layout.getGroupId(), 0,
-				fragmentEntry.getFragmentEntryId(), segmentsExperienceId,
-				layout.getPlid(), fragmentEntry.getCss(),
+				null, TestPropsValues.getUserId(), layout.getGroupId(), null,
+				fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					fragmentEntry.getGroupId(), layout.getGroupId()),
+				segmentsExperienceId, layout.getPlid(), fragmentEntry.getCss(),
 				fragmentEntry.getHtml(), fragmentEntry.getJs(),
 				fragmentEntry.getConfiguration(), StringPool.BLANK,
 				StringPool.BLANK, 0, StringPool.BLANK, fragmentEntry.getType(),

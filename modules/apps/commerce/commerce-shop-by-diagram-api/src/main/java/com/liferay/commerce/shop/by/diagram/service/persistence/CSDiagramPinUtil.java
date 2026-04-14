@@ -217,58 +217,6 @@ public class CSDiagramPinUtil {
 	}
 
 	/**
-	 * Returns the last cs diagram pin in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram pin
-	 * @throws NoSuchCSDiagramPinException if a matching cs diagram pin could not be found
-	 */
-	public static CSDiagramPin findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			OrderByComparator<CSDiagramPin> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramPinException {
-
-		return getPersistence().findByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last cs diagram pin in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram pin, or <code>null</code> if a matching cs diagram pin could not be found
-	 */
-	public static CSDiagramPin fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		OrderByComparator<CSDiagramPin> orderByComparator) {
-
-		return getPersistence().fetchByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cs diagram pins before and after the current cs diagram pin in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CSDiagramPinId the primary key of the current cs diagram pin
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram pin
-	 * @throws NoSuchCSDiagramPinException if a cs diagram pin with the primary key could not be found
-	 */
-	public static CSDiagramPin[] findByCPDefinitionId_PrevAndNext(
-			long CSDiagramPinId, long CPDefinitionId,
-			OrderByComparator<CSDiagramPin> orderByComparator)
-		throws com.liferay.commerce.shop.by.diagram.exception.
-			NoSuchCSDiagramPinException {
-
-		return getPersistence().findByCPDefinitionId_PrevAndNext(
-			CSDiagramPinId, CPDefinitionId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the cs diagram pins where CPDefinitionId = &#63; from the database.
 	 *
 	 * @param CPDefinitionId the cp definition ID
@@ -447,3 +395,4 @@ public class CSDiagramPinUtil {
 	private static volatile CSDiagramPinPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2145903222

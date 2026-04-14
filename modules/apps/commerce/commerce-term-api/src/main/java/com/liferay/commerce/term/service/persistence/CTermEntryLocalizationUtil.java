@@ -224,59 +224,6 @@ public class CTermEntryLocalizationUtil {
 	}
 
 	/**
-	 * Returns the last c term entry localization in the ordered set where commerceTermEntryId = &#63;.
-	 *
-	 * @param commerceTermEntryId the commerce term entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching c term entry localization
-	 * @throws NoSuchCTermEntryLocalizationException if a matching c term entry localization could not be found
-	 */
-	public static CTermEntryLocalization findByCommerceTermEntryId_Last(
-			long commerceTermEntryId,
-			OrderByComparator<CTermEntryLocalization> orderByComparator)
-		throws com.liferay.commerce.term.exception.
-			NoSuchCTermEntryLocalizationException {
-
-		return getPersistence().findByCommerceTermEntryId_Last(
-			commerceTermEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last c term entry localization in the ordered set where commerceTermEntryId = &#63;.
-	 *
-	 * @param commerceTermEntryId the commerce term entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching c term entry localization, or <code>null</code> if a matching c term entry localization could not be found
-	 */
-	public static CTermEntryLocalization fetchByCommerceTermEntryId_Last(
-		long commerceTermEntryId,
-		OrderByComparator<CTermEntryLocalization> orderByComparator) {
-
-		return getPersistence().fetchByCommerceTermEntryId_Last(
-			commerceTermEntryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the c term entry localizations before and after the current c term entry localization in the ordered set where commerceTermEntryId = &#63;.
-	 *
-	 * @param cTermEntryLocalizationId the primary key of the current c term entry localization
-	 * @param commerceTermEntryId the commerce term entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next c term entry localization
-	 * @throws NoSuchCTermEntryLocalizationException if a c term entry localization with the primary key could not be found
-	 */
-	public static CTermEntryLocalization[]
-			findByCommerceTermEntryId_PrevAndNext(
-				long cTermEntryLocalizationId, long commerceTermEntryId,
-				OrderByComparator<CTermEntryLocalization> orderByComparator)
-		throws com.liferay.commerce.term.exception.
-			NoSuchCTermEntryLocalizationException {
-
-		return getPersistence().findByCommerceTermEntryId_PrevAndNext(
-			cTermEntryLocalizationId, commerceTermEntryId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the c term entry localizations where commerceTermEntryId = &#63; from the database.
 	 *
 	 * @param commerceTermEntryId the commerce term entry ID
@@ -544,3 +491,4 @@ public class CTermEntryLocalizationUtil {
 	private static volatile CTermEntryLocalizationPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-270015276

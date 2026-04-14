@@ -285,7 +285,7 @@ public interface AccountRoleLocalService
 	public AccountRole getOrAddEmptyAccountRole(
 			String externalReferenceCode, long companyId, long userId,
 			long accountEntryId, String name)
-		throws Exception;
+		throws PortalException;
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -335,3 +335,4 @@ public interface AccountRoleLocalService
 	public AccountRole updateAccountRole(AccountRole accountRole);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1509501261

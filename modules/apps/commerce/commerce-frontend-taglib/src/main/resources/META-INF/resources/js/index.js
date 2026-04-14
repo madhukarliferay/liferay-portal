@@ -9,7 +9,6 @@ import {
 	DropdownMenu,
 	MiniCart,
 	Price,
-	RequestQuote,
 	StepTracker,
 	accountSelector,
 	compareCheckbox,
@@ -21,6 +20,7 @@ export {default as discontinuedLabelCPInstanceChangeHandler} from './discontinue
 export {default as ExternalReferenceCodeButtonPropsTransformer} from './header';
 export {default as ModalActionContextHandler} from './info_box';
 export {default as ModalContentHandler} from './modal_content';
+export {default as confirmationModal} from './panel/ConfirmationModal';
 export {default as searchBar} from './search_bar/SearchBar';
 export {default as searchResults} from './search_results/SearchResults';
 
@@ -85,7 +85,7 @@ export function compareCheckboxTag({
 	inCompare,
 	itemId,
 	label,
-	pictureUrl,
+	pictureURL,
 	refreshOnRemove,
 	rootId,
 }) {
@@ -95,7 +95,7 @@ export function compareCheckboxTag({
 		inCompare,
 		itemId,
 		label,
-		pictureUrl,
+		pictureURL,
 		refreshOnRemove,
 	});
 }
@@ -151,34 +151,6 @@ export function addToCart({
 		cpInstance,
 		productId: Number(productId),
 		skuOptions: skuOptions && JSON.parse(skuOptions),
-	});
-}
-
-export function requestQuote({
-	accountId,
-	channel,
-	cpDefinitionId,
-	cpInstance,
-	disabled,
-	namespace,
-	orderDetailURL,
-	requestQuoteElementId,
-}) {
-	if (cpInstance.skuOptions && typeof cpInstance.skuOptions === 'string') {
-		try {
-			cpInstance.skuOptions = JSON.parse(cpInstance.skuOptions);
-		}
-		catch (event) {}
-	}
-
-	RequestQuote(requestQuoteElementId, requestQuoteElementId, {
-		accountId: Number(accountId),
-		channel,
-		cpDefinitionId,
-		cpInstance,
-		disabled,
-		namespace,
-		orderDetailURL,
 	});
 }
 
@@ -240,9 +212,9 @@ export function cart({
 
 	if (customCartViews.length) {
 		props.cartViews = customCartViews.reduce(
-			(views, [viewName, contentRendererModuleUrl]) => ({
+			(views, [viewName, contentRendererModuleURL]) => ({
 				...views,
-				[viewName]: {contentRendererModuleUrl},
+				[viewName]: {contentRendererModuleURL},
 			}),
 			{}
 		);

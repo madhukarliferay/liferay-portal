@@ -7,6 +7,7 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
 import {changeTrackingPagesTest} from '../../../fixtures/changeTrackingPagesTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {productMenuPageTest} from '../../../fixtures/productMenuPageTest';
 import getRandomString from '../../../utils/getRandomString';
@@ -17,6 +18,9 @@ import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest
 export const test = mergeTests(
 	apiHelpersTest,
 	changeTrackingPagesTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	isolatedSiteTest,
 	journalPagesTest,
 	productMenuPageTest
@@ -112,4 +116,17 @@ test('LPD-30098 Invite user as admin', async ({
 	await apiHelpers.headlessChangeTracking.deleteCTCollection(
 		ctCollection.body.id
 	);
+});
+
+test('LPD-65173 Assert that the Share Link tab is hidden for Publication Templates', async ({
+	changeTrackingTemplatesPage,
+	page,
+}) => {
+	await changeTrackingTemplatesPage.gotoCreateTemplate();
+
+	await changeTrackingTemplatesPage.openManageCollaboratorsModal();
+
+	await expect(page.getByText('Invite Users')).toBeVisible();
+
+	await expect(page.getByRole('button', {name: 'Share Link'})).toBeHidden();
 });

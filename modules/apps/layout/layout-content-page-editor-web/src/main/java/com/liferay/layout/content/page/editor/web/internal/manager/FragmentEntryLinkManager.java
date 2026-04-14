@@ -143,19 +143,19 @@ public class FragmentEntryLinkManager {
 			return Collections.emptySet();
 		}
 
-		FragmentEntry fragmentEntry = _getFragmentEntry(
-			fragmentEntryLink, LocaleUtil.getMostRelevantLocale());
-
-		if (fragmentEntry != null) {
-			return _getFieldTypes(fragmentEntry.getTypeOptions());
-		}
-
 		FragmentRenderer fragmentRenderer =
 			_fragmentRendererRegistry.getFragmentRenderer(
 				fragmentEntryLink.getRendererKey());
 
 		if (fragmentRenderer != null) {
 			return _getFieldTypes(fragmentRenderer.getTypeOptions());
+		}
+
+		FragmentEntry fragmentEntry = _getFragmentEntry(
+			fragmentEntryLink, LocaleUtil.getMostRelevantLocale());
+
+		if (fragmentEntry != null) {
+			return _getFieldTypes(fragmentEntry.getTypeOptions());
 		}
 
 		return Collections.emptySet();
@@ -588,14 +588,15 @@ public class FragmentEntryLinkManager {
 	private FragmentEntry _getFragmentEntry(
 		FragmentEntryLink fragmentEntryLink, Locale locale) {
 
-		if (fragmentEntryLink.getFragmentEntryId() <= 0) {
-			return getFragmentEntry(
-				fragmentEntryLink.getGroupId(),
-				fragmentEntryLink.getRendererKey(), locale);
+		FragmentEntry fragmentEntry = fragmentEntryLink.fetchFragmentEntry();
+
+		if (fragmentEntry != null) {
+			return fragmentEntry;
 		}
 
-		return _fragmentEntryLocalService.fetchFragmentEntry(
-			fragmentEntryLink.getFragmentEntryId());
+		return getFragmentEntry(
+			fragmentEntryLink.getGroupId(), fragmentEntryLink.getRendererKey(),
+			locale);
 	}
 
 	private JSONArray _getFragmentEntryLinkCommentsJSONArray(
@@ -623,9 +624,8 @@ public class FragmentEntryLinkManager {
 					rootComment, httpServletRequest);
 
 				List<Comment> childComments = _commentManager.getChildComments(
-					rootComment.getCommentId(),
-					WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
-					QueryUtil.ALL_POS);
+					rootComment.getCommentId(), WorkflowConstants.STATUS_ANY,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 				JSONArray childCommentsJSONArray =
 					_jsonFactory.createJSONArray();

@@ -1,35 +1,52 @@
+variable "arn_partition" {
+	default="aws"
+}
 variable "deployment_name" {
-	default="liferay-self-hosted"
+	type=string
+	validation {
+		condition=can(regex("^[a-z][a-z0-9-]{2,23}$", var.deployment_name))
+		error_message="The variable \"deployment_name\" must be 3-24 characters, start with a lowercase letter, and contain only lowercase letters, numbers, and hyphens."
+	}
 }
-variable "node_group_ami_type" {
-	default="AL2023_x86_64_STANDARD"
+variable "deployment_namespace" {
+	default="liferay-system"
+	validation {
+		condition=can(regex("^[a-z0-9-]*$", var.deployment_namespace))
+		error_message="The deployment_namespace must contain only lowercase letters, numbers, and hyphens."
+	}
 }
-variable "node_group_desired_size" {
+variable "ecr_repositories" {
+	type=map(object({ arn=string, url=string }))
+	default={}
+}
+variable "envoy_gateway_helm_chart_version" {
+	type=string
+}
+variable "gateway_namespace" {
+	default="envoy-gateway-system"
+}
+variable "max_availability_zones" {
 	default=2
 }
-variable "node_group_max_size" {
-	default=2
-}
-variable "node_group_min_size" {
-	default=2
-}
-variable "node_instance_type" {
-	default="t3.xlarge"
+variable "observability_config" {
+	default={}
+	type=object(
+		{
+			alloy_namespace=optional(string, "alloy")
+			enabled=optional(bool, false)
+		}
+	)
 }
 variable "private_subnets" {
-	default=["10.0.1.0/24", "10.0.2.0/24"]
+	default=null
+	type=list(string)
 }
 variable "public_subnets" {
-	default=["10.0.101.0/24", "10.0.102.0/24"]
+	default=null
+	type=list(string)
 }
 variable "region" {
-	default="us-west-2"
-}
-variable "root_volume_size" {
-	default=20
-}
-variable "root_volume_type" {
-	default="gp3"
+	type=string
 }
 variable "vpc_cidr" {
 	default="10.0.0.0/16"

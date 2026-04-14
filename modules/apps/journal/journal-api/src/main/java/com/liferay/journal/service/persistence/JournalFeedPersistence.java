@@ -121,47 +121,6 @@ public interface JournalFeedPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal feed in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal feed
-	 * @throws NoSuchFeedException if a matching journal feed could not be found
-	 */
-	public JournalFeed findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
-
-	/**
-	 * Returns the last journal feed in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal feed, or <code>null</code> if a matching journal feed could not be found
-	 */
-	public JournalFeed fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-			orderByComparator);
-
-	/**
-	 * Returns the journal feeds before and after the current journal feed in the ordered set where uuid = &#63;.
-	 *
-	 * @param id the primary key of the current journal feed
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal feed
-	 * @throws NoSuchFeedException if a journal feed with the primary key could not be found
-	 */
-	public JournalFeed[] findByUuid_PrevAndNext(
-			long id, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
-
-	/**
 	 * Removes all the journal feeds where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface JournalFeedPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal feed in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal feed
-	 * @throws NoSuchFeedException if a matching journal feed could not be found
-	 */
-	public JournalFeed findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
-
-	/**
-	 * Returns the last journal feed in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal feed, or <code>null</code> if a matching journal feed could not be found
-	 */
-	public JournalFeed fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-			orderByComparator);
-
-	/**
-	 * Returns the journal feeds before and after the current journal feed in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param id the primary key of the current journal feed
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal feed
-	 * @throws NoSuchFeedException if a journal feed with the primary key could not be found
-	 */
-	public JournalFeed[] findByUuid_C_PrevAndNext(
-			long id, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
-
-	/**
 	 * Removes all the journal feeds where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface JournalFeedPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last journal feed in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal feed
-	 * @throws NoSuchFeedException if a matching journal feed could not be found
-	 */
-	public JournalFeed findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
-
-	/**
-	 * Returns the last journal feed in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching journal feed, or <code>null</code> if a matching journal feed could not be found
-	 */
-	public JournalFeed fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-			orderByComparator);
-
-	/**
-	 * Returns the journal feeds before and after the current journal feed in the ordered set where groupId = &#63;.
-	 *
-	 * @param id the primary key of the current journal feed
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal feed
-	 * @throws NoSuchFeedException if a journal feed with the primary key could not be found
-	 */
-	public JournalFeed[] findByGroupId_PrevAndNext(
-			long id, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
-
-	/**
 	 * Returns all the journal feeds that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -549,21 +423,6 @@ public interface JournalFeedPersistence
 		long groupId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
 			orderByComparator);
-
-	/**
-	 * Returns the journal feeds before and after the current journal feed in the ordered set of journal feeds that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param id the primary key of the current journal feed
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next journal feed
-	 * @throws NoSuchFeedException if a journal feed with the primary key could not be found
-	 */
-	public JournalFeed[] filterFindByGroupId_PrevAndNext(
-			long id, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<JournalFeed>
-				orderByComparator)
-		throws NoSuchFeedException;
 
 	/**
 	 * Removes all the journal feeds where groupId = &#63; from the database.
@@ -757,3 +616,4 @@ public interface JournalFeedPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1809371017

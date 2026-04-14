@@ -10,7 +10,10 @@ import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldRenderer;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeSettings;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox.CheckboxDDMFormFieldType;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox.multiple.CheckboxMultipleDDMFormFieldType;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.fieldset.FieldSetDDMFormFieldType;
+import com.liferay.dynamic.data.mapping.form.field.type.internal.image.ImageDDMFormFieldType;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.radio.RadioDDMFormFieldType;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.select.SelectDDMFormFieldType;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.text.TextDDMFormFieldType;
@@ -50,6 +53,7 @@ import com.liferay.dynamic.data.mapping.storage.Field;
 import com.liferay.dynamic.data.mapping.storage.Fields;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormFieldTypeSettingsTestUtil;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactory;
@@ -83,7 +87,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 
-import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -155,9 +158,9 @@ public abstract class BaseDDMTestCase {
 
 		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
 
-		for (DDMFormField ddmFormField : ddmFormFieldsArray) {
-			ddmFormFields.add(ddmFormField);
-		}
+		ddmFormFields.addAll(
+			TransformUtil.transformToList(
+				ddmFormFieldsArray, ddmFormField -> ddmFormField));
 	}
 
 	protected void addNestedTextDDMFormFields(
@@ -166,17 +169,17 @@ public abstract class BaseDDMTestCase {
 		List<DDMFormField> nestedDDMFormFields =
 			ddmFormField.getNestedDDMFormFields();
 
-		for (String fieldName : fieldNames) {
-			nestedDDMFormFields.add(createTextDDMFormField(fieldName));
-		}
+		nestedDDMFormFields.addAll(
+			TransformUtil.transformToList(
+				fieldNames, fieldName -> createTextDDMFormField(fieldName)));
 	}
 
 	protected void addTextDDMFormFields(DDMForm ddmForm, String... fieldNames) {
 		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
 
-		for (String fieldName : fieldNames) {
-			ddmFormFields.add(createTextDDMFormField(fieldName));
-		}
+		ddmFormFields.addAll(
+			TransformUtil.transformToList(
+				fieldNames, fieldName -> createTextDDMFormField(fieldName)));
 	}
 
 	protected Set<Locale> createAvailableLocales(Locale... locales) {
@@ -237,10 +240,9 @@ public abstract class BaseDDMTestCase {
 	protected DDMFormFieldValue createDDMFormFieldValue(
 		String instanceId, String name, Value value) {
 
-		DDMFormFieldValue ddmFormFieldValue = new DDMFormFieldValue();
+		DDMFormFieldValue ddmFormFieldValue = new DDMFormFieldValue(instanceId);
 
 		ddmFormFieldValue.setFieldReference(name);
-		ddmFormFieldValue.setInstanceId(instanceId);
 		ddmFormFieldValue.setName(name);
 		ddmFormFieldValue.setValue(value);
 
@@ -414,13 +416,8 @@ public abstract class BaseDDMTestCase {
 	}
 
 	protected List<Serializable> createValuesList(String... valuesString) {
-		List<Serializable> values = new ArrayList<>();
-
-		for (String valueString : valuesString) {
-			values.add(valueString);
-		}
-
-		return values;
+		return TransformUtil.transformToList(
+			valuesString, valueString -> valueString);
 	}
 
 	protected Map<Locale, List<Serializable>> createValuesMap(
@@ -478,9 +475,30 @@ public abstract class BaseDDMTestCase {
 
 		Mockito.when(
 			ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
+				Mockito.eq("checkbox"))
+		).thenReturn(
+			new CheckboxDDMFormFieldType()
+		);
+
+		Mockito.when(
+			ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
+				Mockito.eq("checkbox_multiple"))
+		).thenReturn(
+			new CheckboxMultipleDDMFormFieldType()
+		);
+
+		Mockito.when(
+			ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
 				Mockito.eq("fieldset"))
 		).thenReturn(
 			new FieldSetDDMFormFieldType()
+		);
+
+		Mockito.when(
+			ddmFormFieldTypeServicesRegistry.getDDMFormFieldType(
+				Mockito.eq("image"))
+		).thenReturn(
+			new ImageDDMFormFieldType()
 		);
 
 		Mockito.when(

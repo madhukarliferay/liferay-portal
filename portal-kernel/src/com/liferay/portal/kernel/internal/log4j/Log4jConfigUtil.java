@@ -5,9 +5,9 @@
 
 package com.liferay.portal.kernel.internal.log4j;
 
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
-import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -140,6 +140,16 @@ public class Log4jConfigUtil {
 		}
 
 		return priorities;
+	}
+
+	public static String getPriority(String name) {
+		LoggerConfig loggerConfig = _centralizedConfiguration.getLogger(name);
+
+		if (loggerConfig == null) {
+			return null;
+		}
+
+		return String.valueOf(loggerConfig.getLevel());
 	}
 
 	public static void setLevel(String name, String priority) {

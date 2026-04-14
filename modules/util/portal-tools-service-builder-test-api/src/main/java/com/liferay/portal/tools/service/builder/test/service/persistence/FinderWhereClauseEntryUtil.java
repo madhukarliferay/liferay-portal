@@ -223,58 +223,6 @@ public class FinderWhereClauseEntryUtil {
 	}
 
 	/**
-	 * Returns the last finder where clause entry in the ordered set where name = &#63;.
-	 *
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching finder where clause entry
-	 * @throws NoSuchFinderWhereClauseEntryException if a matching finder where clause entry could not be found
-	 */
-	public static FinderWhereClauseEntry findByName_Nickname_Last(
-			String name,
-			OrderByComparator<FinderWhereClauseEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.exception.
-			NoSuchFinderWhereClauseEntryException {
-
-		return getPersistence().findByName_Nickname_Last(
-			name, orderByComparator);
-	}
-
-	/**
-	 * Returns the last finder where clause entry in the ordered set where name = &#63;.
-	 *
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching finder where clause entry, or <code>null</code> if a matching finder where clause entry could not be found
-	 */
-	public static FinderWhereClauseEntry fetchByName_Nickname_Last(
-		String name,
-		OrderByComparator<FinderWhereClauseEntry> orderByComparator) {
-
-		return getPersistence().fetchByName_Nickname_Last(
-			name, orderByComparator);
-	}
-
-	/**
-	 * Returns the finder where clause entries before and after the current finder where clause entry in the ordered set where name = &#63;.
-	 *
-	 * @param finderWhereClauseEntryId the primary key of the current finder where clause entry
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next finder where clause entry
-	 * @throws NoSuchFinderWhereClauseEntryException if a finder where clause entry with the primary key could not be found
-	 */
-	public static FinderWhereClauseEntry[] findByName_Nickname_PrevAndNext(
-			long finderWhereClauseEntryId, String name,
-			OrderByComparator<FinderWhereClauseEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.test.exception.
-			NoSuchFinderWhereClauseEntryException {
-
-		return getPersistence().findByName_Nickname_PrevAndNext(
-			finderWhereClauseEntryId, name, orderByComparator);
-	}
-
-	/**
 	 * Removes all the finder where clause entries where name = &#63; from the database.
 	 *
 	 * @param name the name
@@ -466,3 +414,4 @@ public class FinderWhereClauseEntryUtil {
 	private static volatile FinderWhereClauseEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:948189939

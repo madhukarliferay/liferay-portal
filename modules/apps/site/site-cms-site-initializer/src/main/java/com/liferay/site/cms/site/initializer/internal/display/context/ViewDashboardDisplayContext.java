@@ -5,8 +5,15 @@
 
 package com.liferay.site.cms.site.initializer.internal.display.context;
 
+import com.liferay.learn.LearnMessageUtil;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.license.util.LicenseManagerUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -19,12 +26,30 @@ import java.util.Map;
  */
 public class ViewDashboardDisplayContext {
 
-	public ViewDashboardDisplayContext(ThemeDisplay themeDisplay) {
+	public ViewDashboardDisplayContext(
+		GroupLocalService groupLocalService, ThemeDisplay themeDisplay) {
+
+		_groupLocalService = groupLocalService;
 		_themeDisplay = themeDisplay;
 	}
 
 	public Map<String, Object> getConstants() {
 		return HashMapBuilder.<String, Object>put(
+			"cmsGroupId",
+			() -> {
+				try {
+					Group group = _groupLocalService.getGroup(
+						_themeDisplay.getCompanyId(), GroupConstants.CMS);
+
+					return group.getGroupId();
+				}
+				catch (PortalException portalException) {
+					_log.error(portalException);
+				}
+
+				return null;
+			}
+		).put(
 			"ercContentStructures",
 			ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES
 		).put(
@@ -42,9 +67,18 @@ public class ViewDashboardDisplayContext {
 				LayoutLocalServiceUtil.getLayoutByFriendlyURL(
 					_themeDisplay.getScopeGroupId(), false, "/dashboard"),
 				_themeDisplay)
+		).put(
+			"freeTier", LicenseManagerUtil.isFreeTier()
+		).put(
+			"learnResources",
+			LearnMessageUtil.getReactDataJSONObject("site-cms-site-initializer")
 		).build();
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		ViewDashboardDisplayContext.class);
+
+	private final GroupLocalService _groupLocalService;
 	private final ThemeDisplay _themeDisplay;
 
 }

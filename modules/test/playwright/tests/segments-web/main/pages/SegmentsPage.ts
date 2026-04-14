@@ -10,6 +10,7 @@ import fillAndClickOutside from '../../../../utils/fillAndClickOutside';
 export class SegmentsPage {
 	readonly page: Page;
 
+	readonly actionMenu: Locator;
 	readonly closeButton: Locator;
 	readonly criterionLabel: Locator;
 	readonly deleteButton: Locator;
@@ -25,7 +26,10 @@ export class SegmentsPage {
 	constructor(page: Page) {
 		this.page = page;
 
-		this.closeButton = page.getByLabel('close', {exact: true});
+		this.actionMenu = page.locator('.dropdown-menu.show');
+		this.closeButton = page
+			.locator('.modal-header')
+			.getByLabel('Close', {exact: true});
 		this.criterionLabel = page.locator('span.criterion-string');
 		this.deleteButton = page.getByRole('menuitem', {name: 'Delete'});
 		this.editButton = page.getByRole('menuitem', {name: 'Edit'});
@@ -190,7 +194,10 @@ export class SegmentsPage {
 		await showMoreOptionsButton.waitFor({state: 'visible'});
 		await showMoreOptionsButton.click();
 
+		await this.actionMenu.waitFor({state: 'visible'});
+
 		await this.editButton.waitFor({state: 'visible'});
+
 		await this.editButton.click();
 	}
 

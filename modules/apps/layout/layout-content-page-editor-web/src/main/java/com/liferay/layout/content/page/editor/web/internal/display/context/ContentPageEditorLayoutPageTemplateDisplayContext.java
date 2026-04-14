@@ -27,14 +27,15 @@ import com.liferay.item.selector.criteria.InfoItemItemSelectorReturnType;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
 import com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration;
-import com.liferay.layout.content.page.editor.web.internal.manager.ContentManager;
 import com.liferay.layout.content.page.editor.web.internal.manager.FragmentCollectionManager;
 import com.liferay.layout.content.page.editor.web.internal.manager.FragmentEntryLinkManager;
 import com.liferay.layout.content.page.editor.web.internal.util.MappingContentUtil;
+import com.liferay.layout.manager.ContentManager;
 import com.liferay.layout.manager.LayoutLockManager;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
+import com.liferay.layout.page.template.util.LayoutPageTemplateEntryUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -214,8 +215,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 		repeatableFieldInfoCollectionProviderItemSelectorCriterion.setItemType(
 			layoutPageTemplateEntry.getClassName());
 		repeatableFieldInfoCollectionProviderItemSelectorCriterion.
-			setItemSubtype(
-				String.valueOf(layoutPageTemplateEntry.getClassTypeId()));
+			setItemSubtype(String.valueOf(_getClassTypeId()));
 
 		return ListUtil.concat(
 			collectionItemSelectorCriterions,
@@ -233,19 +233,41 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 
 		String key =
 			layoutPageTemplateEntry.getClassNameId() + StringPool.DASH +
-				layoutPageTemplateEntry.getClassTypeId();
+				_getClassTypeId();
 
 		if (!mappingFieldsJSONObject.has(key)) {
 			mappingFieldsJSONObject.put(
 				key,
 				MappingContentUtil.getMappingFieldsJSONArray(
-					String.valueOf(layoutPageTemplateEntry.getClassTypeId()),
+					String.valueOf(_getClassTypeId()),
 					themeDisplay.getScopeGroupId(), infoItemServiceRegistry,
 					layoutPageTemplateEntry.getClassName(),
 					themeDisplay.getLocale()));
 		}
 
 		return mappingFieldsJSONObject;
+	}
+
+	private Long _getClassTypeId() {
+		if (_classTypeId != null) {
+			return _classTypeId;
+		}
+
+		_classTypeId = LayoutPageTemplateEntryUtil.getClassTypeId(
+			_getLayoutPageTemplateEntry());
+
+		return _classTypeId;
+	}
+
+	private String _getClassTypeKey() {
+		if (_classTypeKey != null) {
+			return _classTypeKey;
+		}
+
+		_classTypeKey = LayoutPageTemplateEntryUtil.getClassTypeKey(
+			_getLayoutPageTemplateEntry());
+
+		return _classTypeKey;
 	}
 
 	private String _getInfoItemPreviewSelectorURL() {
@@ -266,7 +288,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 		itemSelectorCriterion.setItemType(
 			layoutPageTemplateEntry.getClassName());
 		itemSelectorCriterion.setItemSubtype(
-			_getItemSubtype(layoutPageTemplateEntry.getClassTypeId()));
+			_getItemSubtype(_getClassTypeId()));
 
 		PortletURL infoItemSelectorURL = _itemSelector.getItemSelectorURL(
 			RequestBackedPortletURLFactoryUtil.create(httpServletRequest),
@@ -317,8 +339,8 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 
 		InfoItemFormVariation infoItemFormVariation =
 			infoItemFormVariationsProvider.getInfoItemFormVariation(
-				layoutPageTemplateEntry.getGroupId(),
-				String.valueOf(layoutPageTemplateEntry.getClassTypeId()));
+				layoutPageTemplateEntry.getGroupId(), _getClassTypeKey(),
+				String.valueOf(_getClassTypeId()));
 
 		if (infoItemFormVariation != null) {
 			return infoItemFormVariation.getLabel(themeDisplay.getLocale());
@@ -376,14 +398,14 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 				String subtypeLabel = _getMappingSubtypeLabel();
 
 				if (Validator.isNull(subtypeLabel)) {
-					return StringPool.BLANK;
+					return null;
 				}
 
 				return HashMapBuilder.<String, Object>put(
 					"groupSubtypeTitle",
 					language.get(httpServletRequest, "subtype")
 				).put(
-					"id", layoutPageTemplateEntry.getClassTypeId()
+					"id", _getClassTypeId()
 				).put(
 					"label", subtypeLabel
 				).build();
@@ -401,6 +423,8 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 		).build();
 	}
 
+	private Long _classTypeId;
+	private String _classTypeKey;
 	private final ItemSelector _itemSelector;
 	private LayoutPageTemplateEntry _layoutPageTemplateEntry;
 	private final boolean _pageIsDisplayPage;

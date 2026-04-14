@@ -80,6 +80,18 @@ public class BatchEngineExportTaskLocalServiceUtil {
 			batchEngineExportTaskId);
 	}
 
+	public static BatchEngineExportTask createBatchEngineExportTask(
+		long batchEngineExportTaskId, String externalReferenceCode,
+		long companyId, long userId, String callbackURL, String className,
+		String contentType, String executeStatus, List<String> fieldNames,
+		Map<String, Serializable> parameters, String taskItemDelegateName) {
+
+		return getService().createBatchEngineExportTask(
+			batchEngineExportTaskId, externalReferenceCode, companyId, userId,
+			callbackURL, className, contentType, executeStatus, fieldNames,
+			parameters, taskItemDelegateName);
+	}
+
 	/**
 	 * @throws PortalException
 	 */
@@ -417,3 +429,4 @@ public class BatchEngineExportTaskLocalServiceUtil {
 			BatchEngineExportTaskLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:277946843

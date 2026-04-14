@@ -153,9 +153,7 @@ public class FragmentDropZonePageElementDefinition
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -260,3 +258,4 @@ public class FragmentDropZonePageElementDefinition
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:189362452

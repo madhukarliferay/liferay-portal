@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
 import com.liferay.portal.kernel.portlet.FriendlyURLResolver;
 import com.liferay.portal.kernel.portlet.FriendlyURLResolverRegistryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.LayoutFriendlyURLEntryValidator;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
@@ -50,12 +51,12 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.comparator.LayoutPriorityComparator;
 import com.liferay.portal.model.impl.LayoutImpl;
 import com.liferay.portal.util.LayoutTypeControllerTracker;
-import com.liferay.portal.util.PropsValues;
 
 import java.util.HashMap;
 import java.util.List;
@@ -124,6 +125,11 @@ public class LayoutLocalServiceHelper implements IdentifiableOSGiService {
 
 				if (type == LayoutFriendlyURLException.DUPLICATE) {
 					friendlyURL = originalFriendlyURL + i;
+				}
+				else if (type ==
+							LayoutFriendlyURLException.POSSIBLE_DUPLICATE) {
+
+					friendlyURL = originalFriendlyURL + StringPool.DASH + i;
 				}
 				else {
 					friendlyURL = StringPool.SLASH + layoutId;
@@ -459,7 +465,8 @@ public class LayoutLocalServiceHelper implements IdentifiableOSGiService {
 
 		for (FriendlyURLResolver friendlyURLResolver :
 				FriendlyURLResolverRegistryUtil.
-					getFriendlyURLResolversAsCollection()) {
+					getFriendlyURLResolversAsCollection(
+						CompanyThreadLocal.getCompanyId())) {
 
 			String urlSeparator = friendlyURLResolver.getURLSeparator();
 

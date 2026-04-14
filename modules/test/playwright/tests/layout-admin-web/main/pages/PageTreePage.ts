@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Page} from '@playwright/test';
+import {Page, expect} from '@playwright/test';
+
+import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
 
 export class PageTreePage {
 	readonly page: Page;
@@ -13,16 +15,36 @@ export class PageTreePage {
 	}
 
 	async open() {
+		await clickAndExpectToBeVisible({
+			target: this.page.getByLabel('Product Menu').locator('.treeview'),
+			trigger: this.page.getByRole('button', {
+				exact: true,
+				name: 'Page Tree',
+			}),
+		});
+	}
+
+	async close() {
 		const pageTree = this.page
 			.getByLabel('Product Menu')
 			.locator('.treeview');
 
-		if (!(await pageTree.isVisible())) {
-			await this.page
-				.getByRole('button', {exact: true, name: 'Page Tree'})
-				.click();
+		if (await pageTree.isVisible()) {
+			const button = this.page.getByRole('button', {
+				name: 'Back to Menu',
+			});
 
-			await pageTree.waitFor();
+			await expect(async () => {
+				await button.click();
+
+				await expect(
+					this.page.locator("//div[@data-qa-id='productMenuBody']")
+				).toBeVisible();
+
+				await expect(
+					this.page.locator('.sidebar-body > div')
+				).toHaveClass(/panel-group/, {timeout: 2000});
+			}).toPass();
 		}
 	}
 }

@@ -122,47 +122,6 @@ public interface CommerceMLForecastAlertEntryPersistence
 			<CommerceMLForecastAlertEntry> orderByComparator);
 
 	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry, or <code>null</code> if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the commerce ml forecast alert entries before and after the current commerce ml forecast alert entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceMLForecastAlertEntryId the primary key of the current commerce ml forecast alert entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a commerce ml forecast alert entry with the primary key could not be found
-	 */
-	public CommerceMLForecastAlertEntry[] findByUuid_PrevAndNext(
-			long commerceMLForecastAlertEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
-
-	/**
 	 * Removes all the commerce ml forecast alert entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface CommerceMLForecastAlertEntryPersistence
 		String uuid, long companyId,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry, or <code>null</code> if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the commerce ml forecast alert entries before and after the current commerce ml forecast alert entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceMLForecastAlertEntryId the primary key of the current commerce ml forecast alert entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a commerce ml forecast alert entry with the primary key could not be found
-	 */
-	public CommerceMLForecastAlertEntry[] findByUuid_C_PrevAndNext(
-			long commerceMLForecastAlertEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
 
 	/**
 	 * Removes all the commerce ml forecast alert entries where uuid = &#63; and companyId = &#63; from the database.
@@ -491,54 +406,6 @@ public interface CommerceMLForecastAlertEntryPersistence
 		long companyId, long commerceAccountId, int status,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry findByC_C_S_Last(
-			long companyId, long commerceAccountId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry, or <code>null</code> if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry fetchByC_C_S_Last(
-		long companyId, long commerceAccountId, int status,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the commerce ml forecast alert entries before and after the current commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and status = &#63;.
-	 *
-	 * @param commerceMLForecastAlertEntryId the primary key of the current commerce ml forecast alert entry
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a commerce ml forecast alert entry with the primary key could not be found
-	 */
-	public CommerceMLForecastAlertEntry[] findByC_C_S_PrevAndNext(
-			long commerceMLForecastAlertEntryId, long companyId,
-			long commerceAccountId, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
 
 	/**
 	 * Returns all the commerce ml forecast alert entries where companyId = &#63; and commerceAccountId = any &#63; and status = &#63;.
@@ -759,59 +626,6 @@ public interface CommerceMLForecastAlertEntryPersistence
 		int status,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and relativeChange &gt; &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param relativeChange the relative change
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry findByC_C_GtRc_S_Last(
-			long companyId, long commerceAccountId, double relativeChange,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and relativeChange &gt; &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param relativeChange the relative change
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry, or <code>null</code> if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry fetchByC_C_GtRc_S_Last(
-		long companyId, long commerceAccountId, double relativeChange,
-		int status,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the commerce ml forecast alert entries before and after the current commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and relativeChange &gt; &#63; and status = &#63;.
-	 *
-	 * @param commerceMLForecastAlertEntryId the primary key of the current commerce ml forecast alert entry
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param relativeChange the relative change
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a commerce ml forecast alert entry with the primary key could not be found
-	 */
-	public CommerceMLForecastAlertEntry[] findByC_C_GtRc_S_PrevAndNext(
-			long commerceMLForecastAlertEntryId, long companyId,
-			long commerceAccountId, double relativeChange, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
 
 	/**
 	 * Returns all the commerce ml forecast alert entries where companyId = &#63; and commerceAccountId = any &#63; and relativeChange &gt; &#63; and status = &#63;.
@@ -1044,59 +858,6 @@ public interface CommerceMLForecastAlertEntryPersistence
 		int status,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and relativeChange &lt; &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param relativeChange the relative change
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry findByC_C_LtRc_S_Last(
-			long companyId, long commerceAccountId, double relativeChange,
-			int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
-
-	/**
-	 * Returns the last commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and relativeChange &lt; &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param relativeChange the relative change
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce ml forecast alert entry, or <code>null</code> if a matching commerce ml forecast alert entry could not be found
-	 */
-	public CommerceMLForecastAlertEntry fetchByC_C_LtRc_S_Last(
-		long companyId, long commerceAccountId, double relativeChange,
-		int status,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceMLForecastAlertEntry> orderByComparator);
-
-	/**
-	 * Returns the commerce ml forecast alert entries before and after the current commerce ml forecast alert entry in the ordered set where companyId = &#63; and commerceAccountId = &#63; and relativeChange &lt; &#63; and status = &#63;.
-	 *
-	 * @param commerceMLForecastAlertEntryId the primary key of the current commerce ml forecast alert entry
-	 * @param companyId the company ID
-	 * @param commerceAccountId the commerce account ID
-	 * @param relativeChange the relative change
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce ml forecast alert entry
-	 * @throws NoSuchMLForecastAlertEntryException if a commerce ml forecast alert entry with the primary key could not be found
-	 */
-	public CommerceMLForecastAlertEntry[] findByC_C_LtRc_S_PrevAndNext(
-			long commerceMLForecastAlertEntryId, long companyId,
-			long commerceAccountId, double relativeChange, int status,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceMLForecastAlertEntry> orderByComparator)
-		throws NoSuchMLForecastAlertEntryException;
 
 	/**
 	 * Returns all the commerce ml forecast alert entries where companyId = &#63; and commerceAccountId = any &#63; and relativeChange &lt; &#63; and status = &#63;.
@@ -1348,3 +1109,4 @@ public interface CommerceMLForecastAlertEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1170879033

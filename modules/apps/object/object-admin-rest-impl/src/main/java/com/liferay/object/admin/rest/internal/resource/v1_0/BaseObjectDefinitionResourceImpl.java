@@ -5,6 +5,7 @@
 
 package com.liferay.object.admin.rest.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -274,7 +275,7 @@ public abstract class BaseObjectDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableLocalization": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFormContainer": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "permissions": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -341,6 +342,11 @@ public abstract class BaseObjectDefinitionResourceImpl
 				objectDefinition.getEnableComments());
 		}
 
+		if (objectDefinition.getEnableFormContainer() != null) {
+			existingObjectDefinition.setEnableFormContainer(
+				objectDefinition.getEnableFormContainer());
+		}
+
 		if (objectDefinition.getEnableFriendlyURLCustomization() != null) {
 			existingObjectDefinition.setEnableFriendlyURLCustomization(
 				objectDefinition.getEnableFriendlyURLCustomization());
@@ -349,11 +355,6 @@ public abstract class BaseObjectDefinitionResourceImpl
 		if (objectDefinition.getEnableIndexSearch() != null) {
 			existingObjectDefinition.setEnableIndexSearch(
 				objectDefinition.getEnableIndexSearch());
-		}
-
-		if (objectDefinition.getEnableLocalization() != null) {
-			existingObjectDefinition.setEnableLocalization(
-				objectDefinition.getEnableLocalization());
 		}
 
 		if (objectDefinition.getEnableObjectEntryDraft() != null) {
@@ -419,6 +420,11 @@ public abstract class BaseObjectDefinitionResourceImpl
 				objectDefinition.getPanelCategoryKey());
 		}
 
+		if (objectDefinition.getPermissions() != null) {
+			existingObjectDefinition.setPermissions(
+				objectDefinition.getPermissions());
+		}
+
 		if (objectDefinition.getPluralLabel() != null) {
 			existingObjectDefinition.setPluralLabel(
 				objectDefinition.getPluralLabel());
@@ -455,7 +461,7 @@ public abstract class BaseObjectDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/object-admin/v1.0/object-definitions' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableLocalization": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/object-admin/v1.0/object-definitions' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFormContainer": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "permissions": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {
@@ -637,7 +643,7 @@ public abstract class BaseObjectDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableLocalization": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFormContainer": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "permissions": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -717,7 +723,7 @@ public abstract class BaseObjectDefinitionResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/by-external-reference-code/{externalReferenceCode}' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableLocalization": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/by-external-reference-code/{externalReferenceCode}' -d $'{"accountEntryRestricted": ___, "accountEntryRestrictedObjectFieldName": ___, "active": ___, "className": ___, "defaultLanguageId": ___, "enableCategorization": ___, "enableComments": ___, "enableFormContainer": ___, "enableFriendlyURLCustomization": ___, "enableIndexSearch": ___, "enableObjectEntryDraft": ___, "enableObjectEntryHistory": ___, "enableObjectEntrySchedule": ___, "enableObjectEntrySubscription": ___, "enableObjectEntryVersioning": ___, "externalReferenceCode": ___, "friendlyURLSeparator": ___, "label": ___, "modifiable": ___, "name": ___, "objectActions": ___, "objectDefinitionSettings": ___, "objectFields": ___, "objectFolderExternalReferenceCode": ___, "objectLayouts": ___, "objectRelationships": ___, "objectValidationRules": ___, "objectViews": ___, "panelAppOrder": ___, "panelCategoryKey": ___, "permissions": ___, "pluralLabel": ___, "portlet": ___, "scope": ___, "status": ___, "storageType": ___, "system": ___, "titleObjectFieldName": ___, "workflowDefinitionLinks": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -910,6 +916,15 @@ public abstract class BaseObjectDefinitionResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1533,3 +1548,4 @@ public abstract class BaseObjectDefinitionResourceImpl
 		LogFactoryUtil.getLog(BaseObjectDefinitionResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-332620261

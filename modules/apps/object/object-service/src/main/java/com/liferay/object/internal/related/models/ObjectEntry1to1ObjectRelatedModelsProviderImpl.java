@@ -58,7 +58,8 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 				objectRelationshipId);
 
 		List<ObjectEntry> relatedModels = getRelatedModels(
-			groupId, objectRelationshipId, null, primaryKey, null, 0, 1, null);
+			groupId, objectRelationshipId, null, false, primaryKey, null, 0, 1,
+			null);
 
 		if (relatedModels.isEmpty()) {
 			return;
@@ -79,6 +80,7 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 
 			_objectEntryService.partialUpdateObjectEntry(
 				objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
 				HashMapBuilder.<String, Serializable>put(
 					() -> {
 						ObjectField objectField =
@@ -105,8 +107,11 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 			long primaryKey2)
 		throws PortalException {
 
+		ObjectEntry objectEntry = _objectEntryService.getObjectEntry(
+			primaryKey1);
+
 		_objectEntryService.updateObjectEntry(
-			primaryKey1,
+			objectEntry.getPrimaryKey(), objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				() -> {
 					ObjectRelationship objectRelationship =
@@ -142,12 +147,13 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 	@Override
 	public List<ObjectEntry> getRelatedModels(
 			long groupId, long objectRelationshipId, Predicate predicate,
-			long primaryKey, String search, int start, int end, Sort[] sorts)
+			boolean preferApproved, long primaryKey, String search, int start,
+			int end, Sort[] sorts)
 		throws PortalException {
 
 		return _objectEntryService.getOneToManyObjectEntries(
-			groupId, objectRelationshipId, predicate, primaryKey, true, search,
-			0, 1, sorts);
+			groupId, objectRelationshipId, predicate, false, primaryKey, true,
+			search, 0, 1, sorts);
 	}
 
 	@Override
@@ -157,8 +163,8 @@ public class ObjectEntry1to1ObjectRelatedModelsProviderImpl
 		throws PortalException {
 
 		List<ObjectEntry> relatedModels = getRelatedModels(
-			groupId, objectRelationshipId, predicate, primaryKey, search, 0, 1,
-			null);
+			groupId, objectRelationshipId, predicate, false, primaryKey, search,
+			0, 1, null);
 
 		return relatedModels.size();
 	}

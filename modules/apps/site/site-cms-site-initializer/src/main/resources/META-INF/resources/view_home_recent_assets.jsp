@@ -11,15 +11,24 @@
 ViewHomeRecentAssetsSectionDisplayContext viewHomeRecentAssetsSectionDisplayContext = (ViewHomeRecentAssetsSectionDisplayContext)request.getAttribute(ViewHomeRecentAssetsSectionDisplayContext.class.getName());
 %>
 
-<div class="cms-section">
-	<div class="container-fluid">
-		<div class="align-items-center d-flex justify-content-between">
-			<span class="font-weight-semi-bold text-4">Recent Assets</span>
-
-			<a class="btn btn-link btn-sm font-weight-semi-bold" href="<%= viewHomeRecentAssetsSectionDisplayContext.getAssetsAllURL() %>">View All</a>
+<div class="cms-section p-2 p-sm-3">
+	<div class="container-fluid-max">
+		<div id="<%= CMSSiteInitializerFDSNames.HOME_RECENT_ASSETS_SECTION %>">
+			<react:component
+				module="{RecentAssetsHeader} from site-cms-site-initializer"
+				props='<%=
+					HashMapBuilder.<String, Object>put(
+						"label", LanguageUtil.get(request, "view-all")
+					).put(
+						"title", LanguageUtil.get(request, "recent-assets")
+					).put(
+						"url", viewHomeRecentAssetsSectionDisplayContext.getAssetsAllURL()
+					).build()
+				%>'
+			/>
 		</div>
 
-		<div class="cms-fds-fluid cms-section custom-empty-state">
+		<div class="cms-fds-fluid cms-section custom-empty-state recent-assets-fds">
 			<frontend-data-set:headless-display
 				additionalProps="<%= viewHomeRecentAssetsSectionDisplayContext.getAdditionalProps() %>"
 				apiURL="<%= viewHomeRecentAssetsSectionDisplayContext.getAPIURL() %>"

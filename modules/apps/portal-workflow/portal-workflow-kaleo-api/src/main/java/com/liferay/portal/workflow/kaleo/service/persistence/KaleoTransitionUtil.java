@@ -215,57 +215,6 @@ public class KaleoTransitionUtil {
 	}
 
 	/**
-	 * Returns the last kaleo transition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo transition
-	 * @throws NoSuchTransitionException if a matching kaleo transition could not be found
-	 */
-	public static KaleoTransition findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<KaleoTransition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchTransitionException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo transition in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo transition, or <code>null</code> if a matching kaleo transition could not be found
-	 */
-	public static KaleoTransition fetchByCompanyId_Last(
-		long companyId, OrderByComparator<KaleoTransition> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo transitions before and after the current kaleo transition in the ordered set where companyId = &#63;.
-	 *
-	 * @param kaleoTransitionId the primary key of the current kaleo transition
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo transition
-	 * @throws NoSuchTransitionException if a kaleo transition with the primary key could not be found
-	 */
-	public static KaleoTransition[] findByCompanyId_PrevAndNext(
-			long kaleoTransitionId, long companyId,
-			OrderByComparator<KaleoTransition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchTransitionException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			kaleoTransitionId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the kaleo transitions where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -392,58 +341,6 @@ public class KaleoTransitionUtil {
 
 		return getPersistence().fetchByKaleoDefinitionVersionId_First(
 			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo transition in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo transition
-	 * @throws NoSuchTransitionException if a matching kaleo transition could not be found
-	 */
-	public static KaleoTransition findByKaleoDefinitionVersionId_Last(
-			long kaleoDefinitionVersionId,
-			OrderByComparator<KaleoTransition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchTransitionException {
-
-		return getPersistence().findByKaleoDefinitionVersionId_Last(
-			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo transition in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo transition, or <code>null</code> if a matching kaleo transition could not be found
-	 */
-	public static KaleoTransition fetchByKaleoDefinitionVersionId_Last(
-		long kaleoDefinitionVersionId,
-		OrderByComparator<KaleoTransition> orderByComparator) {
-
-		return getPersistence().fetchByKaleoDefinitionVersionId_Last(
-			kaleoDefinitionVersionId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo transitions before and after the current kaleo transition in the ordered set where kaleoDefinitionVersionId = &#63;.
-	 *
-	 * @param kaleoTransitionId the primary key of the current kaleo transition
-	 * @param kaleoDefinitionVersionId the kaleo definition version ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo transition
-	 * @throws NoSuchTransitionException if a kaleo transition with the primary key could not be found
-	 */
-	public static KaleoTransition[] findByKaleoDefinitionVersionId_PrevAndNext(
-			long kaleoTransitionId, long kaleoDefinitionVersionId,
-			OrderByComparator<KaleoTransition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchTransitionException {
-
-		return getPersistence().findByKaleoDefinitionVersionId_PrevAndNext(
-			kaleoTransitionId, kaleoDefinitionVersionId, orderByComparator);
 	}
 
 	/**
@@ -574,58 +471,6 @@ public class KaleoTransitionUtil {
 
 		return getPersistence().fetchByKaleoNodeId_First(
 			kaleoNodeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo transition in the ordered set where kaleoNodeId = &#63;.
-	 *
-	 * @param kaleoNodeId the kaleo node ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo transition
-	 * @throws NoSuchTransitionException if a matching kaleo transition could not be found
-	 */
-	public static KaleoTransition findByKaleoNodeId_Last(
-			long kaleoNodeId,
-			OrderByComparator<KaleoTransition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchTransitionException {
-
-		return getPersistence().findByKaleoNodeId_Last(
-			kaleoNodeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last kaleo transition in the ordered set where kaleoNodeId = &#63;.
-	 *
-	 * @param kaleoNodeId the kaleo node ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo transition, or <code>null</code> if a matching kaleo transition could not be found
-	 */
-	public static KaleoTransition fetchByKaleoNodeId_Last(
-		long kaleoNodeId,
-		OrderByComparator<KaleoTransition> orderByComparator) {
-
-		return getPersistence().fetchByKaleoNodeId_Last(
-			kaleoNodeId, orderByComparator);
-	}
-
-	/**
-	 * Returns the kaleo transitions before and after the current kaleo transition in the ordered set where kaleoNodeId = &#63;.
-	 *
-	 * @param kaleoTransitionId the primary key of the current kaleo transition
-	 * @param kaleoNodeId the kaleo node ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo transition
-	 * @throws NoSuchTransitionException if a kaleo transition with the primary key could not be found
-	 */
-	public static KaleoTransition[] findByKaleoNodeId_PrevAndNext(
-			long kaleoTransitionId, long kaleoNodeId,
-			OrderByComparator<KaleoTransition> orderByComparator)
-		throws com.liferay.portal.workflow.kaleo.exception.
-			NoSuchTransitionException {
-
-		return getPersistence().findByKaleoNodeId_PrevAndNext(
-			kaleoTransitionId, kaleoNodeId, orderByComparator);
 	}
 
 	/**
@@ -946,3 +791,4 @@ public class KaleoTransitionUtil {
 	private static volatile KaleoTransitionPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1831277201

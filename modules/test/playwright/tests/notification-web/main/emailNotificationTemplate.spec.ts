@@ -21,11 +21,15 @@ import {waitForAlert} from '../../../utils/waitForAlert';
 export const test = mergeTests(
 	apiHelpersTest,
 	dataApiHelpersTest,
-	featureFlagsTest({
-		'LPD-50091': {enabled: true},
-	}),
 	loginTest(),
 	notificationPagesTest
+);
+
+const ckEditor5Test = mergeTests(
+	test,
+	featureFlagsTest({
+		'LPD-11235': {enabled: true},
+	})
 );
 
 let objectDefinition: ObjectDefinition;
@@ -231,6 +235,59 @@ test.describe('Email notification template', () => {
 
 		await expect(test.info().errors).toHaveLength(0);
 	});
+
+	test(
+		'can save notification template using empty roles and user groups in CC and BCC recipients',
+		{tag: ['@LPD-78398']},
+		async ({
+			apiHelpers,
+			emailNotificationTemplatePage,
+			notificationTemplatesPage,
+			page,
+		}) => {
+			const notificationTemplate =
+				await apiHelpers.notification.postRandomNotificationTemplate(
+					'notification template test ' + getRandomInt()
+				);
+
+			apiHelpers.data.push({
+				id: notificationTemplate.id,
+				type: 'notificationTemplate',
+			});
+
+			await notificationTemplatesPage.goto();
+
+			for (const recipientType of ['User Groups', 'Roles']) {
+				await notificationTemplatesPage
+					.getFrontEndDatasetItemLocator(notificationTemplate.name)
+					.click();
+
+				await emailNotificationTemplatePage.secondaryRecipientTypeCC.click();
+
+				await page.getByRole('option', {name: recipientType}).click();
+
+				await emailNotificationTemplatePage.secondaryRecipientTypeBCC.click();
+
+				await page.getByRole('option', {name: recipientType}).click();
+
+				await emailNotificationTemplatePage.saveButton.click();
+
+				await notificationTemplatesPage
+					.getFrontEndDatasetItemLocator(notificationTemplate.name)
+					.click();
+
+				await expect(
+					emailNotificationTemplatePage.secondaryRecipientTypeBCC
+				).toHaveText(recipientType);
+
+				await expect(
+					emailNotificationTemplatePage.secondaryRecipientTypeCC
+				).toHaveText(recipientType);
+
+				await emailNotificationTemplatePage.backURLButton.click();
+			}
+		}
+	);
 
 	test('can have rich text source code verifying that the source code is persisted', async ({
 		emailNotificationTemplatePage,
@@ -819,6 +876,69 @@ test.describe('Email notification template', () => {
 					).toBe(recipientUserGroupFields.length);
 				}
 			});
+		}
+	);
+});
+
+ckEditor5Test.describe('Content template with CKEditor5', () => {
+	ckEditor5Test(
+		'can be created and saved correctly',
+		{tag: ['@LPD-66958']},
+		async ({
+			emailNotificationTemplatePage,
+			notificationTemplatesPage,
+			page,
+		}) => {
+			const templateMessage = {
+				en_US: 'This is a text from CKEditor5',
+				pt_BR: 'Isso é um texto do CKEditor5',
+			};
+
+			await emailNotificationTemplatePage.goto();
+
+			const notificationTemplateName =
+				'Notification Template Name' + getRandomInt();
+
+			await emailNotificationTemplatePage.fillNotificationTemplateInfo(
+				notificationTemplateName,
+				notificationTemplateInfo
+			);
+
+			await emailNotificationTemplatePage.richTextCKEditor5Field.click();
+			await emailNotificationTemplatePage.richTextCKEditor5Field.fill(
+				templateMessage['en_US']
+			);
+
+			await page.getByRole('button', {name: 'en_US'}).click();
+
+			await page
+				.getByRole('menuitem', {name: 'pt_BR Untranslated'})
+				.click();
+
+			await emailNotificationTemplatePage.richTextCKEditor5Field.click();
+			await emailNotificationTemplatePage.richTextCKEditor5Field.fill(
+				templateMessage['pt_BR']
+			);
+
+			await emailNotificationTemplatePage.saveButton.click();
+
+			await notificationTemplatesPage
+				.getFrontEndDatasetItemLocator(notificationTemplateName)
+				.click();
+
+			await expect(
+				page.getByText(templateMessage['en_US'])
+			).toBeVisible();
+
+			await page.getByRole('button', {name: 'en_US'}).click();
+
+			await page
+				.getByRole('menuitem', {name: 'pt_BR Translated'})
+				.click();
+
+			await expect(
+				page.getByText(templateMessage['pt_BR'])
+			).toBeVisible();
 		}
 	);
 });

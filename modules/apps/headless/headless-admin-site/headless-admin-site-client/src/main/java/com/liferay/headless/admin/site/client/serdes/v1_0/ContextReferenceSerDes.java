@@ -54,9 +54,7 @@ public class ContextReferenceSerDes {
 			sb.append("\"contextSource\": ");
 
 			sb.append("\"");
-
 			sb.append(contextReference.getContextSource());
-
 			sb.append("\"");
 		}
 
@@ -206,3 +204,4 @@ public class ContextReferenceSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1129845320

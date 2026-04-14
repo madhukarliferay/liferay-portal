@@ -45,10 +45,21 @@ const FieldPicker = ({
 		>
 			<Picker
 				{...restProps}
-				aria-describedby={(errorMessage || helpMessage) ?? feedbackId}
+				aria-describedby={
+					errorMessage || helpMessage ? feedbackId : undefined
+				}
 				disabled={disabled}
 				id={fieldId}
 				items={items}
+				messages={{
+					itemDescribedby: Liferay.Language.get(
+						'you-are-currently-on-a-text-element,-inside-of-a-list-box'
+					),
+					itemSelected: Liferay.Language.get('x-selected'),
+					scrollToBottomAriaLabel:
+						Liferay.Language.get('scroll-to-bottom'),
+					scrollToTopAriaLabel: Liferay.Language.get('scroll-to-top'),
+				}}
 				name={name}
 				placeholder={placeholder}
 			>

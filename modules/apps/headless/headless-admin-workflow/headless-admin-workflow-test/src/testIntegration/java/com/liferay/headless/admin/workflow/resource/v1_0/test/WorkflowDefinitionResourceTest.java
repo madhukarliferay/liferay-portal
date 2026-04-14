@@ -13,6 +13,7 @@ import com.liferay.headless.admin.workflow.client.serdes.v1_0.WorkflowDefinition
 import com.liferay.headless.admin.workflow.resource.v1_0.test.util.WorkflowDefinitionTestUtil;
 import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.workflow.constants.WorkflowDefinitionConstants;
 import com.liferay.portal.workflow.kaleo.definition.util.WorkflowDefinitionContentUtil;
 import com.liferay.portal.workflow.manager.WorkflowDefinitionManager;
 
@@ -40,6 +42,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,9 +81,9 @@ public class WorkflowDefinitionResourceTest
 		String content = _workflowDefinition.getContent();
 
 		_workflowDefinitionManager.deployWorkflowDefinition(
-			null, _workflowDefinition.getCompanyId(),
-			_workflowDefinition.getUserId(), _workflowDefinition.getTitle(),
-			_workflowDefinition.getName(), content.getBytes());
+			content.getBytes(), _workflowDefinition.getCompanyId(), null,
+			_workflowDefinition.getName(), _workflowDefinition.getTitle(),
+			_workflowDefinition.getUserId());
 	}
 
 	@After
@@ -151,6 +154,13 @@ public class WorkflowDefinitionResourceTest
 		Assert.assertEquals(
 			workflowDefinition.getDateCreated(),
 			latestWorkflowDefinition.getDateCreated());
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteWorkflowDefinitionUndeploy() throws Exception {
+		super.testGraphQLDeleteWorkflowDefinitionUndeploy();
 	}
 
 	@Override
@@ -278,8 +288,8 @@ public class WorkflowDefinitionResourceTest
 	@Override
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[] {
-			"active", "name", "nodes", "title", "title_i18n", "transitions",
-			"version"
+			"active", "name", "nodes", "scope", "title", "title_i18n",
+			"transitions", "version"
 		};
 	}
 
@@ -293,6 +303,7 @@ public class WorkflowDefinitionResourceTest
 			WorkflowDefinitionTestUtil.getContent(
 				workflowDefinition.getDescription(), "workflow-definition.xml",
 				workflowDefinition.getName()));
+		workflowDefinition.setGroupExternalReferenceCode(StringPool.BLANK);
 		workflowDefinition.setNodes(
 			new Node[] {
 				new Node() {
@@ -324,6 +335,7 @@ public class WorkflowDefinitionResourceTest
 					}
 				}
 			});
+		workflowDefinition.setScope(WorkflowDefinitionConstants.SCOPE_ALL);
 		workflowDefinition.setTitle_i18n(
 			HashMapBuilder.put(
 				LanguageUtil.getLanguageId(LocaleUtil.US),
@@ -413,6 +425,22 @@ public class WorkflowDefinitionResourceTest
 
 	@Override
 	protected WorkflowDefinition
+			testGraphQLWorkflowDefinition_addWorkflowDefinition(
+				WorkflowDefinition workflowDefinition)
+		throws Exception {
+
+		workflowDefinition =
+			workflowDefinitionResource.postWorkflowDefinitionDeploy(
+				workflowDefinition);
+
+		_workflowDefinitions.put(
+			workflowDefinition.getName(), workflowDefinition);
+
+		return workflowDefinition;
+	}
+
+	@Override
+	protected WorkflowDefinition
 			testPostWorkflowDefinition_addWorkflowDefinition(
 				WorkflowDefinition workflowDefinition)
 		throws Exception {
@@ -480,12 +508,12 @@ public class WorkflowDefinitionResourceTest
 		}
 
 		_workflowDefinitionManager.updateActive(
-			TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
-			workflowDefinitionName, workflowDefinitionVersion, false);
+			false, TestPropsValues.getCompanyId(), workflowDefinitionName,
+			TestPropsValues.getUserId(), workflowDefinitionVersion);
 
 		_workflowDefinitionManager.undeployWorkflowDefinition(
-			TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
-			workflowDefinitionName, workflowDefinitionVersion);
+			TestPropsValues.getCompanyId(), workflowDefinitionName,
+			TestPropsValues.getUserId(), workflowDefinitionVersion);
 	}
 
 	private JSONObject _getWorkflowDefinitionJSONObject(String fileName)

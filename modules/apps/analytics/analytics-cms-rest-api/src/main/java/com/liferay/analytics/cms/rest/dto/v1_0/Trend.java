@@ -184,9 +184,7 @@ public class Trend implements Serializable {
 			sb.append("\"classification\": ");
 
 			sb.append("\"");
-
 			sb.append(classification);
-
 			sb.append("\"");
 		}
 
@@ -341,3 +339,4 @@ public class Trend implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:221369875

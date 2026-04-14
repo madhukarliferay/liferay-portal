@@ -64,6 +64,7 @@ export default function AccountsListView({
 
 				{!!currentAccount.id && !orderSelectionDisabled && (
 					<ClayButtonWithIcon
+						aria-label={Liferay.Language.get('back-to-orders')}
 						displayType="unstyled"
 						onClick={() => setCurrentView(VIEWS.ORDERS_LIST)}
 						symbol="angle-right-small"
@@ -139,7 +140,7 @@ export default function AccountsListView({
 
 			{modalVisible && (
 				<AccountCreationModal
-					accountTypes={accountEntryAllowedTypes}
+					accountEntryAllowedTypes={accountEntryAllowedTypes}
 					closeModal={onClose}
 					commerceChannelId={commerceChannelId}
 					handleAccountChange={changeAccount}

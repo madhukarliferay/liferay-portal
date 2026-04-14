@@ -120,47 +120,6 @@ public interface AssetTagPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset tag in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag
-	 * @throws NoSuchTagException if a matching asset tag could not be found
-	 */
-	public AssetTag findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
-	 * Returns the last asset tag in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag, or <code>null</code> if a matching asset tag could not be found
-	 */
-	public AssetTag fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-			orderByComparator);
-
-	/**
-	 * Returns the asset tags before and after the current asset tag in the ordered set where uuid = &#63;.
-	 *
-	 * @param tagId the primary key of the current asset tag
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset tag
-	 * @throws NoSuchTagException if a asset tag with the primary key could not be found
-	 */
-	public AssetTag[] findByUuid_PrevAndNext(
-			long tagId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
 	 * Removes all the asset tags where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -319,50 +278,6 @@ public interface AssetTagPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset tag in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag
-	 * @throws NoSuchTagException if a matching asset tag could not be found
-	 */
-	public AssetTag findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
-	 * Returns the last asset tag in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag, or <code>null</code> if a matching asset tag could not be found
-	 */
-	public AssetTag fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-			orderByComparator);
-
-	/**
-	 * Returns the asset tags before and after the current asset tag in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param tagId the primary key of the current asset tag
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset tag
-	 * @throws NoSuchTagException if a asset tag with the primary key could not be found
-	 */
-	public AssetTag[] findByUuid_C_PrevAndNext(
-			long tagId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
 	 * Removes all the asset tags where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -465,47 +380,6 @@ public interface AssetTagPersistence
 		long groupId,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset tag in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag
-	 * @throws NoSuchTagException if a matching asset tag could not be found
-	 */
-	public AssetTag findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
-	 * Returns the last asset tag in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag, or <code>null</code> if a matching asset tag could not be found
-	 */
-	public AssetTag fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-			orderByComparator);
-
-	/**
-	 * Returns the asset tags before and after the current asset tag in the ordered set where groupId = &#63;.
-	 *
-	 * @param tagId the primary key of the current asset tag
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset tag
-	 * @throws NoSuchTagException if a asset tag with the primary key could not be found
-	 */
-	public AssetTag[] findByGroupId_PrevAndNext(
-			long tagId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
 
 	/**
 	 * Returns all the asset tags where groupId = any &#63;.
@@ -680,47 +554,6 @@ public interface AssetTagPersistence
 		String name,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset tag in the ordered set where name = &#63;.
-	 *
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag
-	 * @throws NoSuchTagException if a matching asset tag could not be found
-	 */
-	public AssetTag findByName_Last(
-			String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
-	 * Returns the last asset tag in the ordered set where name = &#63;.
-	 *
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag, or <code>null</code> if a matching asset tag could not be found
-	 */
-	public AssetTag fetchByName_Last(
-		String name,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-			orderByComparator);
-
-	/**
-	 * Returns the asset tags before and after the current asset tag in the ordered set where name = &#63;.
-	 *
-	 * @param tagId the primary key of the current asset tag
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset tag
-	 * @throws NoSuchTagException if a asset tag with the primary key could not be found
-	 */
-	public AssetTag[] findByName_PrevAndNext(
-			long tagId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
 
 	/**
 	 * Returns all the asset tags where name = any &#63;.
@@ -904,50 +737,6 @@ public interface AssetTagPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last asset tag in the ordered set where groupId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag
-	 * @throws NoSuchTagException if a matching asset tag could not be found
-	 */
-	public AssetTag findByG_N_Last(
-			long groupId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
-	 * Returns the last asset tag in the ordered set where groupId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag, or <code>null</code> if a matching asset tag could not be found
-	 */
-	public AssetTag fetchByG_N_Last(
-		long groupId, String name,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-			orderByComparator);
-
-	/**
-	 * Returns the asset tags before and after the current asset tag in the ordered set where groupId = &#63; and name = &#63;.
-	 *
-	 * @param tagId the primary key of the current asset tag
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset tag
-	 * @throws NoSuchTagException if a asset tag with the primary key could not be found
-	 */
-	public AssetTag[] findByG_N_PrevAndNext(
-			long tagId, long groupId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
 	 * Removes all the asset tags where groupId = &#63; and name = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -1056,50 +845,6 @@ public interface AssetTagPersistence
 		long groupId, String name,
 		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
 			orderByComparator);
-
-	/**
-	 * Returns the last asset tag in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag
-	 * @throws NoSuchTagException if a matching asset tag could not be found
-	 */
-	public AssetTag findByG_LikeN_Last(
-			long groupId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
-
-	/**
-	 * Returns the last asset tag in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset tag, or <code>null</code> if a matching asset tag could not be found
-	 */
-	public AssetTag fetchByG_LikeN_Last(
-		long groupId, String name,
-		com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-			orderByComparator);
-
-	/**
-	 * Returns the asset tags before and after the current asset tag in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param tagId the primary key of the current asset tag
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset tag
-	 * @throws NoSuchTagException if a asset tag with the primary key could not be found
-	 */
-	public AssetTag[] findByG_LikeN_PrevAndNext(
-			long tagId, long groupId, String name,
-			com.liferay.portal.kernel.util.OrderByComparator<AssetTag>
-				orderByComparator)
-		throws NoSuchTagException;
 
 	/**
 	 * Returns all the asset tags where groupId = any &#63; and name LIKE &#63;.
@@ -1540,3 +1285,4 @@ public interface AssetTagPersistence
 		java.util.List<com.liferay.asset.kernel.model.AssetEntry> assetEntries);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-100821479

@@ -208,52 +208,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByUuid_Last(
-			String uuid, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByUuid_Last(
-		String uuid, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where uuid = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByUuid_PrevAndNext(
-			long messageId, String uuid,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			messageId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -446,59 +400,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByUuid_C_PrevAndNext(
-			long messageId, String uuid, long companyId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			messageId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -621,52 +522,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByGroupId_Last(
-			long groupId, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByGroupId_Last(
-		long groupId, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByGroupId_PrevAndNext(
-			long messageId, long groupId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			messageId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -713,24 +568,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByGroupId(
 			groupId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByGroupId_PrevAndNext(
-			long messageId, long groupId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByGroupId_PrevAndNext(
-			messageId, groupId, orderByComparator);
 	}
 
 	/**
@@ -865,54 +702,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByCompanyId_Last(
-			long companyId, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByCompanyId_Last(
-		long companyId, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where companyId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByCompanyId_PrevAndNext(
-			long messageId, long companyId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			messageId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -1029,52 +818,6 @@ public class MBMessageUtil {
 		long userId, OrderByComparator<MBMessage> orderByComparator) {
 
 		return getPersistence().fetchByUserId_First(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByUserId_Last(
-			long userId, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByUserId_Last(
-		long userId, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where userId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByUserId_PrevAndNext(
-			long messageId, long userId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			messageId, userId, orderByComparator);
 	}
 
 	/**
@@ -1199,54 +942,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByThreadId_Last(
-			long threadId, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByThreadId_Last(
-			threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByThreadId_Last(
-		long threadId, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByThreadId_Last(
-			threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByThreadId_PrevAndNext(
-			long messageId, long threadId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByThreadId_PrevAndNext(
-			messageId, threadId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where threadId = &#63; from the database.
 	 *
 	 * @param threadId the thread ID
@@ -1365,54 +1060,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByThreadIdReplies_First(
 			threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByThreadIdReplies_Last(
-			long threadId, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByThreadIdReplies_Last(
-			threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByThreadIdReplies_Last(
-		long threadId, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByThreadIdReplies_Last(
-			threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByThreadIdReplies_PrevAndNext(
-			long messageId, long threadId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByThreadIdReplies_PrevAndNext(
-			messageId, threadId, orderByComparator);
 	}
 
 	/**
@@ -1536,55 +1183,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByParentMessageId_First(
 			parentMessageId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where parentMessageId = &#63;.
-	 *
-	 * @param parentMessageId the parent message ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByParentMessageId_Last(
-			long parentMessageId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByParentMessageId_Last(
-			parentMessageId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where parentMessageId = &#63;.
-	 *
-	 * @param parentMessageId the parent message ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByParentMessageId_Last(
-		long parentMessageId, OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByParentMessageId_Last(
-			parentMessageId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where parentMessageId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param parentMessageId the parent message ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByParentMessageId_PrevAndNext(
-			long messageId, long parentMessageId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByParentMessageId_PrevAndNext(
-			messageId, parentMessageId, orderByComparator);
 	}
 
 	/**
@@ -1717,59 +1315,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_U_Last(
-			long groupId, long userId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_U_Last(
-			groupId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_U_Last(
-		long groupId, long userId,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_U_Last(
-			groupId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_U_PrevAndNext(
-			long messageId, long groupId, long userId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_U_PrevAndNext(
-			messageId, groupId, userId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and userId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1819,25 +1364,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_U(
 			groupId, userId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and userId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_U_PrevAndNext(
-			long messageId, long groupId, long userId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_U_PrevAndNext(
-			messageId, groupId, userId, orderByComparator);
 	}
 
 	/**
@@ -1983,59 +1509,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_C_Last(
-			long groupId, long categoryId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_Last(
-			groupId, categoryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_C_Last(
-		long groupId, long categoryId,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_C_Last(
-			groupId, categoryId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_C_PrevAndNext(
-			long messageId, long groupId, long categoryId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_PrevAndNext(
-			messageId, groupId, categoryId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2088,25 +1561,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_C(
 			groupId, categoryId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_C_PrevAndNext(
-			long messageId, long groupId, long categoryId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_C_PrevAndNext(
-			messageId, groupId, categoryId, orderByComparator);
 	}
 
 	/**
@@ -2316,59 +1770,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_S_Last(
-			long groupId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_S_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_S_Last(
-		long groupId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_S_Last(
-			groupId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_S_PrevAndNext(
-			long messageId, long groupId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_S_PrevAndNext(
-			messageId, groupId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -2418,25 +1819,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_S(
 			groupId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_S_PrevAndNext(
-			long messageId, long groupId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_S_PrevAndNext(
-			messageId, groupId, status, orderByComparator);
 	}
 
 	/**
@@ -2582,59 +1964,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByC_S_Last(
-			long companyId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByC_S_Last(
-			companyId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByC_S_Last(
-		long companyId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByC_S_Last(
-			companyId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where companyId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByC_S_PrevAndNext(
-			long messageId, long companyId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByC_S_PrevAndNext(
-			messageId, companyId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where companyId = &#63; and status = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -2763,59 +2092,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByU_C_First(
 			userId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByU_C_Last(
-			long userId, long classNameId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_Last(
-			userId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByU_C_Last(
-		long userId, long classNameId,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByU_C_Last(
-			userId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where userId = &#63; and classNameId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByU_C_PrevAndNext(
-			long messageId, long userId, long classNameId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_PrevAndNext(
-			messageId, userId, classNameId, orderByComparator);
 	}
 
 	/**
@@ -3043,59 +2319,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByC_C_Last(
-			long classNameId, long classPK,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByC_C_Last(
-		long classNameId, long classPK,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByC_C_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByC_C_PrevAndNext(
-			long messageId, long classNameId, long classPK,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByC_C_PrevAndNext(
-			messageId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -3231,59 +2454,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and parentMessageId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param parentMessageId the parent message ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByT_P_Last(
-			long threadId, long parentMessageId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_P_Last(
-			threadId, parentMessageId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and parentMessageId = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param parentMessageId the parent message ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByT_P_Last(
-		long threadId, long parentMessageId,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByT_P_Last(
-			threadId, parentMessageId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63; and parentMessageId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param parentMessageId the parent message ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByT_P_PrevAndNext(
-			long messageId, long threadId, long parentMessageId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_P_PrevAndNext(
-			messageId, threadId, parentMessageId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where threadId = &#63; and parentMessageId = &#63; from the database.
 	 *
 	 * @param threadId the thread ID
@@ -3412,59 +2582,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByT_A_First(
 			threadId, answer, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and answer = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByT_A_Last(
-			long threadId, boolean answer,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_A_Last(
-			threadId, answer, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and answer = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByT_A_Last(
-		long threadId, boolean answer,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByT_A_Last(
-			threadId, answer, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63; and answer = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByT_A_PrevAndNext(
-			long messageId, long threadId, boolean answer,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_A_PrevAndNext(
-			messageId, threadId, answer, orderByComparator);
 	}
 
 	/**
@@ -3599,59 +2716,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByT_S_Last(
-			long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_S_Last(
-			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByT_S_Last(
-		long threadId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByT_S_Last(
-			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByT_S_PrevAndNext(
-			long messageId, long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_S_PrevAndNext(
-			messageId, threadId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where threadId = &#63; and status = &#63; from the database.
 	 *
 	 * @param threadId the thread ID
@@ -3780,59 +2844,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByT_NotS_First(
 			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and status &ne; &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByT_NotS_Last(
-			long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_NotS_Last(
-			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and status &ne; &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByT_NotS_Last(
-		long threadId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByT_NotS_Last(
-			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63; and status &ne; &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByT_NotS_PrevAndNext(
-			long messageId, long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByT_NotS_PrevAndNext(
-			messageId, threadId, status, orderByComparator);
 	}
 
 	/**
@@ -3967,59 +2978,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByTR_S_Last(
-			long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByTR_S_Last(
-			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where threadId = &#63; and status = &#63;.
-	 *
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByTR_S_Last(
-		long threadId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByTR_S_Last(
-			threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where threadId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByTR_S_PrevAndNext(
-			long messageId, long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByTR_S_PrevAndNext(
-			messageId, threadId, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where threadId = &#63; and status = &#63; from the database.
 	 *
 	 * @param threadId the thread ID
@@ -4149,59 +3107,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByP_S_First(
 			parentMessageId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where parentMessageId = &#63; and status = &#63;.
-	 *
-	 * @param parentMessageId the parent message ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByP_S_Last(
-			long parentMessageId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByP_S_Last(
-			parentMessageId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where parentMessageId = &#63; and status = &#63;.
-	 *
-	 * @param parentMessageId the parent message ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByP_S_Last(
-		long parentMessageId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByP_S_Last(
-			parentMessageId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where parentMessageId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param parentMessageId the parent message ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByP_S_PrevAndNext(
-			long messageId, long parentMessageId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByP_S_PrevAndNext(
-			messageId, parentMessageId, status, orderByComparator);
 	}
 
 	/**
@@ -4346,62 +3251,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_U_S_Last(
-			long groupId, long userId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_U_S_Last(
-			groupId, userId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_U_S_Last(
-		long groupId, long userId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_U_S_Last(
-			groupId, userId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_U_S_PrevAndNext(
-			long messageId, long groupId, long userId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_U_S_PrevAndNext(
-			messageId, groupId, userId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and userId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -4457,26 +3306,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_U_S(
 			groupId, userId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_U_S_PrevAndNext(
-			long messageId, long groupId, long userId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_U_S_PrevAndNext(
-			messageId, groupId, userId, status, orderByComparator);
 	}
 
 	/**
@@ -4637,62 +3466,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_C_T_Last(
-			long groupId, long categoryId, long threadId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_T_Last(
-			groupId, categoryId, threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_C_T_Last(
-		long groupId, long categoryId, long threadId,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_C_T_Last(
-			groupId, categoryId, threadId, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_C_T_PrevAndNext(
-			long messageId, long groupId, long categoryId, long threadId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_T_PrevAndNext(
-			messageId, groupId, categoryId, threadId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and threadId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -4749,26 +3522,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_C_T(
 			groupId, categoryId, threadId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and threadId = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_C_T_PrevAndNext(
-			long messageId, long groupId, long categoryId, long threadId,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_C_T_PrevAndNext(
-			messageId, groupId, categoryId, threadId, orderByComparator);
 	}
 
 	/**
@@ -4934,62 +3687,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_C_S_Last(
-			long groupId, long categoryId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_S_Last(
-			groupId, categoryId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_C_S_Last(
-		long groupId, long categoryId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_C_S_Last(
-			groupId, categoryId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_C_S_PrevAndNext(
-			long messageId, long groupId, long categoryId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_S_PrevAndNext(
-			messageId, groupId, categoryId, status, orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -5045,26 +3742,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_C_S(
 			groupId, categoryId, status, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_C_S_PrevAndNext(
-			long messageId, long groupId, long categoryId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_C_S_PrevAndNext(
-			messageId, groupId, categoryId, status, orderByComparator);
 	}
 
 	/**
@@ -5227,62 +3904,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByU_C_C_Last(
-			long userId, long classNameId, long classPK,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_C_Last(
-			userId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByU_C_C_Last(
-		long userId, long classNameId, long classPK,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByU_C_C_Last(
-			userId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByU_C_C_PrevAndNext(
-			long messageId, long userId, long classNameId, long classPK,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_C_PrevAndNext(
-			messageId, userId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where userId = &#63; and classNameId = &#63; and classPK = &#63; from the database.
 	 *
 	 * @param userId the user ID
@@ -5427,62 +4048,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByU_C_S_First(
 			userId, classNameId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByU_C_S_Last(
-			long userId, long classNameId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_S_Last(
-			userId, classNameId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByU_C_S_Last(
-		long userId, long classNameId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByU_C_S_Last(
-			userId, classNameId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByU_C_S_PrevAndNext(
-			long messageId, long userId, long classNameId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_S_PrevAndNext(
-			messageId, userId, classNameId, status, orderByComparator);
 	}
 
 	/**
@@ -5733,62 +4298,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByC_C_S_Last(
-			long classNameId, long classPK, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByC_C_S_Last(
-			classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByC_C_S_Last(
-		long classNameId, long classPK, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByC_C_S_Last(
-			classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByC_C_S_PrevAndNext(
-			long messageId, long classNameId, long classPK, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByC_C_S_PrevAndNext(
-			messageId, classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
 	 * Removes all the message-boards messages where classNameId = &#63; and classPK = &#63; and status = &#63; from the database.
 	 *
 	 * @param classNameId the class name ID
@@ -5943,66 +4452,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63; and answer = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_C_T_A_Last(
-			long groupId, long categoryId, long threadId, boolean answer,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_T_A_Last(
-			groupId, categoryId, threadId, answer, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63; and answer = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_C_T_A_Last(
-		long groupId, long categoryId, long threadId, boolean answer,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_C_T_A_Last(
-			groupId, categoryId, threadId, answer, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63; and answer = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_C_T_A_PrevAndNext(
-			long messageId, long groupId, long categoryId, long threadId,
-			boolean answer, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_T_A_PrevAndNext(
-			messageId, groupId, categoryId, threadId, answer,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and threadId = &#63; and answer = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6063,28 +4512,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_C_T_A(
 			groupId, categoryId, threadId, answer, start, end,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and threadId = &#63; and answer = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param answer the answer
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_C_T_A_PrevAndNext(
-			long messageId, long groupId, long categoryId, long threadId,
-			boolean answer, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_C_T_A_PrevAndNext(
-			messageId, groupId, categoryId, threadId, answer,
 			orderByComparator);
 	}
 
@@ -6264,66 +4691,6 @@ public class MBMessageUtil {
 	}
 
 	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByG_C_T_S_Last(
-			long groupId, long categoryId, long threadId, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_T_S_Last(
-			groupId, categoryId, threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByG_C_T_S_Last(
-		long groupId, long categoryId, long threadId, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByG_C_T_S_Last(
-			groupId, categoryId, threadId, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where groupId = &#63; and categoryId = &#63; and threadId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByG_C_T_S_PrevAndNext(
-			long messageId, long groupId, long categoryId, long threadId,
-			int status, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByG_C_T_S_PrevAndNext(
-			messageId, groupId, categoryId, threadId, status,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and threadId = &#63; and status = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -6384,28 +4751,6 @@ public class MBMessageUtil {
 
 		return getPersistence().filterFindByG_C_T_S(
 			groupId, categoryId, threadId, status, start, end,
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set of message-boards messages that the user has permission to view where groupId = &#63; and categoryId = &#63; and threadId = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param groupId the group ID
-	 * @param categoryId the category ID
-	 * @param threadId the thread ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] filterFindByG_C_T_S_PrevAndNext(
-			long messageId, long groupId, long categoryId, long threadId,
-			int status, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().filterFindByG_C_T_S_PrevAndNext(
-			messageId, groupId, categoryId, threadId, status,
 			orderByComparator);
 	}
 
@@ -6582,65 +4927,6 @@ public class MBMessageUtil {
 
 		return getPersistence().fetchByU_C_C_S_First(
 			userId, classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message
-	 * @throws NoSuchMessageException if a matching message-boards message could not be found
-	 */
-	public static MBMessage findByU_C_C_S_Last(
-			long userId, long classNameId, long classPK, int status,
-			OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_C_S_Last(
-			userId, classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the last message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching message-boards message, or <code>null</code> if a matching message-boards message could not be found
-	 */
-	public static MBMessage fetchByU_C_C_S_Last(
-		long userId, long classNameId, long classPK, int status,
-		OrderByComparator<MBMessage> orderByComparator) {
-
-		return getPersistence().fetchByU_C_C_S_Last(
-			userId, classNameId, classPK, status, orderByComparator);
-	}
-
-	/**
-	 * Returns the message-boards messages before and after the current message-boards message in the ordered set where userId = &#63; and classNameId = &#63; and classPK = &#63; and status = &#63;.
-	 *
-	 * @param messageId the primary key of the current message-boards message
-	 * @param userId the user ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next message-boards message
-	 * @throws NoSuchMessageException if a message-boards message with the primary key could not be found
-	 */
-	public static MBMessage[] findByU_C_C_S_PrevAndNext(
-			long messageId, long userId, long classNameId, long classPK,
-			int status, OrderByComparator<MBMessage> orderByComparator)
-		throws com.liferay.message.boards.exception.NoSuchMessageException {
-
-		return getPersistence().findByU_C_C_S_PrevAndNext(
-			messageId, userId, classNameId, classPK, status, orderByComparator);
 	}
 
 	/**
@@ -6899,3 +5185,4 @@ public class MBMessageUtil {
 	private static volatile MBMessagePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1067337502

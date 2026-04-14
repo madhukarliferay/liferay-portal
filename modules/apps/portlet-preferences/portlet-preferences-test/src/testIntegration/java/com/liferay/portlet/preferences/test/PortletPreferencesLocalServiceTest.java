@@ -11,7 +11,6 @@ import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.deploy.hot.ServiceBag;
-import com.liferay.portal.kernel.bean.ClassLoaderBeanHandler;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutRevision;
@@ -1359,10 +1358,8 @@ public class PortletPreferencesLocalServiceTest
 			typeSettingsUnicodeProperties.setProperty(
 				propertyKey, propertyValue);
 
-			_layoutLocalService.updateLayout(
-				draftLayout.getGroupId(), draftLayout.isPrivateLayout(),
-				draftLayout.getLayoutId(),
-				typeSettingsUnicodeProperties.toString());
+			_layoutLocalService.updateTypeSettings(
+				draftLayout, typeSettingsUnicodeProperties.toString());
 
 			ServiceContext serviceContext =
 				ServiceContextTestUtil.getServiceContext();
@@ -1551,13 +1548,8 @@ public class PortletPreferencesLocalServiceTest
 			long companyId, long ownerId, int ownerType, long plid,
 			String portletId) {
 
-			ClassLoaderBeanHandler classLoaderBeanHandler =
-				(ClassLoaderBeanHandler)ProxyUtil.getInvocationHandler(
-					getWrappedService());
-
 			PortletPreferencesLocalService portletPreferencesLocalService =
-				(PortletPreferencesLocalService)
-					classLoaderBeanHandler.getBean();
+				(PortletPreferencesLocalService)getWrappedService();
 
 			return portletPreferencesLocalService.getPreferences(
 				companyId, ownerId, ownerType, plid, portletId);

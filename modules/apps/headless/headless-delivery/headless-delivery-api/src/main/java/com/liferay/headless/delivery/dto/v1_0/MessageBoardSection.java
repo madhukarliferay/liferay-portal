@@ -994,9 +994,7 @@ public class MessageBoardSection implements Serializable {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(viewableBy);
-
 			sb.append("\"");
 		}
 
@@ -1139,3 +1137,4 @@ public class MessageBoardSection implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1562988479

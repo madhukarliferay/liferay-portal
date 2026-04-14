@@ -86,12 +86,14 @@ public abstract class PageElementDefinition implements Cloneable, Serializable {
 
 	public static enum Type {
 
-		COLLECTION("Collection"), COLLECTION_ITEM("CollectionItem"),
-		COLUMN("Column"), CONTAINER("Container"), DROP_ZONE("DropZone"),
-		FORM("Form"), FORM_STEP("FormStep"),
-		FORM_STEP_CONTAINER("FormStepContainer"), FRAGMENT("Fragment"),
-		FRAGMENT_COMPOSITION("FragmentComposition"),
-		FRAGMENT_DROP_ZONE("FragmentDropZone"), ROW("Row"), WIDGET("Widget");
+		BASIC_FRAGMENT("BasicFragment"),
+		COLLECTION_DISPLAY("CollectionDisplay"),
+		COLLECTION_ITEM("CollectionItem"), CONTAINER("Container"),
+		DROP_ZONE("DropZone"), FORM_CONTAINER("FormContainer"),
+		FORM_FRAGMENT("FormFragment"), FORM_STEP("FormStep"),
+		FORM_STEP_CONTAINER("FormStepContainer"),
+		FRAGMENT_DROP_ZONE("FragmentDropZone"), GRID("Grid"), MODULE("Module"),
+		WIDGET("Widget");
 
 		public static Type create(String value) {
 			for (Type type : values()) {
@@ -123,3 +125,4 @@ public abstract class PageElementDefinition implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-400817268

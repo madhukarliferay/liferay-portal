@@ -4,6 +4,16 @@
 			"fields": [
 				{
 					"dataType": "string",
+					"label": "Channel ID",
+					"name": "channelId",
+					"type": "text"
+				}
+			]
+		},
+		{
+			"fields": [
+				{
+					"dataType": "string",
 					"defaultValue": "Highlights",
 					"description": "apps-section-title",
 					"label": "Section Title",
@@ -72,7 +82,6 @@
 			"fields": [
 				{
 					"dataType": "string",
-					"defaultValue": "Highlights",
 					"description": "specification-filter-value",
 					"label": "Specification Filter Value",
 					"name": "specificationFilterValue",

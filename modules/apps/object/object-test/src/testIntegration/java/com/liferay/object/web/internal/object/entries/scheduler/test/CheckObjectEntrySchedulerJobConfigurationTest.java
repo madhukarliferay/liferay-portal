@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.scheduler.SchedulerJobConfiguration;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -91,7 +92,8 @@ public class CheckObjectEntrySchedulerJobConfigurationTest {
 						RandomTestUtil.randomString())
 				).name(
 					_OBJECT_FIELD_NAME
-				).build()));
+				).build()),
+			false);
 
 		_configurationProvider.saveCompanyConfiguration(
 			ObjectEntryVersionConfiguration.class,
@@ -251,8 +253,8 @@ public class CheckObjectEntrySchedulerJobConfigurationTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), 0, null, false, false, true, false,
-				true, false, false, true, "-",
+				null, TestPropsValues.getUserId(), 0, null, true, false, true,
+				false, true, true, false, false, true, "_",
 				RandomTestUtil.randomLocaleStringMap(),
 				"A" + StringUtil.randomString(), null, null,
 				RandomTestUtil.randomLocaleStringMap(), true,
@@ -265,7 +267,8 @@ public class CheckObjectEntrySchedulerJobConfigurationTest {
 						RandomTestUtil.randomLocaleStringMap()
 					).name(
 						"textObjectFieldName"
-					).build()));
+					).build()),
+				Collections.emptyList(), new ServiceContext());
 
 		objectDefinition =
 			_objectDefinitionLocalService.publishCustomObjectDefinition(
@@ -290,6 +293,7 @@ public class CheckObjectEntrySchedulerJobConfigurationTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build(),
@@ -299,6 +303,7 @@ public class CheckObjectEntrySchedulerJobConfigurationTest {
 
 		objectEntry = _objectEntryLocalService.updateObjectEntry(
 			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			objectEntry.getObjectEntryFolderId(),
 			HashMapBuilder.<String, Serializable>put(
 				"textObjectFieldName", RandomTestUtil.randomString()
 			).build(),

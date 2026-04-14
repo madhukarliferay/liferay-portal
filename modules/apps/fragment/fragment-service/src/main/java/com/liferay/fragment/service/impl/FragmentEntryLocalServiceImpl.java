@@ -8,6 +8,7 @@ package com.liferay.fragment.service.impl;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.fragment.configuration.FragmentServiceConfiguration;
+import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.constants.FragmentPortletKeys;
 import com.liferay.fragment.exception.DuplicateFragmentEntryKeyException;
 import com.liferay.fragment.exception.FragmentEntryNameException;
@@ -16,45 +17,50 @@ import com.liferay.fragment.exception.RequiredFragmentEntryException;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
+import com.liferay.fragment.model.FragmentEntryTable;
 import com.liferay.fragment.processor.FragmentEntryProcessorRegistry;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.fragment.service.base.FragmentEntryLocalServiceBaseImpl;
 import com.liferay.fragment.service.persistence.FragmentCollectionPersistence;
-import com.liferay.fragment.service.persistence.FragmentEntryLinkPersistence;
 import com.liferay.fragment.validator.FragmentEntryValidator;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
-import com.liferay.portal.kernel.dao.orm.Property;
-import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Conjunction;
+import com.liferay.portal.kernel.dao.orm.Disjunction;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.WildcardMode;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
+import com.liferay.portal.kernel.util.UniqueUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
@@ -192,7 +198,22 @@ public class FragmentEntryLocalServiceImpl
 				publishedFragmentEntry.fetchDraftFragmentEntry();
 		}
 
-		String name = _getUniqueCopyName(sourceFragmentEntry);
+		String name = UniqueUtil.getUniqueValue(
+			"copy",
+			uniqueValue -> {
+				FragmentEntry existingFragmentEntry =
+					fragmentEntryPersistence.fetchByG_FCI_LikeN_First(
+						sourceFragmentEntry.getGroupId(),
+						sourceFragmentEntry.getFragmentCollectionId(),
+						uniqueValue, null);
+
+				if (existingFragmentEntry == null) {
+					return true;
+				}
+
+				return false;
+			},
+			sourceFragmentEntry.getName());
 
 		FragmentEntry copyPublishedFragmentEntry = null;
 
@@ -286,10 +307,9 @@ public class FragmentEntryLocalServiceImpl
 	public FragmentEntry deleteFragmentEntry(FragmentEntry fragmentEntry)
 		throws PortalException {
 
-		long fragmentEntryLinkCount = _fragmentEntryLinkPersistence.countByF_D(
-			fragmentEntry.getFragmentEntryId(), false);
+		if (!GroupThreadLocal.isDeleteInProcess() &&
+			(fragmentEntry.getUsageCount() > 0)) {
 
-		if (fragmentEntryLinkCount > 0) {
 			throw new RequiredFragmentEntryException();
 		}
 
@@ -298,9 +318,8 @@ public class FragmentEntryLocalServiceImpl
 			ResourceConstants.SCOPE_INDIVIDUAL,
 			fragmentEntry.getFragmentEntryId());
 
-		_fragmentEntryLinkLocalService.
-			deleteFragmentEntryLinksByFragmentEntryId(
-				fragmentEntry.getFragmentEntryId(), true);
+		_fragmentEntryLinkLocalService.deleteFragmentEntryLinksByFragmentEntry(
+			fragmentEntry, true);
 
 		if (fragmentEntry.getPreviewFileEntryId() > 0) {
 			boolean deletePreviewFileEntry = true;
@@ -353,11 +372,6 @@ public class FragmentEntryLocalServiceImpl
 	}
 
 	@Override
-	public FragmentEntry fetchFragmentEntry(long fragmentEntryId) {
-		return fragmentEntryPersistence.fetchByPrimaryKey(fragmentEntryId);
-	}
-
-	@Override
 	public FragmentEntry fetchFragmentEntry(
 		long groupId, String fragmentEntryKey) {
 
@@ -375,14 +389,6 @@ public class FragmentEntryLocalServiceImpl
 
 		return fetchFragmentEntryByUuidAndGroupId(
 			fragmentEntry.getUuid(), groupId);
-	}
-
-	@Override
-	public FragmentEntry fetchFragmentEntryByExternalReferenceCode(
-		String externalReferenceCode, long groupId) {
-
-		return fragmentEntryPersistence.fetchByERC_G_Head(
-			externalReferenceCode, groupId, true);
 	}
 
 	@Override
@@ -571,6 +577,32 @@ public class FragmentEntryLocalServiceImpl
 	}
 
 	@Override
+	public boolean hasExportableFragmentEntries(long fragmentCollectionId) {
+		int count = dslQueryCount(
+			DSLQueryFactoryUtil.count(
+			).from(
+				FragmentEntryTable.INSTANCE
+			).where(
+				FragmentEntryTable.INSTANCE.fragmentCollectionId.eq(
+					fragmentCollectionId
+				).and(
+					FragmentEntryTable.INSTANCE.marketplace.eq(false)
+				).and(
+					FragmentEntryTable.INSTANCE.type.neq(
+						FragmentConstants.TYPE_REACT)
+				).and(
+					FragmentEntryTable.INSTANCE.head.eq(true)
+				)
+			));
+
+		if (count > 0) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public FragmentEntry moveFragmentEntry(
 			long fragmentEntryId, long fragmentCollectionId)
 		throws PortalException {
@@ -659,9 +691,18 @@ public class FragmentEntryLocalServiceImpl
 		FragmentEntry fragmentEntry = fragmentEntryPersistence.findByPrimaryKey(
 			fragmentEntryId);
 
+		long previousPreviewFileEntryId = fragmentEntry.getPreviewFileEntryId();
+
 		fragmentEntry.setPreviewFileEntryId(previewFileEntryId);
 
-		return fragmentEntryPersistence.update(fragmentEntry);
+		fragmentEntry = fragmentEntryPersistence.update(fragmentEntry);
+
+		if ((previewFileEntryId == 0) && (previousPreviewFileEntryId > 0)) {
+			_portletFileRepository.deletePortletFileEntry(
+				previousPreviewFileEntryId);
+		}
+
+		return fragmentEntry;
 	}
 
 	@Override
@@ -946,42 +987,47 @@ public class FragmentEntryLocalServiceImpl
 		return repository;
 	}
 
-	private String _getUniqueCopyName(FragmentEntry fragmentEntry) {
-		String copy = _language.get(LocaleUtil.getSiteDefault(), "copy");
-
-		String name = StringUtil.appendParentheticalSuffix(
-			fragmentEntry.getName(), copy);
-
-		for (int i = 1;; i++) {
-			FragmentEntry existingFragmentEntry =
-				fragmentEntryPersistence.fetchByG_FCI_LikeN_First(
-					fragmentEntry.getGroupId(),
-					fragmentEntry.getFragmentCollectionId(), name, null);
-
-			if (existingFragmentEntry == null) {
-				break;
-			}
-
-			name = StringUtil.appendParentheticalSuffix(
-				fragmentEntry.getName(), copy + StringPool.SPACE + i);
-		}
-
-		return name;
-	}
-
-	private void _propagateChanges(long fragmentEntryId)
+	private void _propagateChanges(FragmentEntry fragmentEntry)
 		throws PortalException {
 
 		ActionableDynamicQuery actionableDynamicQuery =
 			_fragmentEntryLinkLocalService.getActionableDynamicQuery();
 
+		Group group = _groupLocalService.getGroup(fragmentEntry.getGroupId());
+
 		actionableDynamicQuery.setAddCriteriaMethod(
 			dynamicQuery -> {
-				Property fragmentEntryIdProperty = PropertyFactoryUtil.forName(
-					"fragmentEntryId");
+				Conjunction conjunction = RestrictionsFactoryUtil.conjunction();
 
-				dynamicQuery.add(fragmentEntryIdProperty.eq(fragmentEntryId));
+				conjunction.add(
+					RestrictionsFactoryUtil.eq(
+						"fragmentEntryERC",
+						fragmentEntry.getExternalReferenceCode()));
+
+				Disjunction disjunction = RestrictionsFactoryUtil.disjunction();
+
+				disjunction.add(
+					RestrictionsFactoryUtil.eq(
+						"fragmentEntryScopeERC",
+						group.getExternalReferenceCode()));
+
+				Conjunction innerConjunction =
+					RestrictionsFactoryUtil.conjunction();
+
+				innerConjunction.add(
+					RestrictionsFactoryUtil.eq(
+						"groupId", fragmentEntry.getGroupId()));
+
+				innerConjunction.add(
+					RestrictionsFactoryUtil.isNull("fragmentEntryScopeERC"));
+
+				disjunction.add(innerConjunction);
+
+				conjunction.add(disjunction);
+
+				dynamicQuery.add(conjunction);
 			});
+
 		actionableDynamicQuery.setPerformActionMethod(
 			(FragmentEntryLink fragmentEntryLink) ->
 				_fragmentEntryLinkLocalService.updateLatestChanges(
@@ -1027,8 +1073,7 @@ public class FragmentEntryLocalServiceImpl
 			!ExportImportThreadLocal.isLayoutImportInProcess() &&
 			!ExportImportThreadLocal.isStagingInProcess()) {
 
-			_propagateChanges(
-				updatedPublishedFragmentEntry.getFragmentEntryId());
+			_propagateChanges(updatedPublishedFragmentEntry);
 		}
 
 		return updatedPublishedFragmentEntry;
@@ -1099,19 +1144,19 @@ public class FragmentEntryLocalServiceImpl
 	private FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;
 
 	@Reference
-	private FragmentEntryLinkPersistence _fragmentEntryLinkPersistence;
-
-	@Reference
 	private FragmentEntryProcessorRegistry _fragmentEntryProcessorRegistry;
 
 	@Reference
 	private FragmentEntryValidator _fragmentEntryValidator;
 
 	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
 	private JSONFactory _jsonFactory;
 
 	@Reference
-	private Language _language;
+	private PortletFileRepository _portletFileRepository;
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;

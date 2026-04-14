@@ -80,9 +80,7 @@ public class FavIconClientExtensionSerDes {
 			sb.append("\"favIconType\": ");
 
 			sb.append("\"");
-
 			sb.append(favIconClientExtension.getFavIconType());
-
 			sb.append("\"");
 		}
 
@@ -276,3 +274,4 @@ public class FavIconClientExtensionSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:501438516

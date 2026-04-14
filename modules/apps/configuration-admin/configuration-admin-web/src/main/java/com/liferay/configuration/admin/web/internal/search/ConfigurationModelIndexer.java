@@ -11,6 +11,7 @@ import com.liferay.configuration.admin.web.internal.model.ConfigurationModel;
 import com.liferay.configuration.admin.web.internal.util.ConfigurationEntryRetriever;
 import com.liferay.configuration.admin.web.internal.util.ConfigurationModelRetriever;
 import com.liferay.configuration.admin.web.internal.util.ResourceBundleLoaderProviderUtil;
+import com.liferay.petra.concurrent.NoticeableFuture;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -19,7 +20,6 @@ import com.liferay.portal.kernel.cluster.ClusterExecutor;
 import com.liferay.portal.kernel.cluster.ClusterMasterExecutor;
 import com.liferay.portal.kernel.cluster.ClusterMasterTokenTransitionListener;
 import com.liferay.portal.kernel.cluster.ClusterRequest;
-import com.liferay.portal.kernel.concurrent.NoticeableFuture;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.IndexWriterHelper;
 import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.ReindexCacheThreadLocal;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Summary;
@@ -119,6 +120,14 @@ public class ConfigurationModelIndexer
 	@Override
 	public String getOSGiServiceIdentifier() {
 		return ConfigurationModelIndexer.class.getName();
+	}
+
+	@Override
+	public long getReindexEntryCount(long companyId) {
+		Map<String, ConfigurationModel> configurationModels =
+			_getConfigurationModels();
+
+		return configurationModels.size();
 	}
 
 	@Override
@@ -265,14 +274,13 @@ public class ConfigurationModelIndexer
 
 		_setUID(document, configurationModel);
 
+		document.addKeyword(Field.COMPANY_ID, CompanyConstants.SYSTEM);
+		document.addKeyword(Field.ENTRY_CLASS_NAME, getClassName());
 		document.addKeyword(
 			FieldNames.CONFIGURATION_MODEL_FACTORY_PID,
 			configurationModel.getFactoryPid());
 		document.addKeyword(
 			FieldNames.CONFIGURATION_MODEL_ID, configurationModel.getID());
-		document.addKeyword(Field.COMPANY_ID, CompanyConstants.SYSTEM);
-
-		document.addKeyword(Field.ENTRY_CLASS_NAME, getClassName());
 
 		AttributeDefinition[] requiredAttributeDefinitions =
 			configurationModel.getAttributeDefinitions(
@@ -367,12 +375,11 @@ public class ConfigurationModelIndexer
 	}
 
 	@Override
-	protected void doReindex(String[] ids) throws Exception {
+	protected void doReindexCompany(long companyId) throws Exception {
 		Set<Document> documents = new HashSet<>();
 
 		Map<String, ConfigurationModel> configurationModels =
-			_configurationModelRetriever.getConfigurationModels(
-				ExtendedObjectClassDefinition.Scope.SYSTEM, null);
+			_getConfigurationModels();
 
 		for (ConfigurationModel configurationModel :
 				configurationModels.values()) {
@@ -434,6 +441,24 @@ public class ConfigurationModelIndexer
 				_log.warn("Unable to commit", searchException);
 			}
 		}
+	}
+
+	private Map<String, ConfigurationModel> _getConfigurationModels() {
+		Map<String, ConfigurationModel> configurationModels =
+			ReindexCacheThreadLocal.getGlobalReindexCache(
+				() -> -1,
+				ConfigurationModelIndexer.class.getName() +
+					"#_getConfigurationModels",
+				count -> _configurationModelRetriever.getConfigurationModels(
+					ExtendedObjectClassDefinition.Scope.SYSTEM, null));
+
+		if (configurationModels == null) {
+			configurationModels =
+				_configurationModelRetriever.getConfigurationModels(
+					ExtendedObjectClassDefinition.Scope.SYSTEM, null);
+		}
+
+		return configurationModels;
 	}
 
 	private List<String> _getLocalizedValues(

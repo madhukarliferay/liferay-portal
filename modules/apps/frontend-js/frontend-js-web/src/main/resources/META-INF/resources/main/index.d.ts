@@ -855,6 +855,9 @@ export function setSessionValue(
 
 export function isReducedMotion(): boolean;
 
+export {default as deepClone} from '../liferay/util/deepClone';
+export {default as formatStorage} from '../liferay/util/format_storage';
+
 /**
  * Client Extensions API
  */
@@ -865,10 +868,15 @@ export {
 	loadClientExtensions,
 } from './utils/client_extensions/loadClientExtensions';
 export {default as loadEditorClientExtensions} from './utils/client_extensions/loadEditorClientExtensions';
+
 export {loadModule} from './utils/client_extensions/loadModule';
 
 /**
  * Utils
  */
-export {default as dateUtils} from './utils/dateUtils';
+export type {FirstDayOfWeekLocale} from './utils/date_time';
+export {default as dateUtils} from './utils/date_time';
+export {default as mimeTypeUtils} from './utils/mime_type';
 export {getObjectValueFromPath} from './utils/object/getObjectValueFromPath';
+export {default as pkceChallenge} from './utils/pkceChallenge';
+export {getFileAsBase64} from './utils/string/getFileAsBase64';

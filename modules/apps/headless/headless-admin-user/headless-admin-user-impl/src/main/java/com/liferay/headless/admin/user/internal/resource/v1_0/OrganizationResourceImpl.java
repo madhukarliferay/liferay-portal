@@ -14,6 +14,7 @@ import com.liferay.account.service.AccountEntryService;
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.service.AssetCategoryService;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.vulcan.batch.engine.ExportImportVulcanBatchEngineTaskItemDelegate;
 import com.liferay.headless.admin.user.dto.v1_0.Account;
 import com.liferay.headless.admin.user.dto.v1_0.AccountBrief;
@@ -43,7 +44,6 @@ import com.liferay.headless.admin.user.internal.util.v1_0.ResourcePermissionUtil
 import com.liferay.headless.admin.user.resource.v1_0.OrganizationResource;
 import com.liferay.headless.admin.user.resource.v1_0.RoleResource;
 import com.liferay.petra.string.CharPool;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Address;
@@ -126,8 +126,11 @@ import org.osgi.service.component.annotations.ServiceScope;
  */
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/organization.properties",
-	property = "nested.field.support=true", scope = ServiceScope.PROTOTYPE,
-	service = OrganizationResource.class
+	property = {
+		"export.import.vulcan.batch.engine.task.item.delegate=true",
+		"nested.field.support=true"
+	},
+	scope = ServiceScope.PROTOTYPE, service = OrganizationResource.class
 )
 public class OrganizationResourceImpl
 	extends BaseOrganizationResourceImpl
@@ -297,17 +300,39 @@ public class OrganizationResourceImpl
 	}
 
 	@Override
-	public ExportImportDescriptor getExportImportDescriptor() {
-		return new ExportImportDescriptor() {
+	public ExportImportDescriptor<com.liferay.portal.kernel.model.Organization>
+		getExportImportDescriptor() {
+
+		return new ExportImportDescriptor<>() {
+
+			@Override
+			public String getKey() {
+				return OrganizationResourceImpl.class.getName();
+			}
+
+			@Override
+			public String getLabelLanguageKey() {
+				return "organizations";
+			}
+
+			@Override
+			public Class<com.liferay.portal.kernel.model.Organization>
+				getModelClass() {
+
+				return com.liferay.portal.kernel.model.Organization.class;
+			}
 
 			@Override
 			public List<String> getNestedFields() {
 				return List.of(
-					"accountBriefs", "imageBase64", "roleBriefs",
+					"accountBriefs", "creator", "imageBase64", "roleBriefs",
 					"taxonomyCategoryBriefs", "userAccountBriefs");
 			}
 
-			public Map<String, Serializable> getParameters() {
+			@Override
+			public Map<String, Serializable> getParameters(
+				PortletDataContext portletDataContext) {
+
 				return HashMapBuilder.<String, Serializable>put(
 					"flatten", "true"
 				).build();
@@ -865,10 +890,6 @@ public class OrganizationResourceImpl
 	}
 
 	private long[] _getAssetCategoryIds(Organization organization) {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			return null;
-		}
-
 		TaxonomyCategoryBrief[] taxonomyCategoryBriefs =
 			organization.getTaxonomyCategoryBriefs();
 
@@ -902,8 +923,13 @@ public class OrganizationResourceImpl
 					}
 
 					AssetCategory assetCategory =
-						_assetCategoryService.getOrAddEmptyCategory(
-							externalReferenceCode, group.getGroupId());
+						_assetCategoryService.
+							getOrAddEmptyCategoryWithAncestors(
+								externalReferenceCode, group.getGroupId(),
+								taxonomyCategoryBrief.
+									getParentTaxonomyCategoryExternalReferenceCode(),
+								taxonomyCategoryBrief.
+									getParentVocabularyExternalReferenceCode());
 
 					return assetCategory.getCategoryId();
 				},
@@ -1128,21 +1154,6 @@ public class OrganizationResourceImpl
 
 		if (Validator.isBlank(externalReferenceCode)) {
 			return Long.valueOf(parentOrganization.getId());
-		}
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			com.liferay.portal.kernel.model.Organization
-				serviceBuilderOrganization =
-					_organizationService.
-						fetchOrganizationByExternalReferenceCode(
-							parentOrganization.getExternalReferenceCode(),
-							contextCompany.getCompanyId());
-
-			if (serviceBuilderOrganization == null) {
-				return defaultValue;
-			}
-
-			return serviceBuilderOrganization.getOrganizationId();
 		}
 
 		com.liferay.portal.kernel.model.Organization
@@ -1420,10 +1431,6 @@ public class OrganizationResourceImpl
 			com.liferay.portal.kernel.model.Organization
 				serviceBuilderOrganization)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			return serviceBuilderOrganization;
-		}
 
 		AccountBrief[] accountBriefs = organization.getAccountBriefs();
 

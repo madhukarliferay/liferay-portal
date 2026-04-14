@@ -215,6 +215,10 @@ public class OpenIdConnectSessionLocalServiceUtil {
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
+	public static OpenIdConnectSession fetchCurrentOpenIdConnectSession() {
+		return getService().fetchCurrentOpenIdConnectSession();
+	}
+
 	public static OpenIdConnectSession fetchOpenIdConnectSession(
 		long openIdConnectSessionId) {
 
@@ -261,6 +265,20 @@ public class OpenIdConnectSessionLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getOpenIdConnectSession(openIdConnectSessionId);
+	}
+
+	public static OpenIdConnectSession getOpenIdConnectSession(
+			long userId, String issuer)
+		throws PortalException {
+
+		return getService().getOpenIdConnectSession(userId, issuer);
+	}
+
+	public static OpenIdConnectSession getOpenIdConnectSession(
+			String issuer, String sessionId)
+		throws PortalException {
+
+		return getService().getOpenIdConnectSession(issuer, sessionId);
 	}
 
 	/**
@@ -333,3 +351,4 @@ public class OpenIdConnectSessionLocalServiceUtil {
 			OpenIdConnectSessionLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1092747922

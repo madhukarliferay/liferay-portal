@@ -1,6 +1,7 @@
 @component-name = "portal-headless"
 definition {
 
+	property browser.chrome.version = "139.0";
 	property custom.properties = "feature.flag.LPS-178642=true";
 	property portal.acceptance = "quarantine";
 	property portal.release = "true";
@@ -86,7 +87,7 @@ definition {
 		task ("Then I can see no API Application Found") {
 			AssertTextEquals(
 				locator1 = "Message#EMPTY_STATE_INFO",
-				value1 = "No API Application Found");
+				value1 = "No Results Found");
 		}
 	}
 
@@ -143,7 +144,7 @@ definition {
 		task ("Then no API application were found") {
 			AssertTextEquals(
 				locator1 = "Message#EMPTY_STATE_INFO",
-				value1 = "No API Application Found");
+				value1 = "No Results Found");
 		}
 	}
 

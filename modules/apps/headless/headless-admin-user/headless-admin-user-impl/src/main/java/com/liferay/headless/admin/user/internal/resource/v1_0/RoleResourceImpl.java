@@ -14,7 +14,6 @@ import com.liferay.headless.admin.user.resource.v1_0.RoleResource;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.NoSuchRoleException;
 import com.liferay.portal.kernel.exception.RoleAssignmentException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -65,6 +64,7 @@ import org.osgi.service.component.annotations.ServiceScope;
  */
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/role.properties",
+	property = "export.import.vulcan.batch.engine.task.item.delegate=true",
 	scope = ServiceScope.PROTOTYPE, service = RoleResource.class
 )
 public class RoleResourceImpl
@@ -168,8 +168,25 @@ public class RoleResourceImpl
 	}
 
 	@Override
-	public ExportImportDescriptor getExportImportDescriptor() {
-		return new ExportImportDescriptor() {
+	public ExportImportDescriptor<com.liferay.portal.kernel.model.Role>
+		getExportImportDescriptor() {
+
+		return new ExportImportDescriptor<>() {
+
+			@Override
+			public String getKey() {
+				return RoleResourceImpl.class.getName();
+			}
+
+			@Override
+			public String getLabelLanguageKey() {
+				return "roles";
+			}
+
+			@Override
+			public Class<com.liferay.portal.kernel.model.Role> getModelClass() {
+				return com.liferay.portal.kernel.model.Role.class;
+			}
 
 			@Override
 			public String getPortletId() {
@@ -533,7 +550,7 @@ public class RoleResourceImpl
 				StringBundler.concat(
 					"Role type ",
 					RoleConstants.getTypeLabel(serviceBuilderRole.getType()),
-					" is not role type ", RoleConstants.getTypeLabel(type)));
+					" is not ", RoleConstants.getTypeLabel(type)));
 		}
 	}
 
@@ -605,10 +622,6 @@ public class RoleResourceImpl
 	private com.liferay.portal.kernel.model.Role _updateNestedResources(
 			Role role, com.liferay.portal.kernel.model.Role serviceBuilderRole)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-47858")) {
-			return serviceBuilderRole;
-		}
 
 		return ResourcePermissionUtil.setResourcePermissions(
 			serviceBuilderRole, serviceBuilderRole.getCompanyId(),

@@ -7,6 +7,7 @@ package com.liferay.change.tracking.rest.internal.resource.v1_0;
 
 import com.liferay.change.tracking.rest.dto.v1_0.CTCollection;
 import com.liferay.change.tracking.rest.resource.v1_0.CTCollectionResource;
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
@@ -307,6 +308,10 @@ public abstract class BaseCTCollectionResourceImpl
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "filter"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -341,6 +346,8 @@ public abstract class BaseCTCollectionResourceImpl
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("status")
 			Integer[] status,
+			@jakarta.ws.rs.core.Context
+				com.liferay.portal.kernel.search.filter.Filter filter,
 			@jakarta.ws.rs.core.Context Pagination pagination,
 			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
 				sorts)
@@ -662,6 +669,10 @@ public abstract class BaseCTCollectionResourceImpl
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "filter"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -701,6 +712,8 @@ public abstract class BaseCTCollectionResourceImpl
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("status")
 			Integer[] status,
+			@jakarta.ws.rs.core.Context
+				com.liferay.portal.kernel.search.filter.Filter filter,
 			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
 				sorts,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
@@ -931,7 +944,8 @@ public abstract class BaseCTCollectionResourceImpl
 		throws Exception {
 
 		return getCTCollectionsPage(
-			search, (Integer[])parameters.get("status"), pagination, sorts);
+			search, (Integer[])parameters.get("status"), filter, pagination,
+			sorts);
 	}
 
 	@Override
@@ -951,6 +965,15 @@ public abstract class BaseCTCollectionResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1569,3 +1592,4 @@ public abstract class BaseCTCollectionResourceImpl
 		LogFactoryUtil.getLog(BaseCTCollectionResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1583845303

@@ -121,47 +121,6 @@ public interface LayoutSEOEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last layout seo entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo entry
-	 * @throws NoSuchEntryException if a matching layout seo entry could not be found
-	 */
-	public LayoutSEOEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last layout seo entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo entry, or <code>null</code> if a matching layout seo entry could not be found
-	 */
-	public LayoutSEOEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the layout seo entries before and after the current layout seo entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param layoutSEOEntryId the primary key of the current layout seo entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout seo entry
-	 * @throws NoSuchEntryException if a layout seo entry with the primary key could not be found
-	 */
-	public LayoutSEOEntry[] findByUuid_PrevAndNext(
-			long layoutSEOEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
 	 * Removes all the layout seo entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -319,50 +278,6 @@ public interface LayoutSEOEntryPersistence
 		String uuid, long companyId,
 		com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last layout seo entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo entry
-	 * @throws NoSuchEntryException if a matching layout seo entry could not be found
-	 */
-	public LayoutSEOEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
-
-	/**
-	 * Returns the last layout seo entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching layout seo entry, or <code>null</code> if a matching layout seo entry could not be found
-	 */
-	public LayoutSEOEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the layout seo entries before and after the current layout seo entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param layoutSEOEntryId the primary key of the current layout seo entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next layout seo entry
-	 * @throws NoSuchEntryException if a layout seo entry with the primary key could not be found
-	 */
-	public LayoutSEOEntry[] findByUuid_C_PrevAndNext(
-			long layoutSEOEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<LayoutSEOEntry>
-				orderByComparator)
-		throws NoSuchEntryException;
 
 	/**
 	 * Removes all the layout seo entries where uuid = &#63; and companyId = &#63; from the database.
@@ -561,3 +476,4 @@ public interface LayoutSEOEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:216081177

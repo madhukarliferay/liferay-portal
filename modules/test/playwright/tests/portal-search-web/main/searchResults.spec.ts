@@ -4,6 +4,8 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
+import {createReadStream} from 'fs';
+import path from 'path';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
@@ -11,6 +13,7 @@ import {loginTest} from '../../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {searchPageTest} from '../../../fixtures/searchPageTest';
 import getRandomString from '../../../utils/getRandomString';
+import {reloadUntilVisible} from '../../../utils/reloadUntilVisible';
 import getBasicWebContentStructureId from '../../../utils/structured-content/getBasicWebContentStructureId';
 
 export const test = mergeTests(
@@ -21,7 +24,77 @@ export const test = mergeTests(
 	searchPageTest
 );
 
-test.describe('Use two Search Results widgets in the same page', () => {
+test.describe('Results Display', () => {
+	test('Search results image thumbnail for PDFs render correctly @LPD-71503', async ({
+		apiHelpers,
+		page,
+		searchPage,
+		site,
+	}) => {
+		let siteLayout: Layout;
+
+		await test.step('Upload a PDF to documents and media', async () => {
+			await apiHelpers.headlessDelivery.postDocument(
+				site.id,
+				createReadStream(
+					path.join(__dirname, '/dependencies/test.pdf')
+				),
+				{
+					description: '',
+					fileName: 'test.pdf',
+					title: 'Sample Document',
+				}
+			);
+		});
+
+		await test.step('Create a portlet page associated to site', async () => {
+			siteLayout = await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: site.id,
+				options: {type: 'portlet'},
+				title: getRandomString(),
+			});
+		});
+
+		await test.step('Navigate to the site page', async () => {
+			await page.goto(
+				`/web${site.friendlyUrlPath}${siteLayout.friendlyURL}`
+			);
+		});
+
+		await test.step('Add search bar and results portlet to new page', async () => {
+			await searchPage.addPortlet('Search Bar', 'Search');
+
+			await searchPage.addPortlet('Search Results', 'Search');
+		});
+
+		await test.step('Search for "test" and view PDF in results', async () => {
+			await searchPage.searchKeywordInMainContent('test');
+
+			await expect(
+				searchPage.searchResults.getByText('Sample Document')
+			).toBeVisible();
+		});
+
+		await test.step('Verify correct alt text for thumbnail image', async () => {
+
+			// Reload and wait for PDF image generation
+
+			await reloadUntilVisible({
+				beforeReload: () => page.waitForTimeout(1000),
+				myLocator: searchPage.searchResults.locator('img.sticker-img'),
+				page,
+			});
+
+			await expect(
+				searchPage.searchResults.getByAltText(
+					'Sample Document Thumbnail'
+				)
+			).toBeVisible();
+		});
+	});
+});
+
+test.describe('Multiple Widgets on a Page', () => {
 	test('Change the pagination delta of a search results widget on a page with two search results widgets @LPD-36512', async ({
 		apiHelpers,
 		page,
@@ -199,6 +272,86 @@ test.describe('Use two Search Results widgets in the same page', () => {
 			await expect(
 				searchPage.searchResultsPaginationItemsPerPageToggle.nth(0)
 			).toHaveText('60 Entries');
+		});
+	});
+});
+
+test.describe('Search Paginator', () => {
+	test('Retains items per page after new keyword search @LPD-19994', async ({
+		apiHelpers,
+		page,
+		searchPage,
+		site,
+	}) => {
+		let siteLayout: Layout;
+
+		await test.step('Create web content for search results', async () => {
+			const basicWebContentStructureId =
+				await getBasicWebContentStructureId(apiHelpers);
+
+			for (let count = 0; count < 21; count++) {
+				await apiHelpers.jsonWebServicesJournal.addWebContent({
+					ddmStructureId: basicWebContentStructureId,
+					groupId: site.id,
+					titleMap: {en_US: `Test Web Content ${count}`},
+				});
+			}
+		});
+
+		await test.step('Create a portlet page associated to site', async () => {
+			siteLayout = await apiHelpers.jsonWebServicesLayout.addLayout({
+				groupId: site.id,
+				options: {type: 'portlet'},
+				title: getRandomString(),
+			});
+		});
+
+		await test.step('Navigate to the site page', async () => {
+			await page.goto(
+				`/web${site.friendlyUrlPath}${siteLayout.friendlyURL}`
+			);
+		});
+
+		await test.step('Add search bar and results portlet to new page', async () => {
+			await searchPage.addPortlet('Search Bar', 'Search');
+
+			await searchPage.addPortlet('Search Results', 'Search');
+		});
+
+		await test.step('Perform new search', async () => {
+			await searchPage.searchKeywordInMainContent('test');
+
+			await expect(searchPage.searchResultsTotalLabel).toHaveText(
+				/\d+ Results for test/
+			);
+		});
+
+		await test.step('Change pagination items per page and page number', async () => {
+			await searchPage.selectPaginationItemsPerPage(20);
+
+			await searchPage.selectPaginationPageNumber(2);
+		});
+
+		await test.step('Perform new search with different keyword', async () => {
+			await searchPage.searchKeywordInMainContent('web');
+
+			await expect(searchPage.searchResultsTotalLabel).toHaveText(
+				/\d+ Results for web/
+			);
+		});
+
+		await test.step('Verify that page number is reset but items per page is not', async () => {
+			await expect(
+				searchPage.searchResultsPaginationItemsPerPageToggle
+			).toHaveText(/20 Entries/);
+
+			await expect(
+				searchPage.searchResultsPaginationBar.getByText('1').first()
+			).toHaveAttribute('aria-current', 'page');
+
+			await expect(
+				searchPage.searchResultsPaginationDescription
+			).toHaveText(/Showing 1 to 20 of \d+ entries./);
 		});
 	});
 });

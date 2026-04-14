@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -24,12 +25,11 @@ import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.servlet.I18nServlet;
-import com.liferay.portal.util.PortalInstances;
-import com.liferay.portal.util.PropsValues;
 
 import java.util.Set;
 
@@ -42,7 +42,8 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	property = {
 		"utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_SC_INTERNAL_SERVER_ERROR,
-		"utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_SC_NOT_FOUND
+		"utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_SC_NOT_FOUND,
+		"utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_SC_SERVICE_UNAVAILABLE
 	},
 	service = StatusLayoutUtilityPageEntryRequestContributor.class
 )
@@ -53,7 +54,7 @@ public class CommonStatusLayoutUtilityPageEntryRequestContributor
 	public void addAttributesAndParameters(
 		DynamicServletRequest dynamicServletRequest) {
 
-		long companyId = PortalInstances.getCompanyId(dynamicServletRequest);
+		long companyId = CompanyThreadLocal.getCompanyId();
 
 		PermissionChecker permissionChecker = _getPermissionChecker(
 			companyId, dynamicServletRequest);
@@ -145,7 +146,9 @@ public class CommonStatusLayoutUtilityPageEntryRequestContributor
 		Group group = _groupLocalService.fetchFriendlyURLGroup(
 			companyId, StringPool.SLASH + urlParts[2]);
 
-		if ((group == null) || !group.isActive()) {
+		if ((group == null) ||
+			(!group.isActive() && !group.isMaintenanceMode())) {
+
 			_addVirtualHostAttributesAndParameters(
 				dynamicServletRequest, languageId, permissionChecker);
 

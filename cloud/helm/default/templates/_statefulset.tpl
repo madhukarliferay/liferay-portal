@@ -1,4 +1,8 @@
 {{- define "liferay.statefulset" -}}
+{{- $backendPort := 8080 -}}
+{{- range .statefulset.service.ports -}}
+    {{- if eq .name "http" -}}{{- $backendPort = .port -}}{{- end -}}
+{{- end -}}
 {{- $suffix := ternary "" (printf "-%s" .name) (eq .name "") }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -21,6 +25,11 @@ spec:
     serviceName: {{ include "liferay.name" .root }}{{ $suffix }}
     template:
         metadata:
+            annotations:
+                checksum/config: {{ include (print .root.Template.BasePath "/configmap.yaml") .root | sha256sum }}
+                {{- with .statefulset.annotations }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
             labels:
                 app: {{ include "liferay.name" .root }}{{ $suffix }}
                 {{- include "liferay.labels" .root | nindent 16 }}
@@ -37,7 +46,9 @@ spec:
                         {{- toYaml . | nindent 22 }}
                         {{- end }}
                         {{- range $k, $v := .statefulset.customEnv }}
+                        {{- if and $v (gt (len $v) 0) }}
                         {{- toYaml $v | nindent 22 }}
+                        {{- end }}
                         {{- end }}
                     {{- end }}
                     {{- if or .statefulset.envFrom .statefulset.customEnvFrom }}
@@ -46,7 +57,9 @@ spec:
                         {{- toYaml . | nindent 22 }}
                         {{- end }}
                         {{- range $k, $v := .statefulset.customEnvFrom }}
+                        {{- if and $v (gt (len $v) 0) }}
                         {{- toYaml $v | nindent 22 }}
+                        {{- end }}
                         {{- end }}
                     {{- end }}
                     image: {{ printf "%s:%s" .statefulset.image.repository (.statefulset.image.tag | toString) }}
@@ -87,7 +100,9 @@ spec:
                         {{- toYaml . | nindent 22 }}
                         {{- end }}
                         {{- range $k, $v := .statefulset.customVolumeMounts }}
+                        {{- if and $v (gt (len $v) 0) }}
                         {{- toYaml $v | nindent 22 }}
+                        {{- end }}
                         {{- end }}
                     {{- end }}
             {{- if or .statefulset.pullSecrets .statefulset.customPullSecrets}}
@@ -143,6 +158,11 @@ spec:
                 {{- with .statefulset.volumes }}
                 {{- toYaml . | nindent 16 }}
                 {{- end }}
+                {{- if and .statefulset.overlay .statefulset.overlay.enabled }}
+                -   name: {{ .statefulset.overlay.bucketName }}
+                    persistentVolumeClaim:
+                        claimName: {{ .statefulset.overlay.bucketName }}
+                {{- end }}
                 {{- range $k, $v := .statefulset.customVolumes }}
                 {{- toYaml $v | nindent 16 }}
                 {{- end }}
@@ -160,6 +180,98 @@ spec:
         {{- toYaml $v | nindent 8 }}
         {{- end }}
     {{- end }}
+{{- if and .statefulset.network .statefulset.network.enabled }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+    labels:
+        app: {{ include "liferay.name" .root }}{{ $suffix }}
+        {{- include "liferay.labels" .root | nindent 8 }}
+    name: {{ include "liferay.name" .root }}-hash-policy
+    namespace: {{ include "liferay.namespace" .root }}
+spec:
+    loadBalancer:
+        consistentHash:
+            cookie:
+                name:
+                    JSESSIONID
+            type: Cookie
+        type: ConsistentHash
+    targetRefs:
+        -   group: gateway.networking.k8s.io
+            kind: HTTPRoute
+            name: {{ include "liferay.name" .root }}-httproute
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+    {{- with .statefulset.network.annotations }}
+    annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    labels:
+        app: {{ include "liferay.name" .root }}{{ $suffix }}
+        {{- include "liferay.labels" .root | nindent 8 }}
+    name: {{ include "liferay.name" .root }}-httproute
+    namespace: {{ include "liferay.namespace" .root }}
+spec:
+    {{- with .statefulset.network.hostnames }}
+    hostnames:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    parentRefs:
+        -   group: gateway.networking.k8s.io
+            kind: Gateway
+            name: {{ .statefulset.network.gatewayName }}
+            sectionName: {{ .statefulset.network.endpointRef }}
+        {{- with .statefulset.network.extraParentRefs }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    rules:
+        -   backendRefs:
+                -   name: {{ include "liferay.name" .root }}{{ $suffix }}
+                    port: {{ $backendPort }}
+            matches:
+                -   path:
+                        type: PathPrefix
+                        value: /
+            {{- with .statefulset.network.timeouts }}
+            timeouts:
+                backendRequest: {{ .backendRequest }}
+                request: {{ .request }}
+            {{- end }}
+        {{- with .statefulset.network.extraRules }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- if and .statefulset.network.forceHttpsRedirect (ne .statefulset.network.endpointRef "http") }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+    labels:
+        app: {{ include "liferay.name" .root }}{{ $suffix }}
+        {{- include "liferay.labels" .root | nindent 8 }}
+    name: {{ include "liferay.name" .root }}-https-redirect
+    namespace: {{ include "liferay.namespace" .root }}
+spec:
+    {{- with .statefulset.network.hostnames }}
+    hostnames:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    parentRefs:
+        -   group: gateway.networking.k8s.io
+            kind: Gateway
+            name: {{ .statefulset.network.gatewayName }}
+            sectionName: http
+    rules:
+        -   filters:
+            -   requestRedirect:
+                    scheme: https
+                    statusCode: 301
+                type: RequestRedirect
+{{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -210,35 +322,4 @@ spec:
         app: {{ include "liferay.name" .root }}{{ $suffix }}
         {{- include "liferay.selectorLabels" .root | nindent 8 }}
     type: ClusterIP
-{{- if and .statefulset.ingress .statefulset.ingress.enabled }}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-    {{- with .statefulset.ingress.annotations }}
-    annotations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    labels:
-        app: {{ include "liferay.name" .root }}{{ $suffix }}
-        {{- include "liferay.labels" .root | nindent 8 }}
-    name: {{ include "liferay.name" .root }}{{ $suffix }}
-    namespace: {{ include "liferay.namespace" .root }}
-spec:
-    {{- with .statefulset.ingress.className }}
-    ingressClassName: {{ . }}
-    {{- end }}
-    rules:
-        {{- with .statefulset.ingress.rules }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-    {{- with .statefulset.ingress.tls }}
-    tls:
-        {{- range $tls := . }}
-        -   hosts:
-            {{- toYaml $tls.hosts | nindent 12 }}
-            secretName: {{ $tls.secretName }}
-        {{- end }}
-    {{- end }}
-{{- end }}
 {{- end -}}

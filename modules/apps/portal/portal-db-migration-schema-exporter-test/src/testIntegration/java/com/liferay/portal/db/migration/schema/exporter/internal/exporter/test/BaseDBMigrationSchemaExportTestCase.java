@@ -5,9 +5,11 @@
 
 package com.liferay.portal.db.migration.schema.exporter.internal.exporter.test;
 
+import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalServiceUtil;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
 import com.liferay.object.test.util.ObjectRelationshipTestUtil;
@@ -16,6 +18,8 @@ import com.liferay.portal.db.migration.schema.exporter.internal.test.util.Config
 import com.liferay.portal.db.migration.schema.exporter.internal.test.util.DatabaseTestUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
@@ -29,7 +33,6 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.cm.PersistenceManager;
 
 import org.junit.Assert;
@@ -46,14 +49,15 @@ public abstract class BaseDBMigrationSchemaExportTestCase {
 
 		folder = FileUtil.createTempFolder();
 
-		_objectDefinition1 = ObjectDefinitionTestUtil.addCustomObjectDefinition(
-			ObjectDefinitionTestUtil.getRandomName());
-		_objectDefinition2 = ObjectDefinitionTestUtil.addCustomObjectDefinition(
-			ObjectDefinitionTestUtil.getRandomName());
+		_objectDefinition1 = ObjectDefinitionTestUtil.publishObjectDefinition();
+		_objectDefinition2 = ObjectDefinitionTestUtil.publishObjectDefinition();
 
 		_objectRelationship = ObjectRelationshipTestUtil.addObjectRelationship(
-			ObjectRelationshipLocalServiceUtil.getService(), _objectDefinition1,
-			_objectDefinition2);
+			_objectRelationshipLocalService, _objectDefinition1,
+			_objectDefinition2,
+			ObjectRelationshipConstants.DELETION_TYPE_CASCADE,
+			StringUtil.randomId(),
+			ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
 	}
 
 	protected static void tearDownClassBaseDBMigrationSchemaExportTestCase()
@@ -83,40 +87,18 @@ public abstract class BaseDBMigrationSchemaExportTestCase {
 			DataSource dataSource, DataSource copyDataSource)
 		throws Exception {
 
-		List<String> copyIndexColumnNames =
-			DatabaseTestUtil.getIndexColumnNames(copyDataSource);
-		List<String> indexColumnNames = DatabaseTestUtil.getIndexColumnNames(
-			dataSource);
-
-		Assert.assertEquals(
-			StringUtils.difference(
-				copyIndexColumnNames.toString(), indexColumnNames.toString()),
-			indexColumnNames.size(), copyIndexColumnNames.size());
-
-		for (int i = 0; i < indexColumnNames.size(); i++) {
-			Assert.assertEquals(
-				indexColumnNames.get(i), copyIndexColumnNames.get(i));
-		}
+		_assertColumnNamesMatch(
+			DatabaseTestUtil.getIndexColumnNames(dataSource),
+			DatabaseTestUtil.getIndexColumnNames(copyDataSource));
 	}
 
 	protected void assertTables(
 			DataSource dataSource, DataSource copyDataSource)
 		throws Exception {
 
-		List<String> copyTableColumnNames =
-			DatabaseTestUtil.getTableColumnNames(copyDataSource);
-		List<String> tableColumnNames = DatabaseTestUtil.getTableColumnNames(
-			dataSource);
-
-		Assert.assertEquals(
-			StringUtils.difference(
-				copyTableColumnNames.toString(), tableColumnNames.toString()),
-			tableColumnNames.size(), copyTableColumnNames.size());
-
-		for (int i = 0; i < tableColumnNames.size(); i++) {
-			Assert.assertEquals(
-				tableColumnNames.get(i), copyTableColumnNames.get(i));
-		}
+		_assertColumnNamesMatch(
+			DatabaseTestUtil.getTableColumnNames(dataSource),
+			DatabaseTestUtil.getTableColumnNames(copyDataSource));
 	}
 
 	protected String getReportContent() throws Exception {
@@ -177,9 +159,30 @@ public abstract class BaseDBMigrationSchemaExportTestCase {
 	@Inject
 	protected ConfigurationAdmin configurationAdmin;
 
+	private void _assertColumnNamesMatch(
+		List<String> columnNames, List<String> copyColumnNames) {
+
+		List<String> missingColumnNames = ListUtil.remove(
+			columnNames, copyColumnNames);
+
+		Assert.assertTrue(
+			missingColumnNames.toString(),
+			ListUtil.isEmpty(missingColumnNames));
+
+		List<String> addedColumnNames = ListUtil.remove(
+			copyColumnNames, columnNames);
+
+		Assert.assertTrue(
+			addedColumnNames.toString(), ListUtil.isEmpty(addedColumnNames));
+	}
+
 	private static ObjectDefinition _objectDefinition1;
 	private static ObjectDefinition _objectDefinition2;
 	private static ObjectRelationship _objectRelationship;
+
+	@Inject
+	private static ObjectRelationshipLocalService
+		_objectRelationshipLocalService;
 
 	@Inject
 	private PersistenceManager _persistenceManager;

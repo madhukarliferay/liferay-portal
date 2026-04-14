@@ -211,54 +211,6 @@ public class SpringEntryUtil {
 	}
 
 	/**
-	 * Returns the last spring entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching spring entry
-	 * @throws NoSuchSpringEntryException if a matching spring entry could not be found
-	 */
-	public static SpringEntry findByUuid_Last(
-			String uuid, OrderByComparator<SpringEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.spring.sample.exception.
-			NoSuchSpringEntryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last spring entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching spring entry, or <code>null</code> if a matching spring entry could not be found
-	 */
-	public static SpringEntry fetchByUuid_Last(
-		String uuid, OrderByComparator<SpringEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the spring entries before and after the current spring entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param springEntryId the primary key of the current spring entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next spring entry
-	 * @throws NoSuchSpringEntryException if a spring entry with the primary key could not be found
-	 */
-	public static SpringEntry[] findByUuid_PrevAndNext(
-			long springEntryId, String uuid,
-			OrderByComparator<SpringEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.spring.sample.exception.
-			NoSuchSpringEntryException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			springEntryId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the spring entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -389,61 +341,6 @@ public class SpringEntryUtil {
 	}
 
 	/**
-	 * Returns the last spring entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching spring entry
-	 * @throws NoSuchSpringEntryException if a matching spring entry could not be found
-	 */
-	public static SpringEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<SpringEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.spring.sample.exception.
-			NoSuchSpringEntryException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last spring entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching spring entry, or <code>null</code> if a matching spring entry could not be found
-	 */
-	public static SpringEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<SpringEntry> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the spring entries before and after the current spring entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param springEntryId the primary key of the current spring entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next spring entry
-	 * @throws NoSuchSpringEntryException if a spring entry with the primary key could not be found
-	 */
-	public static SpringEntry[] findByUuid_C_PrevAndNext(
-			long springEntryId, String uuid, long companyId,
-			OrderByComparator<SpringEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.spring.sample.exception.
-			NoSuchSpringEntryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			springEntryId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the spring entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -565,56 +462,6 @@ public class SpringEntryUtil {
 
 		return getPersistence().fetchByCompanyId_First(
 			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last spring entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching spring entry
-	 * @throws NoSuchSpringEntryException if a matching spring entry could not be found
-	 */
-	public static SpringEntry findByCompanyId_Last(
-			long companyId, OrderByComparator<SpringEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.spring.sample.exception.
-			NoSuchSpringEntryException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last spring entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching spring entry, or <code>null</code> if a matching spring entry could not be found
-	 */
-	public static SpringEntry fetchByCompanyId_Last(
-		long companyId, OrderByComparator<SpringEntry> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the spring entries before and after the current spring entry in the ordered set where companyId = &#63;.
-	 *
-	 * @param springEntryId the primary key of the current spring entry
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next spring entry
-	 * @throws NoSuchSpringEntryException if a spring entry with the primary key could not be found
-	 */
-	public static SpringEntry[] findByCompanyId_PrevAndNext(
-			long springEntryId, long companyId,
-			OrderByComparator<SpringEntry> orderByComparator)
-		throws com.liferay.portal.tools.service.builder.spring.sample.exception.
-			NoSuchSpringEntryException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			springEntryId, companyId, orderByComparator);
 	}
 
 	/**
@@ -796,3 +643,4 @@ public class SpringEntryUtil {
 	private static volatile SpringEntryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1515930418

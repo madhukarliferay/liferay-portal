@@ -9,6 +9,10 @@ import com.liferay.osb.faro.web.internal.constants.FaroConstants;
 import com.liferay.osb.faro.web.internal.controller.contacts.AccountController;
 import com.liferay.osb.faro.web.internal.controller.contacts.ActivityController;
 import com.liferay.osb.faro.web.internal.controller.contacts.ActivityGroupController;
+import com.liferay.osb.faro.web.internal.controller.contacts.AssetSummaryCategoryController;
+import com.liferay.osb.faro.web.internal.controller.contacts.AssetSummaryController;
+import com.liferay.osb.faro.web.internal.controller.contacts.AssetSummaryTagController;
+import com.liferay.osb.faro.web.internal.controller.contacts.AssetSummaryTypeController;
 import com.liferay.osb.faro.web.internal.controller.contacts.ContactsCardController;
 import com.liferay.osb.faro.web.internal.controller.contacts.ContactsCardTemplateController;
 import com.liferay.osb.faro.web.internal.controller.contacts.ContactsLayoutController;
@@ -20,6 +24,7 @@ import com.liferay.osb.faro.web.internal.controller.contacts.IndividualControlle
 import com.liferay.osb.faro.web.internal.controller.contacts.IndividualSegmentController;
 import com.liferay.osb.faro.web.internal.controller.contacts.InterestController;
 import com.liferay.osb.faro.web.internal.controller.contacts.PagesVisitedController;
+import com.liferay.osb.faro.web.internal.controller.contacts.SalesforceController;
 import com.liferay.osb.faro.web.internal.controller.contacts.SessionController;
 
 import jakarta.ws.rs.ApplicationPath;
@@ -45,6 +50,10 @@ public class ContactsApplication extends BaseApplication {
 		controllers.add(_accountController);
 		controllers.add(_activityController);
 		controllers.add(_activityGroupController);
+		controllers.add(_assetSummaryCategoryController);
+		controllers.add(_assetSummaryController);
+		controllers.add(_assetSummaryTagController);
+		controllers.add(_assetSummaryTypeController);
 		controllers.add(_contactsCardController);
 		controllers.add(_contactsCardTemplateController);
 		controllers.add(_contactsLayoutController);
@@ -56,6 +65,7 @@ public class ContactsApplication extends BaseApplication {
 		controllers.add(_individualSegmentController);
 		controllers.add(_interestController);
 		controllers.add(_pagesVisitedController);
+		controllers.add(_salesforceController);
 		controllers.add(_sessionController);
 
 		return controllers;
@@ -69,6 +79,18 @@ public class ContactsApplication extends BaseApplication {
 
 	@Reference
 	private ActivityGroupController _activityGroupController;
+
+	@Reference
+	private AssetSummaryCategoryController _assetSummaryCategoryController;
+
+	@Reference
+	private AssetSummaryController _assetSummaryController;
+
+	@Reference
+	private AssetSummaryTagController _assetSummaryTagController;
+
+	@Reference
+	private AssetSummaryTypeController _assetSummaryTypeController;
 
 	@Reference
 	private ContactsCardController _contactsCardController;
@@ -102,6 +124,9 @@ public class ContactsApplication extends BaseApplication {
 
 	@Reference
 	private PagesVisitedController _pagesVisitedController;
+
+	@Reference
+	private SalesforceController _salesforceController;
 
 	@Reference
 	private SessionController _sessionController;

@@ -3,15 +3,17 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {IInternalRenderer} from '@liferay/frontend-data-set-web';
-import {openModal} from 'frontend-js-components-web';
+import {IInternalRenderer, replaceTokens} from '@liferay/frontend-data-set-web';
 import {navigate, sessionStorage, sub} from 'frontend-js-web';
 
-import formatActionURL from '../../common/utils/formatActionURL';
+import StatusLabel from '../../common/components/StatusLabel';
+import {openCMSModal} from '../../common/utils/openCMSModal';
 import FilePreviewerModalContent from '../modal/FilePreviewerModalContent';
-import deleteEntryAction from './actions/deleteEntryAction';
+import confirmAndDeleteEntryAction from './actions/confirmAndDeleteEntryAction';
+import deleteAssetVersionBulkAction from './actions/deleteAssetVersionBulkAction';
+import expireEntriesBulkAction from './actions/expireEntriesBulkAction';
+import AssetVersionRenderer from './cell_renderers/AssetVersionRenderer';
 import AuthorRenderer from './cell_renderers/AuthorRenderer';
-import NameRenderer from './cell_renderers/NameRenderer';
 import VersionRenderer from './cell_renderers/VersionRenderer';
 import {executeAsyncItemAction} from './utils/executeAsyncItemAction';
 
@@ -21,6 +23,8 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 	...otherProps
 }: {
 	additionalProps: any;
+	apiURL?: string;
+	id?: string;
 	itemsActions?: any[];
 }) {
 	return {
@@ -33,8 +37,8 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 					type: 'internal',
 				} as IInternalRenderer,
 				{
-					component: NameRenderer,
-					name: 'nameTableCellRenderer',
+					component: AssetVersionRenderer,
+					name: 'assetVersionTableCellRenderer',
 					type: 'internal',
 				} as IInternalRenderer,
 				{
@@ -42,8 +46,14 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 					name: 'versionTableCellRenderer',
 					type: 'internal',
 				} as IInternalRenderer,
+				{
+					component: ({value}) => StatusLabel(value),
+					name: 'statusTableCellRenderer',
+					type: 'internal',
+				} as IInternalRenderer,
 			],
 		},
+		hideManagementBarInEmptyState: true,
 		itemsActions: itemsActions.map((action) => {
 			if (action?.data?.id === 'download') {
 				return {
@@ -54,7 +64,7 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 			else if (action?.data?.id === 'view-content') {
 				return {
 					...action,
-					isVisible: (item: any) => Boolean(!item?.file?.link?.href),
+					isVisible: (item: any) => Boolean(!item?.file),
 				};
 			}
 			else if (action?.data?.id === 'view-file') {
@@ -118,7 +128,7 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 			else if (action.data.id === 'delete') {
 				event?.preventDefault();
 
-				deleteEntryAction({
+				confirmAndDeleteEntryAction({
 					bodyHTML: sub(
 						Liferay.Language.get('delete-version-confirmation'),
 						`<strong>${sub(Liferay.Language.get('version-x'), itemData.systemProperties.version.number)}</strong>`,
@@ -165,10 +175,7 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 			else if (action?.data?.id === 'view-content') {
 				event?.preventDefault();
 
-				openModal({
-					containerProps: {
-						className: '',
-					},
+				openCMSModal({
 					size: 'full-screen',
 					title: sub(
 						Liferay.Language.get('x-version-x'),
@@ -178,14 +185,11 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 							itemData.systemProperties.version.number
 						)}`
 					),
-					url: formatActionURL(itemData, action.href),
+					url: replaceTokens(action.href, itemData),
 				});
 			}
 			else if (action?.data?.id === 'view-file') {
-				openModal({
-					containerProps: {
-						className: '',
-					},
+				openCMSModal({
 					contentComponent: () =>
 						FilePreviewerModalContent({
 							file: itemData.file,
@@ -199,6 +203,36 @@ export default function ViewVersionHistoryFDSPropsTransformer({
 							),
 						}),
 					size: 'full-screen',
+				});
+			}
+		},
+		onBulkActionItemClick: async ({
+			action,
+			selectedData,
+		}: {
+			action: any;
+			selectedData: any;
+		}) => {
+			if (action?.data.id === 'delete') {
+				deleteAssetVersionBulkAction({
+					apiURL: otherProps.apiURL,
+					className: additionalProps.className,
+					classPK: additionalProps.classPK,
+					dataSetId: otherProps.id,
+					entryClassName: additionalProps.entryClassName,
+					objectEntryCurrentVersion:
+						additionalProps.objectEntryCurrentVersion,
+					objectEntryTitle: additionalProps.objectEntryTitle,
+					objectEntryVersionsCount:
+						additionalProps.objectEntryVersionsCount,
+					selectedData,
+				});
+			}
+			else if (action?.data.id === 'expire') {
+				expireEntriesBulkAction({
+					apiURL: otherProps.apiURL,
+					dataSetId: otherProps.id,
+					selectedData,
 				});
 			}
 		},

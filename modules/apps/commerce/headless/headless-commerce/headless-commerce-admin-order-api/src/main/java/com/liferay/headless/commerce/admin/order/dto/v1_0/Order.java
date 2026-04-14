@@ -274,6 +274,47 @@ public class Order implements Serializable {
 	private Supplier<String> _advanceStatusSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
+	public String getAuthor() {
+		if (_authorSupplier != null) {
+			author = _authorSupplier.get();
+
+			_authorSupplier = null;
+		}
+
+		return author;
+	}
+
+	public void setAuthor(String author) {
+		this.author = author;
+
+		_authorSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setAuthor(
+		UnsafeSupplier<String, Exception> authorUnsafeSupplier) {
+
+		_authorSupplier = () -> {
+			try {
+				return authorUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String author;
+
+	@JsonIgnore
+	private Supplier<String> _authorSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
 	public BillingAddress getBillingAddress() {
 		if (_billingAddressSupplier != null) {
@@ -5070,6 +5111,22 @@ public class Order implements Serializable {
 			sb.append("\"");
 		}
 
+		String author = getAuthor();
+
+		if (author != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"author\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(author));
+
+			sb.append("\"");
+		}
+
 		BillingAddress billingAddress = getBillingAddress();
 
 		if (billingAddress != null) {
@@ -6653,3 +6710,4 @@ public class Order implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1096459711

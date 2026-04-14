@@ -451,9 +451,8 @@ public class SitemapManagerTest {
 		typeSettingsUnicodeProperties.setProperty(
 			"sitemap-include-child-layouts", "false");
 
-		_layoutLocalService.updateLayout(
-			childLayout.getGroupId(), false, childLayout.getLayoutId(),
-			typeSettingsUnicodeProperties.toString());
+		_layoutLocalService.updateTypeSettings(
+			childLayout, typeSettingsUnicodeProperties.toString());
 
 		_testSitemapIncludePagesCompanyEnabledGroupEnabled(
 			childLayout.getUuid(), childLayoutCanonicalURL);
@@ -466,9 +465,8 @@ public class SitemapManagerTest {
 		typeSettingsUnicodeProperties.setProperty(
 			"sitemap-include-child-layouts", "false");
 
-		_layoutLocalService.updateLayout(
-			_layout.getGroupId(), false, _layout.getLayoutId(),
-			typeSettingsUnicodeProperties.toString());
+		_layoutLocalService.updateTypeSettings(
+			_layout, typeSettingsUnicodeProperties.toString());
 
 		_testEmptySitemapIncludePagesCompanyEnabledGroupEnabled(
 			childLayout.getUuid());
@@ -499,8 +497,8 @@ public class SitemapManagerTest {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 					_group.getGroupId(),
-					_portal.getClassNameId(JournalArticle.class.getName()), 0,
-					true, WorkflowConstants.STATUS_APPROVED);
+					_portal.getClassNameId(JournalArticle.class.getName()),
+					null, true, WorkflowConstants.STATUS_APPROVED);
 
 			Layout layout = _layoutLocalService.getLayout(
 				layoutPageTemplateEntry.getPlid());
@@ -801,17 +799,17 @@ public class SitemapManagerTest {
 
 	private void _addAssetCategoryAssetDisplayPageEntry() throws Exception {
 		_addAssetDisplayPageEntry(
-			_portal.getClassNameId(AssetCategory.class.getName()), 0, 0,
+			_portal.getClassNameId(AssetCategory.class.getName()), 0, null,
 			AssetDisplayPageConstants.TYPE_DEFAULT);
 	}
 
 	private AssetDisplayPageEntry _addAssetDisplayPageEntry(
-			long classNameId, long classPK, long classTypeId, int type)
+			long classNameId, long classPK, String classTypeKey, int type)
 		throws Exception {
 
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
-				_group.getGroupId(), classNameId, classTypeId, true,
+				_group.getGroupId(), classNameId, classTypeKey, true,
 				WorkflowConstants.STATUS_APPROVED);
 
 		return _assetDisplayPageEntryLocalService.addAssetDisplayPageEntry(
@@ -840,7 +838,7 @@ public class SitemapManagerTest {
 		return _addAssetDisplayPageEntry(
 			_portal.getClassNameId(JournalArticle.class.getName()),
 			journalArticle.getResourcePrimKey(),
-			journalArticle.getDDMStructureId(),
+			journalArticle.getDDMStructureKey(),
 			AssetDisplayPageConstants.TYPE_SPECIFIC);
 	}
 

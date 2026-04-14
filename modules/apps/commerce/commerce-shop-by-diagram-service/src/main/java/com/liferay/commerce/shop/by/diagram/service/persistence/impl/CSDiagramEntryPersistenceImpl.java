@@ -5,6 +5,7 @@
 
 package com.liferay.commerce.shop.by.diagram.service.persistence.impl;
 
+import com.liferay.commerce.shop.by.diagram.exception.DuplicateCSDiagramEntryExternalReferenceCodeException;
 import com.liferay.commerce.shop.by.diagram.exception.NoSuchCSDiagramEntryException;
 import com.liferay.commerce.shop.by.diagram.model.CSDiagramEntry;
 import com.liferay.commerce.shop.by.diagram.model.CSDiagramEntryTable;
@@ -26,18 +27,25 @@ import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.SessionFactory;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.sanitizer.Sanitizer;
+import com.liferay.portal.kernel.sanitizer.SanitizerException;
+import com.liferay.portal.kernel.sanitizer.SanitizerUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.persistence.change.tracking.helper.CTPersistenceHelper;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -323,220 +331,6 @@ public class CSDiagramEntryPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	@Override
-	public CSDiagramEntry findByCPDefinitionId_Last(
-			long CPDefinitionId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws NoSuchCSDiagramEntryException {
-
-		CSDiagramEntry csDiagramEntry = fetchByCPDefinitionId_Last(
-			CPDefinitionId, orderByComparator);
-
-		if (csDiagramEntry != null) {
-			return csDiagramEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("CPDefinitionId=");
-		sb.append(CPDefinitionId);
-
-		sb.append("}");
-
-		throw new NoSuchCSDiagramEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	@Override
-	public CSDiagramEntry fetchByCPDefinitionId_Last(
-		long CPDefinitionId,
-		OrderByComparator<CSDiagramEntry> orderByComparator) {
-
-		int count = countByCPDefinitionId(CPDefinitionId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CSDiagramEntry> list = findByCPDefinitionId(
-			CPDefinitionId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CPDefinitionId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CPDefinitionId the cp definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	@Override
-	public CSDiagramEntry[] findByCPDefinitionId_PrevAndNext(
-			long CSDiagramEntryId, long CPDefinitionId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws NoSuchCSDiagramEntryException {
-
-		CSDiagramEntry csDiagramEntry = findByPrimaryKey(CSDiagramEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CSDiagramEntry[] array = new CSDiagramEntryImpl[3];
-
-			array[0] = getByCPDefinitionId_PrevAndNext(
-				session, csDiagramEntry, CPDefinitionId, orderByComparator,
-				true);
-
-			array[1] = csDiagramEntry;
-
-			array[2] = getByCPDefinitionId_PrevAndNext(
-				session, csDiagramEntry, CPDefinitionId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CSDiagramEntry getByCPDefinitionId_PrevAndNext(
-		Session session, CSDiagramEntry csDiagramEntry, long CPDefinitionId,
-		OrderByComparator<CSDiagramEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CSDIAGRAMENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CPDEFINITIONID_CPDEFINITIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CSDiagramEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(CPDefinitionId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						csDiagramEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CSDiagramEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -842,219 +636,6 @@ public class CSDiagramEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	@Override
-	public CSDiagramEntry findByCPInstanceId_Last(
-			long CPInstanceId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws NoSuchCSDiagramEntryException {
-
-		CSDiagramEntry csDiagramEntry = fetchByCPInstanceId_Last(
-			CPInstanceId, orderByComparator);
-
-		if (csDiagramEntry != null) {
-			return csDiagramEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("CPInstanceId=");
-		sb.append(CPInstanceId);
-
-		sb.append("}");
-
-		throw new NoSuchCSDiagramEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	@Override
-	public CSDiagramEntry fetchByCPInstanceId_Last(
-		long CPInstanceId,
-		OrderByComparator<CSDiagramEntry> orderByComparator) {
-
-		int count = countByCPInstanceId(CPInstanceId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CSDiagramEntry> list = findByCPInstanceId(
-			CPInstanceId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CPInstanceId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CPInstanceId the cp instance ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	@Override
-	public CSDiagramEntry[] findByCPInstanceId_PrevAndNext(
-			long CSDiagramEntryId, long CPInstanceId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws NoSuchCSDiagramEntryException {
-
-		CSDiagramEntry csDiagramEntry = findByPrimaryKey(CSDiagramEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CSDiagramEntry[] array = new CSDiagramEntryImpl[3];
-
-			array[0] = getByCPInstanceId_PrevAndNext(
-				session, csDiagramEntry, CPInstanceId, orderByComparator, true);
-
-			array[1] = csDiagramEntry;
-
-			array[2] = getByCPInstanceId_PrevAndNext(
-				session, csDiagramEntry, CPInstanceId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CSDiagramEntry getByCPInstanceId_PrevAndNext(
-		Session session, CSDiagramEntry csDiagramEntry, long CPInstanceId,
-		OrderByComparator<CSDiagramEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CSDIAGRAMENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CPINSTANCEID_CPINSTANCEID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CSDiagramEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(CPInstanceId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						csDiagramEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CSDiagramEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the cs diagram entries where CPInstanceId = &#63; from the database.
 	 *
 	 * @param CPInstanceId the cp instance ID
@@ -1355,217 +936,6 @@ public class CSDiagramEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
-	 */
-	@Override
-	public CSDiagramEntry findByCProductId_Last(
-			long CProductId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws NoSuchCSDiagramEntryException {
-
-		CSDiagramEntry csDiagramEntry = fetchByCProductId_Last(
-			CProductId, orderByComparator);
-
-		if (csDiagramEntry != null) {
-			return csDiagramEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("CProductId=");
-		sb.append(CProductId);
-
-		sb.append("}");
-
-		throw new NoSuchCSDiagramEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
-	 */
-	@Override
-	public CSDiagramEntry fetchByCProductId_Last(
-		long CProductId, OrderByComparator<CSDiagramEntry> orderByComparator) {
-
-		int count = countByCProductId(CProductId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CSDiagramEntry> list = findByCProductId(
-			CProductId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the cs diagram entries before and after the current cs diagram entry in the ordered set where CProductId = &#63;.
-	 *
-	 * @param CSDiagramEntryId the primary key of the current cs diagram entry
-	 * @param CProductId the c product ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cs diagram entry
-	 * @throws NoSuchCSDiagramEntryException if a cs diagram entry with the primary key could not be found
-	 */
-	@Override
-	public CSDiagramEntry[] findByCProductId_PrevAndNext(
-			long CSDiagramEntryId, long CProductId,
-			OrderByComparator<CSDiagramEntry> orderByComparator)
-		throws NoSuchCSDiagramEntryException {
-
-		CSDiagramEntry csDiagramEntry = findByPrimaryKey(CSDiagramEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CSDiagramEntry[] array = new CSDiagramEntryImpl[3];
-
-			array[0] = getByCProductId_PrevAndNext(
-				session, csDiagramEntry, CProductId, orderByComparator, true);
-
-			array[1] = csDiagramEntry;
-
-			array[2] = getByCProductId_PrevAndNext(
-				session, csDiagramEntry, CProductId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CSDiagramEntry getByCProductId_PrevAndNext(
-		Session session, CSDiagramEntry csDiagramEntry, long CProductId,
-		OrderByComparator<CSDiagramEntry> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CSDIAGRAMENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_CPRODUCTID_CPRODUCTID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CSDiagramEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(CProductId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						csDiagramEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CSDiagramEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the cs diagram entries where CProductId = &#63; from the database.
 	 *
 	 * @param CProductId the c product ID
@@ -1841,6 +1211,218 @@ public class CSDiagramEntryPersistenceImpl
 	private static final String _FINDER_COLUMN_CPDI_S_SEQUENCE_3 =
 		"(csDiagramEntry.sequence IS NULL OR csDiagramEntry.sequence = '')";
 
+	private FinderPath _finderPathFetchByERC_C;
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or throws a <code>NoSuchCSDiagramEntryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching cs diagram entry
+	 * @throws NoSuchCSDiagramEntryException if a matching cs diagram entry could not be found
+	 */
+	@Override
+	public CSDiagramEntry findByERC_C(
+			String externalReferenceCode, long companyId)
+		throws NoSuchCSDiagramEntryException {
+
+		CSDiagramEntry csDiagramEntry = fetchByERC_C(
+			externalReferenceCode, companyId);
+
+		if (csDiagramEntry == null) {
+			StringBundler sb = new StringBundler(6);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("externalReferenceCode=");
+			sb.append(externalReferenceCode);
+
+			sb.append(", companyId=");
+			sb.append(companyId);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchCSDiagramEntryException(sb.toString());
+		}
+
+		return csDiagramEntry;
+	}
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
+	 */
+	@Override
+	public CSDiagramEntry fetchByERC_C(
+		String externalReferenceCode, long companyId) {
+
+		return fetchByERC_C(externalReferenceCode, companyId, true);
+	}
+
+	/**
+	 * Returns the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching cs diagram entry, or <code>null</code> if a matching cs diagram entry could not be found
+	 */
+	@Override
+	public CSDiagramEntry fetchByERC_C(
+		String externalReferenceCode, long companyId, boolean useFinderCache) {
+
+		try (SafeCloseable safeCloseable =
+				ctPersistenceHelper.setCTCollectionIdWithSafeCloseable(
+					CSDiagramEntry.class)) {
+
+			externalReferenceCode = Objects.toString(externalReferenceCode, "");
+
+			Object[] finderArgs = null;
+
+			if (useFinderCache) {
+				finderArgs = new Object[] {externalReferenceCode, companyId};
+			}
+
+			Object result = null;
+
+			if (useFinderCache) {
+				result = finderCache.getResult(
+					_finderPathFetchByERC_C, finderArgs, this);
+			}
+
+			if (result instanceof CSDiagramEntry) {
+				CSDiagramEntry csDiagramEntry = (CSDiagramEntry)result;
+
+				if (!Objects.equals(
+						externalReferenceCode,
+						csDiagramEntry.getExternalReferenceCode()) ||
+					(companyId != csDiagramEntry.getCompanyId())) {
+
+					result = null;
+				}
+			}
+
+			if (result == null) {
+				StringBundler sb = new StringBundler(4);
+
+				sb.append(_SQL_SELECT_CSDIAGRAMENTRY_WHERE);
+
+				boolean bindExternalReferenceCode = false;
+
+				if (externalReferenceCode.isEmpty()) {
+					sb.append(_FINDER_COLUMN_ERC_C_EXTERNALREFERENCECODE_3);
+				}
+				else {
+					bindExternalReferenceCode = true;
+
+					sb.append(_FINDER_COLUMN_ERC_C_EXTERNALREFERENCECODE_2);
+				}
+
+				sb.append(_FINDER_COLUMN_ERC_C_COMPANYID_2);
+
+				String sql = sb.toString();
+
+				Session session = null;
+
+				try {
+					session = openSession();
+
+					Query query = session.createQuery(sql);
+
+					QueryPos queryPos = QueryPos.getInstance(query);
+
+					if (bindExternalReferenceCode) {
+						queryPos.add(externalReferenceCode);
+					}
+
+					queryPos.add(companyId);
+
+					List<CSDiagramEntry> list = query.list();
+
+					if (list.isEmpty()) {
+						if (useFinderCache) {
+							finderCache.putResult(
+								_finderPathFetchByERC_C, finderArgs, list);
+						}
+					}
+					else {
+						CSDiagramEntry csDiagramEntry = list.get(0);
+
+						result = csDiagramEntry;
+
+						cacheResult(csDiagramEntry);
+					}
+				}
+				catch (Exception exception) {
+					throw processException(exception);
+				}
+				finally {
+					closeSession(session);
+				}
+			}
+
+			if (result instanceof List<?>) {
+				return null;
+			}
+			else {
+				return (CSDiagramEntry)result;
+			}
+		}
+	}
+
+	/**
+	 * Removes the cs diagram entry where externalReferenceCode = &#63; and companyId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the cs diagram entry that was removed
+	 */
+	@Override
+	public CSDiagramEntry removeByERC_C(
+			String externalReferenceCode, long companyId)
+		throws NoSuchCSDiagramEntryException {
+
+		CSDiagramEntry csDiagramEntry = findByERC_C(
+			externalReferenceCode, companyId);
+
+		return remove(csDiagramEntry);
+	}
+
+	/**
+	 * Returns the number of cs diagram entries where externalReferenceCode = &#63; and companyId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
+	 * @return the number of matching cs diagram entries
+	 */
+	@Override
+	public int countByERC_C(String externalReferenceCode, long companyId) {
+		CSDiagramEntry csDiagramEntry = fetchByERC_C(
+			externalReferenceCode, companyId);
+
+		if (csDiagramEntry == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_ERC_C_EXTERNALREFERENCECODE_2 =
+		"csDiagramEntry.externalReferenceCode = ? AND ";
+
+	private static final String _FINDER_COLUMN_ERC_C_EXTERNALREFERENCECODE_3 =
+		"(csDiagramEntry.externalReferenceCode IS NULL OR csDiagramEntry.externalReferenceCode = '') AND ";
+
+	private static final String _FINDER_COLUMN_ERC_C_COMPANYID_2 =
+		"csDiagramEntry.companyId = ?";
+
 	public CSDiagramEntryPersistenceImpl() {
 		setModelClass(CSDiagramEntry.class);
 
@@ -1870,6 +1452,14 @@ public class CSDiagramEntryPersistenceImpl
 				new Object[] {
 					csDiagramEntry.getCPDefinitionId(),
 					csDiagramEntry.getSequence()
+				},
+				csDiagramEntry);
+
+			finderCache.putResult(
+				_finderPathFetchByERC_C,
+				new Object[] {
+					csDiagramEntry.getExternalReferenceCode(),
+					csDiagramEntry.getCompanyId()
 				},
 				csDiagramEntry);
 		}
@@ -1963,6 +1553,14 @@ public class CSDiagramEntryPersistenceImpl
 
 			finderCache.putResult(
 				_finderPathFetchByCPDI_S, args, csDiagramEntryModelImpl);
+
+			args = new Object[] {
+				csDiagramEntryModelImpl.getExternalReferenceCode(),
+				csDiagramEntryModelImpl.getCompanyId()
+			};
+
+			finderCache.putResult(
+				_finderPathFetchByERC_C, args, csDiagramEntryModelImpl);
 		}
 	}
 
@@ -2095,6 +1693,72 @@ public class CSDiagramEntryPersistenceImpl
 
 		CSDiagramEntryModelImpl csDiagramEntryModelImpl =
 			(CSDiagramEntryModelImpl)csDiagramEntry;
+
+		if (Validator.isNull(csDiagramEntry.getExternalReferenceCode())) {
+			csDiagramEntry.setExternalReferenceCode(
+				String.valueOf(csDiagramEntry.getPrimaryKey()));
+		}
+		else {
+			if (!Objects.equals(
+					csDiagramEntryModelImpl.getColumnOriginalValue(
+						"externalReferenceCode"),
+					csDiagramEntry.getExternalReferenceCode())) {
+
+				long userId = GetterUtil.getLong(
+					PrincipalThreadLocal.getName());
+
+				if (userId > 0) {
+					long companyId = csDiagramEntry.getCompanyId();
+
+					long groupId = 0;
+
+					long classPK = 0;
+
+					if (!isNew) {
+						classPK = csDiagramEntry.getPrimaryKey();
+					}
+
+					try {
+						csDiagramEntry.setExternalReferenceCode(
+							SanitizerUtil.sanitize(
+								companyId, groupId, userId,
+								CSDiagramEntry.class.getName(), classPK,
+								ContentTypes.TEXT_HTML, Sanitizer.MODE_ALL,
+								csDiagramEntry.getExternalReferenceCode(),
+								null));
+					}
+					catch (SanitizerException sanitizerException) {
+						throw new SystemException(sanitizerException);
+					}
+				}
+			}
+
+			CSDiagramEntry ercCSDiagramEntry = fetchByERC_C(
+				csDiagramEntry.getExternalReferenceCode(),
+				csDiagramEntry.getCompanyId());
+
+			if (isNew) {
+				if (ercCSDiagramEntry != null) {
+					throw new DuplicateCSDiagramEntryExternalReferenceCodeException(
+						"Duplicate cs diagram entry with external reference code " +
+							csDiagramEntry.getExternalReferenceCode() +
+								" and company " +
+									csDiagramEntry.getCompanyId());
+				}
+			}
+			else {
+				if ((ercCSDiagramEntry != null) &&
+					(csDiagramEntry.getCSDiagramEntryId() !=
+						ercCSDiagramEntry.getCSDiagramEntryId())) {
+
+					throw new DuplicateCSDiagramEntryExternalReferenceCodeException(
+						"Duplicate cs diagram entry with external reference code " +
+							csDiagramEntry.getExternalReferenceCode() +
+								" and company " +
+									csDiagramEntry.getCompanyId());
+				}
+			}
+		}
 
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
@@ -2634,6 +2298,7 @@ public class CSDiagramEntryPersistenceImpl
 
 		ctControlColumnNames.add("mvccVersion");
 		ctControlColumnNames.add("ctCollectionId");
+		ctStrictColumnNames.add("externalReferenceCode");
 		ctStrictColumnNames.add("companyId");
 		ctStrictColumnNames.add("userId");
 		ctStrictColumnNames.add("userName");
@@ -2660,6 +2325,9 @@ public class CSDiagramEntryPersistenceImpl
 
 		_uniqueIndexColumnNames.add(
 			new String[] {"CPDefinitionId", "sequence"});
+
+		_uniqueIndexColumnNames.add(
+			new String[] {"externalReferenceCode", "companyId"});
 	}
 
 	/**
@@ -2741,6 +2409,11 @@ public class CSDiagramEntryPersistenceImpl
 			new String[] {Long.class.getName(), String.class.getName()},
 			new String[] {"CPDefinitionId", "sequence"}, true);
 
+		_finderPathFetchByERC_C = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByERC_C",
+			new String[] {String.class.getName(), Long.class.getName()},
+			new String[] {"externalReferenceCode", "companyId"}, true);
+
 		CSDiagramEntryUtil.setPersistence(this);
 	}
 
@@ -2815,3 +2488,4 @@ public class CSDiagramEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:403741516

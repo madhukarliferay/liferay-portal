@@ -7,8 +7,8 @@ import ClayButton from '@clayui/button';
 import {useNavigate} from 'react-router-dom';
 
 import ListView from '../../../../components/ListView';
-import OrderStatus from '../../../../components/OrderStatus';
 import Page from '../../../../components/Page';
+import ProductStatus from '../../../../components/ProductStatus';
 import {useMarketplaceContext} from '../../../../context/MarketplaceContext';
 import SearchBuilder from '../../../../core/SearchBuilder';
 import {
@@ -16,7 +16,6 @@ import {
 	ProductTypeLabels,
 	ProductTypeVocabulary,
 	ProductWorkflowStatusCode,
-	ProductWorkflowStatusLabel,
 } from '../../../../enums/Product';
 import i18n from '../../../../i18n';
 import {formatDate} from '../../../../utils/date';
@@ -41,7 +40,7 @@ const Apps = () => {
 	const {properties} = useMarketplaceContext();
 	const navigate = useNavigate();
 
-	const isNewAppEnabled = properties.featureFlags.includes('LPD-24546');
+	const isEditAppEnabled = properties.featureFlags.includes('LPD-24546');
 
 	return (
 		<Page
@@ -51,15 +50,9 @@ const Apps = () => {
 			rightButton={
 				<ClayButton
 					disabled={!catalogId}
-					onClick={() =>
-						navigate(
-							isNewAppEnabled
-								? '/newapp/publisher'
-								: '/app/create'
-						)
-					}
+					onClick={() => navigate('/newapp/publisher')}
 				>
-					{i18n.translate('new-app')}
+					{i18n.translate('publish-new-app')}
 				</ClayButton>
 			}
 			title={i18n.translate('apps')}
@@ -78,7 +71,7 @@ const Apps = () => {
 					className:
 						'border px-4 py-6 d-flex align-items-center flex-column justify-content-center',
 					description:
-						"Publish apps and they will show up hereClick on 'Add Apps' to start.",
+						"Publish apps and they will show up here. Click on 'Publish New App' to start.",
 					title: i18n.translate('no-apps-yet'),
 					type: 'BLANK',
 				}}
@@ -96,7 +89,7 @@ const Apps = () => {
 					}
 				)}`}
 				tableProps={{
-					actions: isNewAppEnabled
+					actions: isEditAppEnabled
 						? [
 								{
 									disabled: (row: Product) =>
@@ -200,15 +193,9 @@ const Apps = () => {
 								}
 
 								return (
-									<OrderStatus
-										orderStatus={workflowStatusInfo.label}
-									>
-										{
-											ProductWorkflowStatusLabel[
-												workflowStatusInfo.code as keyof typeof ProductWorkflowStatusLabel
-											]
-										}
-									</OrderStatus>
+									<ProductStatus
+										productStatus={workflowStatusInfo.label}
+									/>
 								);
 							},
 						},

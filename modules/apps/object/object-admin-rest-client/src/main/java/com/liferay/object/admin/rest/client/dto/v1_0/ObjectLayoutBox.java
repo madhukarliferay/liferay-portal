@@ -190,7 +190,7 @@ public class ObjectLayoutBox implements Cloneable, Serializable {
 
 	public static enum Type {
 
-		CATEGORIZATION("categorization"), REGULAR("regular");
+		CATEGORIZATION("categorization"), REGULAR("regular"), SEO("seo");
 
 		public static Type create(String value) {
 			for (Type type : values()) {
@@ -222,3 +222,4 @@ public class ObjectLayoutBox implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:271927345

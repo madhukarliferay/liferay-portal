@@ -6,12 +6,17 @@
 import ClayButton from '@clayui/button';
 import {Option, Picker, Text} from '@clayui/core';
 import DropDown from '@clayui/drop-down';
+import {ClayToggle} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayLayout from '@clayui/layout';
 import ClayLink from '@clayui/link';
 import {ClayTooltipProvider} from '@clayui/tooltip';
+import {
+	getConfigParamName,
+	serializeFDSConfig,
+} from '@liferay/frontend-data-set-web';
 import {fetch, navigate} from 'frontend-js-web';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 
 import {
 	DEFAULT_FETCH_HEADERS,
@@ -33,95 +38,65 @@ const NOT_CONFIGURED_VISUALIZATION_MODE = {
 const Settings = ({
 	backURL,
 	dataSet,
+	manageUserViewsURL,
+	namespace,
 	onActiveSectionChange,
 	onDataSetUpdate,
 	spritemap,
 }: IDataSetSectionProps) => {
+	const [snapshotsEnabled, setSnapshotsEnabled] = useState<boolean>(
+		dataSet.snapshotsEnabled
+	);
 	const [defaultVisualizationMode, setDefaultVisualizationMode] = useState<
 		string | undefined
 	>(NOT_CONFIGURED_VISUALIZATION_MODE.type);
+	const [hideManagementBarInEmptyState, setHideManagementBarInEmptyState] =
+		useState(dataSet.hideManagementBarInEmptyState ?? true);
 	const [loading, setLoading] = useState(true);
 	const [visualizationModes, setVisualizationModes] = useState<
 		Array<TVisualizationMode>
 	>([]);
 
-	const getActiveVisualizationModes = async () => {
-		const fields = [
-			OBJECT_RELATIONSHIP.DATA_SET_CARDS_SECTIONS,
-			OBJECT_RELATIONSHIP.DATA_SET_LIST_SECTIONS,
-			OBJECT_RELATIONSHIP.DATA_SET_TABLE_SECTIONS,
-		].join(',');
+	const handleToggleChange = useCallback(
+		() => setHideManagementBarInEmptyState(!hideManagementBarInEmptyState),
+		[hideManagementBarInEmptyState]
+	);
 
-		const url = getDataSetResourceURL({
-			dataSetERC: dataSet.externalReferenceCode,
-			params: {
-				fields,
-				nestedFields: fields,
-			},
-		});
+	const getManageUserViewsWithFilterURL = () => {
+		const url = new URL(
+			manageUserViewsURL,
+			Liferay.ThemeDisplay.getPortalURL()
+		);
+		const dataSetFilterConfig = {
+			filters: [
+				{
+					id: 'fdsName',
+					selectedData: {
+						exclude: false,
+						selectedItems: [
+							{
+								label: dataSet.label,
+								value: dataSet.externalReferenceCode,
+							},
+						],
+					},
+				},
+			],
+		};
 
-		const response = await fetch(url, {
-			headers: DEFAULT_FETCH_HEADERS,
-		});
-
-		if (!response.ok) {
-			openDefaultFailureToast();
-
-			setVisualizationModes([]);
-
-			setLoading(false);
-
-			return;
-		}
-
-		const responseJSON = await response.json();
-
-		const {
-			[OBJECT_RELATIONSHIP.DATA_SET_CARDS_SECTIONS]: cards,
-			[OBJECT_RELATIONSHIP.DATA_SET_LIST_SECTIONS]: list,
-			[OBJECT_RELATIONSHIP.DATA_SET_TABLE_SECTIONS]: table,
-		} = responseJSON;
-
-		const activeViews: Array<TVisualizationMode> = [];
-
-		(DEFAULT_VISUALIZATION_MODES as Array<TVisualizationMode>).forEach(
-			(view) => {
-				if (view.mode === 'cards' && cards && cards.length) {
-					activeViews.push(view);
-				}
-				if (view.mode === 'list' && list && list.length) {
-					activeViews.push(view);
-				}
-				if (view.mode === 'table' && table && table.length) {
-					activeViews.push(view);
-				}
-			}
+		url.searchParams.set(
+			getConfigParamName(`${namespace}ManageUserViews`),
+			serializeFDSConfig(dataSetFilterConfig)
 		);
 
-		setVisualizationModes(activeViews);
-
-		setDefaultVisualizationMode(() => {
-			if (
-				activeViews.find(
-					(view: TVisualizationMode) =>
-						view.mode === dataSet.defaultVisualizationMode
-				)
-			) {
-				return dataSet.defaultVisualizationMode;
-			}
-			else {
-				return activeViews.length
-					? activeViews[0].mode
-					: NOT_CONFIGURED_VISUALIZATION_MODE.type;
-			}
-		});
-
-		setLoading(false);
+		return url.toString();
 	};
 
 	const updateFDSViewSettings = async () => {
 		const body = {
 			defaultVisualizationMode,
+			hideManagementBarInEmptyState,
+			snapshotsEnabled,
 		};
 
 		const url = getDataSetResourceURL({
@@ -153,7 +128,104 @@ const Settings = ({
 	};
 
 	useEffect(() => {
-		getActiveVisualizationModes();
+		const fetchSettings = async () => {
+			const fields = [
+				OBJECT_RELATIONSHIP.DATA_SET_CARDS_SECTIONS,
+				OBJECT_RELATIONSHIP.DATA_SET_LIST_SECTIONS,
+				OBJECT_RELATIONSHIP.DATA_SET_TABLE_SECTIONS,
+			].join(',');
+
+			const url = getDataSetResourceURL({
+				dataSetERC: dataSet.externalReferenceCode,
+				params: {
+					fields: `${fields},hideManagementBarInEmptyState`,
+					nestedFields: fields,
+				},
+			});
+
+			try {
+				const response = await fetch(url, {
+					headers: DEFAULT_FETCH_HEADERS,
+				});
+
+				if (!response.ok) {
+					openDefaultFailureToast();
+
+					setVisualizationModes([]);
+
+					setLoading(false);
+
+					setHideManagementBarInEmptyState(true);
+
+					return;
+				}
+
+				const responseJSON = await response.json();
+
+				const {
+					hideManagementBarInEmptyState:
+						persistedHideManagementBarInEmptyState,
+					[OBJECT_RELATIONSHIP.DATA_SET_CARDS_SECTIONS]: cards,
+					[OBJECT_RELATIONSHIP.DATA_SET_LIST_SECTIONS]: list,
+					[OBJECT_RELATIONSHIP.DATA_SET_TABLE_SECTIONS]: table,
+				} = responseJSON;
+
+				const activeViews: Array<TVisualizationMode> = [];
+
+				(
+					DEFAULT_VISUALIZATION_MODES as Array<TVisualizationMode>
+				).forEach((view) => {
+					if (view.mode === 'cards' && cards && cards.length) {
+						activeViews.push(view);
+					}
+					if (view.mode === 'list' && list && list.length) {
+						activeViews.push(view);
+					}
+					if (view.mode === 'table' && table && table.length) {
+						activeViews.push(view);
+					}
+				});
+
+				setVisualizationModes(activeViews);
+
+				setDefaultVisualizationMode(() => {
+					if (
+						activeViews.find(
+							(view: TVisualizationMode) =>
+								view.mode === dataSet.defaultVisualizationMode
+						)
+					) {
+						return dataSet.defaultVisualizationMode;
+					}
+					else {
+						return activeViews.length
+							? activeViews[0].mode
+							: NOT_CONFIGURED_VISUALIZATION_MODE.type;
+					}
+				});
+
+				const serverHideManagementBarValue =
+					persistedHideManagementBarInEmptyState || false;
+
+				if (
+					serverHideManagementBarValue !==
+					hideManagementBarInEmptyState
+				) {
+					setHideManagementBarInEmptyState(
+						serverHideManagementBarValue
+					);
+				}
+
+				setLoading(false);
+			}
+			catch (error) {
+				openDefaultFailureToast();
+				setVisualizationModes([]);
+				setLoading(false);
+			}
+		};
+
+		fetchSettings();
 
 		// eslint-disable-next-line react-compiler/react-compiler
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,7 +246,7 @@ const Settings = ({
 					</h3>
 
 					<ClayLayout.Row className="align-items-center justify-content-between">
-						<ClayLayout.Col size={8}>
+						<ClayLayout.Col size={9}>
 							<div>
 								<label
 									htmlFor="view-mode-picker"
@@ -208,7 +280,7 @@ const Settings = ({
 							</div>
 						</ClayLayout.Col>
 
-						<ClayLayout.Col size={4}>
+						<ClayLayout.Col size={3}>
 							{!loading && (
 								<Picker
 									aria-labelledby="view-mode"
@@ -216,6 +288,21 @@ const Settings = ({
 									disabled={!visualizationModes.length}
 									id="view-mode-picker"
 									items={visualizationModes}
+									messages={{
+										itemDescribedby: Liferay.Language.get(
+											'you-are-currently-on-a-text-element,-inside-of-a-list-box'
+										),
+										itemSelected:
+											Liferay.Language.get('x-selected'),
+										scrollToBottomAriaLabel:
+											Liferay.Language.get(
+												'scroll-to-bottom'
+											),
+										scrollToTopAriaLabel:
+											Liferay.Language.get(
+												'scroll-to-top'
+											),
+									}}
 									onSelectionChange={(option: React.Key) => {
 										if (
 											option !==
@@ -294,6 +381,90 @@ const Settings = ({
 									)}
 								</ClayLink>
 							)}
+						</ClayLayout.Col>
+					</ClayLayout.Row>
+				</ClayLayout.SheetSection>
+
+				<ClayLayout.SheetSection>
+					<h3 className="sheet-subtitle">
+						{Liferay.Language.get('user-customization')}
+					</h3>
+
+					<ClayLayout.Row className="align-items-center justify-content-between mb-4">
+						<ClayLayout.Col size={9}>
+							<div>
+								<label
+									htmlFor="hide-management-bar-in-empty-state"
+									id="hide-management-bar-in-empty-state"
+								>
+									{Liferay.Language.get(
+										'hide-management-bar-in-empty-state'
+									)}
+								</label>
+							</div>
+
+							<div>
+								{Liferay.Language.get(
+									'hide-management-bar-in-empty-state-help'
+								)}
+							</div>
+						</ClayLayout.Col>
+
+						<ClayLayout.Col size={1}>
+							<div className="d-flex form-group justify-content-end mr-2">
+								<ClayToggle
+									disabled={loading}
+									onToggle={handleToggleChange}
+									toggled={hideManagementBarInEmptyState}
+								/>
+							</div>
+						</ClayLayout.Col>
+					</ClayLayout.Row>
+
+					<ClayLayout.Row className="align-items-center justify-content-between mb-4">
+						<ClayLayout.Col size={9}>
+							<div>
+								<label htmlFor="user-views-toggle">
+									{Liferay.Language.get('enable-user-views')}
+								</label>
+							</div>
+
+							<div>{Liferay.Language.get('user-views-help')}</div>
+						</ClayLayout.Col>
+
+						<ClayLayout.Col className="align-self-start" size={1}>
+							<ClayToggle
+								id="user-views-toggle"
+								onToggle={setSnapshotsEnabled}
+								toggled={snapshotsEnabled}
+							/>
+						</ClayLayout.Col>
+					</ClayLayout.Row>
+
+					<ClayLayout.Row className="align-items-center justify-content-between">
+						<ClayLayout.Col size={9}>
+							<div>
+								<label htmlFor="manage-user-views-button">
+									{Liferay.Language.get('manage-user-views')}
+								</label>
+							</div>
+
+							<div>
+								{Liferay.Language.get('manage-user-views-help')}
+							</div>
+						</ClayLayout.Col>
+
+						<ClayLayout.Col size={3}>
+							<ClayButton
+								className="w-100"
+								displayType="secondary"
+								id="manage-user-views-button"
+								onClick={() =>
+									navigate(getManageUserViewsWithFilterURL())
+								}
+							>
+								{Liferay.Language.get('manage-user-views')}
+							</ClayButton>
 						</ClayLayout.Col>
 					</ClayLayout.Row>
 				</ClayLayout.SheetSection>

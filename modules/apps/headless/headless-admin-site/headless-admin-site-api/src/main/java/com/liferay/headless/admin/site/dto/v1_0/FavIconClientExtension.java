@@ -212,9 +212,7 @@ public class FavIconClientExtension extends FavIcon implements Serializable {
 			sb.append("\"favIconType\": ");
 
 			sb.append("\"");
-
 			sb.append(favIconType);
-
 			sb.append("\"");
 		}
 
@@ -319,3 +317,4 @@ public class FavIconClientExtension extends FavIcon implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-67061490

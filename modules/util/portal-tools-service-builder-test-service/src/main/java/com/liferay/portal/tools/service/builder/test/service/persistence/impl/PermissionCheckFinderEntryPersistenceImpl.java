@@ -16,14 +16,17 @@ import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.spring.extender.service.ServiceReference;
 import com.liferay.portal.tools.service.builder.test.exception.NoSuchPermissionCheckFinderEntryException;
 import com.liferay.portal.tools.service.builder.test.model.PermissionCheckFinderEntry;
@@ -76,6 +79,7 @@ public class PermissionCheckFinderEntryPersistenceImpl
 	private FinderPath _finderPathWithPaginationFindByGroupId;
 	private FinderPath _finderPathWithoutPaginationFindByGroupId;
 	private FinderPath _finderPathCountByGroupId;
+	private FinderPath _finderPathWithPaginationCountByGroupId;
 
 	/**
 	 * Returns all the permission check finder entries where groupId = &#63;.
@@ -296,224 +300,6 @@ public class PermissionCheckFinderEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last permission check finder entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching permission check finder entry
-	 * @throws NoSuchPermissionCheckFinderEntryException if a matching permission check finder entry could not be found
-	 */
-	@Override
-	public PermissionCheckFinderEntry findByGroupId_Last(
-			long groupId,
-			OrderByComparator<PermissionCheckFinderEntry> orderByComparator)
-		throws NoSuchPermissionCheckFinderEntryException {
-
-		PermissionCheckFinderEntry permissionCheckFinderEntry =
-			fetchByGroupId_Last(groupId, orderByComparator);
-
-		if (permissionCheckFinderEntry != null) {
-			return permissionCheckFinderEntry;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append("}");
-
-		throw new NoSuchPermissionCheckFinderEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last permission check finder entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching permission check finder entry, or <code>null</code> if a matching permission check finder entry could not be found
-	 */
-	@Override
-	public PermissionCheckFinderEntry fetchByGroupId_Last(
-		long groupId,
-		OrderByComparator<PermissionCheckFinderEntry> orderByComparator) {
-
-		int count = countByGroupId(groupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<PermissionCheckFinderEntry> list = findByGroupId(
-			groupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the permission check finder entries before and after the current permission check finder entry in the ordered set where groupId = &#63;.
-	 *
-	 * @param permissionCheckFinderEntryId the primary key of the current permission check finder entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next permission check finder entry
-	 * @throws NoSuchPermissionCheckFinderEntryException if a permission check finder entry with the primary key could not be found
-	 */
-	@Override
-	public PermissionCheckFinderEntry[] findByGroupId_PrevAndNext(
-			long permissionCheckFinderEntryId, long groupId,
-			OrderByComparator<PermissionCheckFinderEntry> orderByComparator)
-		throws NoSuchPermissionCheckFinderEntryException {
-
-		PermissionCheckFinderEntry permissionCheckFinderEntry =
-			findByPrimaryKey(permissionCheckFinderEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			PermissionCheckFinderEntry[] array =
-				new PermissionCheckFinderEntryImpl[3];
-
-			array[0] = getByGroupId_PrevAndNext(
-				session, permissionCheckFinderEntry, groupId, orderByComparator,
-				true);
-
-			array[1] = permissionCheckFinderEntry;
-
-			array[2] = getByGroupId_PrevAndNext(
-				session, permissionCheckFinderEntry, groupId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected PermissionCheckFinderEntry getByGroupId_PrevAndNext(
-		Session session, PermissionCheckFinderEntry permissionCheckFinderEntry,
-		long groupId,
-		OrderByComparator<PermissionCheckFinderEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_PERMISSIONCHECKFINDERENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(PermissionCheckFinderEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						permissionCheckFinderEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<PermissionCheckFinderEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the permission check finder entries that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -564,6 +350,16 @@ public class PermissionCheckFinderEntryPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByGroupId(groupId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -648,72 +444,78 @@ public class PermissionCheckFinderEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the permission check finder entries before and after the current permission check finder entry in the ordered set of permission check finder entries that the user has permission to view where groupId = &#63;.
+	 * Returns all the permission check finder entries that the user has permission to view where groupId = any &#63;.
 	 *
-	 * @param permissionCheckFinderEntryId the primary key of the current permission check finder entry
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next permission check finder entry
-	 * @throws NoSuchPermissionCheckFinderEntryException if a permission check finder entry with the primary key could not be found
+	 * @param groupIds the group IDs
+	 * @return the matching permission check finder entries that the user has permission to view
 	 */
 	@Override
-	public PermissionCheckFinderEntry[] filterFindByGroupId_PrevAndNext(
-			long permissionCheckFinderEntryId, long groupId,
-			OrderByComparator<PermissionCheckFinderEntry> orderByComparator)
-		throws NoSuchPermissionCheckFinderEntryException {
+	public List<PermissionCheckFinderEntry> filterFindByGroupId(
+		long[] groupIds) {
 
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByGroupId_PrevAndNext(
-				permissionCheckFinderEntryId, groupId, orderByComparator);
-		}
-
-		PermissionCheckFinderEntry permissionCheckFinderEntry =
-			findByPrimaryKey(permissionCheckFinderEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			PermissionCheckFinderEntry[] array =
-				new PermissionCheckFinderEntryImpl[3];
-
-			array[0] = filterGetByGroupId_PrevAndNext(
-				session, permissionCheckFinderEntry, groupId, orderByComparator,
-				true);
-
-			array[1] = permissionCheckFinderEntry;
-
-			array[2] = filterGetByGroupId_PrevAndNext(
-				session, permissionCheckFinderEntry, groupId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
+		return filterFindByGroupId(
+			groupIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
 
-	protected PermissionCheckFinderEntry filterGetByGroupId_PrevAndNext(
-		Session session, PermissionCheckFinderEntry permissionCheckFinderEntry,
-		long groupId,
-		OrderByComparator<PermissionCheckFinderEntry> orderByComparator,
-		boolean previous) {
+	/**
+	 * Returns a range of all the permission check finder entries that the user has permission to view where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PermissionCheckFinderEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of permission check finder entries
+	 * @param end the upper bound of the range of permission check finder entries (not inclusive)
+	 * @return the range of matching permission check finder entries that the user has permission to view
+	 */
+	@Override
+	public List<PermissionCheckFinderEntry> filterFindByGroupId(
+		long[] groupIds, int start, int end) {
 
-		StringBundler sb = null;
+		return filterFindByGroupId(groupIds, start, end, null);
+	}
 
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
+	/**
+	 * Returns an ordered range of all the permission check finder entries that the user has permission to view where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PermissionCheckFinderEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of permission check finder entries
+	 * @param end the upper bound of the range of permission check finder entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching permission check finder entries that the user has permission to view
+	 */
+	@Override
+	public List<PermissionCheckFinderEntry> filterFindByGroupId(
+		long[] groupIds, int start, int end,
+		OrderByComparator<PermissionCheckFinderEntry> orderByComparator) {
+
+		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
+			return findByGroupId(groupIds, start, end, orderByComparator);
 		}
-		else {
-			sb = new StringBundler(4);
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupIds);
 		}
+
+		if (groupIds == null) {
+			groupIds = new long[0];
+		}
+		else if (groupIds.length > 1) {
+			groupIds = ArrayUtil.sortedUnique(groupIds);
+		}
+
+		StringBundler sb = new StringBundler();
 
 		if (getDB().isSupportsInlineDistinct()) {
 			sb.append(_FILTER_SQL_SELECT_PERMISSIONCHECKFINDERENTRY_WHERE);
@@ -723,7 +525,20 @@ public class PermissionCheckFinderEntryPersistenceImpl
 				_FILTER_SQL_SELECT_PERMISSIONCHECKFINDERENTRY_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
+		if (groupIds.length > 0) {
+			sb.append("(");
+
+			sb.append(_FINDER_COLUMN_GROUPID_GROUPID_7);
+
+			sb.append(StringUtil.merge(groupIds));
+
+			sb.append(")");
+
+			sb.append(")");
+		}
+
+		sb.setStringAt(
+			removeConjunction(sb.stringAt(sb.index() - 1)), sb.index() - 1);
 
 		if (!getDB().isSupportsInlineDistinct()) {
 			sb.append(
@@ -731,77 +546,13 @@ public class PermissionCheckFinderEntryPersistenceImpl
 		}
 
 		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator, true);
 			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
+			else {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_TABLE, orderByComparator, true);
 			}
 		}
 		else {
@@ -817,43 +568,216 @@ public class PermissionCheckFinderEntryPersistenceImpl
 
 		String sql = InlineSQLHelperUtil.replacePermissionCheck(
 			sb.toString(), PermissionCheckFinderEntry.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupIds);
 
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+		Session session = null;
 
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
+		try {
+			session = openSession();
 
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(
-				_FILTER_ENTITY_ALIAS, PermissionCheckFinderEntryImpl.class);
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_ALIAS, PermissionCheckFinderEntryImpl.class);
+			}
+			else {
+				sqlQuery.addEntity(
+					_FILTER_ENTITY_TABLE, PermissionCheckFinderEntryImpl.class);
+			}
+
+			return (List<PermissionCheckFinderEntry>)QueryUtil.list(
+				sqlQuery, getDialect(), start, end);
 		}
-		else {
-			sqlQuery.addEntity(
-				_FILTER_ENTITY_TABLE, PermissionCheckFinderEntryImpl.class);
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Returns all the permission check finder entries where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PermissionCheckFinderEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @return the matching permission check finder entries
+	 */
+	@Override
+	public List<PermissionCheckFinderEntry> findByGroupId(long[] groupIds) {
+		return findByGroupId(
+			groupIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the permission check finder entries where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PermissionCheckFinderEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of permission check finder entries
+	 * @param end the upper bound of the range of permission check finder entries (not inclusive)
+	 * @return the range of matching permission check finder entries
+	 */
+	@Override
+	public List<PermissionCheckFinderEntry> findByGroupId(
+		long[] groupIds, int start, int end) {
+
+		return findByGroupId(groupIds, start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the permission check finder entries where groupId = any &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PermissionCheckFinderEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of permission check finder entries
+	 * @param end the upper bound of the range of permission check finder entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching permission check finder entries
+	 */
+	@Override
+	public List<PermissionCheckFinderEntry> findByGroupId(
+		long[] groupIds, int start, int end,
+		OrderByComparator<PermissionCheckFinderEntry> orderByComparator) {
+
+		return findByGroupId(groupIds, start, end, orderByComparator, true);
+	}
+
+	/**
+	 * Returns an ordered range of all the permission check finder entries where groupId = &#63;, optionally using the finder cache.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>PermissionCheckFinderEntryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param groupIds the group IDs
+	 * @param start the lower bound of the range of permission check finder entries
+	 * @param end the upper bound of the range of permission check finder entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching permission check finder entries
+	 */
+	@Override
+	public List<PermissionCheckFinderEntry> findByGroupId(
+		long[] groupIds, int start, int end,
+		OrderByComparator<PermissionCheckFinderEntry> orderByComparator,
+		boolean useFinderCache) {
+
+		if (groupIds == null) {
+			groupIds = new long[0];
+		}
+		else if (groupIds.length > 1) {
+			groupIds = ArrayUtil.sortedUnique(groupIds);
 		}
 
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
+		if (groupIds.length == 1) {
+			return findByGroupId(groupIds[0], start, end, orderByComparator);
+		}
 
-		queryPos.add(groupId);
+		Object[] finderArgs = null;
 
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						permissionCheckFinderEntry)) {
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			(orderByComparator == null)) {
 
-				queryPos.add(orderByConditionValue);
+			if (useFinderCache) {
+				finderArgs = new Object[] {StringUtil.merge(groupIds)};
+			}
+		}
+		else if (useFinderCache) {
+			finderArgs = new Object[] {
+				StringUtil.merge(groupIds), start, end, orderByComparator
+			};
+		}
+
+		List<PermissionCheckFinderEntry> list = null;
+
+		if (useFinderCache) {
+			list = (List<PermissionCheckFinderEntry>)finderCache.getResult(
+				_finderPathWithPaginationFindByGroupId, finderArgs, this);
+
+			if ((list != null) && !list.isEmpty()) {
+				for (PermissionCheckFinderEntry permissionCheckFinderEntry :
+						list) {
+
+					if (!ArrayUtil.contains(
+							groupIds,
+							permissionCheckFinderEntry.getGroupId())) {
+
+						list = null;
+
+						break;
+					}
+				}
 			}
 		}
 
-		List<PermissionCheckFinderEntry> list = sqlQuery.list();
+		if (list == null) {
+			StringBundler sb = new StringBundler();
 
-		if (list.size() == 2) {
-			return list.get(1);
+			sb.append(_SQL_SELECT_PERMISSIONCHECKFINDERENTRY_WHERE);
+
+			if (groupIds.length > 0) {
+				sb.append("(");
+
+				sb.append(_FINDER_COLUMN_GROUPID_GROUPID_7);
+
+				sb.append(StringUtil.merge(groupIds));
+
+				sb.append(")");
+
+				sb.append(")");
+			}
+
+			sb.setStringAt(
+				removeConjunction(sb.stringAt(sb.index() - 1)), sb.index() - 1);
+
+			if (orderByComparator != null) {
+				appendOrderByComparator(
+					sb, _ORDER_BY_ENTITY_ALIAS, orderByComparator);
+			}
+			else {
+				sb.append(PermissionCheckFinderEntryModelImpl.ORDER_BY_JPQL);
+			}
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				list = (List<PermissionCheckFinderEntry>)QueryUtil.list(
+					query, getDialect(), start, end);
+
+				cacheResult(list);
+
+				if (useFinderCache) {
+					finderCache.putResult(
+						_finderPathWithPaginationFindByGroupId, finderArgs,
+						list);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
 		}
-		else {
-			return null;
-		}
+
+		return list;
 	}
 
 	/**
@@ -921,6 +845,71 @@ public class PermissionCheckFinderEntryPersistenceImpl
 	}
 
 	/**
+	 * Returns the number of permission check finder entries where groupId = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @return the number of matching permission check finder entries
+	 */
+	@Override
+	public int countByGroupId(long[] groupIds) {
+		if (groupIds == null) {
+			groupIds = new long[0];
+		}
+		else if (groupIds.length > 1) {
+			groupIds = ArrayUtil.sortedUnique(groupIds);
+		}
+
+		Object[] finderArgs = new Object[] {StringUtil.merge(groupIds)};
+
+		Long count = (Long)finderCache.getResult(
+			_finderPathWithPaginationCountByGroupId, finderArgs, this);
+
+		if (count == null) {
+			StringBundler sb = new StringBundler();
+
+			sb.append(_SQL_COUNT_PERMISSIONCHECKFINDERENTRY_WHERE);
+
+			if (groupIds.length > 0) {
+				sb.append("(");
+
+				sb.append(_FINDER_COLUMN_GROUPID_GROUPID_7);
+
+				sb.append(StringUtil.merge(groupIds));
+
+				sb.append(")");
+
+				sb.append(")");
+			}
+
+			sb.setStringAt(
+				removeConjunction(sb.stringAt(sb.index() - 1)), sb.index() - 1);
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				count = (Long)query.uniqueResult();
+
+				finderCache.putResult(
+					_finderPathWithPaginationCountByGroupId, finderArgs, count);
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	/**
 	 * Returns the number of permission check finder entries that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -930,6 +919,16 @@ public class PermissionCheckFinderEntryPersistenceImpl
 	public int filterCountByGroupId(long groupId) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByGroupId(groupId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<PermissionCheckFinderEntry> permissionCheckFinderEntries =
+				findByGroupId(groupId);
+
+			permissionCheckFinderEntries = InlineSQLHelperUtil.filter(
+				permissionCheckFinderEntries, groupId);
+
+			return permissionCheckFinderEntries.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -968,8 +967,82 @@ public class PermissionCheckFinderEntryPersistenceImpl
 		}
 	}
 
+	/**
+	 * Returns the number of permission check finder entries that the user has permission to view where groupId = any &#63;.
+	 *
+	 * @param groupIds the group IDs
+	 * @return the number of matching permission check finder entries that the user has permission to view
+	 */
+	@Override
+	public int filterCountByGroupId(long[] groupIds) {
+		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
+			return countByGroupId(groupIds);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<PermissionCheckFinderEntry> permissionCheckFinderEntries =
+				InlineSQLHelperUtil.filter(findByGroupId(groupIds), groupIds);
+
+			return permissionCheckFinderEntries.size();
+		}
+
+		if (groupIds == null) {
+			groupIds = new long[0];
+		}
+		else if (groupIds.length > 1) {
+			groupIds = ArrayUtil.sortedUnique(groupIds);
+		}
+
+		StringBundler sb = new StringBundler();
+
+		sb.append(_FILTER_SQL_COUNT_PERMISSIONCHECKFINDERENTRY_WHERE);
+
+		if (groupIds.length > 0) {
+			sb.append("(");
+
+			sb.append(_FINDER_COLUMN_GROUPID_GROUPID_7);
+
+			sb.append(StringUtil.merge(groupIds));
+
+			sb.append(")");
+
+			sb.append(")");
+		}
+
+		sb.setStringAt(
+			removeConjunction(sb.stringAt(sb.index() - 1)), sb.index() - 1);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(
+			sb.toString(), PermissionCheckFinderEntry.class.getName(),
+			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupIds);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
+
+			sqlQuery.addScalar(
+				COUNT_COLUMN_NAME, com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			Long count = (Long)sqlQuery.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception exception) {
+			throw processException(exception);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	private static final String _FINDER_COLUMN_GROUPID_GROUPID_2 =
 		"permissionCheckFinderEntry.groupId = ?";
+
+	private static final String _FINDER_COLUMN_GROUPID_GROUPID_7 =
+		"permissionCheckFinderEntry.groupId IN (";
 
 	public PermissionCheckFinderEntryPersistenceImpl() {
 		Map<String, String> dbColumnNames = new HashMap<String, String>();
@@ -1100,6 +1173,9 @@ public class PermissionCheckFinderEntryPersistenceImpl
 
 		permissionCheckFinderEntry.setNew(true);
 		permissionCheckFinderEntry.setPrimaryKey(permissionCheckFinderEntryId);
+
+		permissionCheckFinderEntry.setCompanyId(
+			CompanyThreadLocal.getCompanyId());
 
 		return permissionCheckFinderEntry;
 	}
@@ -1560,6 +1636,11 @@ public class PermissionCheckFinderEntryPersistenceImpl
 			new String[] {Long.class.getName()}, new String[] {"groupId"},
 			false);
 
+		_finderPathWithPaginationCountByGroupId = new FinderPath(
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGroupId",
+			new String[] {Long.class.getName()}, new String[] {"groupId"},
+			false);
+
 		PermissionCheckFinderEntryUtil.setPersistence(this);
 	}
 
@@ -1636,3 +1717,4 @@ public class PermissionCheckFinderEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:604552375

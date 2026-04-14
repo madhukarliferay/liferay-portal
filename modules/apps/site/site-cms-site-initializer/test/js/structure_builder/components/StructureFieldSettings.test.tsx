@@ -4,8 +4,6 @@
  */
 
 import '@testing-library/jest-dom';
-
-import '@testing-library/jest-dom/extend-expect';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -34,6 +32,7 @@ const FIELD: Field = {
 		es_ES: 'Campo de Prueba',
 	},
 	localized: false,
+	locked: false,
 	name: 'TextField',
 	parent: getUuid(),
 	required: false,
@@ -43,10 +42,15 @@ const FIELD: Field = {
 };
 
 const DEFAULT_STATE: State = {
-	error: null,
-	history: {deletedChildren: false},
+	history: {
+		deletedChildren: [],
+		deletedGroupERCs: [],
+		deletedRelationships: [],
+		modifiedNames: new Set(),
+	},
 	invalids: new Map(),
 	publishedChildren: new Set(),
+	renamingItemUuid: null,
 	selection: [],
 	structure: {
 		children: new Map([[TEXT_FIELD_UUID, FIELD]]),
@@ -55,7 +59,10 @@ const DEFAULT_STATE: State = {
 		name: 'UntitledStructure',
 		spaces: [],
 		status: 'new',
+		system: false,
+		type: 'L_CMS_CONTENT_STRUCTURES',
 		uuid: getUuid(),
+		workflows: {},
 	},
 	unsavedChanges: false,
 };
@@ -392,16 +399,17 @@ describe('StructureFieldSettings', () => {
 		).not.toBeInTheDocument();
 
 		await userEvent.click(
-			screen.getByLabelText('show-files-in-documents-and-media')
+			screen.getByLabelText('show-files-in-cms-library')
 		);
 
 		expect(MOCK_DISPATCH).toHaveBeenCalledWith({
 			settings: {
 				acceptedFileExtensions: 'jpeg, jpg, pdf, png',
-				fileSource: 'userComputer',
+				fileSource: 'userComputerToCMSBasicDocument',
 				maximumFileSize: 100,
-				showFilesInDocumentsAndMedia: true,
-				storageDLFolderPath: '/new',
+				showFilesInLibrary: true,
+				storageDLFolderPath: '/',
+				storageDepotGroup: undefined,
 			},
 			type: 'update-field',
 			uuid,
@@ -420,7 +428,7 @@ describe('StructureFieldSettings', () => {
 		expect(MOCK_DISPATCH).toHaveBeenCalledWith({
 			settings: {
 				acceptedFileExtensions: 'gif',
-				fileSource: 'userComputer',
+				fileSource: 'userComputerToCMSBasicDocument',
 				maximumFileSize: 100,
 			},
 			type: 'update-field',
@@ -436,7 +444,7 @@ describe('StructureFieldSettings', () => {
 		expect(MOCK_DISPATCH).toHaveBeenCalledWith({
 			settings: {
 				acceptedFileExtensions: 'jpeg, jpg, pdf, png',
-				fileSource: 'userComputer',
+				fileSource: 'userComputerToCMSBasicDocument',
 				maximumFileSize: 200,
 			},
 			type: 'update-field',
@@ -444,7 +452,7 @@ describe('StructureFieldSettings', () => {
 		});
 	});
 
-	it('updates the single select field with the selected picklist', async () => {
+	it('updates the select from list field with the selected picklist', async () => {
 		const uuid = getUuid();
 
 		renderComponent({
@@ -458,42 +466,7 @@ describe('StructureFieldSettings', () => {
 							{
 								...getDefaultField({
 									parent: getUuid(),
-									type: 'single-select',
-								}),
-								uuid,
-							},
-						],
-					]),
-				},
-			},
-			uuid,
-		});
-
-		await userEvent.click(screen.getByLabelText('picklist'));
-		await userEvent.click(screen.getByText('papaya'));
-
-		expect(MOCK_DISPATCH).toHaveBeenCalledWith({
-			picklistId: 1,
-			type: 'update-field',
-			uuid,
-		});
-	});
-
-	it('updates the multiselect field with the selected picklist', async () => {
-		const uuid = getUuid();
-
-		renderComponent({
-			state: {
-				...DEFAULT_STATE,
-				structure: {
-					...DEFAULT_STATE.structure,
-					children: new Map([
-						[
-							uuid,
-							{
-								...getDefaultField({
-									parent: getUuid(),
-									type: 'multiselect',
+									type: 'select-from-list',
 								}),
 								uuid,
 							},
@@ -529,7 +502,7 @@ describe('StructureFieldSettings', () => {
 							{
 								...getDefaultField({
 									parent: getUuid(),
-									type: 'single-select',
+									type: 'select-from-list',
 								}),
 								uuid,
 							},

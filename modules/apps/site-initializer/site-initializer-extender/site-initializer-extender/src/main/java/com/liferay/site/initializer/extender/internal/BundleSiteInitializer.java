@@ -28,6 +28,7 @@ import com.liferay.asset.list.model.AssetListEntry;
 import com.liferay.asset.list.service.AssetListEntryLocalService;
 import com.liferay.asset.list.util.comparator.ClassNameModelResourceComparator;
 import com.liferay.asset.util.AssetRendererFactoryWrapper;
+import com.liferay.batch.engine.unit.BatchEngineUnitThreadLocal;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.client.extension.constants.ClientExtensionEntryConstants;
 import com.liferay.client.extension.service.ClientExtensionEntryLocalService;
@@ -109,6 +110,7 @@ import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.utility.page.converter.LayoutUtilityPageEntryTypeConverter;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
+import com.liferay.list.type.exception.NoSuchListTypeDefinitionException;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.message.boards.model.MBMessage;
 import com.liferay.notification.rest.dto.v1_0.NotificationTemplate;
@@ -192,6 +194,7 @@ import com.liferay.portal.kernel.util.NaturalOrderStringComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
@@ -259,6 +262,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.wiring.BundleWiring;
 
 /**
@@ -535,6 +539,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 		}
 
 		try {
+			BundleContext bundleContext = _siteBundle.getBundleContext();
+
+			BatchEngineUnitThreadLocal.setFileName(
+				String.valueOf(bundleContext.getBundle()));
+
 			_initialize(groupId);
 		}
 		catch (Exception exception) {
@@ -543,6 +552,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 			throw new InitializationException(exception);
 		}
 		finally {
+			BatchEngineUnitThreadLocal.setFileName(StringPool.BLANK);
 			ServiceContextThreadLocal.popServiceContext();
 		}
 
@@ -653,7 +663,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 			serviceContext, _servletContext);
 	}
 
-	private void _addAccounts(ServiceContext serviceContext) throws Exception {
+	private void _addAccounts(
+			ServiceContext serviceContext,
+			Map<String, String> stringUtilReplaceValues)
+		throws Exception {
+
 		String json = SiteInitializerUtil.read(
 			"/site-initializer/accounts.json", _servletContext);
 
@@ -679,8 +693,21 @@ public class BundleSiteInitializer implements SiteInitializer {
 				continue;
 			}
 
-			accountResource.putAccountByExternalReferenceCode(
+			account = accountResource.putAccountByExternalReferenceCode(
 				account.getExternalReferenceCode(), account);
+
+			AccountEntry accountEntry =
+				_accountEntryLocalService.
+					getAccountEntryByExternalReferenceCode(
+						account.getExternalReferenceCode(),
+						serviceContext.getCompanyId());
+
+			Group group = _groupLocalService.getGroup(
+				accountEntry.getAccountEntryGroupId());
+
+			stringUtilReplaceValues.put(
+				"ACCOUNT_ENTRY_GROUP_ERC:" + account.getExternalReferenceCode(),
+				group.getExternalReferenceCode());
 		}
 	}
 
@@ -1016,21 +1043,23 @@ public class BundleSiteInitializer implements SiteInitializer {
 				Keyword existingKeyword = null;
 
 				if (groupId != 0) {
-					existingKeyword =
+					Page<Keyword> page =
 						keywordResource.getAssetLibraryKeywordsPage(
 							groupId, null, null,
 							keywordResource.toFilter(
 								"name eq '" + keyword.getName() + "'"),
-							null, null
-						).fetchFirstItem();
+							null, null);
+
+					existingKeyword = page.fetchFirstItem();
 				}
 				else {
-					existingKeyword = keywordResource.getSiteKeywordsPage(
+					Page<Keyword> page = keywordResource.getSiteKeywordsPage(
 						groupId, null, null,
 						keywordResource.toFilter(
 							"name eq '" + keyword.getName() + "'"),
-						null, null
-					).fetchFirstItem();
+						null, null);
+
+					existingKeyword = page.fetchFirstItem();
 
 					groupId = serviceContext.getScopeGroupId();
 				}
@@ -1364,15 +1393,20 @@ public class BundleSiteInitializer implements SiteInitializer {
 				accountEntryRestrictedObjectDefinitions.entrySet()) {
 
 			com.liferay.object.model.ObjectDefinition
-				serviceBuilderObjectDefinition =
-					_objectDefinitionLocalService.fetchObjectDefinition(
-						serviceContext.getCompanyId(), "C_" + entry.getKey());
+				serviceBuilderObjectDefinition = _fetchObjectDefinition(
+					serviceContext.getCompanyId(), entry.getKey());
+
+			if (serviceBuilderObjectDefinition == null) {
+				continue;
+			}
+
+			ObjectDefinition objectDefinition = entry.getValue();
 
 			com.liferay.object.model.ObjectField serviceBuilderObjectField =
 				_objectFieldLocalService.fetchObjectField(
 					serviceBuilderObjectDefinition.getObjectDefinitionId(),
-					entry.getValue(
-					).getAccountEntryRestrictedObjectFieldName());
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName());
 
 			if (serviceBuilderObjectDefinition.isDefaultStorageType()) {
 				_objectDefinitionLocalService.enableAccountEntryRestricted(
@@ -1491,6 +1525,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 			assetListJSONObject.getString("assetEntrySubtypeId")
 		).put(
 			"classNameIds", StringUtil.merge(classNameIdStrings, ",")
+		).put(
+			"classTypeIds" + assetRendererFactoryName,
+			assetListJSONObject.getString("assetEntrySubtypeId")
 		).put(
 			"groupIds", String.valueOf(serviceContext.getScopeGroupId())
 		).build();
@@ -2004,10 +2041,14 @@ public class BundleSiteInitializer implements SiteInitializer {
 				).build(),
 				unicodeProperties, serviceContext);
 
-			_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
-				(group != null) ? group.getClassPK() :
-					depotEntry.getDepotEntryId(),
-				serviceContext.getScopeGroupId());
+			Group scopeGroup = serviceContext.getScopeGroup();
+
+			if (scopeGroup.isSite()) {
+				_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
+					(group != null) ? group.getClassPK() :
+						depotEntry.getDepotEntryId(),
+					serviceContext.getScopeGroupId());
+			}
 		}
 	}
 
@@ -2232,26 +2273,13 @@ public class BundleSiteInitializer implements SiteInitializer {
 					fileEntry, fileEntry.getFileVersion(), null,
 					StringPool.BLANK, false, false));
 
-			long fileEntryTypeId = 0;
-
-			if (fileEntry.getModel() instanceof DLFileEntry) {
-				DLFileEntry dlFileEntry = (DLFileEntry)fileEntry.getModel();
-
-				DLFileEntryType dlFileEntryType =
-					dlFileEntry.getDLFileEntryType();
-
-				fileEntryTypeId = dlFileEntryType.getFileEntryTypeId();
-			}
-
-			String fileEntryTypeIdString = String.valueOf(fileEntryTypeId);
-
 			siteNavigationMenuItemSettingsBuilder.put(
 				key,
 				new SiteNavigationMenuItemSetting() {
 					{
 						className = FileEntry.class.getName();
-						classPK = String.valueOf(fileEntry.getFileEntryId());
-						classTypeId = fileEntryTypeIdString;
+						externalReferenceCode =
+							fileEntry.getExternalReferenceCode();
 						title = fileEntry.getTitle();
 						type = ResourceActionsUtil.getModelResource(
 							serviceContext.getLocale(),
@@ -2396,6 +2424,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 					FileUtil.getShortFileName(resourcePath));
 			}
 
+			articleId = StringUtil.toUpperCase(StringUtil.trim(articleId));
+
 			Map<Locale, String> titleMap = Collections.singletonMap(
 				LocaleUtil.getSiteDefault(), jsonObject.getString("name"));
 
@@ -2474,10 +2504,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 				new SiteNavigationMenuItemSetting() {
 					{
 						className = JournalArticle.class.getName();
-						classPK = String.valueOf(
-							finalJournalArticle.getResourcePrimKey());
-						classTypeId = String.valueOf(
-							ddmStructure.getStructureId());
+						externalReferenceCode =
+							finalJournalArticle.getExternalReferenceCode();
 						title = finalJournalArticle.getTitle(
 							serviceContext.getLocale());
 						type = ResourceActionsUtil.getModelResource(
@@ -2675,7 +2703,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		}
 
 		if (layout != null) {
-			_layoutLocalService.updateLayout(
+			layout = _layoutLocalService.updateLayout(
 				serviceContext.getScopeGroupId(), layout.isPrivateLayout(),
 				layout.getLayoutId(), parentLayoutId, nameMap,
 				SiteInitializerUtil.toMap(
@@ -2688,12 +2716,13 @@ public class BundleSiteInitializer implements SiteInitializer {
 					pageJSONObject.getString("robots_i18n")),
 				type, pageJSONObject.getBoolean("hidden"),
 				layout.getFriendlyURLMap(), layout.getIconImage(), null,
-				layout.getStyleBookEntryId(),
-				pageJSONObject.getLong("faviconFileEntryId"),
-				layout.getMasterLayoutPlid(), serviceContext);
-			_layoutLocalService.updateLayout(
-				serviceContext.getScopeGroupId(), layout.isPrivateLayout(),
-				layout.getLayoutId(), unicodeProperties.toString());
+				layout.getStyleBookEntryERC(),
+				pageJSONObject.getString("faviconFileEntryERC"),
+				pageJSONObject.getString("faviconFileEntryScopeERC"),
+				layout.getMasterLayoutPageTemplateEntryERC(), serviceContext);
+
+			_layoutLocalService.updateTypeSettings(
+				layout, unicodeProperties.toString());
 		}
 		else {
 			layout = _layoutLocalService.addLayout(
@@ -2984,20 +3013,22 @@ public class BundleSiteInitializer implements SiteInitializer {
 				continue;
 			}
 
-			ListTypeDefinition existingListTypeDefinition =
-				listTypeDefinitionResource.
-					getListTypeDefinitionByExternalReferenceCode(
-						listTypeDefinition.getExternalReferenceCode());
+			try {
+				ListTypeDefinition existingListTypeDefinition =
+					listTypeDefinitionResource.
+						getListTypeDefinitionByExternalReferenceCode(
+							listTypeDefinition.getExternalReferenceCode());
 
-			if (existingListTypeDefinition == null) {
-				listTypeDefinition =
-					listTypeDefinitionResource.postListTypeDefinition(
-						listTypeDefinition);
-			}
-			else {
 				listTypeDefinition =
 					listTypeDefinitionResource.patchListTypeDefinition(
 						existingListTypeDefinition.getId(), listTypeDefinition);
+			}
+			catch (NoSuchListTypeDefinitionException
+						noSuchListTypeDefinitionException) {
+
+				listTypeDefinition =
+					listTypeDefinitionResource.postListTypeDefinition(
+						listTypeDefinition);
 			}
 
 			stringUtilReplaceValues.put(
@@ -3258,9 +3289,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 			JSONObject jsonObject = _jsonFactory.createJSONObject(json);
 
 			com.liferay.object.model.ObjectDefinition objectDefinition =
-				_objectDefinitionLocalService.fetchObjectDefinition(
+				_fetchObjectDefinition(
 					serviceContext.getCompanyId(),
-					"C_" + jsonObject.getString("objectDefinitionName"));
+					jsonObject.getString("objectDefinitionName"));
 
 			if (objectDefinition == null) {
 				continue;
@@ -3307,6 +3338,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 					continue;
 				}
 
+				String objectDefinitionName = objectDefinition.getName();
 				com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
 					_objectEntryLocalService.getObjectEntry(
 						objectEntry.getId());
@@ -3317,10 +3349,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 						{
 							className =
 								serviceBuilderObjectEntry.getModelClassName();
-							classPK = String.valueOf(
-								serviceBuilderObjectEntry.getObjectEntryId());
+							externalReferenceCode =
+								serviceBuilderObjectEntry.
+									getExternalReferenceCode();
 							title = StringBundler.concat(
-								objectDefinition.getName(), StringPool.SPACE,
+								objectDefinitionName, StringPool.SPACE,
 								serviceBuilderObjectEntry.getObjectEntryId());
 						}
 					});
@@ -3468,9 +3501,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 			com.liferay.object.model.ObjectRelationship
 				existingObjectRelationship =
 					_objectRelationshipLocalService.
-						fetchObjectRelationshipByObjectDefinitionId1(
-							objectRelationship.getObjectDefinitionId1(),
-							objectRelationship.getName());
+						fetchObjectRelationshipByExternalReferenceCode(
+							objectRelationship.getExternalReferenceCode(),
+							objectRelationship.getObjectDefinitionId1());
 
 			if (existingObjectRelationship == null) {
 				objectRelationshipResource.
@@ -3843,6 +3876,16 @@ public class BundleSiteInitializer implements SiteInitializer {
 			stringUtilReplaceValues.put(
 				"SEGMENTS_ENTRY_ID:" + segmentsEntry.getSegmentsEntryKey(),
 				String.valueOf(segmentsEntry.getSegmentsEntryId()));
+			stringUtilReplaceValues.put(
+				"SEGMENTS_ENTRY_ERC:" + segmentsEntry.getSegmentsEntryKey(),
+				segmentsEntry.getExternalReferenceCode());
+			stringUtilReplaceValues.put(
+				"SEGMENTS_ENTRY_SCOPE_ERC:" +
+					segmentsEntry.getSegmentsEntryKey(),
+				GetterUtil.getString(
+					ScopeUtil.getItemScopeExternalReferenceCode(
+						segmentsEntry.getGroupId(),
+						serviceContext.getScopeGroupId())));
 		}
 	}
 
@@ -3992,19 +4035,22 @@ public class BundleSiteInitializer implements SiteInitializer {
 				).put(
 					"className", siteNavigationMenuItemSetting.className
 				).put(
-					"classNameId",
-					String.valueOf(
-						_portal.getClassNameId(
-							siteNavigationMenuItemSetting.className))
-				).put(
-					"classPK",
-					String.valueOf(siteNavigationMenuItemSetting.classPK)
-				).put(
-					"classTypeId", siteNavigationMenuItemSetting.classTypeId
+					"externalReferenceCode",
+					siteNavigationMenuItemSetting.externalReferenceCode
 				).put(
 					"title", siteNavigationMenuItemSetting.title
 				).put(
 					"type", siteNavigationMenuItemSetting.type
+				).buildString();
+			}
+
+			String displayIcon = menuItemJSONObject.getString("displayIcon");
+
+			if (Validator.isNotNull(displayIcon)) {
+				typeSettings = UnicodePropertiesBuilder.load(
+					typeSettings
+				).put(
+					"displayIcon", displayIcon
 				).buildString();
 			}
 
@@ -4494,7 +4540,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 				_segmentsExperienceLocalService.appendSegmentsExperience(
 					serviceContext.getUserId(),
 					serviceContext.getScopeGroupId(),
-					jsonObject.getLong("segmentsEntryId"),
+					jsonObject.getString("segmentsEntryERC"),
+					jsonObject.getString("segmentsEntryScopeERC"),
 					draftLayout.getPlid(),
 					SiteInitializerUtil.toMap(
 						jsonObject.getString("name_i18n")),
@@ -4542,7 +4589,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 		if (accessToControlMenuRoleNamesJSONArray == null) {
 			_menuAccessConfigurationManager.updateMenuAccessConfiguration(
-				serviceContext.getScopeGroupId(), new String[0],
+				serviceContext.getScopeGroupId(), null,
 				jsonObject.getBoolean("showControlMenuByRole"));
 
 			return;
@@ -4604,8 +4651,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 			}
 
 			_configurationProvider.saveGroupConfiguration(
-				serviceContext.getScopeGroupId(), jsonObject.getString("pid"),
-				properties);
+				serviceContext.getCompanyId(), serviceContext.getScopeGroupId(),
+				jsonObject.getString("pid"), properties);
 		}
 	}
 
@@ -4702,7 +4749,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 				new SiteNavigationMenuItemSetting() {
 					{
 						className = AssetCategory.class.getName();
-						classPK = finalTaxonomyCategory.getId();
+						externalReferenceCode =
+							finalTaxonomyCategory.getExternalReferenceCode();
 						title = finalTaxonomyCategory.getName();
 					}
 				});
@@ -4906,11 +4954,13 @@ public class BundleSiteInitializer implements SiteInitializer {
 			).build();
 
 		for (String resourcePath : resourcePaths) {
+			String json = _replace(
+				SiteInitializerUtil.read(
+					resourcePath + "workflow-definition.json", _servletContext),
+				stringUtilReplaceValues);
+
 			JSONObject workflowDefinitionJSONObject =
-				_jsonFactory.createJSONObject(
-					SiteInitializerUtil.read(
-						resourcePath + "workflow-definition.json",
-						_servletContext));
+				_jsonFactory.createJSONObject(json);
 
 			workflowDefinitionJSONObject.put(
 				"content",
@@ -5061,7 +5111,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 		R addAccountGroupsR = new R(
 			"addAccountGroups", () -> _addAccountGroups(serviceContext));
 		R addAccountsR = new R(
-			"addAccounts", () -> _addAccounts(serviceContext));
+			"addAccounts",
+			() -> _addAccounts(serviceContext, stringUtilReplaceValues));
 		R addAccountsOrganizationsR = new R(
 			"addAccountsOrganizations",
 			() -> _addAccountsOrganizations(serviceContext));
@@ -5386,7 +5437,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		).put(
 			addUserRolesR, _dependsOn(addOrUpdateRolesR, addUserAccountsR)
 		).put(
-			addWorkflowDefinitionsR, _dependsOn(addOrUpdateRolesR)
+			addWorkflowDefinitionsR, _dependsOn(addAccountsR, addOrUpdateRolesR)
 		).put(
 			publishObjectDefinitionsR, _dependsOn(addOrUpdateObjectFieldsR)
 		).put(
@@ -5398,6 +5449,22 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 	private List<R> _dependsOn(R... rArray) {
 		return ListUtil.fromArray(rArray);
+	}
+
+	private com.liferay.object.model.ObjectDefinition _fetchObjectDefinition(
+		long companyId, String name) {
+
+		com.liferay.object.model.ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				companyId, "C_" + name);
+
+		if (objectDefinition == null) {
+			objectDefinition =
+				_objectDefinitionLocalService.fetchObjectDefinition(
+					companyId, name);
+		}
+
+		return objectDefinition;
 	}
 
 	private long[] _getAssetCategoryIds(
@@ -5877,7 +5944,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 					key, themeSettingsJSONObject.getString(key));
 			}
 
-			draftLayout = _layoutLocalService.updateLayout(
+			draftLayout = _layoutLocalService.updateTypeSettings(
 				draftLayout.getGroupId(), draftLayout.isPrivateLayout(),
 				draftLayout.getLayoutId(), unicodeProperties.toString());
 
@@ -5905,10 +5972,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 						masterPageJSONObject.getString("key"));
 
 			if (layoutPageTemplateEntry != null) {
-				draftLayout = _layoutLocalService.updateMasterLayoutPlid(
-					draftLayout.getGroupId(), draftLayout.isPrivateLayout(),
-					draftLayout.getLayoutId(),
-					layoutPageTemplateEntry.getPlid());
+				draftLayout =
+					_layoutLocalService.updateMasterLayoutPageTemplateEntryERC(
+						draftLayout.getGroupId(), draftLayout.isPrivateLayout(),
+						draftLayout.getLayoutId(),
+						layoutPageTemplateEntry.getExternalReferenceCode());
 			}
 		}
 
@@ -6157,8 +6225,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 	private class SiteNavigationMenuItemSetting {
 
 		public String className;
-		public String classPK;
-		public String classTypeId = StringPool.BLANK;
+		public String externalReferenceCode;
 		public String title;
 		public String type = StringPool.BLANK;
 

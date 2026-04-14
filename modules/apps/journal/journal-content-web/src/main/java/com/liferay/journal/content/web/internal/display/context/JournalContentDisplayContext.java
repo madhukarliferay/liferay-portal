@@ -273,7 +273,9 @@ public class JournalContentDisplayContext {
 			return _articleGroupId;
 		}
 
-		_articleGroupId = ParamUtil.getLong(_portletRequest, "groupId");
+		_articleGroupId = ParamUtil.getLong(
+			_portletRequest, "groupId",
+			_journalContentPortletInstanceConfiguration.groupId());
 
 		if (_articleGroupId > 0) {
 			return _articleGroupId;
@@ -608,32 +610,22 @@ public class JournalContentDisplayContext {
 		PortletPreferences portletPreferences =
 			_portletRequest.getPreferences();
 
-		long assetEntryId = GetterUtil.getLong(
-			portletPreferences.getValue("assetEntryId", StringPool.BLANK));
-
-		if (assetEntryId > 0) {
-			AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchAssetEntry(
-				assetEntryId);
-
-			if (assetEntry != null) {
-				return JournalArticleLocalServiceUtil.fetchLatestArticle(
-					assetEntry.getClassPK());
-			}
-		}
-
 		String articleExternalReferenceCode = portletPreferences.getValue(
 			"articleExternalReferenceCode", null);
-		String groupExternalReferenceCode = GetterUtil.getString(
-			portletPreferences.getValue("groupExternalReferenceCode", null));
 
-		if ((articleExternalReferenceCode == null) ||
-			(groupExternalReferenceCode == null)) {
-
+		if (articleExternalReferenceCode == null) {
 			return null;
 		}
 
-		Group group = GroupLocalServiceUtil.fetchGroupByExternalReferenceCode(
-			groupExternalReferenceCode, _themeDisplay.getCompanyId());
+		Group group = _themeDisplay.getScopeGroup();
+
+		String groupExternalReferenceCode = GetterUtil.getString(
+			portletPreferences.getValue("groupExternalReferenceCode", null));
+
+		if (Validator.isNotNull(groupExternalReferenceCode)) {
+			group = GroupLocalServiceUtil.fetchGroupByExternalReferenceCode(
+				groupExternalReferenceCode, _themeDisplay.getCompanyId());
+		}
 
 		if (group == null) {
 			return null;
@@ -984,7 +976,7 @@ public class JournalContentDisplayContext {
 
 		Layout layout = _themeDisplay.getLayout();
 
-		if (layout.isLayoutPrototypeLinkActive()) {
+		if (layout.isPortletLayoutPageTemplateEntryLinkActive()) {
 			_showSelectArticleLink = false;
 
 			return _showSelectArticleLink;

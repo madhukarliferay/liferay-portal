@@ -14,6 +14,8 @@ import com.liferay.headless.admin.taxonomy.resource.v1_0.TaxonomyVocabularyResou
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
@@ -156,33 +158,6 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {keywords(aggregation: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
-	 */
-	@GraphQLField
-	public KeywordPage keywords(
-			@GraphQLName("search") String search,
-			@GraphQLName("aggregation") List<String> aggregations,
-			@GraphQLName("filter") String filterString,
-			@GraphQLName("pageSize") int pageSize,
-			@GraphQLName("page") int page,
-			@GraphQLName("sort") String sortsString)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_keywordResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			keywordResource -> new KeywordPage(
-				keywordResource.getKeywordsPage(
-					search,
-					_aggregationBiFunction.apply(keywordResource, aggregations),
-					_filterBiFunction.apply(keywordResource, filterString),
-					Pagination.of(page, pageSize),
-					_sortsBiFunction.apply(keywordResource, sortsString))));
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
 	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {keywordsRanked(page: ___, pageSize: ___, search: ___, siteKey: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
@@ -245,12 +220,12 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {siteKeywords(aggregation: ___, filter: ___, page: ___, pageSize: ___, search: ___, siteKey: ___, sorts: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {keywords(aggregation: ___, filter: ___, page: ___, pageSize: ___, search: ___, siteKey: ___, sorts: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a Site's keywords. Results can be paginated, filtered, searched, and sorted."
 	)
-	public KeywordPage siteKeywords(
+	public KeywordPage keywords(
 			@GraphQLName("siteKey") @NotEmpty String siteKey,
 			@GraphQLName("search") String search,
 			@GraphQLName("aggregation") List<String> aggregations,
@@ -308,7 +283,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {assetLibraryTaxonomyCategoryByExternalReferenceCode(assetLibraryId: ___, externalReferenceCode: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, viewableBy}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {assetLibraryTaxonomyCategoryByExternalReferenceCode(assetLibraryId: ___, externalReferenceCode: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, path, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, uuid, viewableBy}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves the asset library's taxonomy category by external reference code."
@@ -361,7 +336,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyCategoryByExternalReferenceCode(externalReferenceCode: ___, siteKey: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, viewableBy}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyCategoryByExternalReferenceCode(externalReferenceCode: ___, siteKey: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, path, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, uuid, viewableBy}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves the site's taxonomy category by external reference code."
@@ -403,7 +378,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyCategory(taxonomyCategoryId: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, viewableBy}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyCategory(taxonomyCategoryId: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, path, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, uuid, viewableBy}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(description = "Retrieves a taxonomy category.")
 	public TaxonomyCategory taxonomyCategory(
@@ -510,7 +485,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabularyTaxonomyCategoryByExternalReferenceCode(externalReferenceCode: ___, taxonomyVocabularyId: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, viewableBy}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabularyTaxonomyCategoryByExternalReferenceCode(externalReferenceCode: ___, taxonomyVocabularyId: ___){actions, assetLibraryKey, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, name, name_i18n, numberOfTaxonomyCategories, parentTaxonomyCategory, parentTaxonomyVocabulary, path, permissions, siteExternalReferenceCode, siteId, taxonomyCategoryProperties, taxonomyCategoryUsageCount, taxonomyVocabularyId, uuid, viewableBy}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves the site's taxonomy category by external reference code."
@@ -566,7 +541,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {assetLibraryTaxonomyVocabularyByExternalReferenceCode(assetLibraryId: ___, externalReferenceCode: ___){actions, assetLibraries, assetLibraryKey, assetTypes, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, multiValued, name, name_i18n, numberOfTaxonomyCategories, permissions, siteExternalReferenceCode, siteId, viewableBy, visibilityType}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {assetLibraryTaxonomyVocabularyByExternalReferenceCode(assetLibraryId: ___, externalReferenceCode: ___){actions, assetLibraries, assetLibraryKey, assetTypes, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, multiValued, name, name_i18n, numberOfTaxonomyCategories, permissions, siteExternalReferenceCode, siteId, uuid, viewableBy, visibilityType}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves the asset library's taxonomy vocabulary by external reference code."
@@ -610,12 +585,12 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {siteTaxonomyVocabularies(aggregation: ___, filter: ___, page: ___, pageSize: ___, search: ___, siteKey: ___, sorts: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabularies(aggregation: ___, filter: ___, page: ___, pageSize: ___, search: ___, siteKey: ___, sorts: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a Site's taxonomy vocabularies. Results can be paginated, filtered, searched, and sorted."
 	)
-	public TaxonomyVocabularyPage siteTaxonomyVocabularies(
+	public TaxonomyVocabularyPage taxonomyVocabularies(
 			@GraphQLName("siteKey") @NotEmpty String siteKey,
 			@GraphQLName("search") String search,
 			@GraphQLName("aggregation") List<String> aggregations,
@@ -643,7 +618,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabularyByExternalReferenceCode(externalReferenceCode: ___, siteKey: ___){actions, assetLibraries, assetLibraryKey, assetTypes, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, multiValued, name, name_i18n, numberOfTaxonomyCategories, permissions, siteExternalReferenceCode, siteId, viewableBy, visibilityType}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabularyByExternalReferenceCode(externalReferenceCode: ___, siteKey: ___){actions, assetLibraries, assetLibraryKey, assetTypes, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, multiValued, name, name_i18n, numberOfTaxonomyCategories, permissions, siteExternalReferenceCode, siteId, uuid, viewableBy, visibilityType}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves the site's taxonomy vocabulary by external reference code."
@@ -685,39 +660,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabularies(aggregation: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
-	 */
-	@GraphQLField(
-		description = "Gets all taxonomy vocabularies that were created in CMS. Does not retrieve vocabularies created in DXP. CMS vocabularies are distinguished by having a `groupId = 0`."
-	)
-	public TaxonomyVocabularyPage taxonomyVocabularies(
-			@GraphQLName("search") String search,
-			@GraphQLName("aggregation") List<String> aggregations,
-			@GraphQLName("filter") String filterString,
-			@GraphQLName("pageSize") int pageSize,
-			@GraphQLName("page") int page,
-			@GraphQLName("sort") String sortsString)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_taxonomyVocabularyResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			taxonomyVocabularyResource -> new TaxonomyVocabularyPage(
-				taxonomyVocabularyResource.getTaxonomyVocabulariesPage(
-					search,
-					_aggregationBiFunction.apply(
-						taxonomyVocabularyResource, aggregations),
-					_filterBiFunction.apply(
-						taxonomyVocabularyResource, filterString),
-					Pagination.of(page, pageSize),
-					_sortsBiFunction.apply(
-						taxonomyVocabularyResource, sortsString))));
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabulary(taxonomyVocabularyId: ___){actions, assetLibraries, assetLibraryKey, assetTypes, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, multiValued, name, name_i18n, numberOfTaxonomyCategories, permissions, siteExternalReferenceCode, siteId, viewableBy, visibilityType}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {taxonomyVocabulary(taxonomyVocabularyId: ___){actions, assetLibraries, assetLibraryKey, assetTypes, availableLanguages, creator, dateCreated, dateModified, description, description_i18n, externalReferenceCode, id, multiValued, name, name_i18n, numberOfTaxonomyCategories, permissions, siteExternalReferenceCode, siteId, uuid, viewableBy, visibilityType}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(description = "Retrieves a taxonomy vocabulary.")
 	public TaxonomyVocabulary taxonomyVocabulary(
@@ -751,45 +694,26 @@ public class Query {
 					taxonomyVocabularyId, roleNames)));
 	}
 
-	@GraphQLTypeExtension(TaxonomyVocabulary.class)
-	public class GetTaxonomyVocabularyTaxonomyCategoriesPageTypeExtension {
+	@GraphQLTypeExtension(TaxonomyCategory.class)
+	public class GetTaxonomyVocabularyTypeExtension {
 
-		public GetTaxonomyVocabularyTaxonomyCategoriesPageTypeExtension(
-			TaxonomyVocabulary taxonomyVocabulary) {
+		public GetTaxonomyVocabularyTypeExtension(
+			TaxonomyCategory taxonomyCategory) {
 
-			_taxonomyVocabulary = taxonomyVocabulary;
+			_taxonomyCategory = taxonomyCategory;
 		}
 
-		@GraphQLField(
-			description = "Retrieves a vocabulary's taxonomy categories. Results can be paginated, filtered, searched, and sorted."
-		)
-		public TaxonomyCategoryPage taxonomyCategories(
-				@GraphQLName("flatten") Boolean flatten,
-				@GraphQLName("search") String search,
-				@GraphQLName("aggregation") List<String> aggregations,
-				@GraphQLName("filter") String filterString,
-				@GraphQLName("pageSize") int pageSize,
-				@GraphQLName("page") int page,
-				@GraphQLName("sort") String sortsString)
-			throws Exception {
-
+		@GraphQLField(description = "Retrieves a taxonomy vocabulary.")
+		public TaxonomyVocabulary taxonomyVocabulary() throws Exception {
 			return _applyComponentServiceObjects(
-				_taxonomyCategoryResourceComponentServiceObjects,
+				_taxonomyVocabularyResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				taxonomyCategoryResource -> new TaxonomyCategoryPage(
-					taxonomyCategoryResource.
-						getTaxonomyVocabularyTaxonomyCategoriesPage(
-							_taxonomyVocabulary.getId(), flatten, search,
-							_aggregationBiFunction.apply(
-								taxonomyCategoryResource, aggregations),
-							_filterBiFunction.apply(
-								taxonomyCategoryResource, filterString),
-							Pagination.of(page, pageSize),
-							_sortsBiFunction.apply(
-								taxonomyCategoryResource, sortsString))));
+				taxonomyVocabularyResource ->
+					taxonomyVocabularyResource.getTaxonomyVocabulary(
+						_taxonomyCategory.getTaxonomyVocabularyId()));
 		}
 
-		private TaxonomyVocabulary _taxonomyVocabulary;
+		private TaxonomyCategory _taxonomyCategory;
 
 	}
 
@@ -834,26 +758,45 @@ public class Query {
 
 	}
 
-	@GraphQLTypeExtension(TaxonomyCategory.class)
-	public class GetTaxonomyVocabularyTypeExtension {
+	@GraphQLTypeExtension(TaxonomyVocabulary.class)
+	public class GetTaxonomyVocabularyTaxonomyCategoriesPageTypeExtension {
 
-		public GetTaxonomyVocabularyTypeExtension(
-			TaxonomyCategory taxonomyCategory) {
+		public GetTaxonomyVocabularyTaxonomyCategoriesPageTypeExtension(
+			TaxonomyVocabulary taxonomyVocabulary) {
 
-			_taxonomyCategory = taxonomyCategory;
+			_taxonomyVocabulary = taxonomyVocabulary;
 		}
 
-		@GraphQLField(description = "Retrieves a taxonomy vocabulary.")
-		public TaxonomyVocabulary taxonomyVocabulary() throws Exception {
+		@GraphQLField(
+			description = "Retrieves a vocabulary's taxonomy categories. Results can be paginated, filtered, searched, and sorted."
+		)
+		public TaxonomyCategoryPage taxonomyCategories(
+				@GraphQLName("flatten") Boolean flatten,
+				@GraphQLName("search") String search,
+				@GraphQLName("aggregation") List<String> aggregations,
+				@GraphQLName("filter") String filterString,
+				@GraphQLName("pageSize") int pageSize,
+				@GraphQLName("page") int page,
+				@GraphQLName("sort") String sortsString)
+			throws Exception {
+
 			return _applyComponentServiceObjects(
-				_taxonomyVocabularyResourceComponentServiceObjects,
+				_taxonomyCategoryResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				taxonomyVocabularyResource ->
-					taxonomyVocabularyResource.getTaxonomyVocabulary(
-						_taxonomyCategory.getTaxonomyVocabularyId()));
+				taxonomyCategoryResource -> new TaxonomyCategoryPage(
+					taxonomyCategoryResource.
+						getTaxonomyVocabularyTaxonomyCategoriesPage(
+							_taxonomyVocabulary.getId(), flatten, search,
+							_aggregationBiFunction.apply(
+								taxonomyCategoryResource, aggregations),
+							_filterBiFunction.apply(
+								taxonomyCategoryResource, filterString),
+							Pagination.of(page, pageSize),
+							_sortsBiFunction.apply(
+								taxonomyCategoryResource, sortsString))));
 		}
 
-		private TaxonomyCategory _taxonomyCategory;
+		private TaxonomyVocabulary _taxonomyVocabulary;
 
 	}
 
@@ -1032,6 +975,10 @@ public class Query {
 		keywordResource.setContextUriInfo(_uriInfo);
 		keywordResource.setContextUser(_user);
 		keywordResource.setGroupLocalService(_groupLocalService);
+		keywordResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		keywordResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		keywordResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1048,6 +995,10 @@ public class Query {
 		taxonomyCategoryResource.setContextUriInfo(_uriInfo);
 		taxonomyCategoryResource.setContextUser(_user);
 		taxonomyCategoryResource.setGroupLocalService(_groupLocalService);
+		taxonomyCategoryResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		taxonomyCategoryResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		taxonomyCategoryResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1064,6 +1015,10 @@ public class Query {
 		taxonomyVocabularyResource.setContextUriInfo(_uriInfo);
 		taxonomyVocabularyResource.setContextUser(_user);
 		taxonomyVocabularyResource.setGroupLocalService(_groupLocalService);
+		taxonomyVocabularyResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		taxonomyVocabularyResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		taxonomyVocabularyResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -1084,6 +1039,8 @@ public class Query {
 	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
+	private ResourceActionLocalService _resourceActionLocalService;
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 	private RoleLocalService _roleLocalService;
 	private BiFunction<Object, String, com.liferay.portal.kernel.search.Sort[]>
 		_sortsBiFunction;
@@ -1091,3 +1048,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
+// LIFERAY-REST-BUILDER-HASH:2118203985

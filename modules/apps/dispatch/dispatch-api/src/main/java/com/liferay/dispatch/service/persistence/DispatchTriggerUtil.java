@@ -210,52 +210,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByUuid_Last(
-			String uuid, OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByUuid_Last(
-		String uuid, OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where uuid = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByUuid_PrevAndNext(
-			long dispatchTriggerId, String uuid,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			dispatchTriggerId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -302,24 +256,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByUuid(
 			uuid, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByUuid_PrevAndNext(
-			long dispatchTriggerId, String uuid,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByUuid_PrevAndNext(
-			dispatchTriggerId, uuid, orderByComparator);
 	}
 
 	/**
@@ -464,59 +400,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByUuid_C_PrevAndNext(
-			long dispatchTriggerId, String uuid, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			dispatchTriggerId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -568,25 +451,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByUuid_C(
 			uuid, companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByUuid_C_PrevAndNext(
-			long dispatchTriggerId, String uuid, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByUuid_C_PrevAndNext(
-			dispatchTriggerId, uuid, companyId, orderByComparator);
 	}
 
 	/**
@@ -725,55 +589,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByCompanyId_Last(
-		long companyId, OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByCompanyId_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			dispatchTriggerId, companyId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -820,24 +635,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByCompanyId(
 			companyId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByCompanyId_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByCompanyId_PrevAndNext(
-			dispatchTriggerId, companyId, orderByComparator);
 	}
 
 	/**
@@ -971,53 +768,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63;.
-	 *
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByActive_Last(
-			boolean active,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByActive_Last(active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63;.
-	 *
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByActive_Last(
-		boolean active, OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByActive_Last(active, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where active = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByActive_PrevAndNext(
-			long dispatchTriggerId, boolean active,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByActive_PrevAndNext(
-			dispatchTriggerId, active, orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where active = &#63;.
 	 *
 	 * @param active the active
@@ -1064,24 +814,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByActive(
 			active, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where active = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByActive_PrevAndNext(
-			long dispatchTriggerId, boolean active,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByActive_PrevAndNext(
-			dispatchTriggerId, active, orderByComparator);
 	}
 
 	/**
@@ -1224,59 +956,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByC_U_Last(
-			long companyId, long userId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByC_U_Last(
-		long companyId, long userId,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByC_U_Last(
-			companyId, userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByC_U_PrevAndNext(
-			long dispatchTriggerId, long companyId, long userId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByC_U_PrevAndNext(
-			dispatchTriggerId, companyId, userId, orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where companyId = &#63; and userId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1328,25 +1007,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByC_U(
 			companyId, userId, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByC_U_PrevAndNext(
-			long dispatchTriggerId, long companyId, long userId,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByC_U_PrevAndNext(
-			dispatchTriggerId, companyId, userId, orderByComparator);
 	}
 
 	/**
@@ -1497,61 +1157,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByC_DTET_Last(
-			long companyId, String dispatchTaskExecutorType,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByC_DTET_Last(
-			companyId, dispatchTaskExecutorType, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByC_DTET_Last(
-		long companyId, String dispatchTaskExecutorType,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByC_DTET_Last(
-			companyId, dispatchTaskExecutorType, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByC_DTET_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			String dispatchTaskExecutorType,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByC_DTET_PrevAndNext(
-			dispatchTriggerId, companyId, dispatchTaskExecutorType,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where companyId = &#63; and dispatchTaskExecutorType = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -1605,27 +1210,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByC_DTET(
 			companyId, dispatchTaskExecutorType, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where companyId = &#63; and dispatchTaskExecutorType = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param companyId the company ID
-	 * @param dispatchTaskExecutorType the dispatch task executor type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByC_DTET_PrevAndNext(
-			long dispatchTriggerId, long companyId,
-			String dispatchTaskExecutorType,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByC_DTET_PrevAndNext(
-			dispatchTriggerId, companyId, dispatchTaskExecutorType,
-			orderByComparator);
 	}
 
 	/**
@@ -1846,60 +1430,6 @@ public class DispatchTriggerUtil {
 	}
 
 	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger
-	 * @throws NoSuchTriggerException if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger findByA_DTCM_Last(
-			boolean active, int dispatchTaskClusterMode,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByA_DTCM_Last(
-			active, dispatchTaskClusterMode, orderByComparator);
-	}
-
-	/**
-	 * Returns the last dispatch trigger in the ordered set where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching dispatch trigger, or <code>null</code> if a matching dispatch trigger could not be found
-	 */
-	public static DispatchTrigger fetchByA_DTCM_Last(
-		boolean active, int dispatchTaskClusterMode,
-		OrderByComparator<DispatchTrigger> orderByComparator) {
-
-		return getPersistence().fetchByA_DTCM_Last(
-			active, dispatchTaskClusterMode, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] findByA_DTCM_PrevAndNext(
-			long dispatchTriggerId, boolean active, int dispatchTaskClusterMode,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().findByA_DTCM_PrevAndNext(
-			dispatchTriggerId, active, dispatchTaskClusterMode,
-			orderByComparator);
-	}
-
-	/**
 	 * Returns all the dispatch triggers that the user has permission to view where active = &#63; and dispatchTaskClusterMode = &#63;.
 	 *
 	 * @param active the active
@@ -1953,26 +1483,6 @@ public class DispatchTriggerUtil {
 
 		return getPersistence().filterFindByA_DTCM(
 			active, dispatchTaskClusterMode, start, end, orderByComparator);
-	}
-
-	/**
-	 * Returns the dispatch triggers before and after the current dispatch trigger in the ordered set of dispatch triggers that the user has permission to view where active = &#63; and dispatchTaskClusterMode = &#63;.
-	 *
-	 * @param dispatchTriggerId the primary key of the current dispatch trigger
-	 * @param active the active
-	 * @param dispatchTaskClusterMode the dispatch task cluster mode
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next dispatch trigger
-	 * @throws NoSuchTriggerException if a dispatch trigger with the primary key could not be found
-	 */
-	public static DispatchTrigger[] filterFindByA_DTCM_PrevAndNext(
-			long dispatchTriggerId, boolean active, int dispatchTaskClusterMode,
-			OrderByComparator<DispatchTrigger> orderByComparator)
-		throws com.liferay.dispatch.exception.NoSuchTriggerException {
-
-		return getPersistence().filterFindByA_DTCM_PrevAndNext(
-			dispatchTriggerId, active, dispatchTaskClusterMode,
-			orderByComparator);
 	}
 
 	/**
@@ -2411,3 +1921,4 @@ public class DispatchTriggerUtil {
 	private static volatile DispatchTriggerPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:564507952

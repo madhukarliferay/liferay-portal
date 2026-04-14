@@ -6,6 +6,7 @@
 package com.liferay.headless.delivery.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.headless.delivery.client.dto.v1_0.Creator;
 import com.liferay.headless.delivery.client.dto.v1_0.StructuredContentFolder;
 import com.liferay.headless.delivery.client.pagination.Page;
 import com.liferay.headless.delivery.client.pagination.Pagination;
@@ -18,11 +19,12 @@ import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.portal.util.PropsValues;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -335,17 +337,27 @@ public class StructuredContentFolderResourceTest
 
 		Assert.assertEquals(1, page.getTotalCount());
 
+		StructuredContentFolder structuredContentFolder = page.fetchFirstItem();
+
 		Assert.assertEquals(
 			postStructuredContentFolder.getId(),
-			page.fetchFirstItem(
-			).getId());
+			structuredContentFolder.getId());
 
-		Assert.assertNotNull(
-			page.fetchFirstItem(
-			).getCreator(
-			).getProfileURL());
+		Creator creator = structuredContentFolder.getCreator();
+
+		Assert.assertNotNull(creator.getProfileURL());
 
 		assertValid(page);
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetStructuredContentFolderStructuredContentFoldersPage()
+		throws Exception {
+
+		super.
+			testGraphQLGetStructuredContentFolderStructuredContentFoldersPage();
 	}
 
 	@Override

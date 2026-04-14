@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.sql.DataSource;
@@ -334,236 +335,6 @@ public class ExportImportReportEntryPersistenceImpl
 	}
 
 	/**
-	 * Returns the last export import report entry in the ordered set where companyId = &#63; and exportImportConfigurationId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param exportImportConfigurationId the export import configuration ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching export import report entry
-	 * @throws NoSuchExportImportReportEntryException if a matching export import report entry could not be found
-	 */
-	@Override
-	public ExportImportReportEntry findByC_E_Last(
-			long companyId, long exportImportConfigurationId,
-			OrderByComparator<ExportImportReportEntry> orderByComparator)
-		throws NoSuchExportImportReportEntryException {
-
-		ExportImportReportEntry exportImportReportEntry = fetchByC_E_Last(
-			companyId, exportImportConfigurationId, orderByComparator);
-
-		if (exportImportReportEntry != null) {
-			return exportImportReportEntry;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append(", exportImportConfigurationId=");
-		sb.append(exportImportConfigurationId);
-
-		sb.append("}");
-
-		throw new NoSuchExportImportReportEntryException(sb.toString());
-	}
-
-	/**
-	 * Returns the last export import report entry in the ordered set where companyId = &#63; and exportImportConfigurationId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param exportImportConfigurationId the export import configuration ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching export import report entry, or <code>null</code> if a matching export import report entry could not be found
-	 */
-	@Override
-	public ExportImportReportEntry fetchByC_E_Last(
-		long companyId, long exportImportConfigurationId,
-		OrderByComparator<ExportImportReportEntry> orderByComparator) {
-
-		int count = countByC_E(companyId, exportImportConfigurationId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<ExportImportReportEntry> list = findByC_E(
-			companyId, exportImportConfigurationId, count - 1, count,
-			orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the export import report entries before and after the current export import report entry in the ordered set where companyId = &#63; and exportImportConfigurationId = &#63;.
-	 *
-	 * @param exportImportReportEntryId the primary key of the current export import report entry
-	 * @param companyId the company ID
-	 * @param exportImportConfigurationId the export import configuration ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next export import report entry
-	 * @throws NoSuchExportImportReportEntryException if a export import report entry with the primary key could not be found
-	 */
-	@Override
-	public ExportImportReportEntry[] findByC_E_PrevAndNext(
-			long exportImportReportEntryId, long companyId,
-			long exportImportConfigurationId,
-			OrderByComparator<ExportImportReportEntry> orderByComparator)
-		throws NoSuchExportImportReportEntryException {
-
-		ExportImportReportEntry exportImportReportEntry = findByPrimaryKey(
-			exportImportReportEntryId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			ExportImportReportEntry[] array =
-				new ExportImportReportEntryImpl[3];
-
-			array[0] = getByC_E_PrevAndNext(
-				session, exportImportReportEntry, companyId,
-				exportImportConfigurationId, orderByComparator, true);
-
-			array[1] = exportImportReportEntry;
-
-			array[2] = getByC_E_PrevAndNext(
-				session, exportImportReportEntry, companyId,
-				exportImportConfigurationId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected ExportImportReportEntry getByC_E_PrevAndNext(
-		Session session, ExportImportReportEntry exportImportReportEntry,
-		long companyId, long exportImportConfigurationId,
-		OrderByComparator<ExportImportReportEntry> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_EXPORTIMPORTREPORTENTRY_WHERE);
-
-		sb.append(_FINDER_COLUMN_C_E_COMPANYID_2);
-
-		sb.append(_FINDER_COLUMN_C_E_EXPORTIMPORTCONFIGURATIONID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(ExportImportReportEntryModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		queryPos.add(exportImportConfigurationId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						exportImportReportEntry)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<ExportImportReportEntry> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the export import report entries where companyId = &#63; and exportImportConfigurationId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -643,6 +414,302 @@ public class ExportImportReportEntryPersistenceImpl
 		_FINDER_COLUMN_C_E_EXPORTIMPORTCONFIGURATIONID_2 =
 			"exportImportReportEntry.exportImportConfigurationId = ?";
 
+	private FinderPath _finderPathFetchByG_C_C_C_E_T;
+
+	/**
+	 * Returns the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; or throws a <code>NoSuchExportImportReportEntryException</code> if it could not be found.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the matching export import report entry
+	 * @throws NoSuchExportImportReportEntryException if a matching export import report entry could not be found
+	 */
+	@Override
+	public ExportImportReportEntry findByG_C_C_C_E_T(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId, long exportImportConfigurationId, int type)
+		throws NoSuchExportImportReportEntryException {
+
+		ExportImportReportEntry exportImportReportEntry = fetchByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
+
+		if (exportImportReportEntry == null) {
+			StringBundler sb = new StringBundler(14);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("groupId=");
+			sb.append(groupId);
+
+			sb.append(", companyId=");
+			sb.append(companyId);
+
+			sb.append(", classExternalReferenceCode=");
+			sb.append(classExternalReferenceCode);
+
+			sb.append(", classNameId=");
+			sb.append(classNameId);
+
+			sb.append(", exportImportConfigurationId=");
+			sb.append(exportImportConfigurationId);
+
+			sb.append(", type=");
+			sb.append(type);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchExportImportReportEntryException(sb.toString());
+		}
+
+		return exportImportReportEntry;
+	}
+
+	/**
+	 * Returns the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the matching export import report entry, or <code>null</code> if a matching export import report entry could not be found
+	 */
+	@Override
+	public ExportImportReportEntry fetchByG_C_C_C_E_T(
+		long groupId, long companyId, String classExternalReferenceCode,
+		long classNameId, long exportImportConfigurationId, int type) {
+
+		return fetchByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type, true);
+	}
+
+	/**
+	 * Returns the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching export import report entry, or <code>null</code> if a matching export import report entry could not be found
+	 */
+	@Override
+	public ExportImportReportEntry fetchByG_C_C_C_E_T(
+		long groupId, long companyId, String classExternalReferenceCode,
+		long classNameId, long exportImportConfigurationId, int type,
+		boolean useFinderCache) {
+
+		classExternalReferenceCode = Objects.toString(
+			classExternalReferenceCode, "");
+
+		Object[] finderArgs = null;
+
+		if (useFinderCache) {
+			finderArgs = new Object[] {
+				groupId, companyId, classExternalReferenceCode, classNameId,
+				exportImportConfigurationId, type
+			};
+		}
+
+		Object result = null;
+
+		if (useFinderCache) {
+			result = finderCache.getResult(
+				_finderPathFetchByG_C_C_C_E_T, finderArgs, this);
+		}
+
+		if (result instanceof ExportImportReportEntry) {
+			ExportImportReportEntry exportImportReportEntry =
+				(ExportImportReportEntry)result;
+
+			if ((groupId != exportImportReportEntry.getGroupId()) ||
+				(companyId != exportImportReportEntry.getCompanyId()) ||
+				!Objects.equals(
+					classExternalReferenceCode,
+					exportImportReportEntry.getClassExternalReferenceCode()) ||
+				(classNameId != exportImportReportEntry.getClassNameId()) ||
+				(exportImportConfigurationId !=
+					exportImportReportEntry.getExportImportConfigurationId()) ||
+				(type != exportImportReportEntry.getType())) {
+
+				result = null;
+			}
+		}
+
+		if (result == null) {
+			StringBundler sb = new StringBundler(8);
+
+			sb.append(_SQL_SELECT_EXPORTIMPORTREPORTENTRY_WHERE);
+
+			sb.append(_FINDER_COLUMN_G_C_C_C_E_T_GROUPID_2);
+
+			sb.append(_FINDER_COLUMN_G_C_C_C_E_T_COMPANYID_2);
+
+			boolean bindClassExternalReferenceCode = false;
+
+			if (classExternalReferenceCode.isEmpty()) {
+				sb.append(
+					_FINDER_COLUMN_G_C_C_C_E_T_CLASSEXTERNALREFERENCECODE_3);
+			}
+			else {
+				bindClassExternalReferenceCode = true;
+
+				sb.append(
+					_FINDER_COLUMN_G_C_C_C_E_T_CLASSEXTERNALREFERENCECODE_2);
+			}
+
+			sb.append(_FINDER_COLUMN_G_C_C_C_E_T_CLASSNAMEID_2);
+
+			sb.append(_FINDER_COLUMN_G_C_C_C_E_T_EXPORTIMPORTCONFIGURATIONID_2);
+
+			sb.append(_FINDER_COLUMN_G_C_C_C_E_T_TYPE_2);
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				queryPos.add(groupId);
+
+				queryPos.add(companyId);
+
+				if (bindClassExternalReferenceCode) {
+					queryPos.add(classExternalReferenceCode);
+				}
+
+				queryPos.add(classNameId);
+
+				queryPos.add(exportImportConfigurationId);
+
+				queryPos.add(type);
+
+				List<ExportImportReportEntry> list = query.list();
+
+				if (list.isEmpty()) {
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathFetchByG_C_C_C_E_T, finderArgs, list);
+					}
+				}
+				else {
+					ExportImportReportEntry exportImportReportEntry = list.get(
+						0);
+
+					result = exportImportReportEntry;
+
+					cacheResult(exportImportReportEntry);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
+		else {
+			return (ExportImportReportEntry)result;
+		}
+	}
+
+	/**
+	 * Removes the export import report entry where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the export import report entry that was removed
+	 */
+	@Override
+	public ExportImportReportEntry removeByG_C_C_C_E_T(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId, long exportImportConfigurationId, int type)
+		throws NoSuchExportImportReportEntryException {
+
+		ExportImportReportEntry exportImportReportEntry = findByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
+
+		return remove(exportImportReportEntry);
+	}
+
+	/**
+	 * Returns the number of export import report entries where groupId = &#63; and companyId = &#63; and classExternalReferenceCode = &#63; and classNameId = &#63; and exportImportConfigurationId = &#63; and type = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param companyId the company ID
+	 * @param classExternalReferenceCode the class external reference code
+	 * @param classNameId the class name ID
+	 * @param exportImportConfigurationId the export import configuration ID
+	 * @param type the type
+	 * @return the number of matching export import report entries
+	 */
+	@Override
+	public int countByG_C_C_C_E_T(
+		long groupId, long companyId, String classExternalReferenceCode,
+		long classNameId, long exportImportConfigurationId, int type) {
+
+		ExportImportReportEntry exportImportReportEntry = fetchByG_C_C_C_E_T(
+			groupId, companyId, classExternalReferenceCode, classNameId,
+			exportImportConfigurationId, type);
+
+		if (exportImportReportEntry == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_G_C_C_C_E_T_GROUPID_2 =
+		"exportImportReportEntry.groupId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_C_C_E_T_COMPANYID_2 =
+		"exportImportReportEntry.companyId = ? AND ";
+
+	private static final String
+		_FINDER_COLUMN_G_C_C_C_E_T_CLASSEXTERNALREFERENCECODE_2 =
+			"exportImportReportEntry.classExternalReferenceCode = ? AND ";
+
+	private static final String
+		_FINDER_COLUMN_G_C_C_C_E_T_CLASSEXTERNALREFERENCECODE_3 =
+			"(exportImportReportEntry.classExternalReferenceCode IS NULL OR exportImportReportEntry.classExternalReferenceCode = '') AND ";
+
+	private static final String _FINDER_COLUMN_G_C_C_C_E_T_CLASSNAMEID_2 =
+		"exportImportReportEntry.classNameId = ? AND ";
+
+	private static final String
+		_FINDER_COLUMN_G_C_C_C_E_T_EXPORTIMPORTCONFIGURATIONID_2 =
+			"exportImportReportEntry.exportImportConfigurationId = ? AND ";
+
+	private static final String _FINDER_COLUMN_G_C_C_C_E_T_TYPE_2 =
+		"exportImportReportEntry.type = ?";
+
 	public ExportImportReportEntryPersistenceImpl() {
 		Map<String, String> dbColumnNames = new HashMap<String, String>();
 
@@ -668,6 +735,18 @@ public class ExportImportReportEntryPersistenceImpl
 		entityCache.putResult(
 			ExportImportReportEntryImpl.class,
 			exportImportReportEntry.getPrimaryKey(), exportImportReportEntry);
+
+		finderCache.putResult(
+			_finderPathFetchByG_C_C_C_E_T,
+			new Object[] {
+				exportImportReportEntry.getGroupId(),
+				exportImportReportEntry.getCompanyId(),
+				exportImportReportEntry.getClassExternalReferenceCode(),
+				exportImportReportEntry.getClassNameId(),
+				exportImportReportEntry.getExportImportConfigurationId(),
+				exportImportReportEntry.getType()
+			},
+			exportImportReportEntry);
 	}
 
 	private int _valueObjectFinderCacheListThreshold;
@@ -748,6 +827,23 @@ public class ExportImportReportEntryPersistenceImpl
 			entityCache.removeResult(
 				ExportImportReportEntryImpl.class, primaryKey);
 		}
+	}
+
+	protected void cacheUniqueFindersCache(
+		ExportImportReportEntryModelImpl exportImportReportEntryModelImpl) {
+
+		Object[] args = new Object[] {
+			exportImportReportEntryModelImpl.getGroupId(),
+			exportImportReportEntryModelImpl.getCompanyId(),
+			exportImportReportEntryModelImpl.getClassExternalReferenceCode(),
+			exportImportReportEntryModelImpl.getClassNameId(),
+			exportImportReportEntryModelImpl.getExportImportConfigurationId(),
+			exportImportReportEntryModelImpl.getType()
+		};
+
+		finderCache.putResult(
+			_finderPathFetchByG_C_C_C_E_T, args,
+			exportImportReportEntryModelImpl);
 	}
 
 	/**
@@ -935,6 +1031,8 @@ public class ExportImportReportEntryPersistenceImpl
 		entityCache.putResult(
 			ExportImportReportEntryImpl.class, exportImportReportEntryModelImpl,
 			false, true);
+
+		cacheUniqueFindersCache(exportImportReportEntryModelImpl);
 
 		if (isNew) {
 			exportImportReportEntry.setNew(false);
@@ -1246,6 +1344,19 @@ public class ExportImportReportEntryPersistenceImpl
 			new String[] {Long.class.getName(), Long.class.getName()},
 			new String[] {"companyId", "exportImportConfigurationId"}, false);
 
+		_finderPathFetchByG_C_C_C_E_T = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchByG_C_C_C_E_T",
+			new String[] {
+				Long.class.getName(), Long.class.getName(),
+				String.class.getName(), Long.class.getName(),
+				Long.class.getName(), Integer.class.getName()
+			},
+			new String[] {
+				"groupId", "companyId", "classExternalReferenceCode",
+				"classNameId", "exportImportConfigurationId", "type_"
+			},
+			true);
+
 		ExportImportReportEntryUtil.setPersistence(this);
 	}
 
@@ -1321,3 +1432,4 @@ public class ExportImportReportEntryPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1107683078

@@ -5,17 +5,30 @@
 
 import {Locator, Page, expect} from '@playwright/test';
 
+import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
+import {expectToPass} from '../../../../utils/expectToPass';
+
 export class DataSetPage {
 	readonly activeViewSelector: Locator;
+	readonly assetLink: (assetName: string) => Locator;
+	readonly loading: Locator;
 	readonly page: Page;
+	readonly searchInput: Locator;
 	readonly table: {
 		bodyRows: Locator;
 		container: Locator;
 		headRow: Locator;
 	};
+	readonly selectAllLink: Locator;
 
 	constructor(page: Page) {
-		this.activeViewSelector = page.getByLabel('Show View Options');
+		this.activeViewSelector = page.getByLabel(/View Selected/);
+		this.assetLink = (assetName) => {
+			return page.getByRole('link', {
+				exact: true,
+				name: assetName,
+			});
+		};
 
 		const tableContainer = page.locator('.fds table');
 		this.table = {
@@ -23,8 +36,13 @@ export class DataSetPage {
 			container: tableContainer,
 			headRow: tableContainer.locator('thead tr'),
 		};
-
+		this.loading = page.locator('.data-set .loading-animation');
 		this.page = page;
+		this.searchInput = this.page.getByPlaceholder('Search');
+		this.selectAllLink = page.getByRole('button', {
+			exact: true,
+			name: 'Select All',
+		});
 	}
 
 	getRow(filter: string) {
@@ -32,7 +50,10 @@ export class DataSetPage {
 	}
 
 	async execBulkItemAction({action}) {
-		await this.page.getByLabel('Actions').click();
+		await this.page
+			.getByTestId('visualization-mode-table')
+			.getByLabel('Actions')
+			.click();
 
 		const dropdownMenuItemDelete = this.page.getByRole('menuitem', {
 			name: action,
@@ -43,31 +64,34 @@ export class DataSetPage {
 		await dropdownMenuItemDelete.click();
 	}
 
-	async execItemAction({action, filter}: {action: string; filter: string}) {
+	async execItemAction({
+		action,
+		filter,
+		timeout,
+	}: {
+		action: string;
+		filter: string;
+		timeout?: number;
+	}) {
 		const item = this.getRow(filter);
+
 		const button = item.getByRole('button', {
-			exact: true,
-			name: 'Actions',
+			name: `${filter} Actions`,
 		});
-		const dropdownId = await button.getAttribute('aria-controls');
-		await button.click();
 
-		const dropdownMenu = this.page
-			.locator(`#${dropdownId}`)
-			.filter({has: this.page.getByRole('menu')});
-		await dropdownMenu.waitFor();
-
-		const dropdownMenuActionItem = dropdownMenu
-			.getByRole('menuitem', {
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {
 				name: action,
-			})
-			.first();
-
-		await dropdownMenuActionItem.waitFor();
-		await dropdownMenuActionItem.click();
+			}),
+			timeout,
+			trigger: button,
+		});
 	}
 
-	async changeVisualizationMode(visualizationMode: 'Cards' | 'Table') {
+	async changeVisualizationMode(
+		visualizationMode: 'Cards' | 'Table' | 'Gallery'
+	) {
 		await this.activeViewSelector.waitFor({
 			state: 'visible',
 		});
@@ -77,5 +101,31 @@ export class DataSetPage {
 			.getByRole('listbox')
 			.getByRole('option', {name: visualizationMode})
 			.click();
+	}
+
+	async search(value: string) {
+		await expectToPass(
+			async () => {
+				await this.searchInput.fill(value);
+
+				await this.searchInput.press('Enter');
+
+				await this.page
+					.locator('.search-resume-label', {
+						has: this.page.locator('strong', {hasText: value}),
+					})
+					.waitFor();
+
+				await this.loading.waitFor({state: 'hidden'});
+			},
+			{timeout: 8000}
+		);
+	}
+
+	async selectAll() {
+		await clickAndExpectToBeVisible({
+			target: this.page.getByText('All Selected'),
+			trigger: this.page.getByTitle('Select Items'),
+		});
 	}
 }

@@ -98,9 +98,9 @@
 		<column method-name="DBTableName" name="dbTableName" type="String" />
 		<column name="enableCategorization" type="boolean" />
 		<column name="enableComments" type="boolean" />
+		<column name="enableFormContainer" type="boolean" />
 		<column name="enableFriendlyURLCustomization" type="boolean" />
 		<column name="enableIndexSearch" type="boolean" />
-		<column name="enableLocalization" type="boolean" />
 		<column name="enableObjectEntryDraft" type="boolean" />
 		<column name="enableObjectEntryHistory" type="boolean" />
 		<column name="enableObjectEntrySchedule" type="boolean" />
@@ -223,6 +223,11 @@
 			<finder-column name="objectDefinitionId" />
 			<finder-column name="name" />
 		</finder>
+		<finder name="C_N_V" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="name" />
+			<finder-column name="value" />
+		</finder>
 	</entity>
 	<entity local-service="true" name="ObjectEntry" remote-service="true" trash-enabled="true" uuid="true">
 
@@ -248,6 +253,7 @@
 
 		<!-- Other fields -->
 
+		<column name="headObjectEntryId" type="long" />
 		<column name="objectDefinitionId" type="long" />
 		<column name="objectEntryFolderId" type="long" />
 		<column name="rootObjectEntryId" type="long" />
@@ -271,40 +277,43 @@
 
 		<!-- Finder methods -->
 
-		<finder name="ObjectDefinitionId" return-type="Collection">
+		<finder name="HeadObjectEntryId" return-type="ObjectEntry" where="objectEntryId != headObjectEntryId">
+			<finder-column name="headObjectEntryId" />
+		</finder>
+		<finder name="ObjectDefinitionId" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="objectDefinitionId" />
 		</finder>
-		<finder name="G_ODI" return-type="Collection">
+		<finder name="G_ODI" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="groupId" />
 			<finder-column name="objectDefinitionId" />
 		</finder>
-		<finder name="G_OEFI" return-type="Collection">
+		<finder name="G_OEFI" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="groupId" />
 			<finder-column name="objectEntryFolderId" />
 		</finder>
-		<finder name="U_ODI" return-type="Collection">
+		<finder name="U_ODI" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="userId" />
 			<finder-column name="objectDefinitionId" />
 		</finder>
-		<finder name="ODI_NotS" return-type="Collection">
+		<finder name="ODI_NotS" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="objectDefinitionId" />
 			<finder-column comparator="!=" name="status" />
 		</finder>
-		<finder name="ROEI_NotS" return-type="Collection">
+		<finder name="ROEI_NotS" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="rootObjectEntryId" />
 			<finder-column comparator="!=" name="status" />
 		</finder>
-		<finder name="G_C_OEFI" return-type="Collection">
+		<finder name="G_C_OEFI" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="groupId" />
 			<finder-column name="companyId" />
 			<finder-column name="objectEntryFolderId" />
 		</finder>
-		<finder name="G_ODI_S" return-type="Collection">
+		<finder name="G_ODI_S" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="groupId" />
 			<finder-column name="objectDefinitionId" />
 			<finder-column name="status" />
 		</finder>
-		<finder name="U_GtCD_ODI" return-type="Collection">
+		<finder name="U_GtCD_ODI" return-type="Collection" where="objectEntryId = headObjectEntryId">
 			<finder-column name="userId" />
 			<finder-column comparator="&gt;" name="createDate" />
 			<finder-column name="objectDefinitionId" />
@@ -364,11 +373,12 @@
 			<finder-column name="companyId" />
 			<finder-column comparator="LIKE" name="treePath" />
 		</finder>
-		<finder name="G_C_P_N" return-type="ObjectEntryFolder" unique="true">
+		<finder name="G_C_P_N_NotS" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="companyId" />
 			<finder-column name="parentObjectEntryFolderId" />
 			<finder-column name="name" />
+			<finder-column comparator="!=" name="status" />
 		</finder>
 	</entity>
 	<entity local-service="true" name="ObjectEntryVersion" remote-service="true" uuid="true">
@@ -414,6 +424,10 @@
 		<finder name="OEI_V" return-type="ObjectEntryVersion" unique="true">
 			<finder-column name="objectEntryId" />
 			<finder-column name="version" />
+		</finder>
+		<finder name="OEI_S" return-type="Collection">
+			<finder-column name="objectEntryId" />
+			<finder-column name="status" />
 		</finder>
 	</entity>
 	<entity local-service="true" name="ObjectField" remote-service="true" uuid="true">
@@ -475,6 +489,10 @@
 		<finder name="C_U" return-type="Collection">
 			<finder-column name="companyId" />
 			<finder-column name="userId" />
+		</finder>
+		<finder name="C_BT" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="businessType" />
 		</finder>
 		<finder name="LTDI_S" return-type="Collection">
 			<finder-column name="listTypeDefinitionId" />
@@ -595,6 +613,7 @@
 
 		<column localized="true" name="label" type="String" />
 		<column name="name" type="String" />
+		<column name="status" type="int" />
 
 		<!-- Finder methods -->
 
@@ -1233,6 +1252,7 @@
 		<exception>ObjectDefinitionClassName</exception>
 		<exception>ObjectDefinitionEnableCategorization</exception>
 		<exception>ObjectDefinitionEnableComments</exception>
+		<exception>ObjectDefinitionEnableFormContainer</exception>
 		<exception>ObjectDefinitionEnableFriendlyURLCustomization</exception>
 		<exception>ObjectDefinitionEnableLocalization</exception>
 		<exception>ObjectDefinitionEnableObjectEntryHistory</exception>
@@ -1244,6 +1264,7 @@
 		<exception>ObjectDefinitionLabel</exception>
 		<exception>ObjectDefinitionModifiable</exception>
 		<exception>ObjectDefinitionName</exception>
+		<exception>ObjectDefinitionObjectFolderId</exception>
 		<exception>ObjectDefinitionPanelCategoryKey</exception>
 		<exception>ObjectDefinitionPluralLabel</exception>
 		<exception>ObjectDefinitionPortlet</exception>
@@ -1260,6 +1281,7 @@
 		<exception>ObjectEntryFolderParentObjectEntryFolderId</exception>
 		<exception>ObjectEntryFolderScope</exception>
 		<exception>ObjectEntryGroupId</exception>
+		<exception>ObjectEntryScope</exception>
 		<exception>ObjectEntryValues</exception>
 		<exception>ObjectFieldBusinessType</exception>
 		<exception>ObjectFieldDBType</exception>
@@ -1279,7 +1301,7 @@
 		<exception>ObjectFolderItemObjectDefinitionId</exception>
 		<exception>ObjectFolderLabel</exception>
 		<exception>ObjectFolderName</exception>
-		<exception>ObjectLayoutBoxCategorizationType</exception>
+		<exception>ObjectLayoutBoxType</exception>
 		<exception>ObjectLayoutColumnSize</exception>
 		<exception>ObjectRelationshipDeletionType</exception>
 		<exception>ObjectRelationshipEdge</exception>

@@ -210,52 +210,6 @@ public class CommerceCurrencyUtil {
 	}
 
 	/**
-	 * Returns the last commerce currency in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency
-	 * @throws NoSuchCurrencyException if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency findByUuid_Last(
-			String uuid, OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency, or <code>null</code> if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency fetchByUuid_Last(
-		String uuid, OrderByComparator<CommerceCurrency> orderByComparator) {
-
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce currencies before and after the current commerce currency in the ordered set where uuid = &#63;.
-	 *
-	 * @param commerceCurrencyId the primary key of the current commerce currency
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce currency
-	 * @throws NoSuchCurrencyException if a commerce currency with the primary key could not be found
-	 */
-	public static CommerceCurrency[] findByUuid_PrevAndNext(
-			long commerceCurrencyId, String uuid,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByUuid_PrevAndNext(
-			commerceCurrencyId, uuid, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce currencies where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -387,59 +341,6 @@ public class CommerceCurrencyUtil {
 	}
 
 	/**
-	 * Returns the last commerce currency in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency
-	 * @throws NoSuchCurrencyException if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency, or <code>null</code> if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<CommerceCurrency> orderByComparator) {
-
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce currencies before and after the current commerce currency in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param commerceCurrencyId the primary key of the current commerce currency
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce currency
-	 * @throws NoSuchCurrencyException if a commerce currency with the primary key could not be found
-	 */
-	public static CommerceCurrency[] findByUuid_C_PrevAndNext(
-			long commerceCurrencyId, String uuid, long companyId,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			commerceCurrencyId, uuid, companyId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce currencies where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -561,55 +462,6 @@ public class CommerceCurrencyUtil {
 
 		return getPersistence().fetchByCompanyId_First(
 			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency
-	 * @throws NoSuchCurrencyException if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency, or <code>null</code> if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CommerceCurrency> orderByComparator) {
-
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce currencies before and after the current commerce currency in the ordered set where companyId = &#63;.
-	 *
-	 * @param commerceCurrencyId the primary key of the current commerce currency
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce currency
-	 * @throws NoSuchCurrencyException if a commerce currency with the primary key could not be found
-	 */
-	public static CommerceCurrency[] findByCompanyId_PrevAndNext(
-			long commerceCurrencyId, long companyId,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByCompanyId_PrevAndNext(
-			commerceCurrencyId, companyId, orderByComparator);
 	}
 
 	/**
@@ -807,59 +659,6 @@ public class CommerceCurrencyUtil {
 	}
 
 	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency
-	 * @throws NoSuchCurrencyException if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency findByC_P_Last(
-			long companyId, boolean primary,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByC_P_Last(
-			companyId, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63; and primary = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency, or <code>null</code> if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency fetchByC_P_Last(
-		long companyId, boolean primary,
-		OrderByComparator<CommerceCurrency> orderByComparator) {
-
-		return getPersistence().fetchByC_P_Last(
-			companyId, primary, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce currencies before and after the current commerce currency in the ordered set where companyId = &#63; and primary = &#63;.
-	 *
-	 * @param commerceCurrencyId the primary key of the current commerce currency
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce currency
-	 * @throws NoSuchCurrencyException if a commerce currency with the primary key could not be found
-	 */
-	public static CommerceCurrency[] findByC_P_PrevAndNext(
-			long commerceCurrencyId, long companyId, boolean primary,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByC_P_PrevAndNext(
-			commerceCurrencyId, companyId, primary, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce currencies where companyId = &#63; and primary = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -990,59 +789,6 @@ public class CommerceCurrencyUtil {
 
 		return getPersistence().fetchByC_A_First(
 			companyId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency
-	 * @throws NoSuchCurrencyException if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency findByC_A_Last(
-			long companyId, boolean active,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByC_A_Last(
-			companyId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency, or <code>null</code> if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency fetchByC_A_Last(
-		long companyId, boolean active,
-		OrderByComparator<CommerceCurrency> orderByComparator) {
-
-		return getPersistence().fetchByC_A_Last(
-			companyId, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce currencies before and after the current commerce currency in the ordered set where companyId = &#63; and active = &#63;.
-	 *
-	 * @param commerceCurrencyId the primary key of the current commerce currency
-	 * @param companyId the company ID
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce currency
-	 * @throws NoSuchCurrencyException if a commerce currency with the primary key could not be found
-	 */
-	public static CommerceCurrency[] findByC_A_PrevAndNext(
-			long commerceCurrencyId, long companyId, boolean active,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByC_A_PrevAndNext(
-			commerceCurrencyId, companyId, active, orderByComparator);
 	}
 
 	/**
@@ -1184,63 +930,6 @@ public class CommerceCurrencyUtil {
 
 		return getPersistence().fetchByC_P_A_First(
 			companyId, primary, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63; and primary = &#63; and active = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency
-	 * @throws NoSuchCurrencyException if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency findByC_P_A_Last(
-			long companyId, boolean primary, boolean active,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByC_P_A_Last(
-			companyId, primary, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce currency in the ordered set where companyId = &#63; and primary = &#63; and active = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce currency, or <code>null</code> if a matching commerce currency could not be found
-	 */
-	public static CommerceCurrency fetchByC_P_A_Last(
-		long companyId, boolean primary, boolean active,
-		OrderByComparator<CommerceCurrency> orderByComparator) {
-
-		return getPersistence().fetchByC_P_A_Last(
-			companyId, primary, active, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce currencies before and after the current commerce currency in the ordered set where companyId = &#63; and primary = &#63; and active = &#63;.
-	 *
-	 * @param commerceCurrencyId the primary key of the current commerce currency
-	 * @param companyId the company ID
-	 * @param primary the primary
-	 * @param active the active
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce currency
-	 * @throws NoSuchCurrencyException if a commerce currency with the primary key could not be found
-	 */
-	public static CommerceCurrency[] findByC_P_A_PrevAndNext(
-			long commerceCurrencyId, long companyId, boolean primary,
-			boolean active,
-			OrderByComparator<CommerceCurrency> orderByComparator)
-		throws com.liferay.commerce.currency.exception.NoSuchCurrencyException {
-
-		return getPersistence().findByC_P_A_PrevAndNext(
-			commerceCurrencyId, companyId, primary, active, orderByComparator);
 	}
 
 	/**
@@ -1502,3 +1191,4 @@ public class CommerceCurrencyUtil {
 	private static volatile CommerceCurrencyPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1688598663

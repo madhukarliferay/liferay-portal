@@ -195,9 +195,7 @@ public class RecommendationItem implements Serializable {
 			sb.append("\"status\": ");
 
 			sb.append("\"");
-
 			sb.append(status);
-
 			sb.append("\"");
 		}
 
@@ -341,3 +339,4 @@ public class RecommendationItem implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1507478580

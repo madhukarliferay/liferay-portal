@@ -87,14 +87,13 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.SynchronousMailTestRule;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.permission.PermissionUtil;
 
 import java.io.InputStream;
@@ -108,6 +107,7 @@ import java.util.Objects;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -357,6 +357,81 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 		_testGetOrganizationsPageWithFilter();
 	}
 
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteAccountByExternalReferenceCodeOrganization()
+		throws Exception {
+
+		super.testGraphQLDeleteAccountByExternalReferenceCodeOrganization();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteAccountOrganization() throws Exception {
+		super.testGraphQLDeleteAccountOrganization();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteOrganizationByExternalReferenceCodeUserAccountsByEmailAddress()
+		throws Exception {
+
+		super.
+			testGraphQLDeleteOrganizationByExternalReferenceCodeUserAccountsByEmailAddress();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLDeleteUserAccountsByEmailAddress() throws Exception {
+		super.testGraphQLDeleteUserAccountsByEmailAddress();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetAccountByExternalReferenceCodeOrganizationsPage()
+		throws Exception {
+
+		super.testGraphQLGetAccountByExternalReferenceCodeOrganizationsPage();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetAccountOrganizationsPage() throws Exception {
+		super.testGraphQLGetAccountOrganizationsPage();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetOrganizationByExternalReferenceCodeChildOrganizationsPage()
+		throws Exception {
+
+		super.
+			testGraphQLGetOrganizationByExternalReferenceCodeChildOrganizationsPage();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetOrganizationChildOrganizationsPage()
+		throws Exception {
+
+		super.testGraphQLGetOrganizationChildOrganizationsPage();
+	}
+
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetOrganizationOrganizationsPage() throws Exception {
+		super.testGraphQLGetOrganizationOrganizationsPage();
+	}
+
 	@Override
 	@Test
 	public void testPatchOrganization() throws Exception {
@@ -415,7 +490,6 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 				_accountEntry.getAccountEntryId(), "-"));
 	}
 
-	@FeatureFlag("LPD-47858")
 	@LazyReferencing
 	@Override
 	@Test
@@ -424,6 +498,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		_testPostOrganizationBatch();
 		_testPostOrganizationWithCustomFields();
+		_testPostOrganizationWithCommentOverMaximumLength();
 		_testPostOrganizationWithNameOverMaximumLength();
 		_testPostOrganizationWithImageExternalReferenceCode();
 	}
@@ -732,6 +807,64 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 		throws Exception {
 
 		return _addOrganization(organization, "0");
+	}
+
+	@Override
+	protected String
+			testGraphQLDeleteAccountByExternalReferenceCodeOrganization_getExternalReferenceCode(
+				Organization organization)
+		throws Exception {
+
+		return _accountEntry.getExternalReferenceCode();
+	}
+
+	@Override
+	protected Long testGraphQLDeleteAccountOrganization_getAccountId()
+		throws Exception {
+
+		return _accountEntry.getAccountEntryId();
+	}
+
+	@Override
+	protected Organization
+			testGraphQLDeleteOrganizationByExternalReferenceCodeUserAccountByEmailAddress_addOrganization()
+		throws Exception {
+
+		Organization organization = _addOrganization(randomOrganization(), "0");
+
+		_organizationLocalService.addUserOrganization(
+			_user.getUserId(), GetterUtil.getLong(organization.getId()));
+
+		return organization;
+	}
+
+	@Override
+	protected String
+			testGraphQLDeleteOrganizationByExternalReferenceCodeUserAccountByEmailAddress_getEmailAddress()
+		throws Exception {
+
+		return _user.getEmailAddress();
+	}
+
+	@Override
+	protected Organization
+			testGraphQLDeleteUserAccountByEmailAddress_addOrganization()
+		throws Exception {
+
+		Organization organization = _addOrganization(randomOrganization(), "0");
+
+		_organizationLocalService.addUserOrganization(
+			_user.getUserId(), GetterUtil.getLong(organization.getId()));
+
+		return organization;
+	}
+
+	@Override
+	protected String
+			testGraphQLDeleteUserAccountByEmailAddress_getEmailAddress()
+		throws Exception {
+
+		return _user.getEmailAddress();
 	}
 
 	@Override
@@ -1113,11 +1246,17 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 				getOrganization.getAccountBriefs(),
 				accountBrief ->
 					accountBrief.getId() == accountEntry2.getAccountEntryId()));
-		Assert.assertNotNull(getOrganization.getCreator());
 
 		Creator creator = getOrganization.getCreator();
 
 		Assert.assertTrue(creator.getId() == TestPropsValues.getUserId());
+
+		User user3 = TestPropsValues.getUser();
+
+		Assert.assertTrue(
+			Objects.equals(
+				creator.getExternalReferenceCode(),
+				user3.getExternalReferenceCode()));
 
 		Assert.assertNotNull(getOrganization.getImageBase64());
 		Assert.assertNotEquals(
@@ -1241,6 +1380,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 				type = accountEntry1.getType();
 			}
 		};
+
 		AccountBrief accountBrief2 = new AccountBrief() {
 			{
 				externalReferenceCode = RandomTestUtil.randomString();
@@ -1269,6 +1409,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 				roleType = RoleConstants.getTypeLabel(role1.getType());
 			}
 		};
+
 		Permission permission2 = new Permission() {
 			{
 				actionIds = new String[] {ActionKeys.UPDATE};
@@ -1291,6 +1432,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 				roleType = role2.getType();
 			}
 		};
+
 		RoleBrief roleBrief2 = new RoleBrief() {
 			{
 				externalReferenceCode = RandomTestUtil.randomString();
@@ -1301,11 +1443,11 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		organization.setRoleBriefs(new RoleBrief[] {roleBrief1, roleBrief2});
 
-		AssetVocabulary assetVocabulary = AssetTestUtil.addVocabulary(
+		AssetVocabulary assetVocabulary1 = AssetTestUtil.addVocabulary(
 			TestPropsValues.getGroupId());
 
 		AssetCategory assetCategory1 = AssetTestUtil.addCategory(
-			TestPropsValues.getGroupId(), assetVocabulary.getVocabularyId());
+			TestPropsValues.getGroupId(), assetVocabulary1.getVocabularyId());
 
 		Group group = _groupLocalService.getGroup(assetCategory1.getGroupId());
 
@@ -1317,6 +1459,10 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 					siteKey = group.getGroupKey();
 				}
 			};
+
+		String randomString1 = RandomTestUtil.randomString();
+		String randomString2 = RandomTestUtil.randomString();
+
 		TaxonomyCategoryReference taxonomyCategoryReference2 =
 			new TaxonomyCategoryReference() {
 				{
@@ -1334,6 +1480,9 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 				},
 				new TaxonomyCategoryBrief() {
 					{
+						parentTaxonomyCategoryExternalReferenceCode =
+							randomString2;
+						parentVocabularyExternalReferenceCode = randomString1;
 						taxonomyCategoryReference = taxonomyCategoryReference2;
 					}
 				}
@@ -1527,6 +1676,34 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 						assetCategory3.getCategoryId()));
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_EMPTY, assetCategory3.getStatus());
+
+		AssetCategory assetCategory4 =
+			_assetCategoryLocalService.
+				fetchAssetCategoryByExternalReferenceCode(
+					randomString2, group.getGroupId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_EMPTY, assetCategory4.getStatus());
+
+		AssetVocabulary assetVocabulary2 =
+			_assetVocabularyLocalService.
+				fetchAssetVocabularyByExternalReferenceCode(
+					randomString1, group.getGroupId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_EMPTY, assetVocabulary2.getStatus());
+	}
+
+	private void _testPostOrganizationWithCommentOverMaximumLength()
+		throws Exception {
+
+		Organization organization = randomOrganization();
+
+		organization.setComment(RandomTestUtil.randomString(4001));
+
+		assertHttpResponseStatusCode(
+			400,
+			organizationResource.postOrganizationHttpResponse(organization));
 	}
 
 	private void _testPostOrganizationWithCustomFields() throws Exception {

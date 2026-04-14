@@ -3,26 +3,45 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import * as OAuth2 from '@liferay/oauth2-provider-web/client';
 import {useCallback, useEffect, useState} from 'react';
-import {Liferay} from '~/services/liferay';
-import {ITicket} from '~/utils/types';
+import {IBusinessEvent, ITicket} from '~/utils/types';
 
-const useAccountsTickets = (externalReferenceCode?: string, skip?: boolean) => {
+const useAccountsTickets = (
+	businessEvent?: IBusinessEvent,
+	externalReferenceCode?: string,
+	skip?: boolean
+) => {
 	const [loading, setLoading] = useState(true);
 	const [tickets, setTickets] = useState<ITicket[] | undefined>(undefined);
 
 	const fetchTickets = useCallback(async () => {
 		if (skip || !externalReferenceCode) {
+			setLoading(false);
+
 			return;
 		}
 
 		try {
-			const response: ITicket[] =
-				await Liferay.OAuth2Client.FromUserAgentApplication(
-					'liferay-customer-etc-spring-boot-oaua'
+			let ticketsParam = '';
+
+			if (businessEvent) {
+				const associatedTickets = JSON.parse(
+					businessEvent.associatedTickets!
+				);
+
+				ticketsParam = `?ticketIds=${associatedTickets.join(',')}`;
+			}
+
+			const oauth2Client = await OAuth2.FromUserAgentApplication(
+				'liferay-customer-etc-spring-boot-oaua'
+			);
+
+			const response: ITicket[] = await oauth2Client
+				.fetch(
+					`/accounts/${externalReferenceCode}/tickets${ticketsParam}`
 				)
-					.fetch(`/accounts/${externalReferenceCode}/tickets`)
-					.then((response: {json: () => any}) => response.json());
+				.then((response: {json: () => any}) => response.json());
 
 			setTickets(response);
 
@@ -35,9 +54,11 @@ const useAccountsTickets = (externalReferenceCode?: string, skip?: boolean) => {
 
 			setLoading(false);
 		}
-	}, [externalReferenceCode, skip]);
+	}, [businessEvent, externalReferenceCode, skip]);
 
 	useEffect(() => {
+		setLoading(true);
+
 		fetchTickets();
 	}, [fetchTickets]);
 

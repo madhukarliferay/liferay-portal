@@ -6,6 +6,7 @@
 package com.liferay.fragment.internal.processor;
 
 import com.liferay.fragment.constants.FragmentWebKeys;
+import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.CSSFragmentEntryProcessor;
 import com.liferay.fragment.processor.DefaultEditableValuesFragmentEntryProcessor;
@@ -23,6 +24,9 @@ import com.liferay.osgi.service.tracker.collections.map.PropertyServiceReference
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -40,6 +44,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.jsoup.Jsoup;
@@ -116,7 +121,7 @@ public class FragmentEntryProcessorRegistryImpl
 
 			JSONObject defaultEditableValuesJSONObject =
 				fragmentEntryProcessor.getDefaultEditableValuesJSONObject(
-					html, configurationJSONObject);
+					configurationJSONObject, html);
 
 			if ((defaultEditableValuesJSONObject != null) &&
 				(defaultEditableValuesJSONObject.length() > 0)) {
@@ -152,6 +157,76 @@ public class FragmentEntryProcessorRegistryImpl
 	}
 
 	@Override
+	public String mergeDefaultEditableValues(
+		JSONObject configurationJSONObject, JSONObject editableValuesJSONObject,
+		String html) {
+
+		JSONObject defaultEditableValuesJSONObject =
+			getDefaultEditableValuesJSONObject(html, configurationJSONObject);
+
+		JSONObject defaultEditableFragmentEntryProcessorJSONObject =
+			defaultEditableValuesJSONObject.getJSONObject(
+				FragmentEntryProcessorConstants.
+					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
+
+		if (defaultEditableFragmentEntryProcessorJSONObject == null) {
+			return editableValuesJSONObject.toString();
+		}
+
+		JSONObject editableFragmentEntryProcessorJSONObject =
+			editableValuesJSONObject.getJSONObject(
+				FragmentEntryProcessorConstants.
+					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
+
+		if (editableFragmentEntryProcessorJSONObject == null) {
+			editableFragmentEntryProcessorJSONObject =
+				_jsonFactory.createJSONObject();
+		}
+
+		Iterator<String> defaultEditableValuesIterator =
+			defaultEditableFragmentEntryProcessorJSONObject.keys();
+
+		while (defaultEditableValuesIterator.hasNext()) {
+			String key = defaultEditableValuesIterator.next();
+
+			if (editableFragmentEntryProcessorJSONObject.has(key)) {
+				JSONObject editableValueJSONObject =
+					editableFragmentEntryProcessorJSONObject.getJSONObject(key);
+
+				JSONObject defaultEditableValueJSONObject =
+					defaultEditableFragmentEntryProcessorJSONObject.
+						getJSONObject(key);
+
+				editableValueJSONObject.put(
+					"defaultValue",
+					defaultEditableValueJSONObject.get("defaultValue"));
+
+				defaultEditableFragmentEntryProcessorJSONObject.put(
+					key, editableValueJSONObject);
+			}
+		}
+
+		Iterator<String> editableValuesIterator =
+			editableFragmentEntryProcessorJSONObject.keys();
+
+		while (editableValuesIterator.hasNext()) {
+			String key = editableValuesIterator.next();
+
+			if (!defaultEditableFragmentEntryProcessorJSONObject.has(key)) {
+				defaultEditableFragmentEntryProcessorJSONObject.put(
+					key, editableFragmentEntryProcessorJSONObject.get(key));
+			}
+		}
+
+		editableValuesJSONObject.put(
+			FragmentEntryProcessorConstants.
+				KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
+			defaultEditableFragmentEntryProcessorJSONObject);
+
+		return editableValuesJSONObject.toString();
+	}
+
+	@Override
 	public String processFragmentEntryLinkCSS(
 			FragmentEntryLink fragmentEntryLink,
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
@@ -175,6 +250,18 @@ public class FragmentEntryProcessorRegistryImpl
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
 		throws PortalException {
 
+		return processFragmentEntryLinkHTML(
+			fragmentEntryLink.getEditableValuesJSONObject(), fragmentEntryLink,
+			fragmentEntryProcessorContext);
+	}
+
+	@Override
+	public String processFragmentEntryLinkHTML(
+			JSONObject editableValuesJSONObject,
+			FragmentEntryLink fragmentEntryLink,
+			FragmentEntryProcessorContext fragmentEntryProcessorContext)
+		throws PortalException {
+
 		if (fragmentEntryLink.isTypePortlet()) {
 			return _renderWidgetHTML(
 				fragmentEntryLink, fragmentEntryProcessorContext);
@@ -186,7 +273,8 @@ public class FragmentEntryProcessorRegistryImpl
 				_fragmentEntryProcessors) {
 
 			html = fragmentEntryProcessor.processFragmentEntryLinkHTML(
-				fragmentEntryLink, html, fragmentEntryProcessorContext);
+				editableValuesJSONObject, fragmentEntryLink,
+				fragmentEntryProcessorContext, html);
 		}
 
 		Document document = _getDocument(html);
@@ -195,7 +283,8 @@ public class FragmentEntryProcessorRegistryImpl
 				_documentFragmentEntryProcessors) {
 
 			documentFragmentEntryProcessor.processFragmentEntryLinkHTML(
-				fragmentEntryLink, document, fragmentEntryProcessorContext);
+				document, editableValuesJSONObject, fragmentEntryLink,
+				fragmentEntryProcessorContext);
 		}
 
 		Element bodyElement = document.body();
@@ -261,6 +350,8 @@ public class FragmentEntryProcessorRegistryImpl
 			Collections.reverseOrder(
 				new PropertyServiceReferenceComparator<>(
 					"fragment.entry.processor.priority")));
+		_documentPortalCache = PortalCacheHelperUtil.getPortalCache(
+			PortalCacheManagerNames.SINGLE_VM, _DOCUMENT_PORTAL_CACHE_NAME);
 		_fragmentEntryAutocompleteContributors = ServiceTrackerListFactory.open(
 			bundleContext, FragmentEntryAutocompleteContributor.class,
 			Collections.reverseOrder(
@@ -280,6 +371,8 @@ public class FragmentEntryProcessorRegistryImpl
 
 	@Deactivate
 	protected void deactivate() {
+		PortalCacheHelperUtil.removePortalCache(
+			PortalCacheManagerNames.SINGLE_VM, _DOCUMENT_PORTAL_CACHE_NAME);
 		_cssFragmentEntryProcessors.close();
 		_defaultEditableValuesFragmentEntryProcessors.close();
 		_documentFragmentEntryProcessors.close();
@@ -290,15 +383,22 @@ public class FragmentEntryProcessorRegistryImpl
 	}
 
 	private Document _getDocument(String html) {
-		Document document = Jsoup.parseBodyFragment(html);
+		Document document = _documentPortalCache.get(html);
 
-		Document.OutputSettings outputSettings = new Document.OutputSettings();
+		if (document == null) {
+			document = Jsoup.parseBodyFragment(html);
 
-		outputSettings.prettyPrint(false);
+			Document.OutputSettings outputSettings =
+				new Document.OutputSettings();
 
-		document.outputSettings(outputSettings);
+			outputSettings.prettyPrint(false);
 
-		return document;
+			document.outputSettings(outputSettings);
+
+			_documentPortalCache.put(html, document);
+		}
+
+		return document.clone();
 	}
 
 	private String _renderWidgetHTML(
@@ -346,6 +446,10 @@ public class FragmentEntryProcessorRegistryImpl
 		return html;
 	}
 
+	private static final String _DOCUMENT_PORTAL_CACHE_NAME =
+		FragmentEntryProcessorRegistryImpl.class.getName() +
+			"#_documentPortalCache";
+
 	private static final ThreadLocal<Set<String>> _validHTMLs =
 		new CentralizedThreadLocal(
 			FragmentEntryProcessorRegistryImpl.class.getName() + "._validHTMLs",
@@ -359,6 +463,7 @@ public class FragmentEntryProcessorRegistryImpl
 		_documentFragmentEntryProcessors;
 	private ServiceTrackerList<DocumentFragmentEntryValidator>
 		_documentFragmentEntryValidators;
+	private PortalCache<String, Document> _documentPortalCache;
 	private ServiceTrackerList<FragmentEntryAutocompleteContributor>
 		_fragmentEntryAutocompleteContributors;
 	private ServiceTrackerList<FragmentEntryProcessor> _fragmentEntryProcessors;

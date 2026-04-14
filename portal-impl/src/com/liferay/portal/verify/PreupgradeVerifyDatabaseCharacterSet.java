@@ -6,13 +6,14 @@
 package com.liferay.portal.verify;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.db.DBResourceUtil;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.db.DBResourceUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,13 +42,22 @@ public class PreupgradeVerifyDatabaseCharacterSet
 			return;
 		}
 
-		Set<String> tableNames =
-			DBResourceUtil.getServiceComponentModuleTableNames(connection);
+		Set<String> tableNames = DBResourceUtil.getLiferayTableNames(
+			connection);
 
-		tableNames.addAll(
-			DBResourceUtil.getServiceComponentPortalTableNames(connection));
-		tableNames.addAll(DBResourceUtil.getModuleTableNames(connection));
-		tableNames.addAll(DBResourceUtil.getPortalTableNames(connection));
+		CompanyLocalServiceUtil.forEachCompanyId(
+			companyId -> {
+				try {
+					tableNames.addAll(
+						DBResourceUtil.getNonserviceBuilderTableNames(
+							companyId));
+				}
+				catch (PortalException portalException) {
+					_log.error(
+						"Unable to get table names for company " + companyId,
+						portalException);
+				}
+			});
 
 		String sql = StringBundler.concat(
 			"select distinct character_set_name, collation_name, table_name, ",
@@ -68,13 +78,9 @@ public class PreupgradeVerifyDatabaseCharacterSet
 			ResultSet resultSet = preparedStatement.executeQuery();
 
 			while (resultSet.next()) {
-				DBInspector dbInspector = new DBInspector(connection);
-
 				String tableName = resultSet.getString("table_name");
 
-				if (!tableNames.contains(
-						dbInspector.normalizeName(tableName))) {
-
+				if (!tableNames.contains(tableName)) {
 					continue;
 				}
 

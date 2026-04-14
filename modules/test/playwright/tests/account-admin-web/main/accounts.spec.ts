@@ -8,9 +8,10 @@ import path from 'path';
 
 import {accountsPagesTest} from '../../../fixtures/accountsPagesTest';
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
-import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {customFieldsPagesTest} from '../../../fixtures/customFieldsPagesTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../fixtures/globalMenuPagesTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {serverAdministrationPageTest} from '../../../fixtures/serverAdministrationPageTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
@@ -19,19 +20,19 @@ import {TCustomField} from '../../../helpers/CustomFieldTypesHelper';
 import getGlobalSiteId from '../../../utils/getGlobalSiteId';
 import getRandomString from '../../../utils/getRandomString';
 import {nextPage, setItemsPerPage} from '../../../utils/pagination';
-import performLogin, {
-	performLogout,
-	userData,
-} from '../../../utils/performLogin';
+import {performUserSwitch, userData} from '../../../utils/performLogin';
 import {waitForAlert} from '../../../utils/waitForAlert';
 import {tagsPagesTest} from '../../asset-tags-admin-web/main/fixtures/tagsAdminPagesTest';
 
 export const test = mergeTests(
 	accountsPagesTest,
 	apiHelpersTest,
-	applicationsMenuPageTest,
 	customFieldsPagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
+	globalMenuPagesTest,
 	loginTest(),
 	serverAdministrationPageTest,
 	tagsPagesTest,
@@ -293,8 +294,7 @@ test('LPD-32045 All account entry can be seen by admin user', async ({
 		userAccount.id
 	);
 
-	await performLogout(page);
-	await performLogin(page, userAccount.alternateName);
+	await performUserSwitch(page, userAccount.alternateName);
 
 	try {
 		await accountsPage.goto();
@@ -310,22 +310,21 @@ test('LPD-32045 All account entry can be seen by admin user', async ({
 		).toHaveCount(1);
 	}
 	finally {
-		await performLogout(page);
-		await performLogin(page, 'test');
+		await performUserSwitch(page, 'test');
 	}
 });
 
 test('LPD-33636 Email address is not deleted by saving in the UI', async ({
 	accountsPage,
 	apiHelpers,
-	applicationsMenuPage,
 	editAccountPage,
+	globalMenuPage,
 	page,
 	serverAdministrationPage,
 }) => {
 	const account = await apiHelpers.headlessAdminUser.postAccount();
 
-	await applicationsMenuPage.goToServerAdministration();
+	await globalMenuPage.goToControlPanel('Server Administration');
 
 	const emailAddress = getRandomString() + '@liferay.com';
 
@@ -344,7 +343,7 @@ test('LPD-33636 Email address is not deleted by saving in the UI', async ({
 	await editAccountPage.saveButton.click();
 	await waitForAlert(page);
 
-	await applicationsMenuPage.goToServerAdministration();
+	await globalMenuPage.goToControlPanel('Server Administration');
 
 	const fetchScript = `
 		import com.liferay.account.model.*; 
@@ -548,6 +547,15 @@ test('LPD-45897 Can delete an inactive account', async ({
 	await expect(accountsPage.accountsTable.cell(account.name)).toHaveCount(1);
 
 	await (await accountsPage.accountsTable.rowActions(account.name)).click();
+
+	await expect(async () => {
+		await (
+			await accountsPage.accountsTable.rowActions(account.name)
+		).click();
+
+		await expect(accountsPage.deleteButton).toBeVisible({timeout: 500});
+	}).toPass();
+
 	await accountsPage.deleteButton.click();
 
 	await waitForAlert(page);
@@ -1165,15 +1173,16 @@ test('LPS-101221 Can search an account', async ({
 	await accountsPage.accountsTable.filterButton.click();
 	await accountsPage.accountsTable.filterMenuItem('Inactive').click();
 
-	await accountsPage.accountsTable.search(account1.name);
+	await expect(async () => {
+		await accountsPage.accountsTable.search(account1.name);
 
-	await expect(accountsPage.accountsTable.cell(account1.name)).toHaveCount(0);
-	await expect(accountsPage.accountsTable.cell(account2.name)).toHaveCount(0);
-
-	await accountsPage.accountsTable.search(account1.name);
-
-	await expect(accountsPage.accountsTable.cell(account1.name)).toBeVisible();
-	await expect(accountsPage.accountsTable.cell(account2.name)).toHaveCount(0);
+		await expect(
+			accountsPage.accountsTable.cell(account1.name)
+		).toBeVisible({timeout: 500});
+		await expect(
+			accountsPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+	}).toPass();
 });
 
 test('LPD-47225 Can edit account custom fields', async ({
@@ -1611,8 +1620,7 @@ test('LPD-47589 Check delete and deactivate permissions work independently', asy
 		surname: userAccount.familyName,
 	};
 
-	await performLogout(page);
-	await performLogin(page, userAccount.alternateName);
+	await performUserSwitch(page, userAccount.alternateName);
 
 	await accountsPage.goto();
 
@@ -1669,6 +1677,31 @@ test(
 		).toBeVisible();
 		await expect(
 			editAccountContactInformationPage.phoneNumberHeader
+		).toBeVisible();
+	}
+);
+
+test(
+	'Escape account name to avoid XSS injections',
+	{tag: '@LPD-65007'},
+	async ({accountsPage, apiHelpers, page}) => {
+		const name = '<img src=x onerror=alert(origin)>';
+
+		await apiHelpers.headlessAdminUser.postAccount({
+			name,
+			type: 'business',
+		});
+
+		page.on('dialog', async (dialog) => {
+			if (dialog.type() === 'alert') {
+				throw new Error('XSS detected');
+			}
+		});
+
+		await accountsPage.goto();
+
+		await expect(
+			await accountsPage.accountsTable.cellLink(name)
 		).toBeVisible();
 	}
 );

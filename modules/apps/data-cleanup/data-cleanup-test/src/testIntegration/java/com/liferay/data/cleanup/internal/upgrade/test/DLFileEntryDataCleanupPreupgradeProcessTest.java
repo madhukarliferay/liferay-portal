@@ -6,15 +6,17 @@
 package com.liferay.data.cleanup.internal.upgrade.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.data.cleanup.DataCleanup;
+import com.liferay.data.cleanup.util.DataCleanupUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -79,14 +81,20 @@ public class DLFileEntryDataCleanupPreupgradeProcessTest
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				DLFileEntryDataCleanupPreupgradeProcess.class.getName(),
-				LoggerTestUtil.INFO);
-			ConfigurationTemporarySwapper configurationTemporarySwapper =
-				new ConfigurationTemporarySwapper(
-					"com.liferay.data.cleanup.internal.configuration." +
-						"DataRemovalConfiguration",
-					HashMapDictionaryBuilder.<String, Object>put(
-						"removeDLFileEntryOrphanData", true
-					).build())) {
+				LoggerTestUtil.INFO)) {
+
+			for (DataCleanup dataCleanup :
+					DataCleanupUtil.getSystemDataCleanups()) {
+
+				if (StringUtil.equals(
+						dataCleanup.getLabel(),
+						"remove-dl-file-entry-orphan-data")) {
+
+					dataCleanup.cleanup();
+
+					break;
+				}
+			}
 
 			_assertNonexistentDLFileEntry(fileEntryId1);
 			_assertNonexistentDLFileEntry(fileEntryId2);
@@ -97,14 +105,18 @@ public class DLFileEntryDataCleanupPreupgradeProcessTest
 				messages.contains(
 					StringBundler.concat(
 						"Table ", _dbInspector.normalizeName("DLFileEntry"),
-						", 1 row deleted because fileEntryId ", fileEntryId1,
-						" name was null")));
+						", 1 row deleted because ",
+						_dbInspector.normalizeName("fileEntryId"),
+						StringPool.SPACE, fileEntryId1, StringPool.SPACE,
+						_dbInspector.normalizeName("name"), " was null")));
 			Assert.assertTrue(
 				messages.contains(
 					StringBundler.concat(
 						"Table ", _dbInspector.normalizeName("DLFileEntry"),
-						", 1 row deleted because fileEntryId ", fileEntryId2,
-						" name was ",
+						", 1 row deleted because ",
+						_dbInspector.normalizeName("fileEntryId"),
+						StringPool.SPACE, fileEntryId2, StringPool.SPACE,
+						_dbInspector.normalizeName("name"), " was ",
 						(DBManagerUtil.getDBType() == DBType.ORACLE) ? "null" :
 							"empty")));
 		}
@@ -120,14 +132,17 @@ public class DLFileEntryDataCleanupPreupgradeProcessTest
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				"select count(*) from DLFileEntry where fileEntryId = ?")) {
+				"select count(*) as count from DLFileEntry where fileEntryId " +
+					"= ?")) {
 
 			preparedStatement.setLong(1, fileEntryId);
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				Assert.assertTrue(resultSet.next());
-				Assert.assertEquals(0, resultSet.getInt(1));
+
+				Assert.assertEquals(0, resultSet.getLong("count"));
 			}
 		}
 	}

@@ -211,51 +211,52 @@ public class CPTaxCategoryUtil {
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63;.
+	 * Returns all the cp tax categories that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a matching cp tax category could not be found
+	 * @return the matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory findByUuid_Last(
-			String uuid, OrderByComparator<CPTaxCategory> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPTaxCategoryException {
-
-		return getPersistence().findByUuid_Last(uuid, orderByComparator);
+	public static List<CPTaxCategory> filterFindByUuid(String uuid) {
+		return getPersistence().filterFindByUuid(uuid);
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63;.
+	 * Returns a range of all the cp tax categories that the user has permission to view where uuid = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category, or <code>null</code> if a matching cp tax category could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @return the range of matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory fetchByUuid_Last(
-		String uuid, OrderByComparator<CPTaxCategory> orderByComparator) {
+	public static List<CPTaxCategory> filterFindByUuid(
+		String uuid, int start, int end) {
 
-		return getPersistence().fetchByUuid_Last(uuid, orderByComparator);
+		return getPersistence().filterFindByUuid(uuid, start, end);
 	}
 
 	/**
-	 * Returns the cp tax categories before and after the current cp tax category in the ordered set where uuid = &#63;.
+	 * Returns an ordered range of all the cp tax categories that the user has permissions to view where uuid = &#63;.
 	 *
-	 * @param CPTaxCategoryId the primary key of the current cp tax category
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a cp tax category with the primary key could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory[] findByUuid_PrevAndNext(
-			long CPTaxCategoryId, String uuid,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPTaxCategoryException {
+	public static List<CPTaxCategory> filterFindByUuid(
+		String uuid, int start, int end,
+		OrderByComparator<CPTaxCategory> orderByComparator) {
 
-		return getPersistence().findByUuid_PrevAndNext(
-			CPTaxCategoryId, uuid, orderByComparator);
+		return getPersistence().filterFindByUuid(
+			uuid, start, end, orderByComparator);
 	}
 
 	/**
@@ -275,6 +276,16 @@ public class CPTaxCategoryUtil {
 	 */
 	public static int countByUuid(String uuid) {
 		return getPersistence().countByUuid(uuid);
+	}
+
+	/**
+	 * Returns the number of cp tax categories that the user has permission to view where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @return the number of matching cp tax categories that the user has permission to view
+	 */
+	public static int filterCountByUuid(String uuid) {
+		return getPersistence().filterCountByUuid(uuid);
 	}
 
 	/**
@@ -391,58 +402,57 @@ public class CPTaxCategoryUtil {
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns all the cp tax categories that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a matching cp tax category could not be found
+	 * @return the matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPTaxCategoryException {
+	public static List<CPTaxCategory> filterFindByUuid_C(
+		String uuid, long companyId) {
 
-		return getPersistence().findByUuid_C_Last(
-			uuid, companyId, orderByComparator);
+		return getPersistence().filterFindByUuid_C(uuid, companyId);
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where uuid = &#63; and companyId = &#63;.
+	 * Returns a range of all the cp tax categories that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param uuid the uuid
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category, or <code>null</code> if a matching cp tax category could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @return the range of matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory fetchByUuid_C_Last(
-		String uuid, long companyId,
+	public static List<CPTaxCategory> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end) {
+
+		return getPersistence().filterFindByUuid_C(uuid, companyId, start, end);
+	}
+
+	/**
+	 * Returns an ordered range of all the cp tax categories that the user has permissions to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching cp tax categories that the user has permission to view
+	 */
+	public static List<CPTaxCategory> filterFindByUuid_C(
+		String uuid, long companyId, int start, int end,
 		OrderByComparator<CPTaxCategory> orderByComparator) {
 
-		return getPersistence().fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-	}
-
-	/**
-	 * Returns the cp tax categories before and after the current cp tax category in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param CPTaxCategoryId the primary key of the current cp tax category
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a cp tax category with the primary key could not be found
-	 */
-	public static CPTaxCategory[] findByUuid_C_PrevAndNext(
-			long CPTaxCategoryId, String uuid, long companyId,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPTaxCategoryException {
-
-		return getPersistence().findByUuid_C_PrevAndNext(
-			CPTaxCategoryId, uuid, companyId, orderByComparator);
+		return getPersistence().filterFindByUuid_C(
+			uuid, companyId, start, end, orderByComparator);
 	}
 
 	/**
@@ -464,6 +474,17 @@ public class CPTaxCategoryUtil {
 	 */
 	public static int countByUuid_C(String uuid, long companyId) {
 		return getPersistence().countByUuid_C(uuid, companyId);
+	}
+
+	/**
+	 * Returns the number of cp tax categories that the user has permission to view where uuid = &#63; and companyId = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param companyId the company ID
+	 * @return the number of matching cp tax categories that the user has permission to view
+	 */
+	public static int filterCountByUuid_C(String uuid, long companyId) {
+		return getPersistence().filterCountByUuid_C(uuid, companyId);
 	}
 
 	/**
@@ -570,53 +591,52 @@ public class CPTaxCategoryUtil {
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where companyId = &#63;.
+	 * Returns all the cp tax categories that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a matching cp tax category could not be found
+	 * @return the matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory findByCompanyId_Last(
-			long companyId, OrderByComparator<CPTaxCategory> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPTaxCategoryException {
-
-		return getPersistence().findByCompanyId_Last(
-			companyId, orderByComparator);
+	public static List<CPTaxCategory> filterFindByCompanyId(long companyId) {
+		return getPersistence().filterFindByCompanyId(companyId);
 	}
 
 	/**
-	 * Returns the last cp tax category in the ordered set where companyId = &#63;.
+	 * Returns a range of all the cp tax categories that the user has permission to view where companyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
 	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching cp tax category, or <code>null</code> if a matching cp tax category could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @return the range of matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CPTaxCategory> orderByComparator) {
+	public static List<CPTaxCategory> filterFindByCompanyId(
+		long companyId, int start, int end) {
 
-		return getPersistence().fetchByCompanyId_Last(
-			companyId, orderByComparator);
+		return getPersistence().filterFindByCompanyId(companyId, start, end);
 	}
 
 	/**
-	 * Returns the cp tax categories before and after the current cp tax category in the ordered set where companyId = &#63;.
+	 * Returns an ordered range of all the cp tax categories that the user has permissions to view where companyId = &#63;.
 	 *
-	 * @param CPTaxCategoryId the primary key of the current cp tax category
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>CPTaxCategoryModelImpl</code>.
+	 * </p>
+	 *
 	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next cp tax category
-	 * @throws NoSuchCPTaxCategoryException if a cp tax category with the primary key could not be found
+	 * @param start the lower bound of the range of cp tax categories
+	 * @param end the upper bound of the range of cp tax categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching cp tax categories that the user has permission to view
 	 */
-	public static CPTaxCategory[] findByCompanyId_PrevAndNext(
-			long CPTaxCategoryId, long companyId,
-			OrderByComparator<CPTaxCategory> orderByComparator)
-		throws com.liferay.commerce.product.exception.
-			NoSuchCPTaxCategoryException {
+	public static List<CPTaxCategory> filterFindByCompanyId(
+		long companyId, int start, int end,
+		OrderByComparator<CPTaxCategory> orderByComparator) {
 
-		return getPersistence().findByCompanyId_PrevAndNext(
-			CPTaxCategoryId, companyId, orderByComparator);
+		return getPersistence().filterFindByCompanyId(
+			companyId, start, end, orderByComparator);
 	}
 
 	/**
@@ -636,6 +656,16 @@ public class CPTaxCategoryUtil {
 	 */
 	public static int countByCompanyId(long companyId) {
 		return getPersistence().countByCompanyId(companyId);
+	}
+
+	/**
+	 * Returns the number of cp tax categories that the user has permission to view where companyId = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @return the number of matching cp tax categories that the user has permission to view
+	 */
+	public static int filterCountByCompanyId(long companyId) {
+		return getPersistence().filterCountByCompanyId(companyId);
 	}
 
 	/**
@@ -871,3 +901,4 @@ public class CPTaxCategoryUtil {
 	private static volatile CPTaxCategoryPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:874758798

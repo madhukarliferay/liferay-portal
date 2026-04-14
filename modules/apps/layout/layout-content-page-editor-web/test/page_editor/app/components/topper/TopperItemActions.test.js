@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -43,7 +43,19 @@ jest.mock(
 	() => jest.fn()
 );
 
+const mockOpenRulesModal = jest.fn();
+
+jest.mock(
+	'../../../../../src/main/resources/META-INF/resources/page_editor/app/contexts/RulesModalContext',
+	() => ({
+		useRulesModal: () => ({
+			openRulesModal: mockOpenRulesModal,
+		}),
+	})
+);
+
 const LAYOUT_DATA = {
+	deletedItems: [],
 	items: {
 		itemId1: {
 			children: [],
@@ -95,6 +107,14 @@ const renderTopperItemActions = ({
 };
 
 describe('TopperItemActions', () => {
+	afterEach(() => {
+		Liferay.FeatureFlags['LPS-169837'] = false;
+	});
+
+	beforeEach(() => {
+		Liferay.FeatureFlags['LPS-169837'] = true;
+	});
+
 	it('does not open TopperItemActions if disabled', async () => {
 		const {baseElement} = renderTopperItemActions({isDisabled: true});
 
@@ -161,5 +181,27 @@ describe('TopperItemActions', () => {
 		renderTopperItemActions({canManageFragments: false, itemId: 'itemId3'});
 
 		expect(screen.queryByText('save-composition')).not.toBeInTheDocument();
+	});
+
+	it('calls openRulesModal with a readOnly action when clicking add-rule', async () => {
+		renderTopperItemActions({itemId: 'itemId3'});
+
+		await userEvent.click(screen.getByText('add-rule'));
+
+		expect(mockOpenRulesModal).toHaveBeenCalledTimes(1);
+
+		expect(mockOpenRulesModal).toHaveBeenCalledWith(
+			expect.objectContaining({
+				rule: expect.objectContaining({
+					actions: [
+						expect.objectContaining({
+							itemId: 'itemId3',
+							readOnly: true,
+							type: 'show',
+						}),
+					],
+				}),
+			})
+		);
 	});
 });

@@ -11,6 +11,7 @@ import QueueFlushService from './queueFlushService';
 import EventMessageQueue from './queues/eventMessageQueue';
 import EventQueue from './queues/eventsQueue';
 import IdentityMessageQueue from './queues/identityMessageQueue';
+import {Segment} from './segment';
 import {Analytics as AnalyticsType} from './types';
 import {
 	ANALYTICS_CLIENT_VERSION,
@@ -20,7 +21,6 @@ import {
 	VALIDATION_CONTEXT_VALUE_MAXIMUM_LENGTH,
 } from './utils/constants';
 import {getContexts, setContexts} from './utils/contexts';
-import {removeCookiesFromUserBrowser} from './utils/cookies';
 import {normalizeEvent} from './utils/events';
 import hash from './utils/hash';
 import {getItem, removeItem, setItem} from './utils/storage';
@@ -49,6 +49,7 @@ class Analytics {
 		channelId: '',
 		dataSourceId: '',
 		endpointUrl: '',
+		faroBackendUrl: '',
 		flushInterval: 0,
 		identity: {
 			emailAddressHashed: '',
@@ -58,6 +59,7 @@ class Analytics {
 		userId: '',
 	};
 	middlewares: AnalyticsType.Middleware[] = [];
+	segment!: Segment;
 	version: string = '';
 
 	/**
@@ -75,15 +77,16 @@ class Analytics {
 
 		const endpointUrl = (config.endpointUrl || '').replace(/\/$/, '');
 
+		const faroBackendUrl = (config.faroBackendUrl || '').replace(/\/$/, '');
+
 		this.config = Object.assign(config, {
 			endpointUrl,
+			faroBackendUrl,
 			flushInterval: config.flushInterval || FLUSH_INTERVAL,
 			identityEndpoint: `${endpointUrl}/identity`,
 		});
 
 		this.version = ANALYTICS_CLIENT_VERSION;
-
-		removeCookiesFromUserBrowser();
 
 		// Register initial middlewares
 
@@ -96,6 +99,8 @@ class Analytics {
 		this._initializeEventQueue();
 		this._initializeEventMessageQueue();
 		this._initializeIdentityMessageQueue();
+
+		this.segment = new Segment(this);
 
 		// Upgrade storage
 
@@ -173,6 +178,14 @@ class Analytics {
 		return this[
 			AnalyticsType.Queues.Events
 		].getItems<AnalyticsType.Event>();
+	}
+
+	getBatchSegmentIds() {
+		return this.segment.getBatchSegmentIds();
+	}
+
+	getRealTimeSegmentIds() {
+		return this.segment.getRealTimeSegmentIds();
 	}
 
 	/**

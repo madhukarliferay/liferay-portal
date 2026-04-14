@@ -12,8 +12,9 @@ import com.liferay.layout.list.retriever.ClassedModelListObjectReference;
 import com.liferay.layout.list.retriever.ListObjectReference;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -26,15 +27,14 @@ public class AssetEntryListListObjectReferenceFactory
 	implements ListObjectReferenceFactory<InfoListItemSelectorReturnType> {
 
 	@Override
-	public ListObjectReference getListObjectReference(JSONObject jsonObject) {
-		String classPK = jsonObject.getString("classPK");
+	public ListObjectReference getListObjectReference(
+		long companyId, long groupId, JSONObject jsonObject) {
 
-		return new ClassedModelListObjectReference(
-			JSONUtil.put(
-				"className", jsonObject.getLong("className")
-			).put(
-				"classPK", classPK
-			).put(
+		String classPK = jsonObject.getString("classPK");
+		String itemType = jsonObject.getString("itemType");
+
+		if (Validator.isNotNull(classPK)) {
+			jsonObject.put(
 				"itemType",
 				() -> {
 					AssetListEntry assetListEntry =
@@ -42,14 +42,41 @@ public class AssetEntryListListObjectReferenceFactory
 							GetterUtil.getLong(classPK));
 
 					if (assetListEntry == null) {
-						return jsonObject.getString("itemType");
+						return itemType;
 					}
 
 					return assetListEntry.getAssetEntryType();
-				}
-			).put(
-				"title", jsonObject.getString("title")
-			));
+				});
+		}
+		else {
+			Long itemGroupId = ScopeUtil.getItemGroupId(
+				companyId, jsonObject.getString("scopeExternalReferenceCode"),
+				groupId);
+
+			if (itemGroupId == null) {
+				return new ClassedModelListObjectReference(jsonObject);
+			}
+
+			AssetListEntry assetListEntry =
+				_assetListEntryLocalService.
+					fetchAssetListEntryByExternalReferenceCode(
+						jsonObject.getString("externalReferenceCode"),
+						itemGroupId);
+
+			if (assetListEntry != null) {
+				jsonObject.put(
+					"className", AssetListEntry.class
+				).put(
+					"classPK", assetListEntry.getAssetListEntryId()
+				).put(
+					"itemType", assetListEntry.getAssetEntryType()
+				).put(
+					"title", assetListEntry.getTitle()
+				);
+			}
+		}
+
+		return new ClassedModelListObjectReference(jsonObject);
 	}
 
 	@Reference

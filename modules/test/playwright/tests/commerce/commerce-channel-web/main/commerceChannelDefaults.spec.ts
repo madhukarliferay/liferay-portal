@@ -6,11 +6,13 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {accountsPagesTest} from '../../../../fixtures/accountsPagesTest';
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
+import {productMenuPageTest} from '../../../../fixtures/productMenuPageTest';
+import {siteSettingsPagesTest} from '../../../../fixtures/siteSettingsPagesTest';
 import {liferayConfig} from '../../../../liferay.config';
 import {getRandomInt} from '../../../../utils/getRandomInt';
 import getRandomString from '../../../../utils/getRandomString';
@@ -23,13 +25,16 @@ import getWidgetDefinition from '../../../layout-content-page-editor-web/main/ut
 
 export const test = mergeTests(
 	accountsPagesTest,
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
+		'LPD-36105': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
-	loginTest()
+	isolatedSiteTest,
+	loginTest(),
+	productMenuPageTest,
+	siteSettingsPagesTest
 );
 
 test('LPD-26142 A Sales Agent can manage channel defaults', async ({
@@ -52,10 +57,14 @@ test('LPD-26142 A Sales Agent can manage channel defaults', async ({
 		rolePermissions: [
 			{
 				actionIds: [
+					'ADD_USER',
+					'ASSIGN_USERS',
+					'INVITE_USER',
 					'MANAGE_ORGANIZATIONS',
-					'MANAGE_USERS',
 					'MANAGE_CHANNEL_DEFAULTS',
+					'UNASSIGN_USERS',
 					'UPDATE',
+					'UPDATE_USERS',
 				],
 				primaryKey: companyId,
 				resourceName: 'com.liferay.account.model.AccountEntry',
@@ -184,7 +193,7 @@ test('LPD-26142 A Sales Agent can manage channel defaults', async ({
 		name: getRandomString(),
 	});
 
-	apiHelpers.data.push({id: site.id, type: 'site'});
+	apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 	const layout = await apiHelpers.headlessDelivery.createSitePage({
 		pageDefinition: getPageDefinition([
@@ -374,7 +383,7 @@ test('LPD-28220 Can user with account manager role view and manage channel defau
 		name: 'Site' + getRandomInt(),
 	});
 
-	apiHelpers.data.push({id: site.id, type: 'site'});
+	apiHelpers.data.push({id: site.externalReferenceCode, type: 'site'});
 
 	const layout = await apiHelpers.headlessDelivery.createSitePage({
 		pageDefinition: getPageDefinition([
@@ -533,3 +542,26 @@ test('LPD-28220 Can user with account manager role view and manage channel defau
 		await performLogin(page, 'test');
 	}
 });
+
+test(
+	'Can see help messages for CP Display Layout Configuration',
+	{tag: '@LPD-64407'},
+	async ({page, site, siteSettingsPage}) => {
+		await siteSettingsPage.goToSiteSetting(
+			'Channel',
+			'CP Display Layout',
+			site.friendlyUrlPath
+		);
+
+		await expect(
+			page.getByText(
+				'The specified layout will be used to display the category.'
+			)
+		).toBeVisible();
+		await expect(
+			page.getByText(
+				'The specified layout will be used to display the product.'
+			)
+		).toBeVisible();
+	}
+);

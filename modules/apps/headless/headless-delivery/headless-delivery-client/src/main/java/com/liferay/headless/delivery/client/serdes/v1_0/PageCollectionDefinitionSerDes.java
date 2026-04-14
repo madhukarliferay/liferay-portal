@@ -260,9 +260,7 @@ public class PageCollectionDefinitionSerDes {
 			sb.append("\"paginationType\": ");
 
 			sb.append("\"");
-
 			sb.append(pageCollectionDefinition.getPaginationType());
-
 			sb.append("\"");
 		}
 
@@ -784,3 +782,4 @@ public class PageCollectionDefinitionSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:962142477

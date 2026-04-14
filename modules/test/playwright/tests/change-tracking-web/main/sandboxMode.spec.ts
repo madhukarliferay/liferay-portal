@@ -14,11 +14,11 @@ import {waitForAlert} from '../../../utils/waitForAlert';
 import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest';
 
 export const test = mergeTests(
-	featureFlagsTest({
-		'LPD-20556': {enabled: true},
-	}),
 	apiHelpersTest,
 	changeTrackingPagesTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	journalPagesTest
 );
 
@@ -40,11 +40,7 @@ test('LPD-53979 Assert warning alert appears when sandbox mode is enabled and Ow
 
 	await page.getByRole('menuitem', {name: 'Settings'}).click();
 
-	const sandboxOnlyCheckbox = page.getByRole('checkbox', {
-		name: 'enable-sandbox-only',
-	});
-
-	await expect(sandboxOnlyCheckbox).toBeChecked();
+	await expect(changeTrackingPage.sandboxOnlyCheckbox).toBeChecked();
 
 	const warningAlert = page.getByText(
 		'Currently, any publication owner can publish the publication'
@@ -73,10 +69,6 @@ test('LPD-53979 Assert warning alert appears when sandbox mode is enabled and Ow
 
 	await saveButton.click();
 
-	const closeButton = page.getByLabel('close', {exact: true});
-
-	await closeButton.click();
-
 	await expect(warningAlert).toBeHidden();
 
 	await changeTrackingPage.toggleSandboxConfiguration(false);
@@ -88,8 +80,6 @@ test('LPD-53979 Assert warning alert appears when sandbox mode is enabled and Ow
 	await checkbox.check();
 
 	await saveButton.click();
-
-	await closeButton.click();
 
 	await expect(warningAlert).toBeHidden();
 

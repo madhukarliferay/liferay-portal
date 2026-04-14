@@ -5,6 +5,7 @@
 
 package com.liferay.portal.search.rest.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
@@ -72,7 +73,7 @@ public abstract class BaseSearchResultResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/search/v1.0/search'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Search the company index for matching content. This endpoint requires setting the portal property 'feature.flag.LPS-179669' to true or enabling via Instance Settings > Feature Flags: Release."
+		description = "Search the company index for matching content."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -165,7 +166,7 @@ public abstract class BaseSearchResultResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/search/v1.0/search' -d $'{"attributes": ___, "facetConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Search the company index for matching content. This endpoint requires setting the portal property 'feature.flag.LPS-179669' to true or enabling via Instance Settings > Feature Flags: Release."
+		description = "Search the company index for matching content."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -314,6 +315,15 @@ public abstract class BaseSearchResultResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -890,3 +900,4 @@ public abstract class BaseSearchResultResourceImpl
 		LogFactoryUtil.getLog(BaseSearchResultResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:501180512

@@ -70,7 +70,9 @@ public interface CTCollectionResource {
 		throws Exception;
 
 	public Page<CTCollection> getCTCollectionsPage(
-			String search, Integer[] status, Pagination pagination,
+			String search, Integer[] status,
+			com.liferay.portal.kernel.search.filter.Filter filter,
+			Pagination pagination,
 			com.liferay.portal.kernel.search.Sort[] sorts)
 		throws Exception;
 
@@ -106,6 +108,7 @@ public interface CTCollectionResource {
 
 	public Response postCTCollectionsPageExportBatch(
 			String search, Integer[] status,
+			com.liferay.portal.kernel.search.filter.Filter filter,
 			com.liferay.portal.kernel.search.Sort[] sorts, String callbackURL,
 			String contentType, String fieldNames)
 		throws Exception;
@@ -213,3 +216,4 @@ public interface CTCollectionResource {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:1797074720

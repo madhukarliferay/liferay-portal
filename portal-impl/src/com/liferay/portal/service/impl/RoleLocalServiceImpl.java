@@ -97,6 +97,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -105,7 +106,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
 import com.liferay.portal.service.base.RoleLocalServiceBaseImpl;
 import com.liferay.portal.util.PortalInstances;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
 
 import java.util.ArrayList;
@@ -475,8 +475,8 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 					serviceContext.getScopeGroupId(),
 					serviceContext.getCompanyId(), resourcePermission.getName(),
 					resourcePermission.getScope(),
-					String.valueOf(resourcePermission.getPrimaryKey()),
-					targetRole.getRoleId(), actionId);
+					resourcePermission.getPrimKey(), targetRole.getRoleId(),
+					actionId);
 			}
 		}
 
@@ -851,7 +851,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	public Role getOrAddEmptyRole(
 			String externalReferenceCode, long companyId, long userId,
 			String className, long classPK, String name, int type)
-		throws Exception {
+		throws PortalException {
 
 		return EmptyModelManagerUtil.getOrAddEmptyModel(
 			Role.class, companyId, externalReferenceCode,
@@ -861,7 +861,8 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 				externalReferenceCode, userId, className, classPK,
 				(fetchRole(companyId, name) != null) ? externalReferenceCode :
 					name,
-				null, null, type, StringPool.BLANK, new ServiceContext()));
+				null, null, type, StringPool.BLANK, new ServiceContext()),
+			"role");
 	}
 
 	/**
@@ -1999,11 +2000,11 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		role.setTitleMap(titleMap);
 		role.setDescriptionMap(descriptionMap);
 		role.setSubtype(subtype);
-
-		if (role.getStatus() == WorkflowConstants.STATUS_EMPTY) {
-			role.setStatus(WorkflowConstants.STATUS_APPROVED);
-		}
-
+		role.setStatus(
+			EmptyModelManagerUtil.solveEmptyModel(
+				externalReferenceCode, role.getModelClassName(),
+				role.getCompanyId(), 0, role.getStatus(),
+				() -> WorkflowConstants.STATUS_APPROVED));
 		role.setExpandoBridgeAttributes(serviceContext);
 
 		return rolePersistence.update(role);
@@ -2043,7 +2044,8 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 
 			try {
 				role = roleLocalService.addRole(
-					null, user.getUserId(), null, 0, name, null,
+					RoleConstants.toSystemRoleExternalReferenceCode(name),
+					user.getUserId(), null, 0, name, null,
 					LocalizationUtil.getLocalizationMap(description), type,
 					null, null);
 			}

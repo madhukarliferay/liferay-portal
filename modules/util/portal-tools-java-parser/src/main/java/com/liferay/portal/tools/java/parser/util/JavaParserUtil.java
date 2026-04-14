@@ -58,7 +58,6 @@ import com.liferay.portal.tools.java.parser.JavaSwitchStatement;
 import com.liferay.portal.tools.java.parser.JavaSynchronizedStatement;
 import com.liferay.portal.tools.java.parser.JavaTerm;
 import com.liferay.portal.tools.java.parser.JavaTernaryOperator;
-import com.liferay.portal.tools.java.parser.JavaTextBlock;
 import com.liferay.portal.tools.java.parser.JavaThrowStatement;
 import com.liferay.portal.tools.java.parser.JavaTryStatement;
 import com.liferay.portal.tools.java.parser.JavaType;
@@ -266,13 +265,11 @@ public class JavaParserUtil {
 			return arrayDimension;
 		}
 
-		List<DetailAST> arrayDeclaratorDetailASTList =
+		List<DetailAST> arrayDeclaratorDetailASTs =
 			DetailASTUtil.getAllChildTokens(
 				typeInfoDetailAST, true, TokenTypes.ARRAY_DECLARATOR);
 
-		for (DetailAST arrayDeclaratorDetailAST :
-				arrayDeclaratorDetailASTList) {
-
+		for (DetailAST arrayDeclaratorDetailAST : arrayDeclaratorDetailASTs) {
 			if (_isMisplacedArrayDeclarator(
 					typeArgumentsDetailAST.getLastChild(),
 					arrayDeclaratorDetailAST)) {
@@ -521,7 +518,7 @@ public class JavaParserUtil {
 	private static List<JavaType> _parseGenericBoundJavaTypes(
 		DetailAST detailAST, int genericBoundType) {
 
-		List<DetailAST> typeGenericBoundsDetailASTList =
+		List<DetailAST> typeGenericBoundsDetailASTs =
 			DetailASTUtil.getAllChildTokens(detailAST, true, genericBoundType);
 
 		int arrayDimension = 0;
@@ -529,7 +526,7 @@ public class JavaParserUtil {
 
 		outerLoop:
 		for (DetailAST curTypeGenericBoundsDetailAST :
-				typeGenericBoundsDetailASTList) {
+				typeGenericBoundsDetailASTs) {
 
 			DetailAST parentDetailAST =
 				curTypeGenericBoundsDetailAST.getParent();
@@ -584,10 +581,10 @@ public class JavaParserUtil {
 
 		List<JavaType> genericJavaTypes = new ArrayList<>();
 
-		List<DetailAST> detailAstList = DetailASTUtil.getAllChildTokens(
+		List<DetailAST> detailASTs = DetailASTUtil.getAllChildTokens(
 			groupDetailAST, false, type);
 
-		for (DetailAST currentDetailAST : detailAstList) {
+		for (DetailAST currentDetailAST : detailASTs) {
 			DetailAST childDetailAST = currentDetailAST.getFirstChild();
 
 			if (childDetailAST.getType() == TokenTypes.TYPE) {
@@ -677,13 +674,13 @@ public class JavaParserUtil {
 		List<JavaAnnotationMemberValuePair> javaAnnotationMemberValuePairs =
 			new ArrayList<>();
 
-		List<DetailAST> annotationMemberValuePairDetailASTList =
+		List<DetailAST> annotationMemberValuePairDetailASTs =
 			DetailASTUtil.getAllChildTokens(
 				annotationDetailAST, false,
 				TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR);
 
 		for (DetailAST annotationMemberValuePairDetailAST :
-				annotationMemberValuePairDetailASTList) {
+				annotationMemberValuePairDetailASTs) {
 
 			javaAnnotationMemberValuePairs.add(
 				_parseJavaAnnotationMemberValuePair(
@@ -698,11 +695,10 @@ public class JavaParserUtil {
 
 		List<JavaAnnotation> javaAnnotations = new ArrayList<>();
 
-		List<DetailAST> annotationDetailASTList =
-			DetailASTUtil.getAllChildTokens(
-				detailAST, false, TokenTypes.ANNOTATION);
+		List<DetailAST> annotationDetailASTs = DetailASTUtil.getAllChildTokens(
+			detailAST, false, TokenTypes.ANNOTATION);
 
-		for (DetailAST annotationDetailAST : annotationDetailASTList) {
+		for (DetailAST annotationDetailAST : annotationDetailASTs) {
 			javaAnnotations.add(_parseJavaAnnotation(annotationDetailAST));
 		}
 
@@ -1217,14 +1213,19 @@ public class JavaParserUtil {
 		else if (detailAST.getType() == TokenTypes.QUESTION) {
 			javaExpression = _parseJavaTernaryOperator(detailAST);
 		}
-		else if (detailAST.getType() == TokenTypes.TEXT_BLOCK_LITERAL_BEGIN) {
-			javaExpression = _parseJavaTextBlock(detailAST.getFirstChild());
-		}
 		else if (detailAST.getType() == TokenTypes.TYPECAST) {
 			javaExpression = _parseJavaTypeCast(detailAST);
 		}
 		else if (ArrayUtil.contains(_SIMPLE_TYPES, detailAST.getType())) {
-			javaExpression = new JavaSimpleValue(detailAST.getText());
+			if (detailAST.getType() == TokenTypes.TEXT_BLOCK_LITERAL_BEGIN) {
+				DetailAST firstChildDetailAST = detailAST.getFirstChild();
+
+				javaExpression = new JavaSimpleValue(
+					"\"\"\"" + firstChildDetailAST.getText() + "\"\"\"");
+			}
+			else {
+				javaExpression = new JavaSimpleValue(detailAST.getText());
+			}
 		}
 		else {
 			for (JavaOperator operator : JavaOperator.values()) {
@@ -1271,11 +1272,11 @@ public class JavaParserUtil {
 
 		if (firstChildDetailAST != null) {
 			if (firstChildDetailAST.getType() == TokenTypes.ELIST) {
-				List<DetailAST> exprDetailASTList =
+				List<DetailAST> exprDetailASTs =
 					DetailASTUtil.getAllChildTokens(
 						firstChildDetailAST, false, TokenTypes.EXPR);
 
-				for (DetailAST exprDetailAST : exprDetailASTList) {
+				for (DetailAST exprDetailAST : exprDetailASTs) {
 					initializationJavaTerms.add(
 						_parseJavaExpression(exprDetailAST));
 				}
@@ -1308,10 +1309,10 @@ public class JavaParserUtil {
 			TokenTypes.ELIST);
 
 		if (elistDetailAST != null) {
-			List<DetailAST> exprDetailASTList = DetailASTUtil.getAllChildTokens(
+			List<DetailAST> exprDetailASTs = DetailASTUtil.getAllChildTokens(
 				elistDetailAST, false, TokenTypes.EXPR);
 
-			for (DetailAST curExprDetailAST : exprDetailASTList) {
+			for (DetailAST curExprDetailAST : exprDetailASTs) {
 				iteratorJavaExpressions.add(
 					_parseJavaExpression(curExprDetailAST));
 			}
@@ -1415,12 +1416,12 @@ public class JavaParserUtil {
 
 		List<JavaLambdaParameter> javaLambdaParameters = new ArrayList<>();
 
-		List<DetailAST> parameterDefinitionDetailASTList =
+		List<DetailAST> parameterDefinitionDetailASTs =
 			DetailASTUtil.getAllChildTokens(
 				parametersDetailAST, false, TokenTypes.PARAMETER_DEF);
 
 		for (DetailAST parameterDefinitionDetailAST :
-				parameterDefinitionDetailASTList) {
+				parameterDefinitionDetailASTs) {
 
 			JavaLambdaParameter javaLambdaParameter = new JavaLambdaParameter(
 				_getName(parameterDefinitionDetailAST));
@@ -1631,12 +1632,12 @@ public class JavaParserUtil {
 			return javaParameters;
 		}
 
-		List<DetailAST> parameterDefinitionDetailASTList =
+		List<DetailAST> parameterDefinitionDetailASTs =
 			DetailASTUtil.getAllChildTokens(
 				detailAST, false, TokenTypes.PARAMETER_DEF);
 
 		for (DetailAST parameterDefinitionDetailAST :
-				parameterDefinitionDetailASTList) {
+				parameterDefinitionDetailASTs) {
 
 			javaParameters.add(
 				_parseJavaParameter(parameterDefinitionDetailAST));
@@ -1698,11 +1699,10 @@ public class JavaParserUtil {
 			javaSwitchCaseStatement.addDefault();
 		}
 
-		List<DetailAST> literalCaseDetailASTList =
-			DetailASTUtil.getAllChildTokens(
-				caseGroupDetailAST, false, TokenTypes.LITERAL_CASE);
+		List<DetailAST> literalCaseDetailASTs = DetailASTUtil.getAllChildTokens(
+			caseGroupDetailAST, false, TokenTypes.LITERAL_CASE);
 
-		for (DetailAST literalCaseDetailAST : literalCaseDetailASTList) {
+		for (DetailAST literalCaseDetailAST : literalCaseDetailASTs) {
 			javaSwitchCaseStatement.addSwitchCaseJavaExpression(
 				_parseJavaExpression(literalCaseDetailAST.getFirstChild()));
 		}
@@ -1731,11 +1731,11 @@ public class JavaParserUtil {
 			javaSwitchRuleStatement.setDefault(true);
 		}
 		else {
-			List<DetailAST> exprCaseDetailASTList =
+			List<DetailAST> exprCaseDetailASTs =
 				DetailASTUtil.getAllChildTokens(
 					firstChildDetailAST, false, TokenTypes.EXPR);
 
-			for (DetailAST exprCaseDetailAST : exprCaseDetailASTList) {
+			for (DetailAST exprCaseDetailAST : exprCaseDetailASTs) {
 				javaSwitchRuleStatement.addSwitchRuleJavaExpression(
 					_parseJavaExpression(exprCaseDetailAST));
 			}
@@ -1818,12 +1818,6 @@ public class JavaParserUtil {
 			trueValueJavaExpression);
 	}
 
-	private static JavaTextBlock _parseJavaTextBlock(
-		DetailAST textBlockContentDetailAST) {
-
-		return new JavaTextBlock(textBlockContentDetailAST.getText());
-	}
-
 	private static JavaThrowStatement _parseJavaThrowStatement(
 		DetailAST literalThrowDetailAST) {
 
@@ -1850,10 +1844,10 @@ public class JavaParserUtil {
 		DetailAST resourcesDetailAST = firstChildDetailAST.findFirstToken(
 			TokenTypes.RESOURCES);
 
-		List<DetailAST> resourceDetailASTList = DetailASTUtil.getAllChildTokens(
+		List<DetailAST> resourceDetailASTs = DetailASTUtil.getAllChildTokens(
 			resourcesDetailAST, false, TokenTypes.RESOURCE);
 
-		for (DetailAST resourceDetailAST : resourceDetailASTList) {
+		for (DetailAST resourceDetailAST : resourceDetailASTs) {
 			resourceJavaVariableDefinitions.add(
 				_parseJavaVariableDefinition(resourceDetailAST));
 		}
@@ -2066,13 +2060,13 @@ public class JavaParserUtil {
 			return javaRecordComponents;
 		}
 
-		List<DetailAST> recordComponentDefinitionDetailASTList =
+		List<DetailAST> recordComponentDefinitionDetailASTs =
 			DetailASTUtil.getAllChildTokens(
 				recordComponentsDetailAST, false,
 				TokenTypes.RECORD_COMPONENT_DEF);
 
 		for (DetailAST recordComponentDefinitionDetailAST :
-				recordComponentDefinitionDetailASTList) {
+				recordComponentDefinitionDetailASTs) {
 
 			DetailAST typeDetailAST =
 				recordComponentDefinitionDetailAST.findFirstToken(
@@ -2107,7 +2101,7 @@ public class JavaParserUtil {
 		TokenTypes.LITERAL_SUPER, TokenTypes.LITERAL_TRUE,
 		TokenTypes.LITERAL_THIS, TokenTypes.LITERAL_VOID, TokenTypes.NUM_DOUBLE,
 		TokenTypes.NUM_FLOAT, TokenTypes.NUM_INT, TokenTypes.NUM_LONG,
-		TokenTypes.STRING_LITERAL
+		TokenTypes.STRING_LITERAL, TokenTypes.TEXT_BLOCK_LITERAL_BEGIN
 	};
 
 }

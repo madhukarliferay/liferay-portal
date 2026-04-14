@@ -40,12 +40,12 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 
 import jakarta.annotation.Generated;
@@ -142,6 +142,9 @@ public abstract class BaseContentSetElementResourceTestCase {
 
 	@After
 	public void tearDown() throws Exception {
+		DepotEntryLocalServiceUtil.deleteDepotEntry(irrelevantDepotEntry);
+		DepotEntryLocalServiceUtil.deleteDepotEntry(testDepotEntry);
+
 		GroupTestUtil.deleteGroup(irrelevantGroup);
 		GroupTestUtil.deleteGroup(testGroup);
 	}
@@ -1706,6 +1709,8 @@ public abstract class BaseContentSetElementResourceTestCase {
 	protected List<GraphQLField> getGraphQLFields() throws Exception {
 		List<GraphQLField> graphQLFields = new ArrayList<>();
 
+		graphQLFields.add(new GraphQLField("id"));
+
 		for (java.lang.reflect.Field field :
 				getDeclaredFields(
 					com.liferay.headless.delivery.dto.v1_0.ContentSetElement.
@@ -2321,3 +2326,4 @@ public abstract class BaseContentSetElementResourceTestCase {
 			_contentSetElementResource;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1082785238

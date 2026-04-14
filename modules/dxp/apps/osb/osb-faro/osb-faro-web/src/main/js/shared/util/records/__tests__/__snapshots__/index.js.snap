@@ -27,6 +27,7 @@ Immutable.Record {
 
 exports[`Records should return a Segment Record 1`] = `
 Immutable.Record {
+  "activation": null,
   "activeIndividualCount": 0,
   "activitiesCount": 0,
   "anonymousIndividualCount": 0,
@@ -81,13 +82,16 @@ Immutable.Record {
 
 exports[`Records should return an Individual Record 1`] = `
 Immutable.Record {
-  "accountNames": null,
+  "accountName": null,
+  "accounts": Immutable.List [],
   "activitiesCount": 0,
+  "context": Immutable.Map {},
   "dateCreated": null,
   "demographics": Immutable.Map {},
   "firstActivityDate": null,
   "id": null,
   "lastActivityDate": null,
+  "lastSessionCountry": null,
   "name": "",
   "properties": Immutable.Map {},
   "type": 2,

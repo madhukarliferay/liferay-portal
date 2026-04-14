@@ -222,58 +222,6 @@ public class CommerceDiscountRelUtil {
 	}
 
 	/**
-	 * Returns the last commerce discount rel in the ordered set where commerceDiscountId = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel
-	 * @throws NoSuchDiscountRelException if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel findByCommerceDiscountId_Last(
-			long commerceDiscountId,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCommerceDiscountId_Last(
-			commerceDiscountId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where commerceDiscountId = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel, or <code>null</code> if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel fetchByCommerceDiscountId_Last(
-		long commerceDiscountId,
-		OrderByComparator<CommerceDiscountRel> orderByComparator) {
-
-		return getPersistence().fetchByCommerceDiscountId_Last(
-			commerceDiscountId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce discount rels before and after the current commerce discount rel in the ordered set where commerceDiscountId = &#63;.
-	 *
-	 * @param commerceDiscountRelId the primary key of the current commerce discount rel
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce discount rel
-	 * @throws NoSuchDiscountRelException if a commerce discount rel with the primary key could not be found
-	 */
-	public static CommerceDiscountRel[] findByCommerceDiscountId_PrevAndNext(
-			long commerceDiscountRelId, long commerceDiscountId,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCommerceDiscountId_PrevAndNext(
-			commerceDiscountRelId, commerceDiscountId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the commerce discount rels where commerceDiscountId = &#63; from the database.
 	 *
 	 * @param commerceDiscountId the commerce discount ID
@@ -405,63 +353,6 @@ public class CommerceDiscountRelUtil {
 
 		return getPersistence().fetchByCD_CN_First(
 			commerceDiscountId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where commerceDiscountId = &#63; and classNameId = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel
-	 * @throws NoSuchDiscountRelException if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel findByCD_CN_Last(
-			long commerceDiscountId, long classNameId,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCD_CN_Last(
-			commerceDiscountId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where commerceDiscountId = &#63; and classNameId = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel, or <code>null</code> if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel fetchByCD_CN_Last(
-		long commerceDiscountId, long classNameId,
-		OrderByComparator<CommerceDiscountRel> orderByComparator) {
-
-		return getPersistence().fetchByCD_CN_Last(
-			commerceDiscountId, classNameId, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce discount rels before and after the current commerce discount rel in the ordered set where commerceDiscountId = &#63; and classNameId = &#63;.
-	 *
-	 * @param commerceDiscountRelId the primary key of the current commerce discount rel
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce discount rel
-	 * @throws NoSuchDiscountRelException if a commerce discount rel with the primary key could not be found
-	 */
-	public static CommerceDiscountRel[] findByCD_CN_PrevAndNext(
-			long commerceDiscountRelId, long commerceDiscountId,
-			long classNameId,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCD_CN_PrevAndNext(
-			commerceDiscountRelId, commerceDiscountId, classNameId,
-			orderByComparator);
 	}
 
 	/**
@@ -599,61 +490,6 @@ public class CommerceDiscountRelUtil {
 
 		return getPersistence().fetchByCN_CPK_First(
 			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel
-	 * @throws NoSuchDiscountRelException if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel findByCN_CPK_Last(
-			long classNameId, long classPK,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCN_CPK_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel, or <code>null</code> if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel fetchByCN_CPK_Last(
-		long classNameId, long classPK,
-		OrderByComparator<CommerceDiscountRel> orderByComparator) {
-
-		return getPersistence().fetchByCN_CPK_Last(
-			classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce discount rels before and after the current commerce discount rel in the ordered set where classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param commerceDiscountRelId the primary key of the current commerce discount rel
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce discount rel
-	 * @throws NoSuchDiscountRelException if a commerce discount rel with the primary key could not be found
-	 */
-	public static CommerceDiscountRel[] findByCN_CPK_PrevAndNext(
-			long commerceDiscountRelId, long classNameId, long classPK,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCN_CPK_PrevAndNext(
-			commerceDiscountRelId, classNameId, classPK, orderByComparator);
 	}
 
 	/**
@@ -799,66 +635,6 @@ public class CommerceDiscountRelUtil {
 
 		return getPersistence().fetchByCD_CN_CPK_First(
 			commerceDiscountId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where commerceDiscountId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel
-	 * @throws NoSuchDiscountRelException if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel findByCD_CN_CPK_Last(
-			long commerceDiscountId, long classNameId, long classPK,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCD_CN_CPK_Last(
-			commerceDiscountId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the last commerce discount rel in the ordered set where commerceDiscountId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce discount rel, or <code>null</code> if a matching commerce discount rel could not be found
-	 */
-	public static CommerceDiscountRel fetchByCD_CN_CPK_Last(
-		long commerceDiscountId, long classNameId, long classPK,
-		OrderByComparator<CommerceDiscountRel> orderByComparator) {
-
-		return getPersistence().fetchByCD_CN_CPK_Last(
-			commerceDiscountId, classNameId, classPK, orderByComparator);
-	}
-
-	/**
-	 * Returns the commerce discount rels before and after the current commerce discount rel in the ordered set where commerceDiscountId = &#63; and classNameId = &#63; and classPK = &#63;.
-	 *
-	 * @param commerceDiscountRelId the primary key of the current commerce discount rel
-	 * @param commerceDiscountId the commerce discount ID
-	 * @param classNameId the class name ID
-	 * @param classPK the class pk
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce discount rel
-	 * @throws NoSuchDiscountRelException if a commerce discount rel with the primary key could not be found
-	 */
-	public static CommerceDiscountRel[] findByCD_CN_CPK_PrevAndNext(
-			long commerceDiscountRelId, long commerceDiscountId,
-			long classNameId, long classPK,
-			OrderByComparator<CommerceDiscountRel> orderByComparator)
-		throws com.liferay.commerce.discount.exception.
-			NoSuchDiscountRelException {
-
-		return getPersistence().findByCD_CN_CPK_PrevAndNext(
-			commerceDiscountRelId, commerceDiscountId, classNameId, classPK,
-			orderByComparator);
 	}
 
 	/**
@@ -1061,3 +837,4 @@ public class CommerceDiscountRelUtil {
 	private static volatile CommerceDiscountRelPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1396432339

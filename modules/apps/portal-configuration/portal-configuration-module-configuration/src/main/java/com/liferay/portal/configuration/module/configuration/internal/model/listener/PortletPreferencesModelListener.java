@@ -6,6 +6,7 @@
 package com.liferay.portal.configuration.module.configuration.internal.model.listener;
 
 import com.liferay.asset.kernel.util.NotifiedAssetEntryThreadLocal;
+import com.liferay.layout.util.UpdateLayoutModifiedDateThreadLocal;
 import com.liferay.portal.configuration.module.configuration.internal.ConfigurationOverrideInstance;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.log.Log;
@@ -104,6 +105,10 @@ public class PortletPreferencesModelListener
 	}
 
 	private void _updateLayout(PortletPreferences portletPreferences) {
+		if (!UpdateLayoutModifiedDateThreadLocal.isUpdateLayoutModifiedDate()) {
+			return;
+		}
+
 		try {
 			if ((portletPreferences.getOwnerType() ==
 					PortletKeys.PREFS_OWNER_TYPE_GROUP) &&
@@ -150,19 +155,26 @@ public class PortletPreferencesModelListener
 				}
 
 				if (layout.isDraftLayout()) {
+					long userId = layout.getUserId();
+
 					ServiceContext serviceContext =
 						ServiceContextThreadLocal.getServiceContext();
 
+					if ((serviceContext != null) &&
+						(serviceContext.getUserId() != 0)) {
+
+						userId = serviceContext.getUserId();
+					}
+
 					_layoutLocalService.updateStatus(
-						serviceContext.getUserId(), layout.getPlid(),
+						userId, layout.getPlid(),
 						WorkflowConstants.STATUS_DRAFT, serviceContext);
 				}
 				else {
 					layout.setModifiedDate(new Date());
 
-					_layoutLocalService.updateLayout(
-						layout.getGroupId(), layout.isPrivateLayout(),
-						layout.getLayoutId(), layout.getTypeSettings());
+					_layoutLocalService.updateTypeSettings(
+						layout, layout.getTypeSettings());
 				}
 			}
 		}

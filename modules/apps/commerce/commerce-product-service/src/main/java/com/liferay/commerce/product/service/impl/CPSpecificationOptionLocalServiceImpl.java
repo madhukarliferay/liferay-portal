@@ -151,6 +151,12 @@ public class CPSpecificationOptionLocalServiceImpl
 			deleteCPSpecificationOptionDefinitionValues(
 				cpSpecificationOption.getCPSpecificationOptionId());
 
+		// Commerce product specification option list type definition rels
+
+		_cpSpecificationOptionListTypeDefinitionRelLocalService.
+			deleteCPSpecificationOptionListTypeDefinitionRels(
+				cpSpecificationOption.getCPSpecificationOptionId());
+
 		// Resources
 
 		_resourceLocalService.deleteResource(
@@ -414,10 +420,8 @@ public class CPSpecificationOptionLocalServiceImpl
 				cpDefinitionSpecificationOptionValue) -> {
 
 				try {
-					indexableActionableDynamicQuery.addDocuments(
-						indexer.getDocument(
-							cpDefinitionSpecificationOptionValue.
-								getCPDefinition()));
+					return indexer.getDocument(
+						cpDefinitionSpecificationOptionValue.getCPDefinition());
 				}
 				catch (PortalException portalException) {
 					if (_log.isWarnEnabled()) {
@@ -431,6 +435,8 @@ public class CPSpecificationOptionLocalServiceImpl
 							portalException);
 					}
 				}
+
+				return null;
 			});
 
 		indexableActionableDynamicQuery.performActions();

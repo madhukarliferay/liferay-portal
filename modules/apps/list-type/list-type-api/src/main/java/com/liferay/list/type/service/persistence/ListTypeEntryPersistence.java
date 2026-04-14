@@ -120,47 +120,6 @@ public interface ListTypeEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last list type entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry
-	 * @throws NoSuchListTypeEntryException if a matching list type entry could not be found
-	 */
-	public ListTypeEntry findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
-	 * Returns the last list type entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry, or <code>null</code> if a matching list type entry could not be found
-	 */
-	public ListTypeEntry fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the list type entries before and after the current list type entry in the ordered set where uuid = &#63;.
-	 *
-	 * @param listTypeEntryId the primary key of the current list type entry
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next list type entry
-	 * @throws NoSuchListTypeEntryException if a list type entry with the primary key could not be found
-	 */
-	public ListTypeEntry[] findByUuid_PrevAndNext(
-			long listTypeEntryId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
 	 * Removes all the list type entries where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -270,50 +229,6 @@ public interface ListTypeEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last list type entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry
-	 * @throws NoSuchListTypeEntryException if a matching list type entry could not be found
-	 */
-	public ListTypeEntry findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
-	 * Returns the last list type entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry, or <code>null</code> if a matching list type entry could not be found
-	 */
-	public ListTypeEntry fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the list type entries before and after the current list type entry in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param listTypeEntryId the primary key of the current list type entry
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next list type entry
-	 * @throws NoSuchListTypeEntryException if a list type entry with the primary key could not be found
-	 */
-	public ListTypeEntry[] findByUuid_C_PrevAndNext(
-			long listTypeEntryId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
 	 * Removes all the list type entries where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -414,32 +329,6 @@ public interface ListTypeEntryPersistence
 	 * @return the first matching list type entry, or <code>null</code> if a matching list type entry could not be found
 	 */
 	public ListTypeEntry fetchByListTypeEntryId_First(
-		long listTypeEntryId,
-		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the last list type entry in the ordered set where listTypeEntryId = &#63;.
-	 *
-	 * @param listTypeEntryId the list type entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry
-	 * @throws NoSuchListTypeEntryException if a matching list type entry could not be found
-	 */
-	public ListTypeEntry findByListTypeEntryId_Last(
-			long listTypeEntryId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
-	 * Returns the last list type entry in the ordered set where listTypeEntryId = &#63;.
-	 *
-	 * @param listTypeEntryId the list type entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry, or <code>null</code> if a matching list type entry could not be found
-	 */
-	public ListTypeEntry fetchByListTypeEntryId_Last(
 		long listTypeEntryId,
 		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
 			orderByComparator);
@@ -622,47 +511,6 @@ public interface ListTypeEntryPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last list type entry in the ordered set where listTypeDefinitionId = &#63;.
-	 *
-	 * @param listTypeDefinitionId the list type definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry
-	 * @throws NoSuchListTypeEntryException if a matching list type entry could not be found
-	 */
-	public ListTypeEntry findByListTypeDefinitionId_Last(
-			long listTypeDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
-	 * Returns the last list type entry in the ordered set where listTypeDefinitionId = &#63;.
-	 *
-	 * @param listTypeDefinitionId the list type definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry, or <code>null</code> if a matching list type entry could not be found
-	 */
-	public ListTypeEntry fetchByListTypeDefinitionId_Last(
-		long listTypeDefinitionId,
-		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the list type entries before and after the current list type entry in the ordered set where listTypeDefinitionId = &#63;.
-	 *
-	 * @param listTypeEntryId the primary key of the current list type entry
-	 * @param listTypeDefinitionId the list type definition ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next list type entry
-	 * @throws NoSuchListTypeEntryException if a list type entry with the primary key could not be found
-	 */
-	public ListTypeEntry[] findByListTypeDefinitionId_PrevAndNext(
-			long listTypeEntryId, long listTypeDefinitionId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
 	 * Returns all the list type entries where listTypeDefinitionId = any &#63;.
 	 *
 	 * <p>
@@ -843,50 +691,6 @@ public interface ListTypeEntryPersistence
 		long companyId, long userId,
 		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
 			orderByComparator);
-
-	/**
-	 * Returns the last list type entry in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry
-	 * @throws NoSuchListTypeEntryException if a matching list type entry could not be found
-	 */
-	public ListTypeEntry findByC_U_Last(
-			long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
-
-	/**
-	 * Returns the last list type entry in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching list type entry, or <code>null</code> if a matching list type entry could not be found
-	 */
-	public ListTypeEntry fetchByC_U_Last(
-		long companyId, long userId,
-		com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-			orderByComparator);
-
-	/**
-	 * Returns the list type entries before and after the current list type entry in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param listTypeEntryId the primary key of the current list type entry
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next list type entry
-	 * @throws NoSuchListTypeEntryException if a list type entry with the primary key could not be found
-	 */
-	public ListTypeEntry[] findByC_U_PrevAndNext(
-			long listTypeEntryId, long companyId, long userId,
-			com.liferay.portal.kernel.util.OrderByComparator<ListTypeEntry>
-				orderByComparator)
-		throws NoSuchListTypeEntryException;
 
 	/**
 	 * Removes all the list type entries where companyId = &#63; and userId = &#63; from the database.
@@ -1140,3 +944,4 @@ public interface ListTypeEntryPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-361029788

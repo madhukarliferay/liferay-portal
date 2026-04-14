@@ -5,15 +5,17 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
 	loginTest()
 );
 
@@ -21,10 +23,13 @@ test(
 	'Site roles should not appear in Catalog permissions menus',
 	{tag: '@LPD-55197'},
 	async ({apiHelpers, commerceAdminCatalogsPage}) => {
-		await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
 		await commerceAdminCatalogsPage.goto();
 
-		await commerceAdminCatalogsPage.catalogActionsButton.first().click();
+		await commerceAdminCatalogsPage
+			.catalogActionsButton(catalog.name)
+			.click();
 		await commerceAdminCatalogsPage.permissionsMenuItem.click();
 
 		await expect(

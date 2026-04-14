@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import {TrendClassification} from '@liferay/analytics-reports-js-components-web';
 import {
 	render,
@@ -50,18 +50,10 @@ describe('[CMS Dashboard] Components: ContentCard', () => {
 		);
 		expect(Description).toBeInTheDocument();
 
-		const [RangeSelectorDropdown, ActionMenu] =
-			screen.getAllByRole('button');
+		const [RangeSelectorDropdown] = screen.getAllByRole('button');
 
 		expect(RangeSelectorDropdown).toBeInTheDocument();
 		expect(RangeSelectorDropdown).toHaveTextContent('last-7-days');
-
-		expect(ActionMenu).toBeInTheDocument();
-
-		const viewAllContentElement = screen.getByText('view-all-content');
-
-		expect(viewAllContentElement).toBeInTheDocument();
-		expect(viewAllContentElement).toHaveAttribute('href', '/contents');
 
 		await waitForElementToBeRemoved(
 			screen.getByTestId('loading-animation')

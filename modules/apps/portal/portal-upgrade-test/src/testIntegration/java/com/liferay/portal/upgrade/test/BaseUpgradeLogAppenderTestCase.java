@@ -5,6 +5,7 @@
 
 package com.liferay.portal.upgrade.test;
 
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.lang.SafeCloseable;
@@ -17,16 +18,21 @@ import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DuplicateUniqueFinderRowsCleaner;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.model.ReleaseConstants;
+import com.liferay.portal.kernel.module.util.BundleUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.upgrade.DeleteDuplicateUniqueFinderRowsUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
@@ -40,6 +46,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
@@ -51,7 +58,6 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -59,7 +65,9 @@ import java.io.Writer;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import java.net.URI;
 
@@ -94,6 +102,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import org.osgi.framework.Bundle;
 
 /**
  * @author Sam Ziemer
@@ -305,8 +315,8 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 			upgradeProcess.upgrade();
 
 			OrphanReferencesDataCleanupUtil.cleanUpTable(
-				connection, null, "companyId", "Portlet", "companyId",
-				"Company");
+				connection, null, null, "companyId", "Portlet",
+				new String[] {"companyId"}, "Company");
 
 			_appender.stop();
 
@@ -314,8 +324,6 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 
 			_assertLogContextDiagnostics(
 				"upgrade.report.data.clean.up", _CLEANUP_INFO_MESSAGE);
-			_assertLogContextDiagnostics(
-				"upgrade.report.data.clean.up", _CLEANUP_WARNING_MESSAGE);
 			_assertLogContextDiagnostics(
 				"upgrade.report.data.clean.up",
 				_DELETE_DUPLICATES_FINDER_WARNING_MESSAGE);
@@ -325,9 +333,11 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 					"Table ", dbInspector.normalizeName("Portlet"),
 					", 1 row deleted because ",
 					dbInspector.normalizeName("companyId"), StringPool.SPACE,
-					randomCompanyId, " was not found in ",
-					dbInspector.normalizeName("Company"), StringPool.PERIOD,
-					dbInspector.normalizeName("companyId")));
+					randomCompanyId, " was not found in column ",
+					dbInspector.normalizeName("companyId"), " from table ",
+					dbInspector.normalizeName("Company")));
+			_assertLogContextDiagnostics(
+				"upgrade.report.warnings", _CLEANUP_WARNING_MESSAGE);
 		}
 		finally {
 			_db.runSQL(
@@ -542,28 +552,30 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 
 	@Test
 	public void testLongestRunningSQLsThreshold() throws Exception {
-		long originalUpgradeReportSQLStatementThreshold =
-			ReflectionTestUtil.getAndSetFieldValue(
-				UpgradeSQLRecorder.class,
-				"_UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 0L);
+		String aboveThresholdSQL = null;
 
-		try {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 0L)) {
+
 			_appender.start();
 
-			String aboveThresholdSQL =
+			aboveThresholdSQL =
 				"insert into UpgradeReportTable1 (id_) values (2)";
 
 			UpgradeProcess aboveThresholdUpgradeProcess =
 				UpgradeProcessFactory.runSQL(aboveThresholdSQL);
 
 			aboveThresholdUpgradeProcess.upgrade();
+		}
 
-			ReflectionTestUtil.setFieldValue(
-				UpgradeSQLRecorder.class,
-				"_UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 60000L);
+		String belowThresholdSQL = null;
 
-			String belowThresholdSQL =
-				"delete from UpgradeReportTable1 where id_ = 2";
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 60000L)) {
+
+			belowThresholdSQL = "delete from UpgradeReportTable1 where id_ = 2";
 
 			UpgradeProcess belowThresholdUpgradeProcess =
 				UpgradeProcessFactory.runSQL(belowThresholdSQL);
@@ -571,19 +583,13 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 			belowThresholdUpgradeProcess.upgrade();
 
 			_appender.stop();
-
-			String longestRunningSQLs = _getLogContextValueDiagnostics(
-				"upgrade.report.longest.running.sqls");
-
-			Assert.assertFalse(longestRunningSQLs.contains(belowThresholdSQL));
-			Assert.assertTrue(longestRunningSQLs.contains(aboveThresholdSQL));
 		}
-		finally {
-			ReflectionTestUtil.setFieldValue(
-				UpgradeSQLRecorder.class,
-				"_UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD",
-				originalUpgradeReportSQLStatementThreshold);
-		}
+
+		String longestRunningSQLs = _getLogContextValueDiagnostics(
+			"upgrade.report.longest.running.sqls");
+
+		Assert.assertFalse(longestRunningSQLs.contains(belowThresholdSQL));
+		Assert.assertTrue(longestRunningSQLs.contains(aboveThresholdSQL));
 	}
 
 	@Test
@@ -740,6 +746,45 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 	}
 
 	@Test
+	public void testPostUpgradeDataCleanupMessages() throws Exception {
+		Thread currentThread = Thread.currentThread();
+
+		ClassName className = null;
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PortalClassLoaderUtil.class, "_classLoader",
+					currentThread.getContextClassLoader());
+			Connection connection = DataAccess.getConnection()) {
+
+			String value = "com.liferay.test." + RandomTestUtil.randomString();
+
+			className = _classNameLocalService.addClassName(value);
+
+			_appender.start();
+
+			_runClassNamePostUpgradeDataCleanUpProcess(connection);
+
+			_appender.stop();
+
+			DBInspector dbInspector = new DBInspector(connection);
+
+			_assertLogContextDiagnostics(
+				"upgrade.report.data.clean.up",
+				StringBundler.concat(
+					"Table ", dbInspector.normalizeName("ClassName_"),
+					", 1 row deleted because \"", value,
+					"\" is not defined in any deployed module and is not in ",
+					"use"));
+		}
+		finally {
+			if (className != null) {
+				_classNameLocalService.deleteClassName(className);
+			}
+		}
+	}
+
+	@Test
 	public void testPropertiesEnvVariable() throws Exception {
 		_setEnv(
 			"LIFERAY_MY_PERIOD_ENVIRONMENT_PERIOD_PROPERTY",
@@ -863,7 +908,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 
 		DBPartitionUtil.forEachCompanyId(
 			companyId -> {
-				if (DBPartition.isPartitionEnabled()) {
+				if (PropsValues.DATABASE_PARTITION_ENABLED) {
 					upgradeProcess1ClassNames.add(
 						upgradeProcess1Class.getName() + StringPool.AT +
 							CompanyThreadLocal.getCompanyId());
@@ -881,12 +926,10 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 				}
 			});
 
-		long originalUpgradeReportSQLStatementThreshold =
-			ReflectionTestUtil.getAndSetFieldValue(
-				UpgradeSQLRecorder.class,
-				"_UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 0L);
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 0L)) {
 
-		try {
 			_appender.start();
 
 			upgradeProcess1.upgrade();
@@ -935,12 +978,6 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 						"Upgrade Process: %s\nSQL: %s\nDuration: %d ms",
 						upgradeProcessClassName, sql, duration));
 			}
-		}
-		finally {
-			ReflectionTestUtil.setFieldValue(
-				UpgradeSQLRecorder.class,
-				"_UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD",
-				originalUpgradeReportSQLStatementThreshold);
 		}
 	}
 
@@ -1076,6 +1113,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"update Release_ set schemaVersion = ?, buildNumber = ? " +
 					"where releaseId = ?")) {
@@ -1296,6 +1334,30 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		return new File(reportsDir, reportFileName);
 	}
 
+	private void _runClassNamePostUpgradeDataCleanUpProcess(
+			Connection connection)
+		throws Exception {
+
+		Bundle bundle = BundleUtil.getBundle(
+			SystemBundleUtil.getBundleContext(),
+			"com.liferay.data.cleanup.impl");
+
+		Class<?> clazz = bundle.loadClass(
+			"com.liferay.data.cleanup.internal.verify." +
+				"ClassNamePostUpgradeDataCleanupProcess");
+
+		Method method = clazz.getMethod("cleanUp");
+
+		Constructor<?> constructor = clazz.getConstructor(
+			ClassNameLocalService.class, CompanyLocalService.class,
+			Connection.class, ObjectDefinitionLocalService.class);
+
+		method.invoke(
+			constructor.newInstance(
+				_classNameLocalService, _companyLocalService, connection,
+				_objectDefinitionLocalService));
+	}
+
 	private void _setEnv(String key, String value) throws Exception {
 		Map<String, String> env = System.getenv();
 
@@ -1352,7 +1414,16 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 	@Inject(filter = "appender.name=UpgradeLogAppender")
 	private Appender _appender;
 
+	@Inject
+	private ClassNameLocalService _classNameLocalService;
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
+
 	private String _diagnosticsReportContent;
+
+	@Inject
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Inject
 	private ReleaseLocalService _releaseLocalService;
@@ -1407,7 +1478,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 			).setLoggerName(
 				DuplicateUniqueFinderRowsCleaner.class.getName()
 			).setLevel(
-				Level.WARN
+				Level.INFO
 			).setMessage(
 				new SimpleMessage(_DELETE_DUPLICATES_FINDER_WARNING_MESSAGE)
 			).build();

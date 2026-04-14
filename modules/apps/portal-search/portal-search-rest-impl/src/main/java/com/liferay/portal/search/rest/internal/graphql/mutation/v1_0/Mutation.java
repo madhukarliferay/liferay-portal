@@ -87,7 +87,7 @@ public class Mutation {
 	}
 
 	@GraphQLField(
-		description = "Search the company index for matching content. This endpoint requires setting the portal property 'feature.flag.LPS-179669' to true or enabling via Instance Settings > Feature Flags: Release."
+		description = "Search the company index for matching content."
 	)
 	public java.util.Collection<SearchResult> createSearchPage(
 			@GraphQLName("entryClassNames") String entryClassNames,
@@ -265,3 +265,4 @@ public class Mutation {
 		_vulcanBatchEngineImportTaskResource;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1695912522

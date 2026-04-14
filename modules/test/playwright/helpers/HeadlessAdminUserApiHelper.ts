@@ -308,8 +308,16 @@ export class HeadlessAdminUserApiHelper {
 
 	async deleteUserRole(
 		roleExternalReferenceCode: string,
-		userId: number | string
+		userId: number | string,
+		siteId?: number | string
 	) {
+		if (siteId) {
+			return this.apiHelpers.delete(
+				`${this.apiHelpers.baseUrl}${this.basePath}roles/by-external-reference-code/${roleExternalReferenceCode}/association/user-account/${userId}/site/${siteId}`,
+				{data: {}, failOnStatusCode: true}
+			);
+		}
+
 		return this.apiHelpers.delete(
 			`${this.apiHelpers.baseUrl}${this.basePath}roles/by-external-reference-code/${roleExternalReferenceCode}/association/user-account/${userId}`,
 			{data: {}, failOnStatusCode: true}
@@ -431,6 +439,26 @@ export class HeadlessAdminUserApiHelper {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/user-groups?search=${search}`
 		);
+	}
+
+	async patchMyUserAccountLanguage(languageId: string): Promise<void> {
+		const authorization = this.apiHelpers.getAuthorizationHeader();
+		const baseUrl = `${this.apiHelpers.baseUrl}${this.basePath}`;
+
+		const response = await fetch(`${baseUrl}/my-user-account`, {
+			headers: {Authorization: authorization},
+		});
+
+		const myUserAccount = await response.json();
+
+		await fetch(`${baseUrl}/user-accounts/${myUserAccount.id}`, {
+			body: JSON.stringify({languageId}),
+			headers: {
+				'Authorization': authorization,
+				'Content-Type': 'application/json',
+			},
+			method: 'PATCH',
+		});
 	}
 
 	async patchUserAccount(

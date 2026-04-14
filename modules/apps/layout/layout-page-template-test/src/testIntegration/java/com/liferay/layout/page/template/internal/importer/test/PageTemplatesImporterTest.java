@@ -75,6 +75,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -1190,8 +1191,10 @@ public class PageTemplatesImporterTest {
 		FragmentEntryLink fragmentEntryLink =
 			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 				"{}", fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
-				fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-				fragmentEntry.getJs(), draftLayout,
+				fragmentEntry.getExternalReferenceCode(),
+				ScopeUtil.getItemScopeExternalReferenceCode(
+					fragmentEntry.getGroupId(), draftLayout.getGroupId()),
+				fragmentEntry.getHtml(), fragmentEntry.getJs(), draftLayout,
 				fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(),
 				null, 0, defaultSegmentsExperienceId);
 
@@ -1256,8 +1259,15 @@ public class PageTemplatesImporterTest {
 				fragmentStyledLayoutStructureItem.getFragmentEntryLinkId());
 
 		Assert.assertEquals(
-			fragmentEntry.getFragmentEntryId(),
-			fragmentEntryLink.getFragmentEntryId());
+			fragmentEntry.getExternalReferenceCode(),
+			fragmentEntryLink.getFragmentEntryERC());
+
+		Long groupId = ScopeUtil.getItemGroupId(
+			fragmentEntryLink.getCompanyId(),
+			fragmentEntryLink.getFragmentEntryScopeERC(),
+			fragmentEntryLink.getGroupId());
+
+		Assert.assertEquals(fragmentEntry.getGroupId(), groupId.longValue());
 
 		List<String> childrenItemIds =
 			fragmentStyledLayoutStructureItem.getChildrenItemIds();

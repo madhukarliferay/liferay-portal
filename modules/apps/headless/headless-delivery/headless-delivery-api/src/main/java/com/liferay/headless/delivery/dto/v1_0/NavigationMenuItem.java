@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 	value = "NavigationMenuItem"
 )
 @io.swagger.v3.oas.annotations.media.Schema(
-	description = "Represents a navigation menu item.",
+	deprecated = true, description = "Represents a navigation menu item.",
 	requiredProperties = {"typeSettings"}
 )
 @JsonFilter("Liferay.Vulcan")
@@ -1036,3 +1036,4 @@ public class NavigationMenuItem implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1600335701

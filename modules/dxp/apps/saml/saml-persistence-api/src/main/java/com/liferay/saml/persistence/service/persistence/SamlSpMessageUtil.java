@@ -219,56 +219,6 @@ public class SamlSpMessageUtil {
 	}
 
 	/**
-	 * Returns the last saml sp message in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml sp message
-	 * @throws NoSuchSpMessageException if a matching saml sp message could not be found
-	 */
-	public static SamlSpMessage findByLtExpirationDate_Last(
-			Date expirationDate,
-			OrderByComparator<SamlSpMessage> orderByComparator)
-		throws com.liferay.saml.persistence.exception.NoSuchSpMessageException {
-
-		return getPersistence().findByLtExpirationDate_Last(
-			expirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the last saml sp message in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching saml sp message, or <code>null</code> if a matching saml sp message could not be found
-	 */
-	public static SamlSpMessage fetchByLtExpirationDate_Last(
-		Date expirationDate,
-		OrderByComparator<SamlSpMessage> orderByComparator) {
-
-		return getPersistence().fetchByLtExpirationDate_Last(
-			expirationDate, orderByComparator);
-	}
-
-	/**
-	 * Returns the saml sp messages before and after the current saml sp message in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param samlSpMessageId the primary key of the current saml sp message
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next saml sp message
-	 * @throws NoSuchSpMessageException if a saml sp message with the primary key could not be found
-	 */
-	public static SamlSpMessage[] findByLtExpirationDate_PrevAndNext(
-			long samlSpMessageId, Date expirationDate,
-			OrderByComparator<SamlSpMessage> orderByComparator)
-		throws com.liferay.saml.persistence.exception.NoSuchSpMessageException {
-
-		return getPersistence().findByLtExpirationDate_PrevAndNext(
-			samlSpMessageId, expirationDate, orderByComparator);
-	}
-
-	/**
 	 * Removes all the saml sp messages where expirationDate &lt; &#63; from the database.
 	 *
 	 * @param expirationDate the expiration date
@@ -521,3 +471,4 @@ public class SamlSpMessageUtil {
 	private static volatile SamlSpMessagePersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-384611603

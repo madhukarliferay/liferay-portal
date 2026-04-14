@@ -42,6 +42,8 @@ import com.liferay.headless.commerce.admin.order.resource.v1_0.TermResource;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
@@ -356,7 +358,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {order(id: ___){account, accountExternalReferenceCode, accountId, actions, advanceStatus, billingAddress, billingAddressExternalReferenceCode, billingAddressId, channel, channelExternalReferenceCode, channelId, couponCode, createDate, creatorEmailAddress, currencyCode, currencyExternalReferenceCode, currencyId, customFields, deliveryTermDescription, deliveryTermExternalReferenceCode, deliveryTermId, deliveryTermName, externalReferenceCode, id, lastPriceUpdateDate, modifiedDate, name, orderDate, orderItems, orderStatus, orderStatusInfo, orderTypeExternalReferenceCode, orderTypeId, paymentMethod, paymentStatus, paymentStatusInfo, paymentTermDescription, paymentTermExternalReferenceCode, paymentTermId, paymentTermName, printedNote, purchaseOrderNumber, requestedDeliveryDate, shippable, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, shippingAmount, shippingAmountFormatted, shippingAmountValue, shippingDiscountAmount, shippingDiscountAmountFormatted, shippingDiscountAmountValue, shippingDiscountPercentageLevel1, shippingDiscountPercentageLevel1WithTaxAmount, shippingDiscountPercentageLevel2, shippingDiscountPercentageLevel2WithTaxAmount, shippingDiscountPercentageLevel3, shippingDiscountPercentageLevel3WithTaxAmount, shippingDiscountPercentageLevel4, shippingDiscountPercentageLevel4WithTaxAmount, shippingDiscountWithTaxAmount, shippingDiscountWithTaxAmountFormatted, shippingMethod, shippingOption, shippingWithTaxAmount, shippingWithTaxAmountFormatted, shippingWithTaxAmountValue, subtotal, subtotalAmount, subtotalDiscountAmount, subtotalDiscountAmountFormatted, subtotalDiscountPercentageLevel1, subtotalDiscountPercentageLevel1WithTaxAmount, subtotalDiscountPercentageLevel2, subtotalDiscountPercentageLevel2WithTaxAmount, subtotalDiscountPercentageLevel3, subtotalDiscountPercentageLevel3WithTaxAmount, subtotalDiscountPercentageLevel4, subtotalDiscountPercentageLevel4WithTaxAmount, subtotalDiscountWithTaxAmount, subtotalDiscountWithTaxAmountFormatted, subtotalFormatted, subtotalWithTaxAmount, subtotalWithTaxAmountFormatted, subtotalWithTaxAmountValue, taxAmount, taxAmountFormatted, taxAmountValue, total, totalAmount, totalDiscountAmount, totalDiscountAmountFormatted, totalDiscountAmountValue, totalDiscountPercentageLevel1, totalDiscountPercentageLevel1WithTaxAmount, totalDiscountPercentageLevel2, totalDiscountPercentageLevel2WithTaxAmount, totalDiscountPercentageLevel3, totalDiscountPercentageLevel3WithTaxAmount, totalDiscountPercentageLevel4, totalDiscountPercentageLevel4WithTaxAmount, totalDiscountWithTaxAmount, totalDiscountWithTaxAmountFormatted, totalDiscountWithTaxAmountValue, totalFormatted, totalWithTaxAmount, totalWithTaxAmountFormatted, totalWithTaxAmountValue, transactionId, workflowStatusInfo}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {order(id: ___){account, accountExternalReferenceCode, accountId, actions, advanceStatus, author, billingAddress, billingAddressExternalReferenceCode, billingAddressId, channel, channelExternalReferenceCode, channelId, couponCode, createDate, creatorEmailAddress, currencyCode, currencyExternalReferenceCode, currencyId, customFields, deliveryTermDescription, deliveryTermExternalReferenceCode, deliveryTermId, deliveryTermName, externalReferenceCode, id, lastPriceUpdateDate, modifiedDate, name, orderDate, orderItems, orderStatus, orderStatusInfo, orderTypeExternalReferenceCode, orderTypeId, paymentMethod, paymentStatus, paymentStatusInfo, paymentTermDescription, paymentTermExternalReferenceCode, paymentTermId, paymentTermName, printedNote, purchaseOrderNumber, requestedDeliveryDate, shippable, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, shippingAmount, shippingAmountFormatted, shippingAmountValue, shippingDiscountAmount, shippingDiscountAmountFormatted, shippingDiscountAmountValue, shippingDiscountPercentageLevel1, shippingDiscountPercentageLevel1WithTaxAmount, shippingDiscountPercentageLevel2, shippingDiscountPercentageLevel2WithTaxAmount, shippingDiscountPercentageLevel3, shippingDiscountPercentageLevel3WithTaxAmount, shippingDiscountPercentageLevel4, shippingDiscountPercentageLevel4WithTaxAmount, shippingDiscountWithTaxAmount, shippingDiscountWithTaxAmountFormatted, shippingMethod, shippingOption, shippingWithTaxAmount, shippingWithTaxAmountFormatted, shippingWithTaxAmountValue, subtotal, subtotalAmount, subtotalDiscountAmount, subtotalDiscountAmountFormatted, subtotalDiscountPercentageLevel1, subtotalDiscountPercentageLevel1WithTaxAmount, subtotalDiscountPercentageLevel2, subtotalDiscountPercentageLevel2WithTaxAmount, subtotalDiscountPercentageLevel3, subtotalDiscountPercentageLevel3WithTaxAmount, subtotalDiscountPercentageLevel4, subtotalDiscountPercentageLevel4WithTaxAmount, subtotalDiscountWithTaxAmount, subtotalDiscountWithTaxAmountFormatted, subtotalFormatted, subtotalWithTaxAmount, subtotalWithTaxAmountFormatted, subtotalWithTaxAmountValue, taxAmount, taxAmountFormatted, taxAmountValue, total, totalAmount, totalDiscountAmount, totalDiscountAmountFormatted, totalDiscountAmountValue, totalDiscountPercentageLevel1, totalDiscountPercentageLevel1WithTaxAmount, totalDiscountPercentageLevel2, totalDiscountPercentageLevel2WithTaxAmount, totalDiscountPercentageLevel3, totalDiscountPercentageLevel3WithTaxAmount, totalDiscountPercentageLevel4, totalDiscountPercentageLevel4WithTaxAmount, totalDiscountWithTaxAmount, totalDiscountWithTaxAmountFormatted, totalDiscountWithTaxAmountValue, totalFormatted, totalWithTaxAmount, totalWithTaxAmountFormatted, totalWithTaxAmountValue, transactionId, workflowStatusInfo}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public Order order(@GraphQLName("id") Long id) throws Exception {
@@ -369,7 +371,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {orderByExternalReferenceCode(externalReferenceCode: ___){account, accountExternalReferenceCode, accountId, actions, advanceStatus, billingAddress, billingAddressExternalReferenceCode, billingAddressId, channel, channelExternalReferenceCode, channelId, couponCode, createDate, creatorEmailAddress, currencyCode, currencyExternalReferenceCode, currencyId, customFields, deliveryTermDescription, deliveryTermExternalReferenceCode, deliveryTermId, deliveryTermName, externalReferenceCode, id, lastPriceUpdateDate, modifiedDate, name, orderDate, orderItems, orderStatus, orderStatusInfo, orderTypeExternalReferenceCode, orderTypeId, paymentMethod, paymentStatus, paymentStatusInfo, paymentTermDescription, paymentTermExternalReferenceCode, paymentTermId, paymentTermName, printedNote, purchaseOrderNumber, requestedDeliveryDate, shippable, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, shippingAmount, shippingAmountFormatted, shippingAmountValue, shippingDiscountAmount, shippingDiscountAmountFormatted, shippingDiscountAmountValue, shippingDiscountPercentageLevel1, shippingDiscountPercentageLevel1WithTaxAmount, shippingDiscountPercentageLevel2, shippingDiscountPercentageLevel2WithTaxAmount, shippingDiscountPercentageLevel3, shippingDiscountPercentageLevel3WithTaxAmount, shippingDiscountPercentageLevel4, shippingDiscountPercentageLevel4WithTaxAmount, shippingDiscountWithTaxAmount, shippingDiscountWithTaxAmountFormatted, shippingMethod, shippingOption, shippingWithTaxAmount, shippingWithTaxAmountFormatted, shippingWithTaxAmountValue, subtotal, subtotalAmount, subtotalDiscountAmount, subtotalDiscountAmountFormatted, subtotalDiscountPercentageLevel1, subtotalDiscountPercentageLevel1WithTaxAmount, subtotalDiscountPercentageLevel2, subtotalDiscountPercentageLevel2WithTaxAmount, subtotalDiscountPercentageLevel3, subtotalDiscountPercentageLevel3WithTaxAmount, subtotalDiscountPercentageLevel4, subtotalDiscountPercentageLevel4WithTaxAmount, subtotalDiscountWithTaxAmount, subtotalDiscountWithTaxAmountFormatted, subtotalFormatted, subtotalWithTaxAmount, subtotalWithTaxAmountFormatted, subtotalWithTaxAmountValue, taxAmount, taxAmountFormatted, taxAmountValue, total, totalAmount, totalDiscountAmount, totalDiscountAmountFormatted, totalDiscountAmountValue, totalDiscountPercentageLevel1, totalDiscountPercentageLevel1WithTaxAmount, totalDiscountPercentageLevel2, totalDiscountPercentageLevel2WithTaxAmount, totalDiscountPercentageLevel3, totalDiscountPercentageLevel3WithTaxAmount, totalDiscountPercentageLevel4, totalDiscountPercentageLevel4WithTaxAmount, totalDiscountWithTaxAmount, totalDiscountWithTaxAmountFormatted, totalDiscountWithTaxAmountValue, totalFormatted, totalWithTaxAmount, totalWithTaxAmountFormatted, totalWithTaxAmountValue, transactionId, workflowStatusInfo}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {orderByExternalReferenceCode(externalReferenceCode: ___){account, accountExternalReferenceCode, accountId, actions, advanceStatus, author, billingAddress, billingAddressExternalReferenceCode, billingAddressId, channel, channelExternalReferenceCode, channelId, couponCode, createDate, creatorEmailAddress, currencyCode, currencyExternalReferenceCode, currencyId, customFields, deliveryTermDescription, deliveryTermExternalReferenceCode, deliveryTermId, deliveryTermName, externalReferenceCode, id, lastPriceUpdateDate, modifiedDate, name, orderDate, orderItems, orderStatus, orderStatusInfo, orderTypeExternalReferenceCode, orderTypeId, paymentMethod, paymentStatus, paymentStatusInfo, paymentTermDescription, paymentTermExternalReferenceCode, paymentTermId, paymentTermName, printedNote, purchaseOrderNumber, requestedDeliveryDate, shippable, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, shippingAmount, shippingAmountFormatted, shippingAmountValue, shippingDiscountAmount, shippingDiscountAmountFormatted, shippingDiscountAmountValue, shippingDiscountPercentageLevel1, shippingDiscountPercentageLevel1WithTaxAmount, shippingDiscountPercentageLevel2, shippingDiscountPercentageLevel2WithTaxAmount, shippingDiscountPercentageLevel3, shippingDiscountPercentageLevel3WithTaxAmount, shippingDiscountPercentageLevel4, shippingDiscountPercentageLevel4WithTaxAmount, shippingDiscountWithTaxAmount, shippingDiscountWithTaxAmountFormatted, shippingMethod, shippingOption, shippingWithTaxAmount, shippingWithTaxAmountFormatted, shippingWithTaxAmountValue, subtotal, subtotalAmount, subtotalDiscountAmount, subtotalDiscountAmountFormatted, subtotalDiscountPercentageLevel1, subtotalDiscountPercentageLevel1WithTaxAmount, subtotalDiscountPercentageLevel2, subtotalDiscountPercentageLevel2WithTaxAmount, subtotalDiscountPercentageLevel3, subtotalDiscountPercentageLevel3WithTaxAmount, subtotalDiscountPercentageLevel4, subtotalDiscountPercentageLevel4WithTaxAmount, subtotalDiscountWithTaxAmount, subtotalDiscountWithTaxAmountFormatted, subtotalFormatted, subtotalWithTaxAmount, subtotalWithTaxAmountFormatted, subtotalWithTaxAmountValue, taxAmount, taxAmountFormatted, taxAmountValue, total, totalAmount, totalDiscountAmount, totalDiscountAmountFormatted, totalDiscountAmountValue, totalDiscountPercentageLevel1, totalDiscountPercentageLevel1WithTaxAmount, totalDiscountPercentageLevel2, totalDiscountPercentageLevel2WithTaxAmount, totalDiscountPercentageLevel3, totalDiscountPercentageLevel3WithTaxAmount, totalDiscountPercentageLevel4, totalDiscountPercentageLevel4WithTaxAmount, totalDiscountWithTaxAmount, totalDiscountWithTaxAmountFormatted, totalDiscountWithTaxAmountValue, totalFormatted, totalWithTaxAmount, totalWithTaxAmountFormatted, totalWithTaxAmountValue, transactionId, workflowStatusInfo}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public Order orderByExternalReferenceCode(
@@ -469,7 +471,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {orderItem(id: ___){bookedQuantityId, customFields, decimalQuantity, deliveryGroup, deliveryGroupName, discountAmount, discountManuallyAdjusted, discountPercentageLevel1, discountPercentageLevel1WithTaxAmount, discountPercentageLevel2, discountPercentageLevel2WithTaxAmount, discountPercentageLevel3, discountPercentageLevel3WithTaxAmount, discountPercentageLevel4, discountPercentageLevel4WithTaxAmount, discountWithTaxAmount, externalReferenceCode, finalPrice, finalPriceWithTaxAmount, formattedQuantity, id, name, options, orderExternalReferenceCode, orderId, priceManuallyAdjusted, printedNote, promoPrice, promoPriceWithTaxAmount, quantity, replacedSku, replacedSkuExternalReferenceCode, replacedSkuId, requestedDeliveryDate, shippable, shippedQuantity, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, sku, skuExternalReferenceCode, skuId, subscription, unitOfMeasure, unitOfMeasureKey, unitPrice, unitPriceWithTaxAmount, virtualItemURLs, virtualItems}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {orderItem(id: ___){bookedQuantityId, customFields, decimalQuantity, deliveryGroup, deliveryGroupName, discountAmount, discountManuallyAdjusted, discountPercentageLevel1, discountPercentageLevel1WithTaxAmount, discountPercentageLevel2, discountPercentageLevel2WithTaxAmount, discountPercentageLevel3, discountPercentageLevel3WithTaxAmount, discountPercentageLevel4, discountPercentageLevel4WithTaxAmount, discountWithTaxAmount, externalReferenceCode, finalPrice, finalPriceWithTaxAmount, formattedQuantity, id, name, options, orderExternalReferenceCode, orderId, priceManuallyAdjusted, printedNote, productId, promoPrice, promoPriceWithTaxAmount, quantity, replacedSku, replacedSkuExternalReferenceCode, replacedSkuId, requestedDeliveryDate, shippable, shippedQuantity, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, sku, skuExternalReferenceCode, skuId, subscription, unitOfMeasure, unitOfMeasureKey, unitPrice, unitPriceWithTaxAmount, virtualItemURLs, virtualItems}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public OrderItem orderItem(@GraphQLName("id") Long id) throws Exception {
@@ -482,7 +484,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {orderItemByExternalReferenceCode(externalReferenceCode: ___){bookedQuantityId, customFields, decimalQuantity, deliveryGroup, deliveryGroupName, discountAmount, discountManuallyAdjusted, discountPercentageLevel1, discountPercentageLevel1WithTaxAmount, discountPercentageLevel2, discountPercentageLevel2WithTaxAmount, discountPercentageLevel3, discountPercentageLevel3WithTaxAmount, discountPercentageLevel4, discountPercentageLevel4WithTaxAmount, discountWithTaxAmount, externalReferenceCode, finalPrice, finalPriceWithTaxAmount, formattedQuantity, id, name, options, orderExternalReferenceCode, orderId, priceManuallyAdjusted, printedNote, promoPrice, promoPriceWithTaxAmount, quantity, replacedSku, replacedSkuExternalReferenceCode, replacedSkuId, requestedDeliveryDate, shippable, shippedQuantity, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, sku, skuExternalReferenceCode, skuId, subscription, unitOfMeasure, unitOfMeasureKey, unitPrice, unitPriceWithTaxAmount, virtualItemURLs, virtualItems}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {orderItemByExternalReferenceCode(externalReferenceCode: ___){bookedQuantityId, customFields, decimalQuantity, deliveryGroup, deliveryGroupName, discountAmount, discountManuallyAdjusted, discountPercentageLevel1, discountPercentageLevel1WithTaxAmount, discountPercentageLevel2, discountPercentageLevel2WithTaxAmount, discountPercentageLevel3, discountPercentageLevel3WithTaxAmount, discountPercentageLevel4, discountPercentageLevel4WithTaxAmount, discountWithTaxAmount, externalReferenceCode, finalPrice, finalPriceWithTaxAmount, formattedQuantity, id, name, options, orderExternalReferenceCode, orderId, priceManuallyAdjusted, printedNote, productId, promoPrice, promoPriceWithTaxAmount, quantity, replacedSku, replacedSkuExternalReferenceCode, replacedSkuId, requestedDeliveryDate, shippable, shippedQuantity, shippingAddress, shippingAddressExternalReferenceCode, shippingAddressId, sku, skuExternalReferenceCode, skuId, subscription, unitOfMeasure, unitOfMeasureKey, unitPrice, unitPriceWithTaxAmount, virtualItemURLs, virtualItems}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public OrderItem orderItemByExternalReferenceCode(
@@ -1126,6 +1128,28 @@ public class Query {
 					id, search, Pagination.of(page, pageSize))));
 	}
 
+	@GraphQLTypeExtension(OrderItem.class)
+	public class GetOrderByExternalReferenceCodeTypeExtension {
+
+		public GetOrderByExternalReferenceCodeTypeExtension(
+			OrderItem orderItem) {
+
+			_orderItem = orderItem;
+		}
+
+		@GraphQLField
+		public Order orderByExternalReferenceCode() throws Exception {
+			return _applyComponentServiceObjects(
+				_orderResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				orderResource -> orderResource.getOrderByExternalReferenceCode(
+					_orderItem.getExternalReferenceCode()));
+		}
+
+		private OrderItem _orderItem;
+
+	}
+
 	@GraphQLTypeExtension(Order.class)
 	public class GetOrderItemByExternalReferenceCodeTypeExtension {
 
@@ -1148,21 +1172,19 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
-	public class GetOrderByExternalReferenceCodeChannelTypeExtension {
+	public class GetOrderNoteByExternalReferenceCodeTypeExtension {
 
-		public GetOrderByExternalReferenceCodeChannelTypeExtension(
-			Order order) {
-
+		public GetOrderNoteByExternalReferenceCodeTypeExtension(Order order) {
 			_order = order;
 		}
 
 		@GraphQLField
-		public Channel byExternalReferenceCodeChannel() throws Exception {
+		public OrderNote noteByExternalReferenceCode() throws Exception {
 			return _applyComponentServiceObjects(
-				_channelResourceComponentServiceObjects,
+				_orderNoteResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				channelResource ->
-					channelResource.getOrderByExternalReferenceCodeChannel(
+				orderNoteResource ->
+					orderNoteResource.getOrderNoteByExternalReferenceCode(
 						_order.getExternalReferenceCode()));
 		}
 
@@ -1192,6 +1214,47 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
+	public class GetOrderTypeByExternalReferenceCodeTypeExtension {
+
+		public GetOrderTypeByExternalReferenceCodeTypeExtension(Order order) {
+			_order = order;
+		}
+
+		@GraphQLField
+		public OrderType typeByExternalReferenceCode() throws Exception {
+			return _applyComponentServiceObjects(
+				_orderTypeResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				orderTypeResource ->
+					orderTypeResource.getOrderTypeByExternalReferenceCode(
+						_order.getExternalReferenceCode()));
+		}
+
+		private Order _order;
+
+	}
+
+	@GraphQLTypeExtension(Order.class)
+	public class GetTermByExternalReferenceCodeTypeExtension {
+
+		public GetTermByExternalReferenceCodeTypeExtension(Order order) {
+			_order = order;
+		}
+
+		@GraphQLField
+		public Term termByExternalReferenceCode() throws Exception {
+			return _applyComponentServiceObjects(
+				_termResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				termResource -> termResource.getTermByExternalReferenceCode(
+					_order.getExternalReferenceCode()));
+		}
+
+		private Order _order;
+
+	}
+
+	@GraphQLTypeExtension(Order.class)
 	public class GetOrderByExternalReferenceCodeAccountTypeExtension {
 
 		public GetOrderByExternalReferenceCodeAccountTypeExtension(
@@ -1207,80 +1270,6 @@ public class Query {
 				Query.this::_populateResourceContext,
 				accountResource ->
 					accountResource.getOrderByExternalReferenceCodeAccount(
-						_order.getExternalReferenceCode()));
-		}
-
-		private Order _order;
-
-	}
-
-	@GraphQLTypeExtension(OrderItem.class)
-	public class GetOrderByExternalReferenceCodeTypeExtension {
-
-		public GetOrderByExternalReferenceCodeTypeExtension(
-			OrderItem orderItem) {
-
-			_orderItem = orderItem;
-		}
-
-		@GraphQLField
-		public Order orderByExternalReferenceCode() throws Exception {
-			return _applyComponentServiceObjects(
-				_orderResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				orderResource -> orderResource.getOrderByExternalReferenceCode(
-					_orderItem.getExternalReferenceCode()));
-		}
-
-		private OrderItem _orderItem;
-
-	}
-
-	@GraphQLTypeExtension(Order.class)
-	public class
-		GetOrderRuleByExternalReferenceCodeOrderRuleAccountGroupsPageTypeExtension {
-
-		public GetOrderRuleByExternalReferenceCodeOrderRuleAccountGroupsPageTypeExtension(
-			Order order) {
-
-			_order = order;
-		}
-
-		@GraphQLField
-		public OrderRuleAccountGroupPage
-				ruleByExternalReferenceCodeOrderRuleAccountGroups(
-					@GraphQLName("pageSize") int pageSize,
-					@GraphQLName("page") int page)
-			throws Exception {
-
-			return _applyComponentServiceObjects(
-				_orderRuleAccountGroupResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				orderRuleAccountGroupResource -> new OrderRuleAccountGroupPage(
-					orderRuleAccountGroupResource.
-						getOrderRuleByExternalReferenceCodeOrderRuleAccountGroupsPage(
-							_order.getExternalReferenceCode(),
-							Pagination.of(page, pageSize))));
-		}
-
-		private Order _order;
-
-	}
-
-	@GraphQLTypeExtension(Order.class)
-	public class GetOrderNoteByExternalReferenceCodeTypeExtension {
-
-		public GetOrderNoteByExternalReferenceCodeTypeExtension(Order order) {
-			_order = order;
-		}
-
-		@GraphQLField
-		public OrderNote noteByExternalReferenceCode() throws Exception {
-			return _applyComponentServiceObjects(
-				_orderNoteResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				orderNoteResource ->
-					orderNoteResource.getOrderNoteByExternalReferenceCode(
 						_order.getExternalReferenceCode()));
 		}
 
@@ -1315,19 +1304,21 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
-	public class GetOrderTypeByExternalReferenceCodeTypeExtension {
+	public class GetOrderByExternalReferenceCodeChannelTypeExtension {
 
-		public GetOrderTypeByExternalReferenceCodeTypeExtension(Order order) {
+		public GetOrderByExternalReferenceCodeChannelTypeExtension(
+			Order order) {
+
 			_order = order;
 		}
 
 		@GraphQLField
-		public OrderType typeByExternalReferenceCode() throws Exception {
+		public Channel byExternalReferenceCodeChannel() throws Exception {
 			return _applyComponentServiceObjects(
-				_orderTypeResourceComponentServiceObjects,
+				_channelResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				orderTypeResource ->
-					orderTypeResource.getOrderTypeByExternalReferenceCode(
+				channelResource ->
+					channelResource.getOrderByExternalReferenceCodeChannel(
 						_order.getExternalReferenceCode()));
 		}
 
@@ -1336,28 +1327,26 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
-	public class
-		GetOrderRuleByExternalReferenceCodeOrderRuleChannelsPageTypeExtension {
+	public class GetOrderByExternalReferenceCodeOrderItemsPageTypeExtension {
 
-		public GetOrderRuleByExternalReferenceCodeOrderRuleChannelsPageTypeExtension(
+		public GetOrderByExternalReferenceCodeOrderItemsPageTypeExtension(
 			Order order) {
 
 			_order = order;
 		}
 
 		@GraphQLField
-		public OrderRuleChannelPage
-				ruleByExternalReferenceCodeOrderRuleChannels(
-					@GraphQLName("pageSize") int pageSize,
-					@GraphQLName("page") int page)
+		public OrderItemPage byExternalReferenceCodeOrderItems(
+				@GraphQLName("pageSize") int pageSize,
+				@GraphQLName("page") int page)
 			throws Exception {
 
 			return _applyComponentServiceObjects(
-				_orderRuleChannelResourceComponentServiceObjects,
+				_orderItemResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				orderRuleChannelResource -> new OrderRuleChannelPage(
-					orderRuleChannelResource.
-						getOrderRuleByExternalReferenceCodeOrderRuleChannelsPage(
+				orderItemResource -> new OrderItemPage(
+					orderItemResource.
+						getOrderByExternalReferenceCodeOrderItemsPage(
 							_order.getExternalReferenceCode(),
 							Pagination.of(page, pageSize))));
 		}
@@ -1396,32 +1385,6 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
-	public class GetOrderByExternalReferenceCodeShippingAddressTypeExtension {
-
-		public GetOrderByExternalReferenceCodeShippingAddressTypeExtension(
-			Order order) {
-
-			_order = order;
-		}
-
-		@GraphQLField
-		public ShippingAddress byExternalReferenceCodeShippingAddress()
-			throws Exception {
-
-			return _applyComponentServiceObjects(
-				_shippingAddressResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				shippingAddressResource ->
-					shippingAddressResource.
-						getOrderByExternalReferenceCodeShippingAddress(
-							_order.getExternalReferenceCode()));
-		}
-
-		private Order _order;
-
-	}
-
-	@GraphQLTypeExtension(Order.class)
 	public class
 		GetOrderRuleByExternalReferenceCodeOrderRuleAccountsPageTypeExtension {
 
@@ -1453,46 +1416,28 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
-	public class GetTermByExternalReferenceCodeTypeExtension {
+	public class
+		GetOrderRuleByExternalReferenceCodeOrderRuleAccountGroupsPageTypeExtension {
 
-		public GetTermByExternalReferenceCodeTypeExtension(Order order) {
-			_order = order;
-		}
-
-		@GraphQLField
-		public Term termByExternalReferenceCode() throws Exception {
-			return _applyComponentServiceObjects(
-				_termResourceComponentServiceObjects,
-				Query.this::_populateResourceContext,
-				termResource -> termResource.getTermByExternalReferenceCode(
-					_order.getExternalReferenceCode()));
-		}
-
-		private Order _order;
-
-	}
-
-	@GraphQLTypeExtension(Order.class)
-	public class GetTermByExternalReferenceCodeTermOrderTypesPageTypeExtension {
-
-		public GetTermByExternalReferenceCodeTermOrderTypesPageTypeExtension(
+		public GetOrderRuleByExternalReferenceCodeOrderRuleAccountGroupsPageTypeExtension(
 			Order order) {
 
 			_order = order;
 		}
 
 		@GraphQLField
-		public TermOrderTypePage termByExternalReferenceCodeTermOrderTypes(
-				@GraphQLName("pageSize") int pageSize,
-				@GraphQLName("page") int page)
+		public OrderRuleAccountGroupPage
+				ruleByExternalReferenceCodeOrderRuleAccountGroups(
+					@GraphQLName("pageSize") int pageSize,
+					@GraphQLName("page") int page)
 			throws Exception {
 
 			return _applyComponentServiceObjects(
-				_termOrderTypeResourceComponentServiceObjects,
+				_orderRuleAccountGroupResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				termOrderTypeResource -> new TermOrderTypePage(
-					termOrderTypeResource.
-						getTermByExternalReferenceCodeTermOrderTypesPage(
+				orderRuleAccountGroupResource -> new OrderRuleAccountGroupPage(
+					orderRuleAccountGroupResource.
+						getOrderRuleByExternalReferenceCodeOrderRuleAccountGroupsPage(
 							_order.getExternalReferenceCode(),
 							Pagination.of(page, pageSize))));
 		}
@@ -1503,27 +1448,27 @@ public class Query {
 
 	@GraphQLTypeExtension(Order.class)
 	public class
-		GetOrderTypeByExternalReferenceCodeOrderTypeChannelsPageTypeExtension {
+		GetOrderRuleByExternalReferenceCodeOrderRuleChannelsPageTypeExtension {
 
-		public GetOrderTypeByExternalReferenceCodeOrderTypeChannelsPageTypeExtension(
+		public GetOrderRuleByExternalReferenceCodeOrderRuleChannelsPageTypeExtension(
 			Order order) {
 
 			_order = order;
 		}
 
 		@GraphQLField
-		public OrderTypeChannelPage
-				typeByExternalReferenceCodeOrderTypeChannels(
+		public OrderRuleChannelPage
+				ruleByExternalReferenceCodeOrderRuleChannels(
 					@GraphQLName("pageSize") int pageSize,
 					@GraphQLName("page") int page)
 			throws Exception {
 
 			return _applyComponentServiceObjects(
-				_orderTypeChannelResourceComponentServiceObjects,
+				_orderRuleChannelResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				orderTypeChannelResource -> new OrderTypeChannelPage(
-					orderTypeChannelResource.
-						getOrderTypeByExternalReferenceCodeOrderTypeChannelsPage(
+				orderRuleChannelResource -> new OrderRuleChannelPage(
+					orderRuleChannelResource.
+						getOrderRuleByExternalReferenceCodeOrderRuleChannelsPage(
 							_order.getExternalReferenceCode(),
 							Pagination.of(page, pageSize))));
 		}
@@ -1564,26 +1509,83 @@ public class Query {
 	}
 
 	@GraphQLTypeExtension(Order.class)
-	public class GetOrderByExternalReferenceCodeOrderItemsPageTypeExtension {
+	public class
+		GetOrderTypeByExternalReferenceCodeOrderTypeChannelsPageTypeExtension {
 
-		public GetOrderByExternalReferenceCodeOrderItemsPageTypeExtension(
+		public GetOrderTypeByExternalReferenceCodeOrderTypeChannelsPageTypeExtension(
 			Order order) {
 
 			_order = order;
 		}
 
 		@GraphQLField
-		public OrderItemPage byExternalReferenceCodeOrderItems(
+		public OrderTypeChannelPage
+				typeByExternalReferenceCodeOrderTypeChannels(
+					@GraphQLName("pageSize") int pageSize,
+					@GraphQLName("page") int page)
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_orderTypeChannelResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				orderTypeChannelResource -> new OrderTypeChannelPage(
+					orderTypeChannelResource.
+						getOrderTypeByExternalReferenceCodeOrderTypeChannelsPage(
+							_order.getExternalReferenceCode(),
+							Pagination.of(page, pageSize))));
+		}
+
+		private Order _order;
+
+	}
+
+	@GraphQLTypeExtension(Order.class)
+	public class GetOrderByExternalReferenceCodeShippingAddressTypeExtension {
+
+		public GetOrderByExternalReferenceCodeShippingAddressTypeExtension(
+			Order order) {
+
+			_order = order;
+		}
+
+		@GraphQLField
+		public ShippingAddress byExternalReferenceCodeShippingAddress()
+			throws Exception {
+
+			return _applyComponentServiceObjects(
+				_shippingAddressResourceComponentServiceObjects,
+				Query.this::_populateResourceContext,
+				shippingAddressResource ->
+					shippingAddressResource.
+						getOrderByExternalReferenceCodeShippingAddress(
+							_order.getExternalReferenceCode()));
+		}
+
+		private Order _order;
+
+	}
+
+	@GraphQLTypeExtension(Order.class)
+	public class GetTermByExternalReferenceCodeTermOrderTypesPageTypeExtension {
+
+		public GetTermByExternalReferenceCodeTermOrderTypesPageTypeExtension(
+			Order order) {
+
+			_order = order;
+		}
+
+		@GraphQLField
+		public TermOrderTypePage termByExternalReferenceCodeTermOrderTypes(
 				@GraphQLName("pageSize") int pageSize,
 				@GraphQLName("page") int page)
 			throws Exception {
 
 			return _applyComponentServiceObjects(
-				_orderItemResourceComponentServiceObjects,
+				_termOrderTypeResourceComponentServiceObjects,
 				Query.this::_populateResourceContext,
-				orderItemResource -> new OrderItemPage(
-					orderItemResource.
-						getOrderByExternalReferenceCodeOrderItemsPage(
+				termOrderTypeResource -> new TermOrderTypePage(
+					termOrderTypeResource.
+						getTermByExternalReferenceCodeTermOrderTypesPage(
 							_order.getExternalReferenceCode(),
 							Pagination.of(page, pageSize))));
 		}
@@ -2182,6 +2184,10 @@ public class Query {
 		accountResource.setContextUriInfo(_uriInfo);
 		accountResource.setContextUser(_user);
 		accountResource.setGroupLocalService(_groupLocalService);
+		accountResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		accountResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		accountResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2198,6 +2204,10 @@ public class Query {
 		billingAddressResource.setContextUriInfo(_uriInfo);
 		billingAddressResource.setContextUser(_user);
 		billingAddressResource.setGroupLocalService(_groupLocalService);
+		billingAddressResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		billingAddressResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		billingAddressResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2211,6 +2221,10 @@ public class Query {
 		channelResource.setContextUriInfo(_uriInfo);
 		channelResource.setContextUser(_user);
 		channelResource.setGroupLocalService(_groupLocalService);
+		channelResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		channelResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		channelResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2224,6 +2238,10 @@ public class Query {
 		orderResource.setContextUriInfo(_uriInfo);
 		orderResource.setContextUser(_user);
 		orderResource.setGroupLocalService(_groupLocalService);
+		orderResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2240,6 +2258,10 @@ public class Query {
 		orderAccountGroupResource.setContextUriInfo(_uriInfo);
 		orderAccountGroupResource.setContextUser(_user);
 		orderAccountGroupResource.setGroupLocalService(_groupLocalService);
+		orderAccountGroupResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderAccountGroupResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderAccountGroupResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2253,6 +2275,10 @@ public class Query {
 		orderItemResource.setContextUriInfo(_uriInfo);
 		orderItemResource.setContextUser(_user);
 		orderItemResource.setGroupLocalService(_groupLocalService);
+		orderItemResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderItemResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderItemResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2266,6 +2292,10 @@ public class Query {
 		orderNoteResource.setContextUriInfo(_uriInfo);
 		orderNoteResource.setContextUser(_user);
 		orderNoteResource.setGroupLocalService(_groupLocalService);
+		orderNoteResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderNoteResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderNoteResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2279,6 +2309,10 @@ public class Query {
 		orderRuleResource.setContextUriInfo(_uriInfo);
 		orderRuleResource.setContextUser(_user);
 		orderRuleResource.setGroupLocalService(_groupLocalService);
+		orderRuleResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderRuleResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderRuleResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2295,6 +2329,10 @@ public class Query {
 		orderRuleAccountResource.setContextUriInfo(_uriInfo);
 		orderRuleAccountResource.setContextUser(_user);
 		orderRuleAccountResource.setGroupLocalService(_groupLocalService);
+		orderRuleAccountResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderRuleAccountResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderRuleAccountResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2311,6 +2349,10 @@ public class Query {
 		orderRuleAccountGroupResource.setContextUriInfo(_uriInfo);
 		orderRuleAccountGroupResource.setContextUser(_user);
 		orderRuleAccountGroupResource.setGroupLocalService(_groupLocalService);
+		orderRuleAccountGroupResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderRuleAccountGroupResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderRuleAccountGroupResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2327,6 +2369,10 @@ public class Query {
 		orderRuleChannelResource.setContextUriInfo(_uriInfo);
 		orderRuleChannelResource.setContextUser(_user);
 		orderRuleChannelResource.setGroupLocalService(_groupLocalService);
+		orderRuleChannelResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderRuleChannelResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderRuleChannelResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2343,6 +2389,10 @@ public class Query {
 		orderRuleOrderTypeResource.setContextUriInfo(_uriInfo);
 		orderRuleOrderTypeResource.setContextUser(_user);
 		orderRuleOrderTypeResource.setGroupLocalService(_groupLocalService);
+		orderRuleOrderTypeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderRuleOrderTypeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderRuleOrderTypeResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2356,6 +2406,10 @@ public class Query {
 		orderTypeResource.setContextUriInfo(_uriInfo);
 		orderTypeResource.setContextUser(_user);
 		orderTypeResource.setGroupLocalService(_groupLocalService);
+		orderTypeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderTypeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderTypeResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2372,6 +2426,10 @@ public class Query {
 		orderTypeChannelResource.setContextUriInfo(_uriInfo);
 		orderTypeChannelResource.setContextUser(_user);
 		orderTypeChannelResource.setGroupLocalService(_groupLocalService);
+		orderTypeChannelResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		orderTypeChannelResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		orderTypeChannelResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2388,6 +2446,10 @@ public class Query {
 		shippingAddressResource.setContextUriInfo(_uriInfo);
 		shippingAddressResource.setContextUser(_user);
 		shippingAddressResource.setGroupLocalService(_groupLocalService);
+		shippingAddressResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		shippingAddressResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		shippingAddressResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2401,6 +2463,9 @@ public class Query {
 		termResource.setContextUriInfo(_uriInfo);
 		termResource.setContextUser(_user);
 		termResource.setGroupLocalService(_groupLocalService);
+		termResource.setResourceActionLocalService(_resourceActionLocalService);
+		termResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		termResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2416,6 +2481,10 @@ public class Query {
 		termOrderTypeResource.setContextUriInfo(_uriInfo);
 		termOrderTypeResource.setContextUser(_user);
 		termOrderTypeResource.setGroupLocalService(_groupLocalService);
+		termOrderTypeResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		termOrderTypeResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
 		termOrderTypeResource.setRoleLocalService(_roleLocalService);
 	}
 
@@ -2462,6 +2531,8 @@ public class Query {
 	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
+	private ResourceActionLocalService _resourceActionLocalService;
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 	private RoleLocalService _roleLocalService;
 	private BiFunction<Object, String, com.liferay.portal.kernel.search.Sort[]>
 		_sortsBiFunction;
@@ -2469,3 +2540,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1993276845

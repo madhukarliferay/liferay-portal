@@ -195,8 +195,9 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 				_fragmentEntryLinkLocalService.addFragmentEntryLink(
 					null, fragmentEntryLink.getUserId(),
 					fragmentEntryLink.getGroupId(),
-					fragmentEntryLink.getOriginalFragmentEntryLinkId(),
-					fragmentEntryLink.getFragmentEntryId(),
+					fragmentEntryLink.getOriginalFragmentEntryLinkERC(),
+					fragmentEntryLink.getFragmentEntryERC(),
+					fragmentEntryLink.getFragmentEntryScopeERC(),
 					segmentsExperienceId, fragmentEntryLink.getPlid(),
 					fragmentEntryLink.getCss(), fragmentEntryLink.getHtml(),
 					fragmentEntryLink.getJs(),
@@ -219,6 +220,7 @@ public class LayoutPageTemplateStructureRelUpgradeProcess
 
 	private void _upgradeLayoutPageTemplateStructureRel() throws Exception {
 		try (Statement s = connection.createStatement();
+
 			ResultSet resultSet = s.executeQuery(
 				"select lPageTemplateStructureRelId, segmentsExperienceId, " +
 					"data_ from LayoutPageTemplateStructureRel order by " +

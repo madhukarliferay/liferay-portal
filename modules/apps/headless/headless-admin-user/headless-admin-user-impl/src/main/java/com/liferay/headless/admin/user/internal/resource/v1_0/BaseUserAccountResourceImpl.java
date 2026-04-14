@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.user.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.headless.admin.user.dto.v1_0.UserAccount;
 import com.liferay.headless.admin.user.resource.v1_0.UserAccountResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
@@ -2726,12 +2727,7 @@ public abstract class BaseUserAccountResourceImpl
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
 
-		if (parameters.containsKey("siteId")) {
-			return getSiteUserAccountsPage(
-				(Long)parameters.get("siteId"), search, filter, pagination,
-				sorts);
-		}
-		else if (parameters.containsKey("accountId")) {
+		if (parameters.containsKey("accountId")) {
 			return getAccountUserAccountsPage(
 				_parseLong((String)parameters.get("accountId")), search, filter,
 				pagination, sorts);
@@ -2740,6 +2736,11 @@ public abstract class BaseUserAccountResourceImpl
 			return getOrganizationUserAccountsPage(
 				(String)parameters.get("organizationId"), search, filter,
 				pagination, sorts);
+		}
+		else if (parameters.containsKey("siteId")) {
+			return getSiteUserAccountsPage(
+				(Long)parameters.get("siteId"), search, filter, pagination,
+				sorts);
 		}
 		else {
 			return getUserAccountsPage(search, filter, pagination, sorts);
@@ -2763,6 +2764,15 @@ public abstract class BaseUserAccountResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -3389,3 +3399,4 @@ public abstract class BaseUserAccountResourceImpl
 		LogFactoryUtil.getLog(BaseUserAccountResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1405401620

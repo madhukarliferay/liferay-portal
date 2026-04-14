@@ -36,13 +36,12 @@ public class ExportImportReportEntryLocalServiceWrapper
 		addEmptyExportImportReportEntry(
 			long groupId, long companyId, String classExternalReferenceCode,
 			long classNameId, long exportImportConfigurationId,
-			String modelName, int origin, String scope, String scopeKey) {
+			String modelNameLanguageKey) {
 
 		return _exportImportReportEntryLocalService.
 			addEmptyExportImportReportEntry(
 				groupId, companyId, classExternalReferenceCode, classNameId,
-				exportImportConfigurationId, modelName, origin, scope,
-				scopeKey);
+				exportImportConfigurationId, modelNameLanguageKey);
 	}
 
 	@Override
@@ -50,14 +49,14 @@ public class ExportImportReportEntryLocalServiceWrapper
 		addErrorExportImportReportEntry(
 			long groupId, long companyId, String classExternalReferenceCode,
 			long classNameId, long classPK, long exportImportConfigurationId,
-			String error, String errorStacktrace, String modelName, int origin,
-			String scope, String scopeKey) {
+			String errorMessage, String errorStacktrace,
+			String modelNameLanguageKey) {
 
 		return _exportImportReportEntryLocalService.
 			addErrorExportImportReportEntry(
 				groupId, companyId, classExternalReferenceCode, classNameId,
-				classPK, exportImportConfigurationId, error, errorStacktrace,
-				modelName, origin, scope, scopeKey);
+				classPK, exportImportConfigurationId, errorMessage,
+				errorStacktrace, modelNameLanguageKey);
 	}
 
 	/**
@@ -343,6 +342,34 @@ public class ExportImportReportEntryLocalServiceWrapper
 			getIndexableActionableDynamicQuery();
 	}
 
+	@Override
+	public com.liferay.exportimport.report.model.ExportImportReportEntry
+		getOrAddEmptyExportImportReportEntry(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId, long exportImportConfigurationId,
+			String modelNameLanguageKey) {
+
+		return _exportImportReportEntryLocalService.
+			getOrAddEmptyExportImportReportEntry(
+				groupId, companyId, classExternalReferenceCode, classNameId,
+				exportImportConfigurationId, modelNameLanguageKey);
+	}
+
+	@Override
+	public com.liferay.exportimport.report.model.ExportImportReportEntry
+		getOrAddErrorExportImportReportEntry(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId, long classPK, long exportImportConfigurationId,
+			String errorMessage, String errorStacktrace,
+			String modelNameLanguageKey) {
+
+		return _exportImportReportEntryLocalService.
+			getOrAddErrorExportImportReportEntry(
+				groupId, companyId, classExternalReferenceCode, classNameId,
+				classPK, exportImportConfigurationId, errorMessage,
+				errorStacktrace, modelNameLanguageKey);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -363,6 +390,17 @@ public class ExportImportReportEntryLocalServiceWrapper
 
 		return _exportImportReportEntryLocalService.getPersistedModel(
 			primaryKeyObj);
+	}
+
+	@Override
+	public void resolveEmptyExportImportReportEntries(
+			long groupId, long companyId, String classExternalReferenceCode,
+			long classNameId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_exportImportReportEntryLocalService.
+			resolveEmptyExportImportReportEntries(
+				groupId, companyId, classExternalReferenceCode, classNameId);
 	}
 
 	/**
@@ -408,3 +446,4 @@ public class ExportImportReportEntryLocalServiceWrapper
 		_exportImportReportEntryLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:233950841

@@ -12,7 +12,6 @@ import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.exportimport.content.processor.ExportImportContentProcessor;
 import com.liferay.exportimport.data.handler.base.BaseStagedModelDataHandler;
 import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
-import com.liferay.exportimport.kernel.lar.ExportImportHelper;
 import com.liferay.exportimport.kernel.lar.ExportImportPathUtil;
 import com.liferay.exportimport.kernel.lar.ExportImportProcessCallbackRegistry;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
@@ -28,7 +27,6 @@ import com.liferay.exportimport.lar.ThemeImporter;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
 import com.liferay.layout.internal.exportimport.staged.model.repository.StagedLayoutSetStagedModelRepositoryUtil;
 import com.liferay.layout.set.model.adapter.StagedLayoutSet;
-import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -40,7 +38,6 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutSetBranch;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
-import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.model.ThemeSetting;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -50,7 +47,6 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutSetBranchLocalService;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalService;
-import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ColorSchemeFactoryUtil;
@@ -105,7 +101,7 @@ public class StagedLayoutSetStagedModelDataHandler
 		throws Exception {
 
 		_exportClientExtensionEntryRels(portletDataContext, stagedLayoutSet);
-		_exportLayouts(portletDataContext, stagedLayoutSet);
+		_exportLayouts(portletDataContext);
 		_exportLogo(portletDataContext, stagedLayoutSet);
 		_exportTheme(portletDataContext, stagedLayoutSet);
 
@@ -231,10 +227,6 @@ public class StagedLayoutSetStagedModelDataHandler
 
 		List<Element> layoutElements = layoutsElement.elements();
 
-		// Delete missing pages
-
-		_deleteMissingLayouts(portletDataContext, layoutElements);
-
 		// Remove layouts that were deleted from the layout set prototype
 
 		Set<Layout> modifiedLayouts = new HashSet<>();
@@ -308,88 +300,24 @@ public class StagedLayoutSetStagedModelDataHandler
 					layout.getLayoutSetPrototypeLayoutERC(),
 					layoutSetPrototype.getGroupId());
 
-			if ((sourcePrototypeLayout == null) &&
-				_layoutLocalService.hasLayout(
+			if ((sourcePrototypeLayout != null) ||
+				!_layoutLocalService.hasLayout(
 					layout.getUuid(), layout.getGroupId(),
-					layout.isPrivateLayout()) &&
-				!layout.getLayoutSet(
-				).getSettings(
-				).contains(
-					Sites.MERGE_FAIL_FRIENDLY_URL_LAYOUTS
-				)) {
+					layout.isPrivateLayout())) {
 
-				_layoutLocalService.deleteLayout(
-					layout, ServiceContextThreadLocal.getServiceContext());
+				continue;
 			}
-		}
-	}
 
-	private void _deleteMissingLayouts(
-		PortletDataContext portletDataContext, List<Element> layoutElements) {
+			LayoutSet layoutSet = layout.getLayoutSet();
 
-		boolean deleteMissingLayouts = MapUtil.getBoolean(
-			portletDataContext.getParameterMap(),
-			PortletDataHandlerKeys.DELETE_MISSING_LAYOUTS,
-			Boolean.TRUE.booleanValue());
+			String settings = layoutSet.getSettings();
 
-		if (!deleteMissingLayouts) {
-			return;
-		}
-
-		List<String> sourceLayoutUuids = TransformUtil.transform(
-			layoutElements,
-			layoutElement -> layoutElement.attributeValue("uuid"));
-
-		if (_log.isDebugEnabled() && !sourceLayoutUuids.isEmpty()) {
-			_log.debug("Delete missing layouts");
-		}
-
-		Map<Long, Long> layoutPlids =
-			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-				Layout.class);
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
-
-		for (Layout layout :
-				_layoutLocalService.getLayouts(
-					portletDataContext.getGroupId(),
-					portletDataContext.isPrivateLayout())) {
-
-			if (!sourceLayoutUuids.contains(layout.getUuid()) &&
-				!layoutPlids.containsValue(layout.getPlid())) {
-
-				layout = _layoutLocalService.fetchLayout(layout.getPlid());
-
-				if (layout == null) {
-					continue;
-				}
-
-				String layoutUUID = layout.getUuid();
-				long stagingGroupID = portletDataContext.getSourceGroupId();
-
-				try {
-					Layout stagedLayout =
-						_layoutLocalService.fetchLayoutByUuidAndGroupId(
-							layoutUUID, stagingGroupID,
-							!layout.isPublicLayout());
-
-					if ((stagedLayout != null) &&
-						_exportImportHelper.isLayoutRevisionInReview(
-							stagedLayout)) {
-
-						continue;
-					}
-
-					_layoutLocalService.deleteLayout(layout, serviceContext);
-				}
-				catch (Exception exception) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Unable to delete layout with UUID " + layoutUUID,
-							exception);
-					}
-				}
+			if (settings.contains(Sites.MERGE_FAIL_FRIENDLY_URL_LAYOUTS)) {
+				continue;
 			}
+
+			_layoutLocalService.deleteLayout(
+				layout, ServiceContextThreadLocal.getServiceContext());
 		}
 	}
 
@@ -487,10 +415,7 @@ public class StagedLayoutSetStagedModelDataHandler
 			PortletDataContext.REFERENCE_TYPE_STRONG);
 	}
 
-	private void _exportLayouts(
-			PortletDataContext portletDataContext,
-			StagedLayoutSet stagedLayoutSet)
-		throws Exception {
+	private void _exportLayouts(PortletDataContext portletDataContext) {
 
 		// Force to always export layout deletions
 
@@ -500,61 +425,6 @@ public class StagedLayoutSetStagedModelDataHandler
 		// Force to always have a layout group element
 
 		portletDataContext.getExportDataGroupElement(Layout.class);
-
-		long[] layoutIds = portletDataContext.getLayoutIds();
-
-		LayoutSet layoutSet = stagedLayoutSet.getLayoutSet();
-
-		Group group = layoutSet.getGroup();
-
-		if (group.isLayoutPrototype()) {
-			layoutIds = _exportImportHelper.getAllLayoutIds(
-				group.getGroupId(), portletDataContext.isPrivateLayout());
-		}
-
-		for (StagedModel stagedModel :
-				StagedLayoutSetStagedModelRepositoryUtil.
-					fetchChildrenStagedModels(
-						portletDataContext, stagedLayoutSet)) {
-
-			Layout layout = (Layout)stagedModel;
-
-			if (!ArrayUtil.contains(layoutIds, layout.getLayoutId())) {
-				Element layoutElement = portletDataContext.getExportDataElement(
-					layout);
-
-				if (layoutElement.attributeValue(Constants.ACTION) == null) {
-					layoutElement.addAttribute(
-						Constants.ACTION, Constants.SKIP);
-					layoutElement.addAttribute(
-						"layout-parent-layout-id",
-						String.valueOf(layout.getParentLayoutId()));
-				}
-
-				continue;
-			}
-
-			try {
-				if (!LayoutStagingUtil.prepareLayoutStagingHandler(
-						portletDataContext, layout)) {
-
-					continue;
-				}
-
-				StagedModelDataHandlerUtil.exportReferenceStagedModel(
-					portletDataContext, stagedLayoutSet, layout,
-					PortletDataContext.REFERENCE_TYPE_CHILD);
-			}
-			catch (Exception exception) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Unable to export layout " + layout.getName(),
-						exception);
-				}
-
-				throw exception;
-			}
-		}
 	}
 
 	private void _exportLogo(
@@ -1176,9 +1046,6 @@ public class StagedLayoutSetStagedModelDataHandler
 	@Reference(target = "(content.processor.type=DLReferences)")
 	private ExportImportContentProcessor<String>
 		_dlReferencesExportImportContentProcessor;
-
-	@Reference
-	private ExportImportHelper _exportImportHelper;
 
 	@Reference
 	private ExportImportProcessCallbackRegistry

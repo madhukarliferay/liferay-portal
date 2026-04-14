@@ -5,9 +5,8 @@
 
 package com.liferay.headless.cms.internal.graphql.mutation.v1_0;
 
-import com.liferay.headless.cms.dto.v1_0.BulkAction;
-import com.liferay.headless.cms.dto.v1_0.BulkActionTask;
-import com.liferay.headless.cms.resource.v1_0.BulkActionResource;
+import com.liferay.headless.cms.dto.v1_0.AssetPermissionAction;
+import com.liferay.headless.cms.resource.v1_0.AssetPermissionActionResource;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -34,28 +33,26 @@ import org.osgi.service.component.ComponentServiceObjects;
 @Generated("")
 public class Mutation {
 
-	public static void setBulkActionResourceComponentServiceObjects(
-		ComponentServiceObjects<BulkActionResource>
-			bulkActionResourceComponentServiceObjects) {
+	public static void setAssetPermissionActionResourceComponentServiceObjects(
+		ComponentServiceObjects<AssetPermissionActionResource>
+			assetPermissionActionResourceComponentServiceObjects) {
 
-		_bulkActionResourceComponentServiceObjects =
-			bulkActionResourceComponentServiceObjects;
+		_assetPermissionActionResourceComponentServiceObjects =
+			assetPermissionActionResourceComponentServiceObjects;
 	}
 
-	@GraphQLField(description = "Execute a bulk action")
-	public BulkActionTask createBulkAction(
-			@GraphQLName("search") String search,
-			@GraphQLName("filter") String filterString,
-			@GraphQLName("bulkAction") BulkAction bulkAction)
+	@GraphQLField(description = "Perform an action on the asset's permissions")
+	public AssetPermissionAction createAssetPermission(
+			@GraphQLName("assetPermissionAction") AssetPermissionAction
+				assetPermissionAction)
 		throws Exception {
 
 		return _applyComponentServiceObjects(
-			_bulkActionResourceComponentServiceObjects,
+			_assetPermissionActionResourceComponentServiceObjects,
 			this::_populateResourceContext,
-			bulkActionResource -> bulkActionResource.postBulkAction(
-				search,
-				_filterBiFunction.apply(bulkActionResource, filterString),
-				bulkAction));
+			assetPermissionActionResource ->
+				assetPermissionActionResource.postAssetPermission(
+					assetPermissionAction));
 	}
 
 	private <T, R, E1 extends Throwable, E2 extends Throwable> R
@@ -96,27 +93,27 @@ public class Mutation {
 		}
 	}
 
-	private void _populateResourceContext(BulkActionResource bulkActionResource)
+	private void _populateResourceContext(
+			AssetPermissionActionResource assetPermissionActionResource)
 		throws Exception {
 
-		bulkActionResource.setContextAcceptLanguage(_acceptLanguage);
-		bulkActionResource.setContextCompany(_company);
-		bulkActionResource.setContextHttpServletRequest(_httpServletRequest);
-		bulkActionResource.setContextHttpServletResponse(_httpServletResponse);
-		bulkActionResource.setContextUriInfo(_uriInfo);
-		bulkActionResource.setContextUser(_user);
-		bulkActionResource.setGroupLocalService(_groupLocalService);
-		bulkActionResource.setRoleLocalService(_roleLocalService);
+		assetPermissionActionResource.setContextAcceptLanguage(_acceptLanguage);
+		assetPermissionActionResource.setContextCompany(_company);
+		assetPermissionActionResource.setContextHttpServletRequest(
+			_httpServletRequest);
+		assetPermissionActionResource.setContextHttpServletResponse(
+			_httpServletResponse);
+		assetPermissionActionResource.setContextUriInfo(_uriInfo);
+		assetPermissionActionResource.setContextUser(_user);
+		assetPermissionActionResource.setGroupLocalService(_groupLocalService);
+		assetPermissionActionResource.setRoleLocalService(_roleLocalService);
 	}
 
-	private static ComponentServiceObjects<BulkActionResource>
-		_bulkActionResourceComponentServiceObjects;
+	private static ComponentServiceObjects<AssetPermissionActionResource>
+		_assetPermissionActionResourceComponentServiceObjects;
 
 	private AcceptLanguage _acceptLanguage;
 	private com.liferay.portal.kernel.model.Company _company;
-	private BiFunction
-		<Object, String, com.liferay.portal.kernel.search.filter.Filter>
-			_filterBiFunction;
 	private GroupLocalService _groupLocalService;
 	private HttpServletRequest _httpServletRequest;
 	private HttpServletResponse _httpServletResponse;
@@ -127,3 +124,4 @@ public class Mutation {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1471385625

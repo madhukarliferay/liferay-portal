@@ -227,13 +227,8 @@ public class LayoutPageTemplateServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{
-							"LayoutPageTemplateCollection",
-							"layoutPageTemplateCollectionId"
-						}
-					};
+				protected String[] getTableNames() {
+					return new String[] {"LayoutPageTemplateCollection"};
 				}
 
 			});
@@ -243,10 +238,8 @@ public class LayoutPageTemplateServiceUpgradeStepRegistrator
 			new BaseExternalReferenceCodeUpgradeProcess() {
 
 				@Override
-				protected String[][] getTableAndPrimaryKeyColumnNames() {
-					return new String[][] {
-						{"LayoutPageTemplateEntry", "layoutPageTemplateEntryId"}
-					};
+				protected String[] getTableNames() {
+					return new String[] {"LayoutPageTemplateEntry"};
 				}
 
 			});
@@ -254,6 +247,16 @@ public class LayoutPageTemplateServiceUpgradeStepRegistrator
 		registry.register(
 			"5.7.0", "5.7.1",
 			new com.liferay.layout.page.template.internal.upgrade.v5_7_1.
+				LayoutPageTemplateStructureRelUpgradeProcess());
+
+		registry.register(
+			"5.7.1", "5.8.0",
+			UpgradeProcessFactory.addColumns(
+				"LayoutPageTemplateEntry", "classTypeKey VARCHAR(75) null"));
+
+		registry.register(
+			"5.8.0", "6.0.0",
+			new com.liferay.layout.page.template.internal.upgrade.v6_0_0.
 				LayoutPageTemplateStructureRelUpgradeProcess());
 	}
 

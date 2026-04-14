@@ -96,13 +96,14 @@ public class SQLServerDBCTTest {
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
 			Connection connection = DataAccess.getConnection();
-
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				"select * from CTSChild where ctCollectionId = " +
-					_ctCollection.getCtCollectionId());
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+				"select * from CTSChild where ctCollectionId = ?")) {
 
-			Assert.assertFalse(resultSet.next());
+			preparedStatement.setLong(1, _ctCollection.getCtCollectionId());
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Assert.assertFalse(resultSet.next());
+			}
 		}
 	}
 
@@ -145,14 +146,16 @@ public class SQLServerDBCTTest {
 			WorkflowConstants.STATUS_APPROVED, _ctCollection.getStatus());
 
 		try (LoggingTimer loggingTimer = new LoggingTimer();
-			 Connection connection = DataAccess.getConnection();
+			Connection connection = DataAccess.getConnection();
 
-			 PreparedStatement preparedStatement = connection.prepareStatement(
-				 "select * from CTSChild where ctCollectionId = " +
-				 -_ctCollection.getCtCollectionId());
-			 ResultSet resultSet = preparedStatement.executeQuery()) {
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				"select * from CTSChild where ctCollectionId = ?")) {
 
-			Assert.assertFalse(resultSet.next());
+			preparedStatement.setLong(1, -_ctCollection.getCtCollectionId());
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Assert.assertFalse(resultSet.next());
+			}
 		}
 	}
 

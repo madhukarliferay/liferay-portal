@@ -112,6 +112,31 @@ public class PriceList implements Cloneable, Serializable {
 
 	protected Boolean catalogBasePriceList;
 
+	public String getCatalogExternalReferenceCode() {
+		return catalogExternalReferenceCode;
+	}
+
+	public void setCatalogExternalReferenceCode(
+		String catalogExternalReferenceCode) {
+
+		this.catalogExternalReferenceCode = catalogExternalReferenceCode;
+	}
+
+	public void setCatalogExternalReferenceCode(
+		UnsafeSupplier<String, Exception>
+			catalogExternalReferenceCodeUnsafeSupplier) {
+
+		try {
+			catalogExternalReferenceCode =
+				catalogExternalReferenceCodeUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String catalogExternalReferenceCode;
+
 	public Long getCatalogId() {
 		return catalogId;
 	}
@@ -718,3 +743,4 @@ public class PriceList implements Cloneable, Serializable {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-1022102998

@@ -6,6 +6,8 @@
 package com.liferay.portal.http.internal;
 
 import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.io.unsync.UnsyncFilterInputStream;
 import com.liferay.petra.memory.FinalizeAction;
 import com.liferay.petra.memory.FinalizeManager;
 import com.liferay.petra.string.CharPool;
@@ -14,8 +16,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.http.internal.configuration.HttpConfiguration;
 import com.liferay.portal.kernel.configuration.Filter;
-import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
-import com.liferay.portal.kernel.io.unsync.UnsyncFilterInputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
@@ -28,10 +28,10 @@ import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsValues;
 
 import jakarta.servlet.http.Cookie;
 
@@ -389,7 +389,7 @@ public class HttpImpl implements Http {
 			).build());
 	}
 
-	protected void processPostMethod(
+	protected void processEntityParts(
 		RequestBuilder requestBuilder, Map<String, String> headers,
 		List<Http.FilePart> fileParts,
 		List<Http.InputStreamPart> inputStreamParts,
@@ -654,24 +654,10 @@ public class HttpImpl implements Http {
 					maxConnectionsPerHost);
 			}
 
-			RequestConfig requestConfig = requestConfigBuilder.build();
-
-			CloseableHttpClient httpClient = null;
-
-			if ((requestConfig.getProxy() != null) && hasProxyConfig() &&
-				Validator.isNotNull(_PROXY_USERNAME)) {
-
-				httpClient = _proxyCloseableHttpClientDCLSingleton.getSingleton(
+			CloseableHttpClient closeableHttpClient =
+				_closeableHttpClientDCLSingleton.getSingleton(
 					() -> _createCloseableHttpClient(
-						poolingHttpClientConnectionManager,
-						new HttpHost(_PROXY_HOST, _PROXY_PORT),
-						_proxyAuthPrefs));
-			}
-			else {
-				httpClient = _closeableHttpClientDCLSingleton.getSingleton(
-					() -> _createCloseableHttpClient(
-						poolingHttpClientConnectionManager, null, null));
-			}
+						poolingHttpClientConnectionManager));
 
 			HttpClientContext httpClientContext = HttpClientContext.create();
 
@@ -699,7 +685,9 @@ public class HttpImpl implements Http {
 
 					requestBuilder.setEntity(stringEntity);
 				}
-				else if (method.equals(Http.Method.POST)) {
+				else if (method.equals(Http.Method.POST) ||
+						 method.equals(Http.Method.PUT)) {
+
 					if (!hasRequestHeader(
 							requestBuilder, HttpHeaders.CONTENT_TYPE)) {
 
@@ -713,7 +701,7 @@ public class HttpImpl implements Http {
 							targetHttpHost, connectionConfigBuilder.build());
 					}
 
-					processPostMethod(
+					processEntityParts(
 						requestBuilder, headers, fileParts, inputStreamParts,
 						parts);
 				}
@@ -812,7 +800,7 @@ public class HttpImpl implements Http {
 
 			requestBuilder.setConfig(requestConfigBuilder.build());
 
-			closeableHttpResponse = httpClient.execute(
+			closeableHttpResponse = closeableHttpClient.execute(
 				targetHttpHost, requestBuilder.build(), httpClientContext);
 
 			httpEntity = closeableHttpResponse.getEntity();
@@ -981,8 +969,7 @@ public class HttpImpl implements Http {
 	}
 
 	private CloseableHttpClient _createCloseableHttpClient(
-		PoolingHttpClientConnectionManager poolingHttpClientConnectionManager,
-		HttpHost httpHost, List<String> proxyAuthPrefs) {
+		PoolingHttpClientConnectionManager poolingHttpClientConnectionManager) {
 
 		// Mimic behavior found in
 		// http://java.sun.com/j2se/1.5.0/docs/guide/net/properties.html
@@ -991,22 +978,6 @@ public class HttpImpl implements Http {
 
 		httpClientBuilder.setConnectionManager(
 			poolingHttpClientConnectionManager);
-
-		RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
-
-		requestConfigBuilder = requestConfigBuilder.setConnectTimeout(_TIMEOUT);
-		requestConfigBuilder = requestConfigBuilder.setConnectionRequestTimeout(
-			_TIMEOUT);
-
-		if (httpHost != null) {
-			requestConfigBuilder.setProxy(httpHost);
-		}
-
-		if (proxyAuthPrefs != null) {
-			requestConfigBuilder.setProxyPreferredAuthSchemes(proxyAuthPrefs);
-		}
-
-		httpClientBuilder.setDefaultRequestConfig(requestConfigBuilder.build());
 
 		httpClientBuilder.setKeepAliveStrategy(
 			new DefaultConnectionKeepAliveStrategy() {
@@ -1081,15 +1052,17 @@ public class HttpImpl implements Http {
 			timeout = GetterUtil.getInteger(
 				PropsUtil.get(
 					Http.class.getName() + ".timeout",
-					new Filter(uri.getHost())));
+					new Filter(uri.getHost())),
+				_TIMEOUT);
 		}
 
 		if (timeout > 0) {
-			requestConfigBuilder = requestConfigBuilder.setConnectTimeout(
-				timeout);
-
 			requestConfigBuilder =
 				requestConfigBuilder.setConnectionRequestTimeout(timeout);
+			requestConfigBuilder = requestConfigBuilder.setConnectTimeout(
+				timeout);
+			requestConfigBuilder = requestConfigBuilder.setSocketTimeout(
+				timeout);
 		}
 
 		return requestConfigBuilder;
@@ -1143,8 +1116,6 @@ public class HttpImpl implements Http {
 	private final DCLSingleton<PoolingHttpClientConnectionManager>
 		_poolingHttpClientConnectionManagerDCLSingleton = new DCLSingleton<>();
 	private final List<String> _proxyAuthPrefs = new ArrayList<>();
-	private final DCLSingleton<CloseableHttpClient>
-		_proxyCloseableHttpClientDCLSingleton = new DCLSingleton<>();
 	private Credentials _proxyCredentials;
 
 }

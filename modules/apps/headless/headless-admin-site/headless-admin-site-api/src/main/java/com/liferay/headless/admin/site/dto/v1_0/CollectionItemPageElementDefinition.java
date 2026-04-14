@@ -165,9 +165,7 @@ public class CollectionItemPageElementDefinition
 			sb.append("\"type\": ");
 
 			sb.append("\"");
-
 			sb.append(type);
-
 			sb.append("\"");
 		}
 
@@ -272,3 +270,4 @@ public class CollectionItemPageElementDefinition
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1057840399

@@ -121,47 +121,6 @@ public interface KaleoProcessLinkPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last kaleo process link in the ordered set where kaleoProcessId = &#63;.
-	 *
-	 * @param kaleoProcessId the kaleo process ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo process link
-	 * @throws NoSuchKaleoProcessLinkException if a matching kaleo process link could not be found
-	 */
-	public KaleoProcessLink findByKaleoProcessId_Last(
-			long kaleoProcessId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoProcessLink>
-				orderByComparator)
-		throws NoSuchKaleoProcessLinkException;
-
-	/**
-	 * Returns the last kaleo process link in the ordered set where kaleoProcessId = &#63;.
-	 *
-	 * @param kaleoProcessId the kaleo process ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching kaleo process link, or <code>null</code> if a matching kaleo process link could not be found
-	 */
-	public KaleoProcessLink fetchByKaleoProcessId_Last(
-		long kaleoProcessId,
-		com.liferay.portal.kernel.util.OrderByComparator<KaleoProcessLink>
-			orderByComparator);
-
-	/**
-	 * Returns the kaleo process links before and after the current kaleo process link in the ordered set where kaleoProcessId = &#63;.
-	 *
-	 * @param kaleoProcessLinkId the primary key of the current kaleo process link
-	 * @param kaleoProcessId the kaleo process ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next kaleo process link
-	 * @throws NoSuchKaleoProcessLinkException if a kaleo process link with the primary key could not be found
-	 */
-	public KaleoProcessLink[] findByKaleoProcessId_PrevAndNext(
-			long kaleoProcessLinkId, long kaleoProcessId,
-			com.liferay.portal.kernel.util.OrderByComparator<KaleoProcessLink>
-				orderByComparator)
-		throws NoSuchKaleoProcessLinkException;
-
-	/**
 	 * Removes all the kaleo process links where kaleoProcessId = &#63; from the database.
 	 *
 	 * @param kaleoProcessId the kaleo process ID
@@ -350,3 +309,4 @@ public interface KaleoProcessLinkPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1001546806

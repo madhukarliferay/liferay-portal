@@ -66,6 +66,17 @@ public class ObjectEntryFolderLocalServiceUtil {
 			description, labelMap, name, serviceContext);
 	}
 
+	public static ObjectEntryFolder copyObjectEntryFolder(
+			long userId, long objectEntryFolderId,
+			long parentObjectEntryFolderId, boolean replace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().copyObjectEntryFolder(
+			userId, objectEntryFolderId, parentObjectEntryFolderId, replace,
+			serviceContext);
+	}
+
 	/**
 	 * Creates a new object entry folder with the primary key. Does not add the object entry folder to the database.
 	 *
@@ -234,6 +245,14 @@ public class ObjectEntryFolderLocalServiceUtil {
 		return getService().fetchObjectEntryFolder(objectEntryFolderId);
 	}
 
+	public static ObjectEntryFolder fetchObjectEntryFolder(
+		long groupId, long companyId, long parentObjectEntryFolderId,
+		String name) {
+
+		return getService().fetchObjectEntryFolder(
+			groupId, companyId, parentObjectEntryFolderId, name);
+	}
+
 	public static ObjectEntryFolder
 		fetchObjectEntryFolderByExternalReferenceCode(
 			String externalReferenceCode, long groupId, long companyId) {
@@ -339,6 +358,14 @@ public class ObjectEntryFolderLocalServiceUtil {
 			groupId, companyId, parentObjectEntryFolderId, start, end);
 	}
 
+	public static List<ObjectEntryFolder>
+		getObjectEntryFoldersByExternalReferenceCode(
+			String externalReferenceCode, List<Long> groupIds, long companyId) {
+
+		return getService().getObjectEntryFoldersByExternalReferenceCode(
+			externalReferenceCode, groupIds, companyId);
+	}
+
 	/**
 	 * Returns all the object entry folders matching the UUID and company.
 	 *
@@ -414,6 +441,17 @@ public class ObjectEntryFolderLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
+	}
+
+	public static ObjectEntryFolder moveObjectEntryFolder(
+			long userId, long objectEntryFolderId,
+			long parentObjectEntryFolderId, boolean replace,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().moveObjectEntryFolder(
+			userId, objectEntryFolderId, parentObjectEntryFolderId, replace,
+			serviceContext);
 	}
 
 	public static void moveObjectEntryFoldersToTrash(
@@ -513,3 +551,4 @@ public class ObjectEntryFolderLocalServiceUtil {
 			ObjectEntryFolderLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-446673031

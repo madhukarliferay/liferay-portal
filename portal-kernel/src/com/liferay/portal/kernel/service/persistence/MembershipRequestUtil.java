@@ -216,55 +216,6 @@ public class MembershipRequestUtil {
 	}
 
 	/**
-	 * Returns the last membership request in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request
-	 * @throws NoSuchMembershipRequestException if a matching membership request could not be found
-	 */
-	public static MembershipRequest findByGroupId_Last(
-			long groupId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request, or <code>null</code> if a matching membership request could not be found
-	 */
-	public static MembershipRequest fetchByGroupId_Last(
-		long groupId, OrderByComparator<MembershipRequest> orderByComparator) {
-
-		return getPersistence().fetchByGroupId_Last(groupId, orderByComparator);
-	}
-
-	/**
-	 * Returns the membership requests before and after the current membership request in the ordered set where groupId = &#63;.
-	 *
-	 * @param membershipRequestId the primary key of the current membership request
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next membership request
-	 * @throws NoSuchMembershipRequestException if a membership request with the primary key could not be found
-	 */
-	public static MembershipRequest[] findByGroupId_PrevAndNext(
-			long membershipRequestId, long groupId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByGroupId_PrevAndNext(
-			membershipRequestId, groupId, orderByComparator);
-	}
-
-	/**
 	 * Removes all the membership requests where groupId = &#63; from the database.
 	 *
 	 * @param groupId the group ID
@@ -382,54 +333,6 @@ public class MembershipRequestUtil {
 		long userId, OrderByComparator<MembershipRequest> orderByComparator) {
 
 		return getPersistence().fetchByUserId_First(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request
-	 * @throws NoSuchMembershipRequestException if a matching membership request could not be found
-	 */
-	public static MembershipRequest findByUserId_Last(
-			long userId, OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request, or <code>null</code> if a matching membership request could not be found
-	 */
-	public static MembershipRequest fetchByUserId_Last(
-		long userId, OrderByComparator<MembershipRequest> orderByComparator) {
-
-		return getPersistence().fetchByUserId_Last(userId, orderByComparator);
-	}
-
-	/**
-	 * Returns the membership requests before and after the current membership request in the ordered set where userId = &#63;.
-	 *
-	 * @param membershipRequestId the primary key of the current membership request
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next membership request
-	 * @throws NoSuchMembershipRequestException if a membership request with the primary key could not be found
-	 */
-	public static MembershipRequest[] findByUserId_PrevAndNext(
-			long membershipRequestId, long userId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByUserId_PrevAndNext(
-			membershipRequestId, userId, orderByComparator);
 	}
 
 	/**
@@ -562,61 +465,6 @@ public class MembershipRequestUtil {
 
 		return getPersistence().fetchByG_S_First(
 			groupId, statusId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where groupId = &#63; and statusId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param statusId the status ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request
-	 * @throws NoSuchMembershipRequestException if a matching membership request could not be found
-	 */
-	public static MembershipRequest findByG_S_Last(
-			long groupId, long statusId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByG_S_Last(
-			groupId, statusId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where groupId = &#63; and statusId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param statusId the status ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request, or <code>null</code> if a matching membership request could not be found
-	 */
-	public static MembershipRequest fetchByG_S_Last(
-		long groupId, long statusId,
-		OrderByComparator<MembershipRequest> orderByComparator) {
-
-		return getPersistence().fetchByG_S_Last(
-			groupId, statusId, orderByComparator);
-	}
-
-	/**
-	 * Returns the membership requests before and after the current membership request in the ordered set where groupId = &#63; and statusId = &#63;.
-	 *
-	 * @param membershipRequestId the primary key of the current membership request
-	 * @param groupId the group ID
-	 * @param statusId the status ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next membership request
-	 * @throws NoSuchMembershipRequestException if a membership request with the primary key could not be found
-	 */
-	public static MembershipRequest[] findByG_S_PrevAndNext(
-			long membershipRequestId, long groupId, long statusId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByG_S_PrevAndNext(
-			membershipRequestId, groupId, statusId, orderByComparator);
 	}
 
 	/**
@@ -759,64 +607,6 @@ public class MembershipRequestUtil {
 
 		return getPersistence().fetchByG_U_S_First(
 			groupId, userId, statusId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where groupId = &#63; and userId = &#63; and statusId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param statusId the status ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request
-	 * @throws NoSuchMembershipRequestException if a matching membership request could not be found
-	 */
-	public static MembershipRequest findByG_U_S_Last(
-			long groupId, long userId, long statusId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByG_U_S_Last(
-			groupId, userId, statusId, orderByComparator);
-	}
-
-	/**
-	 * Returns the last membership request in the ordered set where groupId = &#63; and userId = &#63; and statusId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param statusId the status ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching membership request, or <code>null</code> if a matching membership request could not be found
-	 */
-	public static MembershipRequest fetchByG_U_S_Last(
-		long groupId, long userId, long statusId,
-		OrderByComparator<MembershipRequest> orderByComparator) {
-
-		return getPersistence().fetchByG_U_S_Last(
-			groupId, userId, statusId, orderByComparator);
-	}
-
-	/**
-	 * Returns the membership requests before and after the current membership request in the ordered set where groupId = &#63; and userId = &#63; and statusId = &#63;.
-	 *
-	 * @param membershipRequestId the primary key of the current membership request
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param statusId the status ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next membership request
-	 * @throws NoSuchMembershipRequestException if a membership request with the primary key could not be found
-	 */
-	public static MembershipRequest[] findByG_U_S_PrevAndNext(
-			long membershipRequestId, long groupId, long userId, long statusId,
-			OrderByComparator<MembershipRequest> orderByComparator)
-		throws com.liferay.portal.kernel.exception.
-			NoSuchMembershipRequestException {
-
-		return getPersistence().findByG_U_S_PrevAndNext(
-			membershipRequestId, groupId, userId, statusId, orderByComparator);
 	}
 
 	/**
@@ -1010,3 +800,4 @@ public class MembershipRequestUtil {
 	private static volatile MembershipRequestPersistence _persistence;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1910099905

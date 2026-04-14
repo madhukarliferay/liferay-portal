@@ -6,9 +6,10 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {accountsPagesTest} from '../../../../fixtures/accountsPagesTest';
-import {applicationsMenuPageTest} from '../../../../fixtures/applicationsMenuPageTest';
 import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
+import {globalMenuPagesTest} from '../../../../fixtures/globalMenuPagesTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import {usersAndOrganizationsPagesTest} from '../../../../fixtures/usersAndOrganizationsPagesTest';
 import {getRandomInt} from '../../../../utils/getRandomInt';
@@ -18,14 +19,18 @@ import {miniumSetUp} from '../../utils/commerce';
 
 export const test = mergeTests(
 	accountsPagesTest,
-	applicationsMenuPageTest,
 	commercePagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-36105': {enabled: true},
+	}),
+	globalMenuPagesTest,
 	loginTest(),
 	usersAndOrganizationsPagesTest
 );
 
 test('COMMERCE-5839 As a system admin i want to be able to create / update and delete a new currency', async ({
+	apiHelpers,
 	commerceAdminCurrenciesPage,
 	commerceAdminCurrencyDetailsPage,
 	page,
@@ -35,136 +40,182 @@ test('COMMERCE-5839 As a system admin i want to be able to create / update and d
 
 	const currencyName = 'TC' + getRandomInt();
 
-	await commerceAdminCurrenciesPage.addCurrencyAddButton.click();
+	try {
+		await commerceAdminCurrenciesPage.addCurrencyAddButton.click();
 
-	await commerceAdminCurrencyDetailsPage.nameInput.fill(currencyName);
-	await commerceAdminCurrencyDetailsPage.codeInput.fill(currencyName);
-	await commerceAdminCurrencyDetailsPage.saveButton.click();
+		await commerceAdminCurrencyDetailsPage.nameInput.fill(currencyName);
+		await commerceAdminCurrencyDetailsPage.codeInput.fill(currencyName);
+		await commerceAdminCurrencyDetailsPage.saveButton.click();
 
-	await waitForAlert(page);
+		await waitForAlert(page);
 
-	await expect(
-		commerceAdminCurrenciesPage.lastRowCurrencyCellName(currencyName)
-	).toBeVisible();
+		await expect(
+			commerceAdminCurrenciesPage.lastRowCurrencyCellName(currencyName)
+		).toBeVisible();
 
-	await commerceAdminCurrenciesPage.currencyNameLink(currencyName).click();
+		await commerceAdminCurrenciesPage
+			.currencyNameLink(currencyName)
+			.click();
 
-	await commerceAdminCurrencyDetailsPage.symbol.fill('&&&');
-	await commerceAdminCurrencyDetailsPage.priority.fill('99');
-	await commerceAdminCurrencyDetailsPage.saveButton.click();
+		await expect(commerceAdminCurrencyDetailsPage.symbol).toBeVisible();
 
-	await commerceAdminCurrenciesPage.currencyNameLink(currencyName).click();
+		await commerceAdminCurrencyDetailsPage.symbol.fill('&&&');
+		await commerceAdminCurrencyDetailsPage.priority.fill('99');
+		await commerceAdminCurrencyDetailsPage.saveButton.click();
 
-	await expect(commerceAdminCurrencyDetailsPage.codeInput).not.toBeEditable();
-	await expect(commerceAdminCurrencyDetailsPage.symbol).toHaveValue('&&&');
-	await expect(commerceAdminCurrencyDetailsPage.priority).toHaveValue('99.0');
+		await commerceAdminCurrenciesPage
+			.currencyNameLink(currencyName)
+			.click();
 
-	await commerceAdminCurrencyDetailsPage.cancelButton.click();
+		await expect(
+			commerceAdminCurrencyDetailsPage.codeInput
+		).not.toBeEditable();
 
-	await commerceAdminCurrenciesPage.priorityButton.click();
+		await expect(commerceAdminCurrencyDetailsPage.symbol).toBeVisible();
 
-	await expect(
-		commerceAdminCurrenciesPage.firstRowCurrencyCellName('US Dollar')
-	).toBeVisible();
+		await expect(commerceAdminCurrencyDetailsPage.symbol).toHaveValue(
+			'&&&'
+		);
+		await expect(commerceAdminCurrencyDetailsPage.priority).toHaveValue(
+			'99.0'
+		);
 
-	await commerceAdminCurrenciesPage.priorityButton.click();
+		await commerceAdminCurrencyDetailsPage.cancelButton.click();
 
-	await expect(
-		commerceAdminCurrenciesPage.firstRowCurrencyCellName(currencyName)
-	).toBeVisible();
+		await commerceAdminCurrenciesPage.priorityButton.click();
 
-	await commerceAdminCurrenciesPage.addDataSetFilter('Active', 'Yes', false);
+		await expect(
+			commerceAdminCurrenciesPage.firstRowCurrencyCellName('US Dollar')
+		).toBeVisible();
 
-	await expect(
-		commerceAdminCurrenciesPage.currencyNameLink(currencyName)
-	).toHaveCount(0);
+		await commerceAdminCurrenciesPage.priorityButton.click();
 
-	await commerceAdminCurrenciesPage.resetFiltersButton.click();
-	await commerceAdminCurrenciesPage.addDataSetFilter('Active', 'No', false);
+		await expect(
+			commerceAdminCurrenciesPage.firstRowCurrencyCellName(currencyName)
+		).toBeVisible();
 
-	await expect(
-		commerceAdminCurrenciesPage.currencyNameLink(currencyName)
-	).toBeVisible();
+		await commerceAdminCurrenciesPage.addDataSetFilter(
+			'Active',
+			'Yes',
+			false
+		);
 
-	await commerceAdminCurrenciesPage.resetFiltersButton.click();
-	await commerceAdminCurrenciesPage.search.click();
-	await commerceAdminCurrenciesPage.search.fill(getRandomString());
-	await commerceAdminCurrenciesPage.searchButton.click();
+		await expect(
+			commerceAdminCurrenciesPage.currencyNameLink(currencyName)
+		).toHaveCount(0);
 
-	await expect(commerceAdminCurrenciesPage.noResultsFoundText).toBeVisible();
+		await commerceAdminCurrenciesPage.resetFiltersButton.click();
+		await commerceAdminCurrenciesPage.addDataSetFilter(
+			'Active',
+			'No',
+			false,
+			true
+		);
 
-	await commerceAdminCurrenciesPage.search.click();
-	await commerceAdminCurrenciesPage.search.fill(currencyName);
-	await commerceAdminCurrenciesPage.searchButton.click();
+		await expect(
+			commerceAdminCurrenciesPage.currencyNameLink(currencyName)
+		).toBeVisible();
 
-	await expect(
-		commerceAdminCurrenciesPage.currencyNameLink(currencyName)
-	).toBeVisible();
+		await commerceAdminCurrenciesPage.resetFiltersButton.click();
+		await commerceAdminCurrenciesPage.search.click();
+		await commerceAdminCurrenciesPage.search.fill(getRandomString());
+		await commerceAdminCurrenciesPage.searchButton.click();
 
-	await commerceAdminCurrenciesPage.actionsButton.click();
-	await commerceAdminCurrenciesPage.activeToggleMenuItem.click();
+		await expect(
+			commerceAdminCurrenciesPage.noResultsFoundText
+		).toBeVisible();
 
-	await waitForAlert(page);
+		await commerceAdminCurrenciesPage.search.click();
+		await commerceAdminCurrenciesPage.search.fill(currencyName);
+		await commerceAdminCurrenciesPage.searchButton.click();
 
-	await commerceAdminCurrenciesPage.search.click();
-	await commerceAdminCurrenciesPage.search.fill(currencyName);
-	await commerceAdminCurrenciesPage.searchButton.click();
-	await commerceAdminCurrenciesPage.actionsButton.click();
-	await commerceAdminCurrenciesPage.primaryMenuItem.click();
+		await expect(
+			commerceAdminCurrenciesPage.currencyNameLink(currencyName)
+		).toBeVisible();
 
-	await waitForAlert(page);
+		await commerceAdminCurrenciesPage.actionsButton.click();
+		await commerceAdminCurrenciesPage.activeToggleMenuItem.click();
 
-	await commerceAdminCurrenciesPage.currencyNameLink(currencyName).click();
+		await waitForAlert(page);
 
-	await expect(commerceAdminCurrencyDetailsPage.activeToggle).toBeChecked();
-	await expect(commerceAdminCurrencyDetailsPage.primaryToggle).toBeChecked();
+		await commerceAdminCurrenciesPage.search.click();
+		await commerceAdminCurrenciesPage.search.fill(currencyName);
+		await commerceAdminCurrenciesPage.searchButton.click();
+		await commerceAdminCurrenciesPage.actionsButton.click();
+		await commerceAdminCurrenciesPage.primaryMenuItem.click();
 
-	await commerceAdminCurrencyDetailsPage.saveButton.click();
+		await waitForAlert(page);
 
-	await waitForAlert(page);
+		await commerceAdminCurrenciesPage
+			.currencyNameLink(currencyName)
+			.click();
 
-	await commerceAdminCurrenciesPage.currencyNameLink('US Dollar').click();
+		await expect(
+			commerceAdminCurrencyDetailsPage.activeToggle
+		).toBeChecked();
+		await expect(
+			commerceAdminCurrencyDetailsPage.primaryToggle
+		).toBeChecked();
 
-	await expect(
-		commerceAdminCurrencyDetailsPage.primaryToggle
-	).not.toBeChecked();
+		await commerceAdminCurrencyDetailsPage.saveButton.click();
 
-	await commerceAdminCurrencyDetailsPage.primaryToggle.setChecked(true);
-	await commerceAdminCurrencyDetailsPage.saveButton.click();
+		await waitForAlert(page);
 
-	await waitForAlert(page);
+		await commerceAdminCurrenciesPage.currencyNameLink('US Dollar').click();
 
-	await commerceAdminCurrenciesPage.search.click();
-	await commerceAdminCurrenciesPage.search.fill(currencyName);
-	await commerceAdminCurrenciesPage.searchButton.click();
-	await commerceAdminCurrenciesPage.actionsButton.click();
+		await expect(
+			commerceAdminCurrencyDetailsPage.primaryToggle
+		).not.toBeChecked();
 
-	let dialogMessage = '';
+		await commerceAdminCurrencyDetailsPage.primaryToggle.setChecked(true);
+		await commerceAdminCurrencyDetailsPage.saveButton.click();
 
-	page.on('dialog', (dialog) => {
-		dialogMessage = dialog.message();
-		dialog.accept();
-	});
+		await waitForAlert(page);
 
-	await commerceAdminCurrenciesPage.deleteMenuItem.click();
+		await commerceAdminCurrenciesPage.search.click();
+		await commerceAdminCurrenciesPage.search.fill(currencyName);
+		await commerceAdminCurrenciesPage.searchButton.click();
+		await commerceAdminCurrenciesPage.actionsButton.click();
 
-	expect(dialogMessage).toEqual(
-		'Are you sure you want to delete this entry?'
-	);
+		let dialogMessage = '';
 
-	await waitForAlert(page);
+		page.on('dialog', (dialog) => {
+			dialogMessage = dialog.message();
+			dialog.accept();
+		});
 
-	await expect(
-		commerceAdminCurrenciesPage.currencyNameLink(currencyName)
-	).not.toBeVisible();
+		await commerceAdminCurrenciesPage.deleteMenuItem.click();
+
+		expect(dialogMessage).toEqual(
+			'Are you sure you want to delete this entry?'
+		);
+
+		await waitForAlert(page);
+
+		await expect(
+			commerceAdminCurrenciesPage.currencyNameLink(currencyName)
+		).not.toBeVisible();
+	}
+	finally {
+		const currencies =
+			await apiHelpers.headlessCommerceAdminCatalog.getCurrenciesPage(
+				currencyName
+			);
+
+		if (currencies && currencies.items) {
+			for (const currency of currencies.items) {
+				apiHelpers.data.push({id: currency.id, type: 'currency'});
+			}
+		}
+	}
 });
 
 test('COMMERCE-9936 A disabled default currency should not be usable', async ({
 	accountsPage,
 	apiHelpers,
-	applicationsMenuPage,
 	commerceChannelDefaultsPage,
 	editAccountPage,
+	globalMenuPage,
 	page,
 }) => {
 	test.setTimeout(180000);
@@ -198,7 +249,7 @@ test('COMMERCE-9936 A disabled default currency should not be usable', async ({
 			}
 		);
 
-		await applicationsMenuPage.goToSite(site.name);
+		await globalMenuPage.goToSite(site.name);
 
 		await expect(page.getByText('$ 24.00')).toBeVisible();
 	}

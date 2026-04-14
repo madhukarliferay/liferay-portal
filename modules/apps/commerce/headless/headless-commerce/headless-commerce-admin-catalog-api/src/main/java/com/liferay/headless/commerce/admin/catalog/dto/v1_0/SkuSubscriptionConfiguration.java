@@ -642,9 +642,7 @@ public class SkuSubscriptionConfiguration implements Serializable {
 			sb.append("\"deliverySubscriptionType\": ");
 
 			sb.append("\"");
-
 			sb.append(deliverySubscriptionType);
-
 			sb.append("\"");
 		}
 
@@ -719,9 +717,7 @@ public class SkuSubscriptionConfiguration implements Serializable {
 			sb.append("\"subscriptionType\": ");
 
 			sb.append("\"");
-
 			sb.append(subscriptionType);
-
 			sb.append("\"");
 		}
 
@@ -917,3 +913,4 @@ public class SkuSubscriptionConfiguration implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:401346627

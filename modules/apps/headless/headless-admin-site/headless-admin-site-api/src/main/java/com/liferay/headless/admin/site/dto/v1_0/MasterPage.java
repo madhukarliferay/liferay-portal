@@ -103,53 +103,6 @@ public class MasterPage implements Serializable {
 	private Supplier<Creator> _creatorSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The page's creator external reference code."
-	)
-	public String getCreatorExternalReferenceCode() {
-		if (_creatorExternalReferenceCodeSupplier != null) {
-			creatorExternalReferenceCode =
-				_creatorExternalReferenceCodeSupplier.get();
-
-			_creatorExternalReferenceCodeSupplier = null;
-		}
-
-		return creatorExternalReferenceCode;
-	}
-
-	public void setCreatorExternalReferenceCode(
-		String creatorExternalReferenceCode) {
-
-		this.creatorExternalReferenceCode = creatorExternalReferenceCode;
-
-		_creatorExternalReferenceCodeSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setCreatorExternalReferenceCode(
-		UnsafeSupplier<String, Exception>
-			creatorExternalReferenceCodeUnsafeSupplier) {
-
-		_creatorExternalReferenceCodeSupplier = () -> {
-			try {
-				return creatorExternalReferenceCodeUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(description = "The page's creator external reference code.")
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String creatorExternalReferenceCode;
-
-	@JsonIgnore
-	private Supplier<String> _creatorExternalReferenceCodeSupplier;
-
-	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The master page's creation date."
 	)
 	public Date getDateCreated() {
@@ -544,39 +497,83 @@ public class MasterPage implements Serializable {
 	@JsonIgnore
 	private Supplier<PageSpecification[]> _pageSpecificationsSupplier;
 
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The external references to the associated categories."
-	)
+	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
-	public ItemExternalReference[] getTaxonomyCategoryItemExternalReferences() {
-		if (_taxonomyCategoryItemExternalReferencesSupplier != null) {
-			taxonomyCategoryItemExternalReferences =
-				_taxonomyCategoryItemExternalReferencesSupplier.get();
+	public com.liferay.portal.vulcan.permission.Permission[] getPermissions() {
+		if (_permissionsSupplier != null) {
+			permissions = _permissionsSupplier.get();
 
-			_taxonomyCategoryItemExternalReferencesSupplier = null;
+			_permissionsSupplier = null;
 		}
 
-		return taxonomyCategoryItemExternalReferences;
+		return permissions;
 	}
 
-	public void setTaxonomyCategoryItemExternalReferences(
-		ItemExternalReference[] taxonomyCategoryItemExternalReferences) {
+	public void setPermissions(
+		com.liferay.portal.vulcan.permission.Permission[] permissions) {
 
-		this.taxonomyCategoryItemExternalReferences =
-			taxonomyCategoryItemExternalReferences;
+		this.permissions = permissions;
 
-		_taxonomyCategoryItemExternalReferencesSupplier = null;
+		_permissionsSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setTaxonomyCategoryItemExternalReferences(
-		UnsafeSupplier<ItemExternalReference[], Exception>
-			taxonomyCategoryItemExternalReferencesUnsafeSupplier) {
+	public void setPermissions(
+		UnsafeSupplier
+			<com.liferay.portal.vulcan.permission.Permission[], Exception>
+				permissionsUnsafeSupplier) {
 
-		_taxonomyCategoryItemExternalReferencesSupplier = () -> {
+		_permissionsSupplier = () -> {
 			try {
-				return taxonomyCategoryItemExternalReferencesUnsafeSupplier.
-					get();
+				return permissionsUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected com.liferay.portal.vulcan.permission.Permission[] permissions;
+
+	@JsonIgnore
+	private Supplier<com.liferay.portal.vulcan.permission.Permission[]>
+		_permissionsSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The taxonomy categories associated with this page."
+	)
+	@Valid
+	public TaxonomyCategoryBrief[] getTaxonomyCategoryBriefs() {
+		if (_taxonomyCategoryBriefsSupplier != null) {
+			taxonomyCategoryBriefs = _taxonomyCategoryBriefsSupplier.get();
+
+			_taxonomyCategoryBriefsSupplier = null;
+		}
+
+		return taxonomyCategoryBriefs;
+	}
+
+	public void setTaxonomyCategoryBriefs(
+		TaxonomyCategoryBrief[] taxonomyCategoryBriefs) {
+
+		this.taxonomyCategoryBriefs = taxonomyCategoryBriefs;
+
+		_taxonomyCategoryBriefsSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setTaxonomyCategoryBriefs(
+		UnsafeSupplier<TaxonomyCategoryBrief[], Exception>
+			taxonomyCategoryBriefsUnsafeSupplier) {
+
+		_taxonomyCategoryBriefsSupplier = () -> {
+			try {
+				return taxonomyCategoryBriefsUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -588,43 +585,44 @@ public class MasterPage implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "The external references to the associated categories."
+		description = "The taxonomy categories associated with this page."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected ItemExternalReference[] taxonomyCategoryItemExternalReferences;
+	protected TaxonomyCategoryBrief[] taxonomyCategoryBriefs;
 
 	@JsonIgnore
-	private Supplier<ItemExternalReference[]>
-		_taxonomyCategoryItemExternalReferencesSupplier;
+	private Supplier<TaxonomyCategoryBrief[]> _taxonomyCategoryBriefsSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The master page's thumbnail."
 	)
 	@Valid
-	public ItemExternalReference getThumbnail() {
-		if (_thumbnailSupplier != null) {
-			thumbnail = _thumbnailSupplier.get();
+	public ThumbnailURLReference getThumbnailURLReference() {
+		if (_thumbnailURLReferenceSupplier != null) {
+			thumbnailURLReference = _thumbnailURLReferenceSupplier.get();
 
-			_thumbnailSupplier = null;
+			_thumbnailURLReferenceSupplier = null;
 		}
 
-		return thumbnail;
+		return thumbnailURLReference;
 	}
 
-	public void setThumbnail(ItemExternalReference thumbnail) {
-		this.thumbnail = thumbnail;
+	public void setThumbnailURLReference(
+		ThumbnailURLReference thumbnailURLReference) {
 
-		_thumbnailSupplier = null;
+		this.thumbnailURLReference = thumbnailURLReference;
+
+		_thumbnailURLReferenceSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setThumbnail(
-		UnsafeSupplier<ItemExternalReference, Exception>
-			thumbnailUnsafeSupplier) {
+	public void setThumbnailURLReference(
+		UnsafeSupplier<ThumbnailURLReference, Exception>
+			thumbnailURLReferenceUnsafeSupplier) {
 
-		_thumbnailSupplier = () -> {
+		_thumbnailURLReferenceSupplier = () -> {
 			try {
-				return thumbnailUnsafeSupplier.get();
+				return thumbnailURLReferenceUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -637,10 +635,10 @@ public class MasterPage implements Serializable {
 
 	@GraphQLField(description = "The master page's thumbnail.")
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected ItemExternalReference thumbnail;
+	protected ThumbnailURLReference thumbnailURLReference;
 
 	@JsonIgnore
-	private Supplier<ItemExternalReference> _thumbnailSupplier;
+	private Supplier<ThumbnailURLReference> _thumbnailURLReferenceSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "A valid external identifier to reference this page."
@@ -725,22 +723,6 @@ public class MasterPage implements Serializable {
 			sb.append("\"creator\": ");
 
 			sb.append(creator);
-		}
-
-		String creatorExternalReferenceCode = getCreatorExternalReferenceCode();
-
-		if (creatorExternalReferenceCode != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"creatorExternalReferenceCode\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(creatorExternalReferenceCode));
-
-			sb.append("\"");
 		}
 
 		Date dateCreated = getDateCreated();
@@ -899,25 +881,22 @@ public class MasterPage implements Serializable {
 			sb.append("]");
 		}
 
-		ItemExternalReference[] taxonomyCategoryItemExternalReferences =
-			getTaxonomyCategoryItemExternalReferences();
+		com.liferay.portal.vulcan.permission.Permission[] permissions =
+			getPermissions();
 
-		if (taxonomyCategoryItemExternalReferences != null) {
+		if (permissions != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"taxonomyCategoryItemExternalReferences\": ");
+			sb.append("\"permissions\": ");
 
 			sb.append("[");
 
-			for (int i = 0; i < taxonomyCategoryItemExternalReferences.length;
-				 i++) {
+			for (int i = 0; i < permissions.length; i++) {
+				sb.append(permissions[i]);
 
-				sb.append(
-					String.valueOf(taxonomyCategoryItemExternalReferences[i]));
-
-				if ((i + 1) < taxonomyCategoryItemExternalReferences.length) {
+				if ((i + 1) < permissions.length) {
 					sb.append(", ");
 				}
 			}
@@ -925,16 +904,40 @@ public class MasterPage implements Serializable {
 			sb.append("]");
 		}
 
-		ItemExternalReference thumbnail = getThumbnail();
+		TaxonomyCategoryBrief[] taxonomyCategoryBriefs =
+			getTaxonomyCategoryBriefs();
 
-		if (thumbnail != null) {
+		if (taxonomyCategoryBriefs != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"thumbnail\": ");
+			sb.append("\"taxonomyCategoryBriefs\": ");
 
-			sb.append(String.valueOf(thumbnail));
+			sb.append("[");
+
+			for (int i = 0; i < taxonomyCategoryBriefs.length; i++) {
+				sb.append(String.valueOf(taxonomyCategoryBriefs[i]));
+
+				if ((i + 1) < taxonomyCategoryBriefs.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		ThumbnailURLReference thumbnailURLReference =
+			getThumbnailURLReference();
+
+		if (thumbnailURLReference != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"thumbnailURLReference\": ");
+
+			sb.append(String.valueOf(thumbnailURLReference));
 		}
 
 		String uuid = getUuid();
@@ -1054,3 +1057,4 @@ public class MasterPage implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:272785235

@@ -222,9 +222,7 @@ public class CollectionConfig implements Serializable {
 			sb.append("\"collectionType\": ");
 
 			sb.append("\"");
-
 			sb.append(collectionType);
-
 			sb.append("\"");
 		}
 
@@ -367,3 +365,4 @@ public class CollectionConfig implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:1952657978

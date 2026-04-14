@@ -63,6 +63,7 @@ public class ObjectEntryInfoItemCreator
 
 			ObjectEntryManager objectEntryManager =
 				_objectEntryManagerRegistry.getObjectEntryManager(
+					_objectDefinition.getCompanyId(),
 					_objectDefinition.getStorageType());
 
 			ServiceContext serviceContext =
@@ -70,8 +71,8 @@ public class ObjectEntryInfoItemCreator
 
 			ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
 
-			Map<String, Object> curProperties = ObjectEntryUtil.toProperties(
-				themeDisplay.getCompanyId(), infoItemFieldValues);
+			Map<String, Object> curProperties = _getProperties(
+				infoItemFieldValues, themeDisplay);
 
 			com.liferay.object.rest.dto.v1_0.ObjectEntry objectEntry =
 				objectEntryManager.addObjectEntry(
@@ -81,6 +82,10 @@ public class ObjectEntryInfoItemCreator
 					_objectDefinition,
 					new com.liferay.object.rest.dto.v1_0.ObjectEntry() {
 						{
+							setDisplayDate(
+								() -> GetterUtil.getDate(
+									curProperties.get("displayDate"),
+									dateFormat, null));
 							setExpirationDate(
 								() -> GetterUtil.getDate(
 									curProperties.get("expirationDate"),
@@ -130,6 +135,13 @@ public class ObjectEntryInfoItemCreator
 		}
 
 		return null;
+	}
+
+	private Map<String, Object> _getProperties(
+		InfoItemFieldValues infoItemFieldValues, ThemeDisplay themeDisplay) {
+
+		return ObjectEntryUtil.toProperties(
+			themeDisplay.getCompanyId(), infoItemFieldValues, null);
 	}
 
 	private final InfoItemFormProvider<ObjectEntry> _infoItemFormProvider;

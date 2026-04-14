@@ -121,47 +121,6 @@ public interface DDLRecordSetPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last ddl record set in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set
-	 * @throws NoSuchRecordSetException if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
-	 * Returns the last ddl record set in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set, or <code>null</code> if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-			orderByComparator);
-
-	/**
-	 * Returns the ddl record sets before and after the current ddl record set in the ordered set where uuid = &#63;.
-	 *
-	 * @param recordSetId the primary key of the current ddl record set
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddl record set
-	 * @throws NoSuchRecordSetException if a ddl record set with the primary key could not be found
-	 */
-	public DDLRecordSet[] findByUuid_PrevAndNext(
-			long recordSetId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
 	 * Removes all the ddl record sets where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -321,50 +280,6 @@ public interface DDLRecordSetPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last ddl record set in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set
-	 * @throws NoSuchRecordSetException if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
-	 * Returns the last ddl record set in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set, or <code>null</code> if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-			orderByComparator);
-
-	/**
-	 * Returns the ddl record sets before and after the current ddl record set in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param recordSetId the primary key of the current ddl record set
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddl record set
-	 * @throws NoSuchRecordSetException if a ddl record set with the primary key could not be found
-	 */
-	public DDLRecordSet[] findByUuid_C_PrevAndNext(
-			long recordSetId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
 	 * Removes all the ddl record sets where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -469,47 +384,6 @@ public interface DDLRecordSetPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last ddl record set in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set
-	 * @throws NoSuchRecordSetException if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet findByGroupId_Last(
-			long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
-	 * Returns the last ddl record set in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set, or <code>null</code> if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet fetchByGroupId_Last(
-		long groupId,
-		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-			orderByComparator);
-
-	/**
-	 * Returns the ddl record sets before and after the current ddl record set in the ordered set where groupId = &#63;.
-	 *
-	 * @param recordSetId the primary key of the current ddl record set
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddl record set
-	 * @throws NoSuchRecordSetException if a ddl record set with the primary key could not be found
-	 */
-	public DDLRecordSet[] findByGroupId_PrevAndNext(
-			long recordSetId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
 	 * Returns all the ddl record sets that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -549,21 +423,6 @@ public interface DDLRecordSetPersistence
 		long groupId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
 			orderByComparator);
-
-	/**
-	 * Returns the ddl record sets before and after the current ddl record set in the ordered set of ddl record sets that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param recordSetId the primary key of the current ddl record set
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddl record set
-	 * @throws NoSuchRecordSetException if a ddl record set with the primary key could not be found
-	 */
-	public DDLRecordSet[] filterFindByGroupId_PrevAndNext(
-			long recordSetId, long groupId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
 
 	/**
 	 * Returns all the ddl record sets that the user has permission to view where groupId = any &#63;.
@@ -797,47 +656,6 @@ public interface DDLRecordSetPersistence
 		long DDMStructureId,
 		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
 			orderByComparator);
-
-	/**
-	 * Returns the last ddl record set in the ordered set where DDMStructureId = &#63;.
-	 *
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set
-	 * @throws NoSuchRecordSetException if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet findByDDMStructureId_Last(
-			long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
-
-	/**
-	 * Returns the last ddl record set in the ordered set where DDMStructureId = &#63;.
-	 *
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ddl record set, or <code>null</code> if a matching ddl record set could not be found
-	 */
-	public DDLRecordSet fetchByDDMStructureId_Last(
-		long DDMStructureId,
-		com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-			orderByComparator);
-
-	/**
-	 * Returns the ddl record sets before and after the current ddl record set in the ordered set where DDMStructureId = &#63;.
-	 *
-	 * @param recordSetId the primary key of the current ddl record set
-	 * @param DDMStructureId the ddm structure ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ddl record set
-	 * @throws NoSuchRecordSetException if a ddl record set with the primary key could not be found
-	 */
-	public DDLRecordSet[] findByDDMStructureId_PrevAndNext(
-			long recordSetId, long DDMStructureId,
-			com.liferay.portal.kernel.util.OrderByComparator<DDLRecordSet>
-				orderByComparator)
-		throws NoSuchRecordSetException;
 
 	/**
 	 * Returns all the ddl record sets where DDMStructureId = any &#63;.
@@ -1099,3 +917,4 @@ public interface DDLRecordSetPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1756020062

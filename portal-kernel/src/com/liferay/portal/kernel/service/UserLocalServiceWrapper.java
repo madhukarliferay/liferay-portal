@@ -2445,6 +2445,14 @@ public class UserLocalServiceWrapper
 	}
 
 	@Override
+	public int searchCountBySocial(
+		long companyId, long[] groupIds, long[] userGroupIds, String keywords) {
+
+		return _userLocalService.searchCountBySocial(
+			companyId, groupIds, userGroupIds, keywords);
+	}
+
+	@Override
 	public java.util.Map<Long, Integer> searchCounts(
 		long companyId, int status, long[] groupIds) {
 
@@ -3413,3 +3421,4 @@ public class UserLocalServiceWrapper
 	private UserLocalService _userLocalService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-188816055

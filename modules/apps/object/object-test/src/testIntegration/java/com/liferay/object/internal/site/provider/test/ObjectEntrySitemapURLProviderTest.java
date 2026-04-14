@@ -73,7 +73,7 @@ import org.junit.runner.RunWith;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 /**
- * @author Joao Victor Alves
+ * @author João Victor Alves
  */
 @RunWith(Arquillian.class)
 public class ObjectEntrySitemapURLProviderTest {
@@ -94,7 +94,6 @@ public class ObjectEntrySitemapURLProviderTest {
 		_initThemeDisplay();
 
 		_objectDefinition = ObjectDefinitionTestUtil.addCustomObjectDefinition(
-			false,
 			Collections.singletonList(
 				new TextObjectFieldBuilder(
 				).labelMap(
@@ -147,7 +146,7 @@ public class ObjectEntrySitemapURLProviderTest {
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			DisplayPageTemplateTestUtil.addDisplayPageTemplate(
 				_group.getGroupId(),
-				_portal.getClassNameId(_objectDefinition.getClassName()), 0,
+				_portal.getClassNameId(_objectDefinition.getClassName()), null,
 				true, WorkflowConstants.STATUS_APPROVED);
 
 		_assertRootElement(

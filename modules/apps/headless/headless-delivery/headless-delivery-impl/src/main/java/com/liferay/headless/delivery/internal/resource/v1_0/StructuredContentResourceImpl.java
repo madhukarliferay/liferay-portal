@@ -19,7 +19,6 @@ import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.service.DDMStructureService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
-import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.Field;
 import com.liferay.dynamic.data.mapping.storage.Fields;
@@ -87,6 +86,7 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -97,16 +97,13 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.search.aggregation.Aggregations;
-import com.liferay.portal.search.expando.ExpandoBridgeIndexer;
 import com.liferay.portal.search.legacy.searcher.SearchRequestBuilderFactory;
-import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
 import com.liferay.portal.search.sort.Sorts;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
@@ -134,6 +131,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -306,8 +304,8 @@ public class StructuredContentResourceImpl
 			entityFields,
 			EntityFieldsUtil.getEntityFields(
 				_portal.getClassNameId(JournalArticle.class.getName()),
-				contextCompany.getCompanyId(), _expandoBridgeIndexer,
-				_expandoColumnLocalService, _expandoTableLocalService));
+				contextCompany.getCompanyId(), _expandoColumnLocalService,
+				_expandoTableLocalService));
 	}
 
 	@Override
@@ -472,7 +470,7 @@ public class StructuredContentResourceImpl
 			displayPageKey, journalArticle.getGroupId(),
 			contextHttpServletRequest, contextHttpServletResponse,
 			journalArticle, _infoItemServiceRegistry,
-			_layoutDisplayPageProviderRegistry, _layoutLocalService,
+			_layoutDisplayPageProviderRegistry, _layoutService,
 			_layoutPageTemplateEntryService);
 	}
 
@@ -517,50 +515,15 @@ public class StructuredContentResourceImpl
 		_validateContentFields(
 			structuredContent.getContentFields(), ddmStructure);
 
+		boolean neverExpire = _isNeverExpire(structuredContent, journalArticle);
+
+		int[] expirationDateArray = _getExpirationDateArray(
+			structuredContent, journalArticle, neverExpire);
+
 		LocalDateTime localDateTime = LocalDateTimeUtil.toLocalDateTime(
 			structuredContent.getDatePublished(),
 			journalArticle.getDisplayDate(),
 			ZoneId.of(contextUser.getTimeZoneId()));
-
-		int expirationDateMonth = 0;
-		int expirationDateDay = 0;
-		int expirationDateYear = 0;
-		int expirationDateHour = 0;
-		int expirationDateMinute = 0;
-
-		boolean neverExpire = GetterUtil.getBoolean(
-			structuredContent.getNeverExpire());
-
-		if (!neverExpire) {
-			Date dateExpired = structuredContent.getDateExpired();
-
-			if (dateExpired == null) {
-				dateExpired = journalArticle.getExpirationDate();
-			}
-
-			if ((dateExpired != null) &&
-				dateExpired.after(
-					new Date(System.currentTimeMillis() + Time.MINUTE))) {
-
-				Calendar expirationCal = CalendarFactoryUtil.getCalendar(
-					contextUser.getTimeZone());
-
-				expirationCal.setTime(dateExpired);
-
-				expirationDateMonth = expirationCal.get(Calendar.MONTH);
-				expirationDateDay = expirationCal.get(Calendar.DATE);
-				expirationDateYear = expirationCal.get(Calendar.YEAR);
-				expirationDateHour = expirationCal.get(Calendar.HOUR);
-				expirationDateMinute = expirationCal.get(Calendar.MINUTE);
-
-				if (expirationCal.get(Calendar.AM_PM) == Calendar.PM) {
-					expirationDateHour += 12;
-				}
-			}
-			else {
-				neverExpire = true;
-			}
-		}
 
 		return _toStructuredContent(
 			_journalArticleService.updateArticle(
@@ -591,9 +554,10 @@ public class StructuredContentResourceImpl
 				localDateTime.getMonthValue() - 1,
 				localDateTime.getDayOfMonth(), localDateTime.getYear(),
 				localDateTime.getHour(), localDateTime.getMinute(),
-				expirationDateMonth, expirationDateDay, expirationDateYear,
-				expirationDateHour, expirationDateMinute, neverExpire, 0, 0, 0,
-				0, 0, true, true, false, 0, 0, null, null, null, null,
+				expirationDateArray[0], expirationDateArray[1],
+				expirationDateArray[2], expirationDateArray[3],
+				expirationDateArray[4], neverExpire, 0, 0, 0, 0, 0, true, true,
+				false, 0, 0, null, null, null, null,
 				_createServiceContext(
 					_getAssetCategoryIds(journalArticle, structuredContent),
 					_getAssetLinkEntryIds(journalArticle, structuredContent),
@@ -769,41 +733,10 @@ public class StructuredContentResourceImpl
 			structuredContent.getDatePublished(), null,
 			ZoneId.of(contextUser.getTimeZoneId()));
 
-		int expirationDateMonth = 0;
-		int expirationDateDay = 0;
-		int expirationDateYear = 0;
-		int expirationDateHour = 0;
-		int expirationDateMinute = 0;
+		boolean neverExpire = _isNeverExpire(structuredContent, null);
 
-		boolean neverExpire = GetterUtil.getBoolean(
-			structuredContent.getNeverExpire());
-
-		if (!neverExpire) {
-			Date dateExpired = structuredContent.getDateExpired();
-
-			if ((dateExpired == null) ||
-				dateExpired.before(
-					new Date(System.currentTimeMillis() + Time.MINUTE))) {
-
-				neverExpire = true;
-			}
-			else {
-				Calendar expirationCal = CalendarFactoryUtil.getCalendar(
-					contextUser.getTimeZone());
-
-				expirationCal.setTime(dateExpired);
-
-				expirationDateMonth = expirationCal.get(Calendar.MONTH);
-				expirationDateDay = expirationCal.get(Calendar.DATE);
-				expirationDateYear = expirationCal.get(Calendar.YEAR);
-				expirationDateHour = expirationCal.get(Calendar.HOUR);
-				expirationDateMinute = expirationCal.get(Calendar.MINUTE);
-
-				if (expirationCal.get(Calendar.AM_PM) == Calendar.PM) {
-					expirationDateHour += 12;
-				}
-			}
-		}
+		int[] expirationDateArray = _getExpirationDateArray(
+			structuredContent, null, neverExpire);
 
 		Map<Locale, String> titleMap = LocalizedMapUtil.getLocalizedMap(
 			contextAcceptLanguage.getPreferredLocale(),
@@ -846,7 +779,10 @@ public class StructuredContentResourceImpl
 				StructuredContentUtil.getJournalArticleContent(
 					_ddm,
 					DDMFormValuesUtil.toDDMFormValues(
-						titleMap.keySet(), structuredContent.getContentFields(),
+						_populateTitleMap(
+							ddmStructure.getDefaultLanguageId(),
+							ddmStructure.getAvailableLanguageIds(), titleMap),
+						structuredContent.getContentFields(),
 						ddmStructure.getDDMForm(), _dlAppService, groupId,
 						_journalArticleService, _layoutLocalService,
 						contextAcceptLanguage.getPreferredLocale(),
@@ -857,9 +793,10 @@ public class StructuredContentResourceImpl
 				null, localDateTime.getMonthValue() - 1,
 				localDateTime.getDayOfMonth(), localDateTime.getYear(),
 				localDateTime.getHour(), localDateTime.getMinute(),
-				expirationDateMonth, expirationDateDay, expirationDateYear,
-				expirationDateHour, expirationDateMinute, neverExpire, 0, 0, 0,
-				0, 0, true, true, false, 0, 0, null, null, null, null,
+				expirationDateArray[0], expirationDateArray[1],
+				expirationDateArray[2], expirationDateArray[3],
+				expirationDateArray[4], neverExpire, 0, 0, 0, 0, 0, true, true,
+				false, 0, 0, null, null, null, null,
 				_createServiceContext(
 					structuredContent.getTaxonomyCategoryIds(),
 					assetLinkEntryIds, priority,
@@ -1056,6 +993,58 @@ public class StructuredContentResourceImpl
 		return ddmTemplate.getTemplateKey();
 	}
 
+	private int[] _getExpirationDateArray(
+		StructuredContent structuredContent, JournalArticle journalArticle,
+		boolean neverExpire) {
+
+		int expirationDateMonth = 0;
+		int expirationDateDay = 0;
+		int expirationDateYear = 0;
+		int expirationDateHour = 0;
+		int expirationDateMinute = 0;
+
+		if (!neverExpire) {
+			Date date = new Date();
+
+			Date dateExpired = structuredContent.getDateExpired();
+
+			if ((dateExpired == null) && (journalArticle != null)) {
+				dateExpired = journalArticle.getExpirationDate();
+			}
+
+			if (dateExpired == null) {
+				dateExpired = new Date(date.getTime() + Time.YEAR);
+			}
+
+			if (dateExpired.after(date)) {
+				Calendar expirationCal = CalendarFactoryUtil.getCalendar(
+					contextUser.getTimeZone());
+
+				expirationCal.setTime(dateExpired);
+
+				expirationDateMonth = expirationCal.get(Calendar.MONTH);
+				expirationDateDay = expirationCal.get(Calendar.DATE);
+				expirationDateYear = expirationCal.get(Calendar.YEAR);
+				expirationDateHour = expirationCal.get(Calendar.HOUR);
+				expirationDateMinute = expirationCal.get(Calendar.MINUTE);
+
+				if (expirationCal.get(Calendar.AM_PM) == Calendar.PM) {
+					expirationDateHour += 12;
+				}
+			}
+			else {
+				throw new BadRequestException(
+					"Expiration date must be either empty or a date in the " +
+						"future");
+			}
+		}
+
+		return new int[] {
+			expirationDateMonth, expirationDateDay, expirationDateYear,
+			expirationDateHour, expirationDateMinute
+		};
+	}
+
 	private List<DDMFormField> _getRootDDMFormFields(
 		DDMStructure ddmStructure) {
 
@@ -1158,19 +1147,37 @@ public class StructuredContentResourceImpl
 					_searchRequestBuilderFactory.builder(searchContext);
 
 				AggregationUtil.processVulcanAggregation(
-					_aggregations, _ddmIndexer, _queries, searchRequestBuilder,
+					_aggregations, _ddmIndexer, searchRequestBuilder,
 					aggregation);
 
 				SortUtil.processSorts(
 					_ddmIndexer, searchRequestBuilder, searchContext.getSorts(),
-					_queries, _sorts);
+					_sorts);
 			},
 			sorts, this::_toStructuredContent);
 	}
 
-	private void _populateContentFieldValuesMap(
+	private boolean _isNeverExpire(
+		StructuredContent structuredContent, JournalArticle journalArticle) {
+
+		Boolean neverExpire = structuredContent.getNeverExpire();
+
+		if (neverExpire == null) {
+			neverExpire = true;
+
+			if ((journalArticle != null) &&
+				(journalArticle.getExpirationDate() != null)) {
+
+				neverExpire = false;
+			}
+		}
+
+		return neverExpire;
+	}
+
+	private void _populateContentFieldsMap(
 		ContentField[] contentFields,
-		Map<String, List<ContentFieldValue>> contentFieldValuesMap) {
+		Map<String, List<ContentField>> contentFieldsMap) {
 
 		if (ArrayUtil.isEmpty(contentFields)) {
 			return;
@@ -1180,19 +1187,37 @@ public class StructuredContentResourceImpl
 			ContentFieldValue contentFieldValue =
 				contentField.getContentFieldValue();
 
-			if ((contentFieldValue != null) &&
-				(contentFieldValue.getData() != null)) {
-
-				List<ContentFieldValue> contentFieldValues =
-					contentFieldValuesMap.computeIfAbsent(
+			if (contentFieldValue != null) {
+				List<ContentField> contentFieldsList =
+					contentFieldsMap.computeIfAbsent(
 						contentField.getName(), key -> new ArrayList<>());
 
-				contentFieldValues.add(contentFieldValue);
+				contentFieldsList.add(contentField);
 			}
 
-			_populateContentFieldValuesMap(
-				contentField.getNestedContentFields(), contentFieldValuesMap);
+			_populateContentFieldsMap(
+				contentField.getNestedContentFields(), contentFieldsMap);
 		}
+	}
+
+	private Set<Locale> _populateTitleMap(
+		String defaultLanguageId, String[] languageIds,
+		Map<Locale, String> titleMap) {
+
+		if ((titleMap == null) || titleMap.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		String defaultValue = titleMap.get(
+			LocaleUtil.fromLanguageId(defaultLanguageId));
+
+		Locale[] locales = LocaleUtil.fromLanguageIds(languageIds);
+
+		for (Locale locale : locales) {
+			titleMap.putIfAbsent(locale, defaultValue);
+		}
+
+		return titleMap.keySet();
 	}
 
 	private Fields _toFields(
@@ -1229,13 +1254,12 @@ public class StructuredContentResourceImpl
 			return fields;
 		}
 
-		Map<String, List<ContentFieldValue>> contentFieldValuesMap =
-			new HashMap<>();
+		Map<String, List<ContentField>> contentFieldsMap = new HashMap<>();
 
-		_populateContentFieldValuesMap(contentFields, contentFieldValuesMap);
+		_populateContentFieldsMap(contentFields, contentFieldsMap);
 
-		for (Map.Entry<String, List<ContentFieldValue>> entry :
-				contentFieldValuesMap.entrySet()) {
+		for (Map.Entry<String, List<ContentField>> entry :
+				contentFieldsMap.entrySet()) {
 
 			Field field = fields.get(entry.getKey());
 
@@ -1245,12 +1269,26 @@ public class StructuredContentResourceImpl
 
 			List<Serializable> fieldValues = new ArrayList<>();
 
-			for (ContentFieldValue contentFieldValue : entry.getValue()) {
+			DDMFormField ddmFormField = DDMFormFieldUtil.getDDMFormField(
+				_ddmStructureService, ddmStructure, entry.getKey());
+
+			for (ContentField contentField : entry.getValue()) {
+				Value value = DDMValueUtil.toDDMValue(
+					contentField.toString(), ddmFormField, _dlAppService,
+					journalArticle.getGroupId(), _journalArticleService,
+					_layoutLocalService,
+					contextAcceptLanguage.getPreferredLocale());
+
+				if (value == null) {
+					continue;
+				}
+
 				fieldValues.add(
 					FieldConstants.getSerializable(
 						contextAcceptLanguage.getPreferredLocale(),
 						LocaleUtil.ROOT, field.getDataType(),
-						contentFieldValue.getData()));
+						value.getString(
+							contextAcceptLanguage.getPreferredLocale())));
 			}
 
 			if (ListUtil.isNotEmpty(fieldValues)) {
@@ -1286,45 +1324,20 @@ public class StructuredContentResourceImpl
 			}
 		}
 
-		DDMFormValues ddmFormValues = DDMFormValuesUtil.toDDMFormValues(
-			SetUtil.fromArray(
-				LocaleUtil.fromLanguageIds(
-					journalArticle.getAvailableLanguageIds())),
-			contentFields, ddmStructure.getDDMForm(), _dlAppService,
-			journalArticle.getGroupId(), _journalArticleService,
-			_layoutLocalService, contextAcceptLanguage.getPreferredLocale(),
-			_getRootDDMFormFields(ddmStructure));
-
-		Map<String, DDMFormFieldValue> ddmFormFieldValuesMap = new HashMap<>();
-
-		for (DDMFormFieldValue ddmFormFieldValue :
-				ddmFormValues.getDDMFormFieldValues()) {
-
-			ddmFormFieldValuesMap.put(
-				ddmFormFieldValue.getFieldReference(), ddmFormFieldValue);
-		}
-
 		for (ContentField contentField : contentFields) {
-			DDMFormFieldValue ddmFormFieldValue = ddmFormFieldValuesMap.get(
-				contentField.getName());
-
-			if (ddmFormFieldValue == null) {
-				continue;
-			}
-
-			Field field = fields.get(ddmFormFieldValue.getName());
+			Field field = fields.get(contentField.getName());
 
 			Value value = DDMValueUtil.toDDMValue(
-				contentField,
+				contentField.toString(),
 				DDMFormFieldUtil.getDDMFormField(
 					_ddmStructureService, ddmStructure, contentField.getName()),
 				_dlAppService, journalArticle.getGroupId(),
 				_journalArticleService, _layoutLocalService,
 				contextAcceptLanguage.getPreferredLocale());
 
-			field.setValue(
-				contextAcceptLanguage.getPreferredLocale(),
-				value.getString(contextAcceptLanguage.getPreferredLocale()));
+			for (Locale locale : value.getAvailableLocales()) {
+				field.setValue(locale, value.getString(locale));
+			}
 
 			ContentField[] nestedContentFields =
 				contentField.getNestedContentFields();
@@ -1334,7 +1347,7 @@ public class StructuredContentResourceImpl
 			}
 		}
 
-		ddmFormValues = _fieldsToDDMFormValuesConverter.convert(
+		DDMFormValues ddmFormValues = _fieldsToDDMFormValuesConverter.convert(
 			ddmStructure, fields);
 
 		_ddmFormValuesValidator.validate(ddmFormValues);
@@ -1486,45 +1499,10 @@ public class StructuredContentResourceImpl
 			journalArticle.getDisplayDate(),
 			ZoneId.of(contextUser.getTimeZoneId()));
 
-		int expirationDateMonth = 0;
-		int expirationDateDay = 0;
-		int expirationDateYear = 0;
-		int expirationDateHour = 0;
-		int expirationDateMinute = 0;
+		boolean neverExpire = _isNeverExpire(structuredContent, journalArticle);
 
-		boolean neverExpire = GetterUtil.getBoolean(
-			structuredContent.getNeverExpire());
-
-		if (!neverExpire) {
-			Date dateExpired = structuredContent.getDateExpired();
-
-			if (dateExpired == null) {
-				dateExpired = journalArticle.getExpirationDate();
-			}
-
-			if ((dateExpired != null) &&
-				dateExpired.after(
-					new Date(System.currentTimeMillis() + Time.MINUTE))) {
-
-				Calendar expirationCal = CalendarFactoryUtil.getCalendar(
-					contextUser.getTimeZone());
-
-				expirationCal.setTime(dateExpired);
-
-				expirationDateMonth = expirationCal.get(Calendar.MONTH);
-				expirationDateDay = expirationCal.get(Calendar.DATE);
-				expirationDateYear = expirationCal.get(Calendar.YEAR);
-				expirationDateHour = expirationCal.get(Calendar.HOUR);
-				expirationDateMinute = expirationCal.get(Calendar.MINUTE);
-
-				if (expirationCal.get(Calendar.AM_PM) == Calendar.PM) {
-					expirationDateHour += 12;
-				}
-			}
-			else {
-				neverExpire = true;
-			}
-		}
+		int[] expirationDateArray = _getExpirationDateArray(
+			structuredContent, journalArticle, neverExpire);
 
 		return _toStructuredContent(
 			_journalArticleService.updateArticle(
@@ -1542,9 +1520,10 @@ public class StructuredContentResourceImpl
 				localDateTime.getMonthValue() - 1,
 				localDateTime.getDayOfMonth(), localDateTime.getYear(),
 				localDateTime.getHour(), localDateTime.getMinute(),
-				expirationDateMonth, expirationDateDay, expirationDateYear,
-				expirationDateHour, expirationDateMinute, neverExpire, 0, 0, 0,
-				0, 0, true, true, false, 0, 0, null, null, null, null,
+				expirationDateArray[0], expirationDateArray[1],
+				expirationDateArray[2], expirationDateArray[3],
+				expirationDateArray[4], neverExpire, 0, 0, 0, 0, 0, true, true,
+				false, 0, 0, null, null, null, null,
 				_createServiceContext(
 					_getAssetCategoryIds(journalArticle, structuredContent),
 					_getAssetLinkEntryIds(journalArticle, structuredContent),
@@ -1641,9 +1620,6 @@ public class StructuredContentResourceImpl
 	private EntityFieldsProvider _entityFieldsProvider;
 
 	@Reference
-	private ExpandoBridgeIndexer _expandoBridgeIndexer;
-
-	@Reference
 	private ExpandoColumnLocalService _expandoColumnLocalService;
 
 	@Reference
@@ -1693,10 +1669,10 @@ public class StructuredContentResourceImpl
 	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
 
 	@Reference
-	private Portal _portal;
+	private LayoutService _layoutService;
 
 	@Reference
-	private Queries _queries;
+	private Portal _portal;
 
 	@Reference
 	private RatingsEntryLocalService _ratingsEntryLocalService;

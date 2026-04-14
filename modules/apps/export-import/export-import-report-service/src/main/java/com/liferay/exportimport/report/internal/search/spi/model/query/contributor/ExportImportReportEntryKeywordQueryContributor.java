@@ -32,10 +32,11 @@ public class ExportImportReportEntryKeywordQueryContributor
 		SearchContext searchContext =
 			keywordQueryContributorHelper.getSearchContext();
 
-		queryHelper.addSearchTerm(booleanQuery, searchContext, "error", false);
+		queryHelper.addSearchTerm(
+			booleanQuery, searchContext, "errorMessage", false);
 		queryHelper.addSearchTerm(
 			booleanQuery, searchContext, "errorStacktrace", false);
-		queryHelper.addSearchTerm(
+		queryHelper.addSearchLocalizedTerm(
 			booleanQuery, searchContext, "modelName", false);
 	}
 

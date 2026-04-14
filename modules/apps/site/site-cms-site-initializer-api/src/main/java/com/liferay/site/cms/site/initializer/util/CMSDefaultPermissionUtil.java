@@ -34,7 +34,8 @@ public class CMSDefaultPermissionUtil {
 	public static ObjectEntry addOrUpdateObjectEntry(
 			String externalReferenceCode, long companyId, long userId,
 			String classExternalReferenceCode, String className,
-			JSONObject permissionsJSONObject)
+			JSONObject defaultPermissionsJSONObject, long depotGroupId,
+			String treePath)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
@@ -51,7 +52,11 @@ public class CMSDefaultPermissionUtil {
 			).put(
 				"className", className
 			).put(
-				"defaultPermissions", permissionsJSONObject.toString()
+				"defaultPermissions", defaultPermissionsJSONObject.toString()
+			).put(
+				"depotGroupId", depotGroupId
+			).put(
+				"treePath", treePath
 			).build(),
 			new ServiceContext());
 	}
@@ -74,7 +79,7 @@ public class CMSDefaultPermissionUtil {
 
 		List<Long> primaryKeys = ObjectEntryLocalServiceUtil.getPrimaryKeys(
 			new Long[0], companyId, userId,
-			objectDefinition.getObjectDefinitionId(), predicate, null,
+			objectDefinition.getObjectDefinitionId(), predicate, false, null,
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
 		if (ListUtil.isEmpty(primaryKeys)) {
@@ -88,6 +93,14 @@ public class CMSDefaultPermissionUtil {
 			long companyId, long userId, String classExternalReferenceCode,
 			String className, FilterFactory<Predicate> filterFactory)
 		throws PortalException {
+
+		if (classExternalReferenceCode.equals(
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS) ||
+			classExternalReferenceCode.equals(
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES)) {
+
+			return JSONFactoryUtil.createJSONObject();
+		}
 
 		ObjectEntry objectEntry = fetchObjectEntry(
 			companyId, userId, classExternalReferenceCode, className,

@@ -10,7 +10,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
-import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.module.util.BundleUtil;
@@ -20,9 +19,9 @@ import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +71,7 @@ public class FileInstallDeployTest {
 			new AssumeTestRule("assume"), new LiferayIntegrationTestRule());
 
 	public static void assume() {
-		Assume.assumeFalse(DBPartition.isPartitionEnabled());
+		Assume.assumeFalse(PropsValues.DATABASE_PARTITION_ENABLED);
 	}
 
 	@Before
@@ -393,6 +392,18 @@ public class FileInstallDeployTest {
 								dictionaryKey, StringPool.EQUAL,
 								StringPool.QUOTE, dictionaryValue,
 								StringPool.QUOTE);
+
+							if (dictionaryKey.equals(
+									ExtendedObjectClassDefinition.Scope.GROUP.
+										getPropertyKey())) {
+
+								content = StringBundler.concat(
+									content, StringPool.RETURN_NEW_LINE,
+									ExtendedObjectClassDefinition.Scope.COMPANY.
+										getPropertyKey(),
+									StringPool.EQUAL, StringPool.QUOTE,
+									_company.getCompanyId(), StringPool.QUOTE);
+							}
 						}
 
 						Files.write(path, content.getBytes());
@@ -421,6 +432,18 @@ public class FileInstallDeployTest {
 							content, StringPool.RETURN_NEW_LINE, dictionaryKey,
 							StringPool.EQUAL, StringPool.QUOTE, dictionaryValue,
 							StringPool.QUOTE);
+
+						if (dictionaryKey.equals(
+								ExtendedObjectClassDefinition.Scope.GROUP.
+									getPropertyKey())) {
+
+							content = StringBundler.concat(
+								content, StringPool.RETURN_NEW_LINE,
+								ExtendedObjectClassDefinition.Scope.COMPANY.
+									getPropertyKey(),
+								StringPool.EQUAL, StringPool.QUOTE,
+								_company.getCompanyId(), StringPool.QUOTE);
+						}
 					}
 
 					Files.write(path, content.getBytes());
@@ -527,6 +550,7 @@ public class FileInstallDeployTest {
 
 		public void build() throws IOException {
 			try (OutputStream outputStream = Files.newOutputStream(_path);
+
 				JarOutputStream jarOutputStream = new JarOutputStream(
 					outputStream)) {
 

@@ -14,8 +14,8 @@ ViewStructuresDisplayContext viewStructuresDisplayContext = (ViewStructuresDispl
 <div class="cms-section">
 	<div>
 		<react:component
-			module="{Toolbar} from site-cms-site-initializer"
-			props="<%= viewStructuresDisplayContext.getToolbarProps() %>"
+			module="{Breadcrumb} from site-cms-site-initializer"
+			props="<%= viewStructuresDisplayContext.getBreadcrumbProps() %>"
 		/>
 	</div>
 
@@ -31,7 +31,6 @@ ViewStructuresDisplayContext viewStructuresDisplayContext = (ViewStructuresDispl
 			propsTransformer="{StructuresFDSPropsTransformer} from site-cms-site-initializer"
 			selectedItemsKey="id"
 			selectionType="multiple"
-			style="fluid"
 		/>
 	</div>
 </div>

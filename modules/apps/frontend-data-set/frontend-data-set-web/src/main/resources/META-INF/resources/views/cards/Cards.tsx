@@ -5,7 +5,7 @@
 
 import {ClayCardWithInfo} from '@clayui/card';
 import classNames from 'classnames';
-import {getObjectValueFromPath} from 'frontend-js-web';
+import {getObjectValueFromPath, sub} from 'frontend-js-web';
 import React, {forwardRef, useContext, useRef} from 'react';
 
 import FrontendDataSetContext, {
@@ -21,7 +21,7 @@ import getRandomId from '../../utils/getRandomId';
 import isLink from '../../utils/isLink';
 import {
 	DisplayType,
-	ESelectionTrigger,
+	EItemActionsType,
 	ICardLabelSchema,
 	ICardSchema,
 	IItemsActions,
@@ -53,7 +53,6 @@ const Card = forwardRef<HTMLDivElement, any>(
 			loadData,
 			onActionDropdownItemClick,
 			onInfoPanelToggleButtonClick,
-			onSelect,
 			openModal,
 			openSidePanel,
 			selectable,
@@ -62,6 +61,17 @@ const Card = forwardRef<HTMLDivElement, any>(
 			selectionType,
 			toggleItemInlineEdit,
 		}: IFrontendDataSetContext = useContext(FrontendDataSetContext);
+
+		const {
+			accessibleNameField,
+			description,
+			image,
+			labels,
+			link,
+			sticker,
+			symbol,
+			title,
+		} = schema;
 
 		const [viewsContext] = useContext(ViewsContext);
 
@@ -91,11 +101,11 @@ const Card = forwardRef<HTMLDivElement, any>(
 			displayType: DisplayType;
 			value: string;
 		}> => {
-			if (!schema.labels) {
+			if (!labels) {
 				return [];
 			}
 
-			return schema.labels.flatMap((label: ICardLabelSchema) => {
+			return labels.flatMap((label: ICardLabelSchema) => {
 				const {displayTypeKey, displayTypeValues} = label;
 				let {displayType} = label;
 
@@ -123,77 +133,119 @@ const Card = forwardRef<HTMLDivElement, any>(
 			});
 		};
 
-		const getSelectionTrigger = (event: any): string | boolean => {
-			const target = event.nativeEvent?.target;
+		const getDropdownActions = (actions: IItemsActions[]): Array<any> => {
+			const processedActions: any[] = [];
 
-			if (target.classList.contains('custom-control-input')) {
-				return ESelectionTrigger.INPUT;
-			}
+			actions.forEach((action, index) => {
+				if (
+					action.type === EItemActionsType.GROUP ||
+					action.type === EItemActionsType.CONTEXTUAL
+				) {
+					const {items: nestedItems, ...otherProps} = action;
 
-			if (
-				target.closest('.dropdown-toggle') ||
-				target.closest('.dropdown-item')
-			) {
-				return false;
-			}
+					if (nestedItems?.length) {
+						if (action.separator && index !== 0) {
+							processedActions.push({type: 'divider'});
+						}
 
-			return ESelectionTrigger.CONTAINER;
+						processedActions.push({
+							...otherProps,
+							items: getDropdownActions(nestedItems),
+							symbolLeft: action.icon,
+						});
+					}
+				}
+				else {
+					processedActions.push({
+						...action,
+						href: isLink(action.target, null)
+							? formatActionURL(action.href, item, action.target)
+							: null,
+						onClick: (event: Event) => {
+							handleActionClick({
+								action,
+								event,
+								executeAsyncItemAction,
+								highlightItems,
+								infoPanelOpen,
+								itemData: item,
+								itemId: selectedItemKey,
+								items,
+								loadData,
+								onActionDropdownItemClick,
+								onInfoPanelToggleButtonClick,
+								onItemSelectionChange,
+								openModal,
+								openSidePanel,
+								toggleItemInlineEdit,
+							});
+						},
+						symbolLeft: action.icon,
+					});
+				}
+			});
+
+			return processedActions;
 		};
 
+		const accessibleNameItemKey =
+			accessibleNameField || title || description;
+
+		const accessibleName =
+			getLocalizedValue(item, accessibleNameItemKey)?.value ||
+			Liferay.Language.get('card');
+
 		const props = {
-			actions: formattedActions?.map((action: IItemsActions) => ({
-				...action,
-				href: isLink(action.target, null)
-					? formatActionURL(action.href, item, action.target)
-					: null,
-				onClick: (event: Event) => {
-					handleActionClick({
-						action,
-						event,
-						executeAsyncItemAction,
-						highlightItems,
-						infoPanelOpen,
-						itemData: item,
-						itemId: selectedItemKey,
-						items,
-						loadData,
-						onActionDropdownItemClick,
-						onInfoPanelToggleButtonClick,
-						onItemSelectionChange,
-						openModal,
-						openSidePanel,
-						toggleItemInlineEdit,
-					});
-				},
-				symbolLeft: action.icon,
-			})),
-			description: getLocalizedValue(item, schema.description)?.value,
-			href: (schema.link && item[schema.link]) || null,
-			imgProps:
-				schema.image &&
-				imagePropsTransformer(
-					getLocalizedValue(item, schema.image)?.value
+			actions: formattedActions && getDropdownActions(formattedActions),
+			checkboxProps: {
+				'aria-label': sub(
+					Liferay.Language.get('select-x'),
+					accessibleName
 				),
+			},
+			description: getLocalizedValue(item, description)?.value,
+			dropDownTriggerProps: {
+				'aria-label': sub(
+					Liferay.Language.get('x-actions'),
+					accessibleName
+				),
+			},
+			href: (link && item[link]) || null,
+			imgProps:
+				image &&
+				imagePropsTransformer(getLocalizedValue(item, image)?.value),
 			labels: getLabels(item),
-			onClick: selectable
-				? (event: any) => {
-						const target = getSelectionTrigger(event);
+			onClick: (event: React.MouseEvent) => {
+				const target = event.nativeEvent.target as Element;
 
-						if (target) {
-							onItemSelectionChange?.({
-								item,
-								trigger: target,
-							});
+				if (
+					target?.closest('.dropdown-toggle') ||
+					target?.closest('.dropdown-item')
+				) {
+					return;
+				}
 
-							onSelect?.({selectedItems: [item]});
+				// This logic is to avoid the onClick event from being
+				// triggered twice when the user clicks on anything other
+				// than the checkbox/radio in a selectable card
 
-							if (event.target.tagName !== 'A') {
-								event.preventDefault();
-							}
-						}
+				if (target.tagName !== 'INPUT' && target.tagName !== 'A') {
+					event.preventDefault();
+
+					onItemSelectionChange?.(item, true);
+				}
+			},
+			onSelectChange: selectable
+				? () => {
+						onItemSelectionChange?.(item);
 					}
 				: undefined,
-			onSelectChange: selectable ? () => undefined : undefined,
+			radioProps: {
+				'aria-label': sub(
+					Liferay.Language.get('select-x'),
+					accessibleName
+				),
+			},
 			selectableType: selectionType === 'single' ? 'radio' : 'checkbox',
 			selected:
 				selectable &&
@@ -206,19 +258,17 @@ const Card = forwardRef<HTMLDivElement, any>(
 								path: selectedItemsKey,
 							})
 				),
-			stickerProps: (schema.sticker && item[schema.sticker]) || null,
-			symbol: schema.symbol && item[schema.symbol],
-			title: getLocalizedValue(item, schema.title)?.value || '',
+			stickerProps: (sticker && item[sticker]) || null,
+			symbol: symbol && item[symbol],
+			title: getLocalizedValue(item, title)?.value || '',
 		};
 
 		return (
 			<div ref={ref}>
 				<ClayCardWithInfo
-					{...{
-						...props,
-						...(activeView.setItemComponentProps?.({item, props}) ??
-							{}),
-					}}
+					{...props}
+					{...(activeView.setItemComponentProps?.({item, props}) ??
+						{})}
 				/>
 			</div>
 		);

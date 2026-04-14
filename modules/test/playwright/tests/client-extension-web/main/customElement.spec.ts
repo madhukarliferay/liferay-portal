@@ -20,6 +20,7 @@ const test = mergeTests(
 	editCustomElementPageTest,
 	loginTest()
 );
+
 const testSample = mergeTests(
 	clientExtensionsPageTest,
 	editCustomElementPageTest,
@@ -199,15 +200,73 @@ test('Can cancel the creation of a Custom Element', async ({
 	).not.toBeVisible();
 });
 
-test('Check that Name field is required', async ({editCustomElementPage}) => {
-	await editCustomElementPage.goto();
-	await editCustomElementPage.fillRequiredFields();
+test(
+	'Publishing with invalid field values results in error',
+	{tag: '@LPD-75288'},
+	async ({editCustomElementPage, page}) => {
+		await test.step('Go to "Add Custom Element" page', async () => {
+			await editCustomElementPage.goto();
+		});
 
-	await test.step('Check expectations', async () => {
-		await editCustomElementPage.nameInput.clear();
-		await editCustomElementPage.publish(WaitAction.ERROR);
-	});
-});
+		await test.step('Name cannot be empty', async () => {
+			await editCustomElementPage.fillRequiredFields();
+
+			await editCustomElementPage.nameInput.clear();
+
+			await editCustomElementPage.publish(WaitAction.ERROR);
+		});
+
+		await test.step('HTML Element Name cannot be empty', async () => {
+			await editCustomElementPage.fillRequiredFields();
+
+			await editCustomElementPage.htmlElementNameInput.clear();
+
+			await editCustomElementPage.publish(WaitAction.NONE);
+
+			await expect(
+				page.getByText('The HTML Element Name field is required')
+			).toBeVisible();
+		});
+
+		await test.step('HTML Element Name cannot contain a space character', async () => {
+			await editCustomElementPage.fillRequiredFields();
+
+			await editCustomElementPage.htmlElementNameInput.fill('foo bar');
+
+			await editCustomElementPage.publish(WaitAction.INVALID_CHARACTER);
+		});
+
+		await test.step('HTML Element Name must contain a hyphen', async () => {
+			await editCustomElementPage.fillRequiredFields();
+
+			await editCustomElementPage.htmlElementNameInput.fill('foo');
+
+			await editCustomElementPage.publish(WaitAction.MISSING_HYPHEN);
+		});
+
+		await test.step('HTML Element Name must start with a lowercase letter', async () => {
+			await editCustomElementPage.fillRequiredFields();
+
+			await editCustomElementPage.htmlElementNameInput.fill('Foo-bar');
+
+			await editCustomElementPage.publish(
+				WaitAction.UPPERCASE_STARTING_LETTER
+			);
+		});
+
+		await test.step('JavaScript URL field cannot be empty', async () => {
+			await editCustomElementPage.fillRequiredFields();
+
+			await editCustomElementPage.javaScriptURLInput.clear();
+
+			await editCustomElementPage.publish(WaitAction.NONE);
+
+			await expect(
+				page.getByText('The JavaScript URL field is required')
+			).toBeVisible();
+		});
+	}
+);
 
 test('Check that Name field can be translated', async ({
 	editCustomElementPage,
@@ -252,7 +311,7 @@ test('Check that JavaScript URL field is required', async ({
 	});
 });
 
-test('Check if custom elements can be created, edited and deleted', async ({
+test('Client extension can be created, edited and deleted', async ({
 	clientExtensionsPage,
 	editCustomElementPage,
 }) => {
@@ -261,7 +320,7 @@ test('Check if custom elements can be created, edited and deleted', async ({
 
 	await editCustomElementPage.goto();
 
-	await test.step('Create a new Custom Element', async () => {
+	await test.step('Create a new client extension', async () => {
 		await editCustomElementPage.cssURLInput.fill(getRandomString());
 		await editCustomElementPage.descriptionContentEditable.fill(
 			getRandomString()
@@ -287,7 +346,7 @@ test('Check if custom elements can be created, edited and deleted', async ({
 		).toBeVisible();
 	});
 
-	await test.step('Edit the Custom Element', async () => {
+	await test.step('Edit the client extension', async () => {
 		await clientExtensionsPage.editClientExtension(
 			clientExtensionName,
 			EditCustomElementPage
@@ -346,7 +405,7 @@ test('Check if custom elements can be created, edited and deleted', async ({
 		);
 	});
 
-	await test.step('Delete the Custom Element', async () => {
+	await test.step('Delete the client extension', async () => {
 		await clientExtensionsPage.goto();
 
 		await clientExtensionsPage.deleteClientExtension(
@@ -495,5 +554,286 @@ test(
 		await expect(
 			editCustomElementPage.deleteJavaScriptURLButton
 		).toHaveCount(2);
+	}
+);
+
+testSample(
+	'Custom Element can be instanceable',
+	{tag: '@LPS-139377'},
+	async ({
+		clientExtensionsPage,
+		editCustomElementPage,
+		layout,
+		page,
+		pageEditorPage,
+	}) => {
+		const clientExtensionName = getRandomString();
+		const htmlElementName = `html-${getRandomString()}`;
+
+		await test.step('Create an instanceable Custom Element', async () => {
+			await editCustomElementPage.goto();
+
+			await editCustomElementPage.nameInput.fill(clientExtensionName);
+			await editCustomElementPage.htmlElementNameInput.fill(
+				htmlElementName
+			);
+			await editCustomElementPage.javaScriptURLInput.fill(
+				'https://www.example.com/test.js'
+			);
+			await editCustomElementPage.instanceableCheckbox.check();
+
+			await editCustomElementPage.publish(WaitAction.SUCCESS);
+		});
+
+		await test.step('Add the widget to two grid columns', async () => {
+			await page.goto(`/web/guest${layout.friendlyURL}?p_l_mode=edit`);
+
+			await pageEditorPage.addWidget(
+				'Client Extensions',
+				clientExtensionName
+			);
+			await pageEditorPage.addWidget(
+				'Client Extensions',
+				clientExtensionName
+			);
+			await pageEditorPage.publishPage();
+		});
+
+		await test.step('Verify both instances render', async () => {
+			await page.goto(`/web/guest${layout.friendlyURL}`);
+
+			const elements = page.locator(htmlElementName);
+
+			await expect(elements).toHaveCount(2);
+		});
+
+		await test.step('Clean up', async () => {
+			await clientExtensionsPage.goto();
+
+			await clientExtensionsPage.deleteClientExtension(
+				clientExtensionName
+			);
+		});
+	}
+);
+
+testSample(
+	'Custom Element can inject HTML properties',
+	{tag: '@LPS-139377'},
+	async ({
+		clientExtensionsPage,
+		editCustomElementPage,
+		layout,
+		page,
+		pageEditorPage,
+	}) => {
+		const clientExtensionName = getRandomString();
+		const htmlElementName = `html-${getRandomString()}`;
+
+		const propertyName1 = `prop-${getRandomString()}`;
+		const propertyName2 = `prop-${getRandomString()}`;
+
+		const propertyValue1 = getRandomString();
+		const propertyValue2 = getRandomString();
+
+		await test.step('Create a Custom Element with properties', async () => {
+			await editCustomElementPage.goto();
+
+			await editCustomElementPage.nameInput.fill(clientExtensionName);
+			await editCustomElementPage.htmlElementNameInput.fill(
+				htmlElementName
+			);
+			await editCustomElementPage.javaScriptURLInput.fill(
+				'https://www.example.com/test.js'
+			);
+
+			await editCustomElementPage.propertiesTextArea.fill(
+				`${propertyName1}=${propertyValue1}\n${propertyName2}=${propertyValue2}`
+			);
+
+			await editCustomElementPage.publish(WaitAction.SUCCESS);
+		});
+
+		await test.step('Add widget to page and verify HTML property', async () => {
+			await page.goto(`/web/guest${layout.friendlyURL}?p_l_mode=edit`);
+
+			await pageEditorPage.addWidget(
+				'Client Extensions',
+				clientExtensionName
+			);
+			await pageEditorPage.publishPage();
+
+			await page.goto(`/web/guest${layout.friendlyURL}`);
+
+			const element = page.locator(htmlElementName);
+
+			await expect(element).toHaveAttribute(
+				propertyName1,
+				propertyValue1
+			);
+			await expect(element).toHaveAttribute(
+				propertyName2,
+				propertyValue2
+			);
+		});
+
+		await test.step('Clean up', async () => {
+			await clientExtensionsPage.goto();
+
+			await clientExtensionsPage.deleteClientExtension(
+				clientExtensionName
+			);
+		});
+	}
+);
+
+testSample(
+	'Custom Element renders correctly when placed on a page (non ES module)',
+	{tag: '@LPS-159013'},
+	async ({
+		clientExtensionsPage,
+		editCustomElementPage,
+		layout,
+		page,
+		pageEditorPage,
+	}) => {
+		const clientExtensionName = getRandomString();
+		const htmlElementName = `html-${getRandomString()}`;
+		const jsResourceName = `res-${getRandomString()}.js`;
+
+		await test.step('Create a non-ES module Custom Element', async () => {
+			await editCustomElementPage.goto();
+
+			await editCustomElementPage.nameInput.fill(clientExtensionName);
+			await editCustomElementPage.htmlElementNameInput.fill(
+				htmlElementName
+			);
+			await editCustomElementPage.javaScriptURLInput.fill(
+				`https://www.example.com/${jsResourceName}`
+			);
+
+			await editCustomElementPage.publish(WaitAction.SUCCESS);
+		});
+
+		await test.step('Add widget to page and verify script type', async () => {
+			await page.goto(`/web/guest${layout.friendlyURL}?p_l_mode=edit`);
+
+			await pageEditorPage.addWidget(
+				'Client Extensions',
+				clientExtensionName
+			);
+			await pageEditorPage.publishPage();
+
+			await page.goto(`/web/guest${layout.friendlyURL}`);
+
+			await expect(
+				page.locator(`script[src*="${jsResourceName}"]:not(type)`)
+			).toBeAttached();
+		});
+
+		await test.step('Clean up', async () => {
+			await clientExtensionsPage.goto();
+
+			await clientExtensionsPage.deleteClientExtension(
+				clientExtensionName
+			);
+		});
+	}
+);
+
+testSample(
+	'Custom Element renders correctly when placed on a page (ES module type)',
+	{tag: '@LPS-139377'},
+	async ({
+		clientExtensionsPage,
+		editCustomElementPage,
+		layout,
+		page,
+		pageEditorPage,
+	}) => {
+		const clientExtensionName = getRandomString();
+		const htmlElementName = `html-${getRandomString()}`;
+		const jsResourceName = `res-${getRandomString()}.js`;
+
+		await test.step('Create an ES module Custom Element', async () => {
+			await editCustomElementPage.goto();
+
+			await editCustomElementPage.nameInput.fill(clientExtensionName);
+			await editCustomElementPage.htmlElementNameInput.fill(
+				htmlElementName
+			);
+			await editCustomElementPage.javaScriptURLInput.fill(
+				`https://www.example.com/${jsResourceName}`
+			);
+			await editCustomElementPage.useESModulesCheckbox.check();
+
+			await editCustomElementPage.publish(WaitAction.SUCCESS);
+		});
+
+		await test.step('Add to page and verify type="module" script', async () => {
+			await page.goto(`/web/guest${layout.friendlyURL}?p_l_mode=edit`);
+
+			await pageEditorPage.addWidget(
+				'Client Extensions',
+				clientExtensionName
+			);
+			await pageEditorPage.publishPage();
+
+			await page.goto(`/web/guest${layout.friendlyURL}`);
+
+			await expect(
+				page.locator(`script[type="module"][src*="${jsResourceName}"]`)
+			).toBeAttached();
+		});
+
+		await test.step('Clean up', async () => {
+			await clientExtensionsPage.goto();
+
+			await clientExtensionsPage.deleteClientExtension(
+				clientExtensionName
+			);
+		});
+	}
+);
+
+test(
+	'UI label is present for non-OSGi client extensions',
+	{tag: '@LPS-154725'},
+	async ({clientExtensionsPage, editCustomElementPage}) => {
+		const clientExtensionName = getRandomString();
+
+		await test.step('Create a Custom Element', async () => {
+			await editCustomElementPage.goto();
+
+			await editCustomElementPage.nameInput.fill(clientExtensionName);
+			await editCustomElementPage.htmlElementNameInput.fill(
+				`html-${getRandomString()}`
+			);
+			await editCustomElementPage.javaScriptURLInput.fill(
+				'https://www.example.com/test.js'
+			);
+
+			await editCustomElementPage.publish(WaitAction.SUCCESS);
+		});
+
+		await test.step('Verify UI label is present', async () => {
+			await clientExtensionsPage.goto();
+
+			await clientExtensionsPage.search(clientExtensionName);
+
+			const row = clientExtensionsPage.getRowByText(clientExtensionName);
+
+			await expect(row).toBeVisible();
+
+			await expect(row.locator('td').nth(Column.TYPE)).toContainText(
+				'Custom Element'
+			);
+		});
+
+		await test.step('Clean up', async () => {
+			await clientExtensionsPage.deleteClientExtension(
+				clientExtensionName
+			);
+		});
 	}
 );

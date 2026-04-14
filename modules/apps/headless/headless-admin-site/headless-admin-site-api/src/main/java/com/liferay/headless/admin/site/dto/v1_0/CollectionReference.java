@@ -52,11 +52,15 @@ import java.util.function.Supplier;
 		),
 		@JsonSubTypes.Type(
 			name = "CollectionProvider", value = ClassNameReference.class
+		),
+		@JsonSubTypes.Type(
+			name = "RepeatableFieldsCollectionProvider",
+			value = RepeatableFieldsCollectionProviderReference.class
 		)
 	}
 )
 @JsonTypeInfo(
-	include = JsonTypeInfo.As.PROPERTY, property = "collectionType",
+	include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "collectionType",
 	use = JsonTypeInfo.Id.NAME, visible = true
 )
 @XmlRootElement(name = "CollectionReference")
@@ -72,7 +76,7 @@ public abstract class CollectionReference implements Serializable {
 	}
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The collection's type (Collection, CollectionProvider)."
+		description = "The collection's type (Collection, CollectionProvider, RepeatableFieldsCollectionProvider)."
 	)
 	@JsonGetter("collectionType")
 	@Valid
@@ -122,7 +126,7 @@ public abstract class CollectionReference implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "The collection's type (Collection, CollectionProvider)."
+		description = "The collection's type (Collection, CollectionProvider, RepeatableFieldsCollectionProvider)."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected CollectionType collectionType;
@@ -167,9 +171,7 @@ public abstract class CollectionReference implements Serializable {
 			sb.append("\"collectionType\": ");
 
 			sb.append("\"");
-
 			sb.append(collectionType);
-
 			sb.append("\"");
 		}
 
@@ -188,7 +190,9 @@ public abstract class CollectionReference implements Serializable {
 	@GraphQLName("CollectionType")
 	public static enum CollectionType {
 
-		COLLECTION("Collection"), COLLECTION_PROVIDER("CollectionProvider");
+		COLLECTION("Collection"), COLLECTION_PROVIDER("CollectionProvider"),
+		REPEATABLE_FIELDS_COLLECTION_PROVIDER(
+			"RepeatableFieldsCollectionProvider");
 
 		@JsonCreator
 		public static CollectionType create(String value) {
@@ -312,3 +316,4 @@ public abstract class CollectionReference implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-53571304

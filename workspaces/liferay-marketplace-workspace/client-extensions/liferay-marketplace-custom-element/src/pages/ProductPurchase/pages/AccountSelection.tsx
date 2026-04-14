@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {ComponentProps, ReactNode, useEffect} from 'react';
+import {ComponentProps, ReactNode} from 'react';
+import {Navigate} from 'react-router-dom';
 
 import AccountSelection from '../../../components/Checkout/AccountSelection';
 import ProductPurchase from '../../../components/ProductPurchase';
@@ -11,6 +12,7 @@ import ProductPurchaseFooter from '../../../components/ProductPurchase/Footer';
 import {useMarketplaceContext} from '../../../context/MarketplaceContext';
 import i18n from '../../../i18n';
 import {useProductPurchaseOutletContext} from '../ProductPurchaseOutlet';
+import CreateNewAccount from './CreateNewAccount';
 
 type ProductPurchaseAccountSelectionProps = {
 	children?: ReactNode;
@@ -30,20 +32,17 @@ const ProductPurchaseAccountSelection: React.FC<
 		setSelectedAccount,
 	} = useProductPurchaseOutletContext();
 
+	const [, nextRoute] = productTypeRoute.routes ?? [];
+
 	const productTypeMetadata = productTypeRoute?.metadata;
 
-	useEffect(() => {
-		if (
-			productTypeMetadata?.skipSingleAccountSelection &&
-			accounts.length === 1
-		) {
-			nextStep();
-		}
-	}, [
-		accounts.length,
-		nextStep,
-		productTypeMetadata?.skipSingleAccountSelection,
-	]);
+	if (
+		productTypeMetadata?.skipSingleAccountSelection &&
+		nextRoute &&
+		accounts.length === 1
+	) {
+		return <Navigate to={nextRoute.path} />;
+	}
 
 	return (
 		<ProductPurchase.Shell
@@ -57,12 +56,14 @@ const ProductPurchaseAccountSelection: React.FC<
 			}}
 			title={i18n.translate('account-selection')}
 		>
-			<AccountSelection
-				onSelectAccount={setSelectedAccount}
-				selectedAccount={selectedAccount}
-				userAccount={myUserAccount}
-			/>
-
+			{!!accounts.length && (
+				<AccountSelection
+					onSelectAccount={setSelectedAccount}
+					selectedAccount={selectedAccount}
+					userAccount={myUserAccount}
+				/>
+			)}
+			<CreateNewAccount accounts={accounts} />
 			{children}
 		</ProductPurchase.Shell>
 	);

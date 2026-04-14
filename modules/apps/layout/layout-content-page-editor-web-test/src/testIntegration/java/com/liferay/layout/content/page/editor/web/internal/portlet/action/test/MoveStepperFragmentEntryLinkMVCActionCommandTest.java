@@ -36,6 +36,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -195,11 +196,13 @@ public class MoveStepperFragmentEntryLinkMVCActionCommandTest {
 			JSONUtil.put("numberOfSteps", 2));
 
 		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
-			null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
-			fragmentEntry.getFragmentEntryId(), _segmentsExperienceId,
-			_draftLayout.getPlid(), fragmentEntry.getCss(),
-			fragmentEntry.getHtml(), fragmentEntry.getJs(),
-			fragmentEntry.getConfiguration(),
+			null, TestPropsValues.getUserId(), _group.getGroupId(), null,
+			fragmentEntry.getExternalReferenceCode(),
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				fragmentEntry.getGroupId(), _group.getGroupId()),
+			_segmentsExperienceId, _draftLayout.getPlid(),
+			fragmentEntry.getCss(), fragmentEntry.getHtml(),
+			fragmentEntry.getJs(), fragmentEntry.getConfiguration(),
 			editableValuesJSONObject.toString(), StringPool.BLANK, 0,
 			"INPUTS-stepper", fragmentEntry.getType(),
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));

@@ -467,6 +467,13 @@ public class ObjectEntryFolderWrapper
 	}
 
 	@Override
+	public boolean isTrashable(com.liferay.trash.TrashHelper trashHelper)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.isTrashable(trashHelper);
+	}
+
+	@Override
 	public void persist() {
 		model.persist();
 	}
@@ -763,3 +770,4 @@ public class ObjectEntryFolderWrapper
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-2001958031

@@ -10,7 +10,10 @@ import TextTruncate from 'shared/components/TextTruncate';
 import URLConstants from 'shared/util/url-constants';
 import {AssetTypes} from 'shared/util/constants';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
-import {getSafeRangeSelectors} from 'shared/util/util';
+import {
+	getSafeDecodedURIComponent,
+	getSafeRangeSelectors
+} from 'shared/util/util';
 import {getUrl} from 'shared/util/urls';
 import {metricsListColumns} from 'shared/util/table-columns';
 import {pickBy} from 'lodash';
@@ -33,14 +36,16 @@ export enum EmptyStateLink {
 	Blog = URLConstants.AssetsAppearsBlogsOnDocumentation,
 	Document = URLConstants.AssetsAppearsDocumentsAndMediaOnDocumentation,
 	Form = URLConstants.AssetsAppearsFormsOnDocumentation,
-	Journal = URLConstants.AssetsAppearsWebContentOnDocumentation
+	Journal = URLConstants.AssetsAppearsWebContentOnDocumentation,
+	ObjectEntry = URLConstants.AssetsCustomAssetsListDocumentation
 }
 
 export enum EmptyStateText {
 	Blog = Liferay.Language.get('learn-more-about-blogs'),
 	Document = Liferay.Language.get('learn-more-about-documents-and-media'),
 	Form = Liferay.Language.get('learn-more-about-forms'),
-	Journal = Liferay.Language.get('learn-more-about-web-content')
+	Journal = Liferay.Language.get('learn-more-about-web-content'),
+	ObjectEntry = Liferay.Language.get('learn-more-about-assets')
 }
 
 interface IAssetAppearsOnCardProps {
@@ -92,10 +97,15 @@ const AssetAppearsOnStateRenderer = ({
 		fetchPolicy: 'network-only',
 		variables: {
 			assetId,
-			assetType: assetType.toUpperCase(),
-			channelId,
+			assetType:
+				assetType === AssetTypes.ObjectEntry
+					? 'OBJECT_ENTRY'
+					: assetType.toUpperCase(),
 			selectedMetrics: accessors,
-			title: decodeURIComponent(title),
+			...(assetType !== AssetTypes.ObjectEntry && {
+				channelId,
+				title: getSafeDecodedURIComponent(title)
+			}),
 			...pagination,
 			...getSafeRangeSelectors(rangeSelectors)
 		}

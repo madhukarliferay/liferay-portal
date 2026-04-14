@@ -125,47 +125,6 @@ public interface CommerceInventoryBookedQuantityPersistence
 			<CommerceInventoryBookedQuantity> orderByComparator);
 
 	/**
-	 * Returns the last commerce inventory booked quantity in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce inventory booked quantity
-	 * @throws NoSuchInventoryBookedQuantityException if a matching commerce inventory booked quantity could not be found
-	 */
-	public CommerceInventoryBookedQuantity findByLtExpirationDate_Last(
-			Date expirationDate,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceInventoryBookedQuantity> orderByComparator)
-		throws NoSuchInventoryBookedQuantityException;
-
-	/**
-	 * Returns the last commerce inventory booked quantity in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce inventory booked quantity, or <code>null</code> if a matching commerce inventory booked quantity could not be found
-	 */
-	public CommerceInventoryBookedQuantity fetchByLtExpirationDate_Last(
-		Date expirationDate,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceInventoryBookedQuantity> orderByComparator);
-
-	/**
-	 * Returns the commerce inventory booked quantities before and after the current commerce inventory booked quantity in the ordered set where expirationDate &lt; &#63;.
-	 *
-	 * @param commerceInventoryBookedQuantityId the primary key of the current commerce inventory booked quantity
-	 * @param expirationDate the expiration date
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce inventory booked quantity
-	 * @throws NoSuchInventoryBookedQuantityException if a commerce inventory booked quantity with the primary key could not be found
-	 */
-	public CommerceInventoryBookedQuantity[] findByLtExpirationDate_PrevAndNext(
-			long commerceInventoryBookedQuantityId, Date expirationDate,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceInventoryBookedQuantity> orderByComparator)
-		throws NoSuchInventoryBookedQuantityException;
-
-	/**
 	 * Removes all the commerce inventory booked quantities where expirationDate &lt; &#63; from the database.
 	 *
 	 * @param expirationDate the expiration date
@@ -267,47 +226,6 @@ public interface CommerceInventoryBookedQuantityPersistence
 		String sku,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceInventoryBookedQuantity> orderByComparator);
-
-	/**
-	 * Returns the last commerce inventory booked quantity in the ordered set where sku = &#63;.
-	 *
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce inventory booked quantity
-	 * @throws NoSuchInventoryBookedQuantityException if a matching commerce inventory booked quantity could not be found
-	 */
-	public CommerceInventoryBookedQuantity findBySku_Last(
-			String sku,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceInventoryBookedQuantity> orderByComparator)
-		throws NoSuchInventoryBookedQuantityException;
-
-	/**
-	 * Returns the last commerce inventory booked quantity in the ordered set where sku = &#63;.
-	 *
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce inventory booked quantity, or <code>null</code> if a matching commerce inventory booked quantity could not be found
-	 */
-	public CommerceInventoryBookedQuantity fetchBySku_Last(
-		String sku,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceInventoryBookedQuantity> orderByComparator);
-
-	/**
-	 * Returns the commerce inventory booked quantities before and after the current commerce inventory booked quantity in the ordered set where sku = &#63;.
-	 *
-	 * @param commerceInventoryBookedQuantityId the primary key of the current commerce inventory booked quantity
-	 * @param sku the sku
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce inventory booked quantity
-	 * @throws NoSuchInventoryBookedQuantityException if a commerce inventory booked quantity with the primary key could not be found
-	 */
-	public CommerceInventoryBookedQuantity[] findBySku_PrevAndNext(
-			long commerceInventoryBookedQuantityId, String sku,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceInventoryBookedQuantity> orderByComparator)
-		throws NoSuchInventoryBookedQuantityException;
 
 	/**
 	 * Removes all the commerce inventory booked quantities where sku = &#63; from the database.
@@ -424,54 +342,6 @@ public interface CommerceInventoryBookedQuantityPersistence
 		long companyId, String sku, String unitOfMeasureKey,
 		com.liferay.portal.kernel.util.OrderByComparator
 			<CommerceInventoryBookedQuantity> orderByComparator);
-
-	/**
-	 * Returns the last commerce inventory booked quantity in the ordered set where companyId = &#63; and sku = &#63; and unitOfMeasureKey = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param unitOfMeasureKey the unit of measure key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce inventory booked quantity
-	 * @throws NoSuchInventoryBookedQuantityException if a matching commerce inventory booked quantity could not be found
-	 */
-	public CommerceInventoryBookedQuantity findByC_S_U_Last(
-			long companyId, String sku, String unitOfMeasureKey,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceInventoryBookedQuantity> orderByComparator)
-		throws NoSuchInventoryBookedQuantityException;
-
-	/**
-	 * Returns the last commerce inventory booked quantity in the ordered set where companyId = &#63; and sku = &#63; and unitOfMeasureKey = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param unitOfMeasureKey the unit of measure key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching commerce inventory booked quantity, or <code>null</code> if a matching commerce inventory booked quantity could not be found
-	 */
-	public CommerceInventoryBookedQuantity fetchByC_S_U_Last(
-		long companyId, String sku, String unitOfMeasureKey,
-		com.liferay.portal.kernel.util.OrderByComparator
-			<CommerceInventoryBookedQuantity> orderByComparator);
-
-	/**
-	 * Returns the commerce inventory booked quantities before and after the current commerce inventory booked quantity in the ordered set where companyId = &#63; and sku = &#63; and unitOfMeasureKey = &#63;.
-	 *
-	 * @param commerceInventoryBookedQuantityId the primary key of the current commerce inventory booked quantity
-	 * @param companyId the company ID
-	 * @param sku the sku
-	 * @param unitOfMeasureKey the unit of measure key
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next commerce inventory booked quantity
-	 * @throws NoSuchInventoryBookedQuantityException if a commerce inventory booked quantity with the primary key could not be found
-	 */
-	public CommerceInventoryBookedQuantity[] findByC_S_U_PrevAndNext(
-			long commerceInventoryBookedQuantityId, long companyId, String sku,
-			String unitOfMeasureKey,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<CommerceInventoryBookedQuantity> orderByComparator)
-		throws NoSuchInventoryBookedQuantityException;
 
 	/**
 	 * Removes all the commerce inventory booked quantities where companyId = &#63; and sku = &#63; and unitOfMeasureKey = &#63; from the database.
@@ -624,3 +494,4 @@ public interface CommerceInventoryBookedQuantityPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-44179597

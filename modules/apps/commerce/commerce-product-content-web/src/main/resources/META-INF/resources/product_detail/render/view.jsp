@@ -204,6 +204,8 @@ long cpDefinitionId = cpCatalogEntry.getCPDefinitionId();
 
 				<commerce-ui:request-quote
 					CPCatalogEntry="<%= cpCatalogEntry %>"
+					createCart="<%= true %>"
+					displayType="secondary"
 					namespace="<%= liferayPortletResponse.getNamespace() %>"
 				/>
 
@@ -281,7 +283,7 @@ String navSpecificationsId = liferayPortletResponse.getNamespace() + "navSpecifi
 
 	<c:if test="<%= hasCPDefinitionSpecificationOptionValues %>">
 		<div aria-labelledby="navUnderlineFieldsTab" class="fade <portlet:namespace />tab-element tab-pane tab-pane-specifications" id="<%= navSpecificationsId %>" role="tabpanel">
-			<dl class="specification-list">
+			<div class="specification-list">
 
 				<%
 				for (CPDefinitionSpecificationOptionValue cpDefinitionSpecificationOptionValue : cpDefinitionSpecificationOptionValues) {
@@ -339,7 +341,7 @@ String navSpecificationsId = liferayPortletResponse.getNamespace() + "navSpecifi
 				}
 				%>
 
-			</dl>
+			</div>
 		</div>
 	</c:if>
 
@@ -404,7 +406,6 @@ String navSpecificationsId = liferayPortletResponse.getNamespace() + "navSpecifi
 				%>'
 				dataProviderKey="<%= CPContentFDSNames.REPLACEMENT_CP_INSTANCES %>"
 				id="<%= CPContentFDSNames.REPLACEMENT_CP_INSTANCES %>"
-				itemsPerPage="<%= 10 %>"
 				propsTransformer="{replacementCPInstancePropsTransformer} from commerce-product-content-web"
 				style="stacked"
 			/>

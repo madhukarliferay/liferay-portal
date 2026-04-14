@@ -302,214 +302,6 @@ public class CTRemotePersistenceImpl
 	}
 
 	/**
-	 * Returns the last ct remote in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct remote
-	 * @throws NoSuchRemoteException if a matching ct remote could not be found
-	 */
-	@Override
-	public CTRemote findByCompanyId_Last(
-			long companyId, OrderByComparator<CTRemote> orderByComparator)
-		throws NoSuchRemoteException {
-
-		CTRemote ctRemote = fetchByCompanyId_Last(companyId, orderByComparator);
-
-		if (ctRemote != null) {
-			return ctRemote;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchRemoteException(sb.toString());
-	}
-
-	/**
-	 * Returns the last ct remote in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct remote, or <code>null</code> if a matching ct remote could not be found
-	 */
-	@Override
-	public CTRemote fetchByCompanyId_Last(
-		long companyId, OrderByComparator<CTRemote> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<CTRemote> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the ct remotes before and after the current ct remote in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctRemoteId the primary key of the current ct remote
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct remote
-	 * @throws NoSuchRemoteException if a ct remote with the primary key could not be found
-	 */
-	@Override
-	public CTRemote[] findByCompanyId_PrevAndNext(
-			long ctRemoteId, long companyId,
-			OrderByComparator<CTRemote> orderByComparator)
-		throws NoSuchRemoteException {
-
-		CTRemote ctRemote = findByPrimaryKey(ctRemoteId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTRemote[] array = new CTRemoteImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, ctRemote, companyId, orderByComparator, true);
-
-			array[1] = ctRemote;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, ctRemote, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTRemote getByCompanyId_PrevAndNext(
-		Session session, CTRemote ctRemote, long companyId,
-		OrderByComparator<CTRemote> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_CTREMOTE_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(CTRemoteModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctRemote)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTRemote> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the ct remotes that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -560,6 +352,15 @@ public class CTRemotePersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return findByCompanyId(companyId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByCompanyId(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator));
 		}
 
 		StringBundler sb = null;
@@ -638,202 +439,6 @@ public class CTRemotePersistenceImpl
 	}
 
 	/**
-	 * Returns the ct remotes before and after the current ct remote in the ordered set of ct remotes that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param ctRemoteId the primary key of the current ct remote
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct remote
-	 * @throws NoSuchRemoteException if a ct remote with the primary key could not be found
-	 */
-	@Override
-	public CTRemote[] filterFindByCompanyId_PrevAndNext(
-			long ctRemoteId, long companyId,
-			OrderByComparator<CTRemote> orderByComparator)
-		throws NoSuchRemoteException {
-
-		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
-			return findByCompanyId_PrevAndNext(
-				ctRemoteId, companyId, orderByComparator);
-		}
-
-		CTRemote ctRemote = findByPrimaryKey(ctRemoteId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			CTRemote[] array = new CTRemoteImpl[3];
-
-			array[0] = filterGetByCompanyId_PrevAndNext(
-				session, ctRemote, companyId, orderByComparator, true);
-
-			array[1] = ctRemote;
-
-			array[2] = filterGetByCompanyId_PrevAndNext(
-				session, ctRemote, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected CTRemote filterGetByCompanyId_PrevAndNext(
-		Session session, CTRemote ctRemote, long companyId,
-		OrderByComparator<CTRemote> orderByComparator, boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTREMOTE_WHERE);
-		}
-		else {
-			sb.append(_FILTER_SQL_SELECT_CTREMOTE_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_CTREMOTE_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(CTRemoteModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(CTRemoteModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), CTRemote.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, CTRemoteImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, CTRemoteImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(ctRemote)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<CTRemote> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the ct remotes where companyId = &#63; from the database.
 	 *
 	 * @param companyId the company ID
@@ -907,6 +512,14 @@ public class CTRemotePersistenceImpl
 	public int filterCountByCompanyId(long companyId) {
 		if (!InlineSQLHelperUtil.isEnabled(companyId, 0)) {
 			return countByCompanyId(companyId);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<CTRemote> ctRemotes = findByCompanyId(companyId);
+
+			ctRemotes = InlineSQLHelperUtil.filter(ctRemotes);
+
+			return ctRemotes.size();
 		}
 
 		StringBundler sb = new StringBundler(2);
@@ -1593,3 +1206,4 @@ public class CTRemotePersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1698602048

@@ -61,6 +61,17 @@ public class ObjectEntryServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectEntry copyObjectEntry(
+			long objectEntryId, long objectEntryFolderId,
+			java.util.Map<String, java.io.Serializable> values,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryService.copyObjectEntry(
+			objectEntryId, objectEntryFolderId, values, serviceContext);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectEntry deleteObjectEntry(
 			long objectEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -70,12 +81,12 @@ public class ObjectEntryServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectEntry expireObjectEntry(
-			long userId, long objectEntryId,
+			long objectEntryId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.expireObjectEntry(
-			userId, objectEntryId, serviceContext);
+			objectEntryId, serviceContext);
 	}
 
 	@Override
@@ -160,13 +171,14 @@ public class ObjectEntryServiceWrapper
 			getOneToManyObjectEntries(
 				long groupId, long objectRelationshipId,
 				com.liferay.petra.sql.dsl.expression.Predicate predicate,
-				long primaryKey, boolean related, String search, int start,
-				int end, com.liferay.portal.kernel.search.Sort[] sorts)
+				boolean preferApproved, long primaryKey, boolean related,
+				String search, int start, int end,
+				com.liferay.portal.kernel.search.Sort[] sorts)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.getOneToManyObjectEntries(
-			groupId, objectRelationshipId, predicate, primaryKey, related,
-			search, start, end, sorts);
+			groupId, objectRelationshipId, predicate, preferApproved,
+			primaryKey, related, search, start, end, sorts);
 	}
 
 	@Override
@@ -183,12 +195,11 @@ public class ObjectEntryServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectEntry getOrAddEmptyObjectEntry(
-			String externalReferenceCode, long groupId, long userId,
-			long objectDefinitionId)
+			String externalReferenceCode, long groupId, long objectDefinitionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.getOrAddEmptyObjectEntry(
-			externalReferenceCode, groupId, userId, objectDefinitionId);
+			externalReferenceCode, groupId, objectDefinitionId);
 	}
 
 	/**
@@ -239,61 +250,70 @@ public class ObjectEntryServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectEntry moveObjectEntry(
+			long objectEntryId, long objectEntryFolderId,
+			java.util.Map<String, java.io.Serializable> values,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryService.moveObjectEntry(
+			objectEntryId, objectEntryFolderId, values, serviceContext);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectEntry moveObjectEntryToTrash(
-			long userId, com.liferay.object.model.ObjectEntry objectEntry,
+			com.liferay.object.model.ObjectEntry objectEntry,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.moveObjectEntryToTrash(
-			userId, objectEntry, serviceContext);
+			objectEntry, serviceContext);
 	}
 
 	@Override
 	public com.liferay.object.model.ObjectEntry partialUpdateObjectEntry(
-			long objectEntryId,
+			long objectEntryId, long objectEntryFolderId,
 			java.util.Map<String, java.io.Serializable> values,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.partialUpdateObjectEntry(
-			objectEntryId, values, serviceContext);
+			objectEntryId, objectEntryFolderId, values, serviceContext);
 	}
 
 	@Override
 	public com.liferay.object.model.ObjectEntry restoreObjectEntryFromTrash(
-			long userId, com.liferay.object.model.ObjectEntry objectEntry,
+			com.liferay.object.model.ObjectEntry objectEntry,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.restoreObjectEntryFromTrash(
-			userId, objectEntry, serviceContext);
+			objectEntry, serviceContext);
 	}
 
 	@Override
-	public void subscribeObjectEntry(
-			long userId, long groupId, long objectEntryId)
+	public void subscribeObjectEntry(long groupId, long objectEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_objectEntryService.subscribeObjectEntry(
-			userId, groupId, objectEntryId);
+		_objectEntryService.subscribeObjectEntry(groupId, objectEntryId);
 	}
 
 	@Override
-	public void unsubscribeObjectEntry(long userId, long objectEntryId)
+	public void unsubscribeObjectEntry(long objectEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		_objectEntryService.unsubscribeObjectEntry(userId, objectEntryId);
+		_objectEntryService.unsubscribeObjectEntry(objectEntryId);
 	}
 
 	@Override
 	public com.liferay.object.model.ObjectEntry updateObjectEntry(
-			long objectEntryId,
+			long objectEntryId, long objectEntryFolderId,
 			java.util.Map<String, java.io.Serializable> values,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryService.updateObjectEntry(
-			objectEntryId, values, serviceContext);
+			objectEntryId, objectEntryFolderId, values, serviceContext);
 	}
 
 	@Override
@@ -321,3 +341,4 @@ public class ObjectEntryServiceWrapper
 	private ObjectEntryService _objectEntryService;
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:1947140339

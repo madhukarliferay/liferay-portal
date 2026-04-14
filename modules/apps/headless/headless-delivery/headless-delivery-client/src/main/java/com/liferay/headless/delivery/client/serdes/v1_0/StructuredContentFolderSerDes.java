@@ -261,9 +261,7 @@ public class StructuredContentFolderSerDes {
 			sb.append("\"viewableBy\": ");
 
 			sb.append("\"");
-
 			sb.append(structuredContentFolder.getViewableBy());
-
 			sb.append("\"");
 		}
 
@@ -729,3 +727,4 @@ public class StructuredContentFolderSerDes {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:-996469084

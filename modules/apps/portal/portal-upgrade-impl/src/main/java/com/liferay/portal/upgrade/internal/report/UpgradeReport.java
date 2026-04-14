@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
@@ -36,7 +37,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.internal.recorder.UpgradeRecorder;
-import com.liferay.portal.util.PropsValues;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -490,7 +490,7 @@ public class UpgradeReport {
 		).put(
 			"tables.initial.final.rows",
 			() -> {
-				Map<String, Integer> finalTableCounts = _getTableCounts();
+				Map<String, Long> finalTableCounts = _getTableCounts();
 
 				if ((finalTableCounts == null) ||
 					(_initialTableCounts == null)) {
@@ -506,13 +506,14 @@ public class UpgradeReport {
 				ListUtil.distinct(
 					tableNames,
 					(tableName1, tableName2) -> {
-						int initialTableCount1 =
-							_initialTableCounts.getOrDefault(tableName1, 0);
-						int initialTableCount2 =
-							_initialTableCounts.getOrDefault(tableName2, 0);
+						long initialTableCount1 =
+							_initialTableCounts.getOrDefault(tableName1, 0L);
+						long initialTableCount2 =
+							_initialTableCounts.getOrDefault(tableName2, 0L);
 
 						if (initialTableCount1 != initialTableCount2) {
-							return initialTableCount2 - initialTableCount1;
+							return Long.compare(
+								initialTableCount2, initialTableCount1);
 						}
 
 						return tableName1.compareTo(tableName2);
@@ -521,10 +522,10 @@ public class UpgradeReport {
 				return TransformUtil.transform(
 					tableNames,
 					tableName -> {
-						int finalTableCount = finalTableCounts.getOrDefault(
-							tableName, -1);
-						int initialTableCount =
-							_initialTableCounts.getOrDefault(tableName, -1);
+						long finalTableCount = finalTableCounts.getOrDefault(
+							tableName, -1L);
+						long initialTableCount =
+							_initialTableCounts.getOrDefault(tableName, -1L);
 
 						if ((finalTableCount <= 0) &&
 							(initialTableCount <= 0)) {
@@ -553,14 +554,13 @@ public class UpgradeReport {
 		).put(
 			"execution.time", _executionTimeString
 		).put(
-			"data.clean.up",
-			_getMessagesPrinters(
-				false, upgradeRecorder.getDataCleanUpMessages())
-		).put(
 			"errors",
 			_getMessagesPrinters(true, upgradeRecorder.getErrorMessages())
 		).put(
 			"failed.sqls", UpgradeSQLRecorder.getFailedSQLs()
+		).put(
+			"warnings",
+			_getMessagesPrinters(true, upgradeRecorder.getWarningMessages())
 		).put(
 			"longest.upgrade.processes",
 			() -> {
@@ -638,8 +638,9 @@ public class UpgradeReport {
 					Math.min(_LONGEST_RUNNING_SQLS_COUNT, runningSQLs.size()));
 			}
 		).put(
-			"warnings",
-			_getMessagesPrinters(true, upgradeRecorder.getWarningMessages())
+			"data.clean.up",
+			_getMessagesPrinters(
+				false, upgradeRecorder.getDataCleanUpMessages())
 		).build();
 	}
 
@@ -768,7 +769,7 @@ public class UpgradeReport {
 		return null;
 	}
 
-	private Map<String, Integer> _getTableCounts() {
+	private Map<String, Long> _getTableCounts() {
 		try (Connection connection = DataAccess.getConnection()) {
 			DatabaseMetaData databaseMetaData = connection.getMetaData();
 
@@ -778,19 +779,21 @@ public class UpgradeReport {
 					dbInspector.getCatalog(), dbInspector.getSchema(), null,
 					new String[] {"TABLE"})) {
 
-				Map<String, Integer> tableCounts = new HashMap<>();
+				Map<String, Long> tableCounts = new HashMap<>();
 
 				while (resultSet1.next()) {
 					String tableName = resultSet1.getString("TABLE_NAME");
 
 					try (PreparedStatement preparedStatement =
 							connection.prepareStatement(
-								"select count(*) from " + tableName);
+								"select count(*) as count from " + tableName);
+
 						ResultSet resultSet2 =
 							preparedStatement.executeQuery()) {
 
 						if (resultSet2.next()) {
-							tableCounts.put(tableName, resultSet2.getInt(1));
+							tableCounts.put(
+								tableName, resultSet2.getLong("count"));
 						}
 					}
 					catch (SQLException sqlException) {
@@ -1010,7 +1013,7 @@ public class UpgradeReport {
 	private String _executionDateString;
 	private String _executionTimeString;
 	private final int _initialBuildNumber;
-	private Map<String, Integer> _initialTableCounts;
+	private Map<String, Long> _initialTableCounts;
 	private String _rootDir;
 
 	private class DLSizeThread extends Thread {

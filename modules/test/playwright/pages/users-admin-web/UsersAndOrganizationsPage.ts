@@ -10,7 +10,7 @@ import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import {getRandomInt} from '../../utils/getRandomInt';
 import {waitForAlert} from '../../utils/waitForAlert';
 import {DataTablePage} from '../account-admin-web/DataTablePage';
-import {ApplicationsMenuPage} from '../product-navigation-applications-menu/ApplicationsMenuPage';
+import {GlobalMenuPage} from '../product-navigation-applications-menu/GlobalMenuPage';
 
 export const searchTableRowByValue = async function (
 	tableLocator: Locator,
@@ -43,8 +43,10 @@ export class UsersAndOrganizationsPage {
 	readonly activateButton: Locator;
 	readonly activateUserMenuItem: Locator;
 	readonly addOrganizationButton: Locator;
+	readonly addOrganizationMenuItem: Locator;
 	readonly addUserButton: Locator;
-	readonly applicationsMenuPage: ApplicationsMenuPage;
+	readonly addUserMenuItem: Locator;
+	readonly globalMenuPage: GlobalMenuPage;
 	readonly assignOrganizationRolesIFrame: FrameLocator;
 	readonly assignOrganizationRolesMenuItem: Locator;
 	readonly assignOrganizationRolesSearchBarButton: Locator;
@@ -91,6 +93,7 @@ export class UsersAndOrganizationsPage {
 	readonly deleteOrganizationMenuItem: Locator;
 	readonly deletePersonalDataMenuItem: Locator;
 	readonly editOrganizationMenuItem: Locator;
+	readonly errorMessage: Locator;
 	readonly emailAddressInput: Locator;
 	readonly exportImportOptionsMenuItem: Locator;
 	readonly exportPersonalDataItem: Locator;
@@ -109,6 +112,9 @@ export class UsersAndOrganizationsPage {
 		value: string,
 		strictEqual?: boolean
 	) => Promise<{column: Locator; row: Locator}>;
+	readonly myOrganizationsTableRowActions: (
+		organizationName: string
+	) => Promise<Locator>;
 	readonly myOrganizationsTableRowLink: (
 		organizationName: string
 	) => Promise<Locator>;
@@ -129,9 +135,11 @@ export class UsersAndOrganizationsPage {
 	) => Promise<Locator>;
 	readonly optionsMenu: Locator;
 	readonly organizationChartLink: Locator;
+	readonly organizationsBreadcrumbLink: (organizationName: string) => Locator;
 	readonly organizationsLink: Locator;
 	readonly organizationsTable: DataTablePage;
 	readonly organizationsTableEmptyMessage: Locator;
+	readonly organizationsTableDivider: Locator;
 	readonly organizationUsersTable: Locator;
 	readonly organizationUsersTableRow: (
 		colPosition: number,
@@ -150,9 +158,14 @@ export class UsersAndOrganizationsPage {
 	) => Promise<Locator>;
 	readonly page: Page;
 	readonly pageTitle: Locator;
+	readonly removeOrganizationMenuItem: Locator;
 	readonly saveUserButton: Locator;
 	readonly screenNameInput: Locator;
 	readonly selectAllUsersCheckBox: Locator;
+	readonly selectViewButton: Locator;
+	readonly selectViewCardButton: Locator;
+	readonly selectViewListButton: Locator;
+	readonly selectViewTableButton: Locator;
 	readonly statusText: (value: string) => Locator;
 	readonly tableFilterMenu: Locator;
 	readonly tableFilterMenuItem: (option: string) => Locator;
@@ -160,6 +173,7 @@ export class UsersAndOrganizationsPage {
 	readonly tableOrderMenuItem: (option: string) => Locator;
 	readonly userIdInput: Locator;
 	readonly usersCheckbox: (userName: string) => Promise<Locator>;
+	readonly usersDataTable: DataTablePage;
 	readonly usersSearchBar: Locator;
 	readonly usersSearchBarButton: Locator;
 	readonly usersTableRow: (
@@ -170,6 +184,7 @@ export class UsersAndOrganizationsPage {
 	readonly usersTableRowLink: (screenName: string) => Promise<Locator>;
 	readonly usersTableRowActions: (screenName: string) => Promise<Locator>;
 	readonly usersLink: Locator;
+	readonly usersTableDivider: Locator;
 	readonly userPersonalMenuButton: Locator;
 	readonly usersTable: Locator;
 	readonly usersTableCell: (userName: string) => Locator;
@@ -178,6 +193,7 @@ export class UsersAndOrganizationsPage {
 	readonly timeZoneSelect: Locator;
 	readonly saveTimeZoneButton: Locator;
 	readonly usersAndOrganizationsButton: Locator;
+	readonly viewStatus: (status: string) => Locator;
 
 	constructor(page: Page) {
 		this.activateButton = page.getByRole('button', {name: 'Activate'});
@@ -187,8 +203,14 @@ export class UsersAndOrganizationsPage {
 		this.addOrganizationButton = page.getByRole('link', {
 			name: 'Add Organization',
 		});
+		this.addOrganizationMenuItem = page.getByRole('menuitem', {
+			name: 'Add Organization',
+		});
 		this.addUserButton = page.getByRole('link', {name: 'Add User'});
-		this.applicationsMenuPage = new ApplicationsMenuPage(page);
+		this.addUserMenuItem = page.getByRole('menuitem', {
+			name: 'Add User',
+		});
+		this.globalMenuPage = new GlobalMenuPage(page);
 		this.assignOrganizationRolesIFrame = page.frameLocator(
 			'iframe[title="Assign Organization Roles"]'
 		);
@@ -315,6 +337,7 @@ export class UsersAndOrganizationsPage {
 		this.editOrganizationMenuItem = page.getByRole('menuitem', {
 			name: 'Edit',
 		});
+		this.errorMessage = page.locator('.alert-danger[role="alert"]');
 		this.emailAddressInput = page.getByLabel('Email Address');
 		this.exportImportOptionsMenuItem = page.getByRole('menuitem', {
 			name: 'Export / Import',
@@ -374,6 +397,24 @@ export class UsersAndOrganizationsPage {
 				`Cannot locate organization row with name ${organizationName}`
 			);
 		};
+		this.myOrganizationsTableRowActions = async (
+			organizationName: string
+		) => {
+			const myOrganizationsTableRow =
+				await this.myOrganizationsUserAndOrgsTableRow(
+					1,
+					organizationName,
+					false
+				);
+
+			if (myOrganizationsTableRow && myOrganizationsTableRow.row) {
+				return myOrganizationsTableRow.row.getByLabel('Show Actions');
+			}
+
+			throw new Error(
+				`Cannot locate organization row with name ${organizationName}`
+			);
+		};
 		this.myOrganizationsUserAndOrgsTable = page.locator(
 			'#_com_liferay_users_admin_web_portlet_MyOrganizationsPortlet_organizationUsersSearchContainer'
 		);
@@ -422,6 +463,12 @@ export class UsersAndOrganizationsPage {
 			exact: true,
 			name: 'Organization Chart',
 		});
+		this.organizationsBreadcrumbLink = (organizationName: string) => {
+			return page.getByRole('link', {
+				exact: true,
+				name: organizationName,
+			});
+		};
 		this.organizationsLink = page.getByRole('link', {
 			name: 'Organizations',
 		});
@@ -431,8 +478,16 @@ export class UsersAndOrganizationsPage {
 				.locator(
 					'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_organizationsSearchContainer'
 				)
+				.or(
+					page.locator(
+						'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_organizationUsersSearchContainer'
+					)
+				)
 				.first()
 		);
+		this.organizationsTableDivider = page.locator('tr.table-divider', {
+			hasText: 'Organizations',
+		});
 		this.organizationsTableEmptyMessage = page.getByText(
 			'No organizations were found.'
 		);
@@ -503,6 +558,9 @@ export class UsersAndOrganizationsPage {
 		this.assignUsersDoneButton = page.getByRole('button', {name: 'Done'});
 		this.page = page;
 		this.pageTitle = page.getByTestId('headerTitle');
+		this.removeOrganizationMenuItem = page.getByRole('menuitem', {
+			name: 'Remove',
+		});
 		this.saveUserButton = page.getByRole('button', {name: 'Save'});
 		this.screenNameInput = page.getByLabel('Screen Name');
 		this.usersCheckbox = async (userName: string) => {
@@ -512,6 +570,12 @@ export class UsersAndOrganizationsPage {
 				return usersTableRow.row.getByRole('checkbox');
 			}
 		};
+		this.usersDataTable = new DataTablePage(
+			page,
+			page.locator(
+				'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_usersSearchContainer'
+			)
+		);
 		this.usersSearchBar = page.getByPlaceholder('Search for');
 		this.usersSearchBarButton = page.getByRole('button', {
 			name: 'Search for',
@@ -532,6 +596,14 @@ export class UsersAndOrganizationsPage {
 		this.selectAllUsersCheckBox = page
 			.locator('.management-bar')
 			.getByLabel('Select All Users on the Page');
+		this.selectViewButton = page.getByLabel('Select View');
+		this.selectViewCardButton = page.getByRole('menuitem', {
+			name: 'Cards',
+		});
+		this.selectViewListButton = page.getByRole('menuitem', {name: 'List'});
+		this.selectViewTableButton = page.getByRole('menuitem', {
+			name: 'Table',
+		});
 		this.tableFilterMenu = page
 			.locator('.management-bar')
 			.getByLabel('Filter');
@@ -580,7 +652,10 @@ export class UsersAndOrganizationsPage {
 				`Cannot locate user row with screenName ${screenName}`
 			);
 		};
-		this.usersLink = page.getByRole('link', {name: 'Users'});
+		this.usersLink = page.getByRole('link', {exact: true, name: 'Users'});
+		this.usersTableDivider = page.locator('tr.table-divider', {
+			hasText: 'Users',
+		});
 		this.userPersonalMenuButton = page.getByTestId('userPersonalMenu');
 		this.usersTable = page.locator(
 			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_usersSearchContainer'
@@ -599,6 +674,8 @@ export class UsersAndOrganizationsPage {
 		});
 		this.timeZoneSelect = page.getByLabel('Time Zone');
 		this.saveTimeZoneButton = page.getByRole('button', {name: 'Save'});
+		this.viewStatus = (status) =>
+			page.getByTitle(`Select View, Currently Selected: ${status}`);
 	}
 
 	async activateUsers(userNames: string[]) {
@@ -607,6 +684,34 @@ export class UsersAndOrganizationsPage {
 		}
 		await this.activateButton.click();
 		await waitForAlert(this.page);
+	}
+
+	async changeView(view: 'Cards' | 'List' | 'Table') {
+		let viewButton: Locator;
+
+		switch (view) {
+			case 'List':
+				viewButton = this.selectViewListButton;
+				break;
+			case 'Cards':
+				viewButton = this.selectViewCardButton;
+				break;
+			default:
+				viewButton = this.selectViewTableButton;
+		}
+
+		await expect(async () => {
+			await this.page.reload();
+
+			await this.selectViewButton.click();
+
+			await expect(viewButton).toBeVisible({
+				timeout: 500,
+			});
+		}).toPass({timeout: 5000});
+
+		await viewButton.click();
+		await expect(this.viewStatus(view)).toBeVisible();
 	}
 
 	async createUser(
@@ -670,7 +775,11 @@ export class UsersAndOrganizationsPage {
 	}
 
 	async goto(forceReload?: boolean) {
-		await this.applicationsMenuPage.goToUsersAndOrganizations(forceReload);
+		if (forceReload) {
+			this.globalMenuPage.goToHome();
+		}
+
+		await this.globalMenuPage.goToControlPanel('Users and Organizations');
 	}
 
 	async goToOrganizations(forceReload?: boolean) {
@@ -688,7 +797,7 @@ export class UsersAndOrganizationsPage {
 	}
 
 	async goToOrganizationsWithLimitedAccess() {
-		await this.applicationsMenuPage.goToUsersAndOrganizationsWithLimitedAccess();
+		await this.globalMenuPage.goToControlPanel('Users and Organizations');
 		await Promise.all([
 			this.organizationsLink.click(),
 			this.page.waitForResponse(
@@ -746,7 +855,7 @@ export class UsersAndOrganizationsPage {
 	}
 
 	async goToUsersWithLimitedAccess() {
-		await this.applicationsMenuPage.goToUsersAndOrganizationsWithLimitedAccess();
+		await this.globalMenuPage.goToControlPanel('Users and Organizations');
 		await Promise.all([
 			this.usersLink.click(),
 			this.page.waitForResponse(

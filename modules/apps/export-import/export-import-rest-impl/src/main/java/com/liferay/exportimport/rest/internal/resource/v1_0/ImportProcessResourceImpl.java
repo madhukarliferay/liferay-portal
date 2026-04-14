@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.dao.orm.OrderFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.NoSuchBackgroundTaskException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.search.Sort;
@@ -30,8 +29,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.staging.StagingGroupHelper;
-
-import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
 
@@ -54,10 +51,6 @@ public class ImportProcessResourceImpl extends BaseImportProcessResourceImpl {
 			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35914")) {
-			throw new NotFoundException();
-		}
-
 		return Page.of(
 			transform(
 				_getBackgroundTasks(
@@ -72,10 +65,6 @@ public class ImportProcessResourceImpl extends BaseImportProcessResourceImpl {
 	@Override
 	public ImportProcess getImportProcess(Long importProcessId)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35914")) {
-			throw new NotFoundException();
-		}
 
 		BackgroundTask backgroundTask =
 			_backgroundTaskLocalService.getBackgroundTask(importProcessId);
@@ -100,10 +89,6 @@ public class ImportProcessResourceImpl extends BaseImportProcessResourceImpl {
 			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35914")) {
-			throw new NotFoundException();
-		}
-
 		long groupId = _getCompanyGroupId();
 
 		return Page.of(
@@ -121,10 +106,6 @@ public class ImportProcessResourceImpl extends BaseImportProcessResourceImpl {
 			Long siteId, Long creatorId, String search, Integer status,
 			Pagination pagination, Sort[] sorts)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-35914")) {
-			throw new NotFoundException();
-		}
 
 		return Page.of(
 			transform(

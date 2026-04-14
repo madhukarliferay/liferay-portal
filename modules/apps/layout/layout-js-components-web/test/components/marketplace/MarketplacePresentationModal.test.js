@@ -7,7 +7,7 @@ import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 import MarketplacePresentationModal from '../../../src/main/resources/META-INF/resources/js/components/marketplace/MarketplacePresentationModal';
 
@@ -17,7 +17,9 @@ jest.mock(
 		__esModule: true,
 		default: jest.fn(
 			({
+				addFragmentCollectionURL,
 				children,
+				fragmentCollections,
 				fragmentPortletNamespace,
 				fragmentsImportURL,
 				trigger,
@@ -26,6 +28,10 @@ jest.mock(
 					{trigger}
 
 					{children}
+
+					{addFragmentCollectionURL}
+
+					{JSON.stringify(fragmentCollections)}
 
 					{fragmentPortletNamespace}
 
@@ -46,7 +52,9 @@ jest.mock('@liferay/marketplace-js-components-web', () => ({
 }));
 
 const mockProps = {
+	addFragmentCollectionURL: '/o/test/add_fragment_collection',
 	body: 'Test body',
+	fragmentCollections: [{fragmentCollectionId: 1, name: 'Set Name'}],
 	fragmentPortletNamespace: 'testNamespace',
 	fragmentsImportURL: '/testImportURL',
 	heading: 'Test Heading',
@@ -70,7 +78,9 @@ describe('MarketplacePresentationModal', () => {
 			expect(screen.getByText('Test body')).toBeInTheDocument();
 			expect(screen.getByText('cancel')).toBeInTheDocument();
 			expect(screen.getByText('explore-marketplace')).toBeInTheDocument();
-			expect(screen.getByRole('img')).toHaveAttribute(
+			expect(
+				screen.getAllByRole('presentation', {hidden: true})[1]
+			).toHaveAttribute(
 				'src',
 				`${Liferay.ThemeDisplay.getPortalURL()}${Liferay.ThemeDisplay.getPathContext()}/o/layout-js-components-web/images/marketplace.svg`
 			);
@@ -111,6 +121,8 @@ describe('MarketplacePresentationModal', () => {
 				.default
 		).toHaveBeenCalledWith(
 			expect.objectContaining({
+				addFragmentCollectionURL: mockProps.addFragmentCollectionURL,
+				fragmentCollections: mockProps.fragmentCollections,
 				fragmentPortletNamespace: mockProps.fragmentPortletNamespace,
 				fragmentsImportURL: mockProps.fragmentsImportURL,
 				openOnRender: true,

@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.AuditedModel;
+import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.LocalizedModel;
 import com.liferay.portal.kernel.model.ResourcedModel;
@@ -644,6 +645,25 @@ public abstract class BaseStagedModelDataHandler<T extends StagedModel>
 				portletDataContext, stagedModel, ratingsEntry,
 				PortletDataContext.REFERENCE_TYPE_WEAK);
 		}
+	}
+
+	protected T fetchExistingStagedModel(
+		StagedModel stagedModel, long groupId) {
+
+		if (stagedModel instanceof
+				ExternalReferenceCodeModel externalReferenceCodeModel) {
+
+			T existingStagedModel =
+				fetchStagedModelByExternalReferenceCodeAndGroupId(
+					externalReferenceCodeModel.getExternalReferenceCode(),
+					groupId);
+
+			if (existingStagedModel != null) {
+				return existingStagedModel;
+			}
+		}
+
+		return fetchStagedModelByUuidAndGroupId(stagedModel.getUuid(), groupId);
 	}
 
 	protected int getProcessFlag() {

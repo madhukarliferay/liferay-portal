@@ -138,11 +138,13 @@ public class TemplatesAspect {
 
 			sb.append(", Site Group ID ");
 			sb.append(themeDisplayShim.getSiteGroupId());
-			sb.append(", and Template ID ");
 
 			DDMTemplateShim dDMTemplateShim = (DDMTemplateShim)parameters[1];
 
-			sb.append(dDMTemplateShim.getTemplateId());
+			if (dDMTemplateShim != null) {
+				sb.append(", and Dynamic Data Mapping Template ID ");
+				sb.append(dDMTemplateShim.getTemplateId());
+			}
 
 			sb.append(")");
 
@@ -156,7 +158,7 @@ public class TemplatesAspect {
 				optionalThreadContext.setTransactionOuter();
 
 				optionalThreadContext.addTransactionAttribute(
-					"Script", dDMTemplateShim.getScript());
+					"Script", (String)parameters[8]);
 			}
 			else if (_INSTRUMENTATION_LEVEL_DEBUG.equals(
 						TemplatesPluginProperties.instrumentationLevel())) {
@@ -199,7 +201,7 @@ public class TemplatesAspect {
 		methodParameterTypes = {
 			"com.liferay.portal.kernel.theme.ThemeDisplay", "java.util.Map",
 			"java.lang.String", "java.lang.String",
-			"com.liferay.portal.kernel.io.unsync.UnsyncStringWriter",
+			"com.liferay.petra.io.unsync.UnsyncStringWriter",
 			"jakarta.servlet.http.HttpServletRequest",
 			"jakarta.servlet.http.HttpServletResponse"
 		},

@@ -5,6 +5,7 @@
 
 package com.liferay.portal.tools.rest.builder.test.internal.resource.v1_0;
 
+import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
@@ -316,27 +317,27 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			String roleNames)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(companyTestEntityId);
+		Long resourceId = getPermissionCheckerResourceId(companyTestEntityId);
 		String resourceName = getPermissionCheckerResourceName(
 			companyTestEntityId);
-		Long resourceId = getPermissionCheckerResourceId(companyTestEntityId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(companyTestEntityId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getCompanyTestEntityPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getCompanyTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putCompanyTestEntityPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putCompanyTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, roleNames);
 	}
@@ -767,13 +768,13 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			Permission[] permissions)
 		throws Exception {
 
+		Long groupId = getPermissionCheckerGroupId(companyTestEntityId);
+		Long resourceId = getPermissionCheckerResourceId(companyTestEntityId);
 		String resourceName = getPermissionCheckerResourceName(
 			companyTestEntityId);
-		Long resourceId = getPermissionCheckerResourceId(companyTestEntityId);
 
 		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(companyTestEntityId), resourceName,
-			resourceId);
+			groupId, resourceName, resourceId);
 
 		ModelPermissions modelPermissions =
 			ModelPermissionsUtil.toModelPermissions(
@@ -809,23 +810,22 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		}
 
 		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(companyTestEntityId), resourceName,
+			contextCompany.getCompanyId(), groupId, resourceName,
 			String.valueOf(resourceId), modelPermissions);
 
 		return toPermissionPage(
 			HashMapBuilder.put(
 				"get",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"getCompanyTestEntityPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"getCompanyTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).put(
 				"replace",
 				addAction(
-					ActionKeys.PERMISSIONS,
-					"putCompanyTestEntityPermissionsPage", resourceName,
-					resourceId)
+					ActionKeys.PERMISSIONS, resourceId,
+					"putCompanyTestEntityPermissionsPage", null, resourceName,
+					groupId)
 			).build(),
 			resourceId, resourceName, null);
 	}
@@ -995,6 +995,15 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			@Override
 			public Locale getPreferredLocale() {
 				return LocaleUtil.fromLanguageId(languageId);
+			}
+
+			@Override
+			public boolean isAcceptAllLanguages() {
+				if (ExportImportThreadLocal.isExportInProcess()) {
+					return true;
+				}
+
+				return AcceptLanguage.super.isAcceptAllLanguages();
 			}
 
 		};
@@ -1213,6 +1222,9 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			Permission permission = new Permission() {
 				{
 					actionIds = actionsIdsSet.toArray(new String[0]);
+
+					roleExternalReferenceCode = role.getExternalReferenceCode();
+
 					roleName = role.getName();
 				}
 			};
@@ -1784,3 +1796,4 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		LogFactoryUtil.getLog(BaseCompanyTestEntityResourceImpl.class);
 
 }
+// LIFERAY-REST-BUILDER-HASH:1061721599

@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
@@ -47,8 +48,10 @@ import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
+import com.liferay.portal.vulcan.fields.NestedFieldsSupplier;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.permission.Permission;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 import com.liferay.sharing.constants.SharingConfigurationConstants;
@@ -56,6 +59,7 @@ import com.liferay.sharing.constants.SharingConfigurationConstants;
 import jakarta.ws.rs.core.MultivaluedMap;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -78,82 +82,38 @@ import org.osgi.service.component.annotations.ServiceScope;
 public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 
 	@Override
-	public void deleteAssetLibrary(Long assetLibraryId) throws Exception {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
+	public void deleteAssetLibrary(String assetLibraryExternalReferenceCode)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
 			throw new UnsupportedOperationException();
 		}
 
-		DepotEntry depotEntry = _getGroupDepotEntry(assetLibraryId);
+		DepotEntry depotEntry = _getGroupDepotEntry(
+			_getGroupIdByExternalReferenceCode(
+				assetLibraryExternalReferenceCode));
 
 		_depotEntryService.deleteDepotEntry(depotEntry.getDepotEntryId());
 	}
 
 	@Override
-	public void deleteAssetLibraryByExternalReferenceCode(
-			String externalReferenceCode)
+	public void deleteAssetLibraryPin(String assetLibraryExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
 			throw new UnsupportedOperationException();
 		}
 
-		deleteAssetLibrary(
-			_getGroupIdByExternalReferenceCode(externalReferenceCode));
-	}
-
-	@Override
-	public void deleteAssetLibraryByExternalReferenceCodePin(
-			String externalReferenceCode)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		deleteAssetLibraryPin(
-			_getGroupIdByExternalReferenceCode(externalReferenceCode));
-	}
-
-	@Override
-	public void deleteAssetLibraryPin(Long assetLibraryId) throws Exception {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		DepotEntry depotEntry = _getGroupDepotEntry(assetLibraryId);
+		DepotEntry depotEntry = _getGroupDepotEntry(
+			_getGroupIdByExternalReferenceCode(
+				assetLibraryExternalReferenceCode));
 
 		_depotEntryPinService.deleteDepotEntryPin(
 			contextUser.getUserId(), depotEntry.getDepotEntryId());
-	}
-
-	@Override
-	public Page<AssetLibrary> getAssetLibrariesPage(
-			String keywords, String search, Filter filter,
-			Pagination pagination, Sort[] sorts)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		return SearchUtil.search(
-			Collections.emptyMap(),
-			booleanQuery -> {
-			},
-			filter, DepotEntry.class.getName(), keywords, pagination,
-			queryConfig -> {
-			},
-			searchContext -> {
-				searchContext.setCompanyId(contextCompany.getCompanyId());
-
-				if (Validator.isNotNull(search)) {
-					searchContext.setKeywords(search);
-				}
-			},
-			sorts,
-			document -> _toAssetLibrary(
-				_depotEntryService.getDepotEntry(
-					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
 	}
 
 	@Override
@@ -161,7 +121,9 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			Pagination pagination)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
 			throw new UnsupportedOperationException();
 		}
 
@@ -187,169 +149,227 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 	}
 
 	@Override
-	public AssetLibrary getAssetLibrary(Long assetLibraryId) throws Exception {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		return _toAssetLibrary(_getGroupDepotEntry(assetLibraryId));
-	}
-
-	@Override
-	public AssetLibrary getAssetLibraryByExternalReferenceCode(
-			String externalReferenceCode)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		return _toAssetLibrary(
-			_depotEntryService.getGroupDepotEntry(
-				_getGroupIdByExternalReferenceCode(externalReferenceCode)));
-	}
-
-	@Override
 	public EntityModel getEntityModel(MultivaluedMap multivaluedMap) {
 		return _assetLibraryEntityModel;
 	}
 
 	@Override
 	public AssetLibrary patchAssetLibrary(
-			Long assetLibraryId, AssetLibrary assetLibrary)
+			String assetLibraryExternalReferenceCode, AssetLibrary assetLibrary)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
 			throw new UnsupportedOperationException();
 		}
 
-		DepotEntry depotEntry = _getGroupDepotEntry(assetLibraryId);
+		DepotEntry depotEntry = _getGroupDepotEntry(
+			_getGroupIdByExternalReferenceCode(
+				assetLibraryExternalReferenceCode));
 
 		Group group = depotEntry.getGroup();
 
 		String name = _getValue(
 			() -> group.getName(contextAcceptLanguage.getPreferredLocale()),
 			assetLibrary::getName);
-		Map<String, String> nameMap = _getValue(
-			() -> LocalizedMapUtil.getI18nMap(group.getNameMap()),
-			assetLibrary::getName_i18n);
 		String description = _getValue(
 			() -> group.getDescription(
 				contextAcceptLanguage.getPreferredLocale()),
 			assetLibrary::getDescription);
-		Map<String, String> descriptionMap = _getValue(
-			() -> LocalizedMapUtil.getI18nMap(group.getDescriptionMap()),
-			assetLibrary::getDescription_i18n);
+
+		if (assetLibrary.getSettings() == null) {
+			assetLibrary.setSettings(Settings::new);
+		}
+
 		UnicodeProperties unicodeProperties = _patchUnicodeProperties(
 			assetLibrary.getSettings(),
 			_getUnicodeProperties(
 				contextCompany.getCompanyId(),
 				group.getExternalReferenceCode()));
 
-		return _toAssetLibrary(
+		AssetLibrary updatedAssetLibrary = _toAssetLibrary(
 			_addOrUpdateDepotEntry(
 				assetLibrary,
-				LocalizedMapUtil.getLocalizedMap(
+				LocalizedMapUtil.patchLocalizedMap(
+					group.getDescriptionMap(),
 					contextAcceptLanguage.getPreferredLocale(), description,
-					descriptionMap),
+					assetLibrary.getDescription_i18n()),
 				group.getExternalReferenceCode(),
-				LocalizedMapUtil.getLocalizedMap(
-					contextAcceptLanguage.getPreferredLocale(), name, nameMap),
+				LocalizedMapUtil.patchLocalizedMap(
+					group.getNameMap(),
+					contextAcceptLanguage.getPreferredLocale(), name,
+					assetLibrary.getName_i18n()),
 				_getServiceContext(), unicodeProperties,
 				_dlSizeLimitConfigurationProvider.getGroupMimeTypeSizeLimit(
 					group.getGroupId())));
+
+		Permission[] permissions = assetLibrary.getPermissions();
+
+		if (permissions != null) {
+			Page<Permission> permissionsPage = putAssetLibraryPermissionsPage(
+				updatedAssetLibrary.getExternalReferenceCode(), permissions);
+
+			updatedAssetLibrary.setPermissions(
+				() -> NestedFieldsSupplier.supply(
+					"permissions",
+					nestedField -> {
+						Collection<Permission> collection =
+							permissionsPage.getItems();
+
+						return collection.toArray(new Permission[0]);
+					}));
+		}
+
+		return updatedAssetLibrary;
 	}
 
 	@Override
-	public AssetLibrary patchAssetLibraryByExternalReferenceCode(
-			String externalReferenceCode, AssetLibrary assetLibrary)
+	public AssetLibrary putAssetLibraryPin(
+			String assetLibraryExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
 			throw new UnsupportedOperationException();
 		}
 
-		return patchAssetLibrary(
-			_getGroupIdByExternalReferenceCode(externalReferenceCode),
-			assetLibrary);
-	}
-
-	@Override
-	public AssetLibrary postAssetLibrary(AssetLibrary assetLibrary)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		return _toAssetLibrary(
-			_addOrUpdateDepotEntry(
-				assetLibrary,
-				LocalizedMapUtil.getLocalizedMap(
-					contextAcceptLanguage.getPreferredLocale(),
-					assetLibrary.getDescription(),
-					assetLibrary.getDescription_i18n()),
-				StringPool.BLANK,
-				LocalizedMapUtil.getLocalizedMap(
-					contextAcceptLanguage.getPreferredLocale(),
-					assetLibrary.getName(), assetLibrary.getName_i18n()),
-				_getServiceContext(),
-				_putUnicodeProperties(assetLibrary.getSettings()),
-				new LinkedHashMap<>()));
-	}
-
-	@Override
-	public AssetLibrary putAssetLibraryByExternalReferenceCode(
-			String externalReferenceCode, AssetLibrary assetLibrary)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		return _toAssetLibrary(
-			_addOrUpdateDepotEntry(
-				assetLibrary,
-				LocalizedMapUtil.getLocalizedMap(
-					contextAcceptLanguage.getPreferredLocale(),
-					assetLibrary.getDescription(),
-					assetLibrary.getDescription_i18n()),
-				externalReferenceCode,
-				LocalizedMapUtil.getLocalizedMap(
-					contextAcceptLanguage.getPreferredLocale(),
-					assetLibrary.getName(), assetLibrary.getName_i18n()),
-				_getServiceContext(),
-				_putUnicodeProperties(assetLibrary.getSettings()),
-				new LinkedHashMap<>()));
-	}
-
-	@Override
-	public AssetLibrary putAssetLibraryByExternalReferenceCodePin(
-			String externalReferenceCode)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		return putAssetLibraryPin(
-			_getGroupIdByExternalReferenceCode(externalReferenceCode));
-	}
-
-	@Override
-	public AssetLibrary putAssetLibraryPin(Long assetLibraryId)
-		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-17564")) {
-			throw new UnsupportedOperationException();
-		}
-
-		DepotEntry depotEntry = _getGroupDepotEntry(assetLibraryId);
+		DepotEntry depotEntry = _getGroupDepotEntry(
+			_getGroupIdByExternalReferenceCode(
+				assetLibraryExternalReferenceCode));
 
 		_depotEntryPinService.addDepotEntryPin(
 			contextUser.getUserId(), depotEntry.getDepotEntryId());
 
 		return _toAssetLibrary(depotEntry);
+	}
+
+	@Override
+	protected Page<AssetLibrary> doGetAssetLibrariesPage(
+			String keywords, String search, Filter filter,
+			Pagination pagination, Sort[] sorts)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		return SearchUtil.search(
+			Collections.emptyMap(),
+			booleanQuery -> {
+			},
+			filter, DepotEntry.class.getName(), keywords, pagination,
+			queryConfig -> {
+			},
+			searchContext -> {
+				searchContext.setCompanyId(contextCompany.getCompanyId());
+
+				if (Validator.isNotNull(search)) {
+					searchContext.setKeywords(search);
+				}
+			},
+			sorts,
+			document -> _toAssetLibrary(
+				_depotEntryService.getDepotEntry(
+					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
+	}
+
+	@Override
+	protected AssetLibrary doGetAssetLibrary(
+			String assetLibraryExternalReferenceCode)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		return _toAssetLibrary(
+			_depotEntryService.getGroupDepotEntry(
+				_getGroupIdByExternalReferenceCode(
+					assetLibraryExternalReferenceCode)));
+	}
+
+	@Override
+	protected AssetLibrary doPostAssetLibrary(AssetLibrary assetLibrary)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		return _toAssetLibrary(
+			_addOrUpdateDepotEntry(
+				assetLibrary,
+				_getLocalizedMap(
+					assetLibrary.getDescription(),
+					assetLibrary.getDescription_i18n()),
+				StringPool.BLANK,
+				_getLocalizedMap(
+					assetLibrary.getName(), assetLibrary.getName_i18n()),
+				_getServiceContext(),
+				_putUnicodeProperties(assetLibrary.getSettings()),
+				new LinkedHashMap<>()));
+	}
+
+	@Override
+	protected AssetLibrary doPutAssetLibrary(
+			String assetLibraryExternalReferenceCode, AssetLibrary assetLibrary)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-17564")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		return _toAssetLibrary(
+			_addOrUpdateDepotEntry(
+				assetLibrary,
+				_getLocalizedMap(
+					assetLibrary.getDescription(),
+					assetLibrary.getDescription_i18n()),
+				assetLibraryExternalReferenceCode,
+				_getLocalizedMap(
+					assetLibrary.getName(), assetLibrary.getName_i18n()),
+				_getServiceContext(),
+				_putUnicodeProperties(assetLibrary.getSettings()),
+				new LinkedHashMap<>()));
+	}
+
+	@Override
+	protected Long getPermissionCheckerGroupId(
+			String groupExternalReferenceCode)
+		throws Exception {
+
+		Group group = _groupLocalService.fetchGroupByExternalReferenceCode(
+			groupExternalReferenceCode, contextCompany.getCompanyId());
+
+		return group.getGroupId();
+	}
+
+	@Override
+	protected Long getPermissionCheckerResourceId(String externalReferenceCode)
+		throws Exception {
+
+		DepotEntry depotEntry = _depotEntryService.getGroupDepotEntry(
+			getPermissionCheckerGroupId(externalReferenceCode));
+
+		return depotEntry.getDepotEntryId();
+	}
+
+	@Override
+	protected String getPermissionCheckerResourceName(
+			String externalReferenceCode)
+		throws Exception {
+
+		return DepotEntry.class.getName();
 	}
 
 	private DepotEntry _addOrUpdateDepotEntry(
@@ -358,6 +378,10 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			ServiceContext serviceContext, UnicodeProperties unicodeProperties,
 			Map<String, Long> mimeTypeSizeLimits)
 		throws Exception {
+
+		if (assetLibrary.getSettings() == null) {
+			assetLibrary.setSettings(() -> new Settings());
+		}
 
 		Group group = null;
 
@@ -388,7 +412,12 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 				depotEntry.getDepotEntryId(), nameMap, descriptionMap,
 				_getDepotAppCustomizationMap(
 					depotEntry.getCompanyId(), externalReferenceCode),
-				unicodeProperties, serviceContext);
+				UnicodePropertiesBuilder.create(
+					group.getTypeSettingsProperties(), true
+				).putAll(
+					unicodeProperties
+				).build(),
+				serviceContext);
 		}
 
 		DepotEntry depotEntry = _depotEntryService.addDepotEntry(
@@ -409,7 +438,12 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			}
 
 			if ((unicodeProperties != null) && !unicodeProperties.isEmpty()) {
-				group.setTypeSettingsProperties(unicodeProperties);
+				group.setTypeSettingsProperties(
+					UnicodePropertiesBuilder.create(
+						group.getTypeSettingsProperties(), true
+					).putAll(
+						unicodeProperties
+					).build());
 			}
 
 			group = _groupLocalService.updateGroup(group);
@@ -495,11 +529,27 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 		return group.getGroupId();
 	}
 
+	private Map<Locale, String> _getLocalizedMap(
+		String defaultValue, Map<String, String> i18nMap) {
+
+		Map<Locale, String> localizedMap = LocalizedMapUtil.getLocalizedMap(
+			contextAcceptLanguage.getPreferredLocale(), defaultValue, i18nMap);
+
+		if (!localizedMap.containsKey(LocaleUtil.getDefault())) {
+			localizedMap = LocalizedMapUtil.patchLocalizedMap(
+				localizedMap, LocaleUtil.getDefault(), defaultValue, i18nMap);
+		}
+
+		return localizedMap;
+	}
+
 	private ServiceContext _getServiceContext() throws Exception {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			DepotEntry.class.getName(), contextHttpServletRequest);
 
+		serviceContext.setCompanyId(contextCompany.getCompanyId());
 		serviceContext.setModifiedDate(new Date());
+		serviceContext.setUserId(contextUser.getUserId());
 
 		return serviceContext;
 	}
@@ -574,6 +624,17 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			_getBooleanValue(
 				unicodeProperties.getProperty("sharingEnabled"),
 				settings.getSharingEnabled())
+		).put(
+			"trashEnabled",
+			_getBooleanValue(
+				unicodeProperties.getProperty("trashEnabled"),
+				settings.getTrashEnabled())
+		).put(
+			"trashEntriesMaxAge",
+			GetterUtil.getInteger(
+				settings.getTrashEntriesMaxAge(),
+				GetterUtil.getInteger(
+					unicodeProperties.getProperty("trashEntriesMaxAge")))
 		).build();
 	}
 
@@ -602,6 +663,12 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			GetterUtil.getBoolean(
 				settings.getSharingEnabled(),
 				SharingConfigurationConstants.SHARING_ENABLED_DEFAULT)
+		).put(
+			"trashEnabled",
+			GetterUtil.getBoolean(settings.getTrashEnabled(), true)
+		).put(
+			"trashEntriesMaxAge",
+			GetterUtil.getInteger(settings.getTrashEntriesMaxAge())
 		).build();
 	}
 
@@ -668,12 +735,12 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 					addAction(
 						ActionKeys.UPDATE, depotEntry, "patchAssetLibrary")
 				).put(
-					"view-members",
+					"view-connected-sites",
 					() -> {
-						if (_groupModelResourcePermission.contains(
+						if (_depotEntryModelResourcePermission.contains(
 								PermissionThreadLocal.getPermissionChecker(),
-								depotEntry.getGroupId(),
-								ActionKeys.ASSIGN_MEMBERS)) {
+								depotEntry.getDepotEntryId(),
+								ActionKeys.UPDATE)) {
 
 							return null;
 						}
@@ -682,12 +749,12 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 							ActionKeys.VIEW, depotEntry, "getAssetLibrary");
 					}
 				).put(
-					"view-sites",
+					"view-members",
 					() -> {
-						if (_depotEntryModelResourcePermission.contains(
+						if (_groupModelResourcePermission.contains(
 								PermissionThreadLocal.getPermissionChecker(),
-								depotEntry.getDepotEntryId(),
-								ActionKeys.UPDATE)) {
+								depotEntry.getGroupId(),
+								ActionKeys.ASSIGN_MEMBERS)) {
 
 							return null;
 						}

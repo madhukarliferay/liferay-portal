@@ -24,6 +24,7 @@ import {createResourceURL, fetch} from 'frontend-js-web';
 interface ModalAddObjectField {
 	baseResourceURL: string;
 	creationLanguageId: Liferay.Language.Locale;
+	hasDepotEntry?: boolean;
 	objectDefinitionExternalReferenceCode: string;
 	objectDefinitionName?: string;
 	onAfterSubmit: (value: ObjectField) => void;
@@ -33,6 +34,7 @@ interface ModalAddObjectField {
 export function ModalAddObjectField({
 	baseResourceURL,
 	creationLanguageId,
+	hasDepotEntry,
 	objectDefinitionExternalReferenceCode,
 	onAfterSubmit,
 	setVisible,
@@ -95,6 +97,7 @@ export function ModalAddObjectField({
 	const {errors, handleChange, handleSubmit, setValues, values} =
 		useObjectFieldForm({
 			initialValues,
+			objectFields: objectDefinition?.objectFields,
 			onSubmit,
 		});
 
@@ -102,17 +105,16 @@ export function ModalAddObjectField({
 		values.businessType === 'LongText' ||
 		values.businessType === 'RichText' ||
 		values.businessType === 'Text' ||
-		(Liferay.FeatureFlags['LPD-32050'] &&
-			(values.businessType === 'Attachment' ||
-				values.businessType === 'Boolean' ||
-				values.businessType === 'Date' ||
-				values.businessType === 'DateTime' ||
-				values.businessType === 'Decimal' ||
-				values.businessType === 'Integer' ||
-				values.businessType === 'LongInteger' ||
-				values.businessType === 'MultiselectPicklist' ||
-				values.businessType === 'Picklist' ||
-				values.businessType === 'PrecisionDecimal'));
+		values.businessType === 'Attachment' ||
+		values.businessType === 'Boolean' ||
+		values.businessType === 'Date' ||
+		values.businessType === 'DateTime' ||
+		values.businessType === 'Decimal' ||
+		values.businessType === 'Integer' ||
+		values.businessType === 'LongInteger' ||
+		values.businessType === 'MultiselectPicklist' ||
+		values.businessType === 'Picklist' ||
+		values.businessType === 'PrecisionDecimal';
 
 	useEffect(() => {
 		const makeFetch = async () => {
@@ -158,7 +160,9 @@ export function ModalAddObjectField({
 		<ClayModalProvider>
 			<ClayTooltipProvider>
 				<ClayModal center observer={observer}>
-					<ClayModal.Header>
+					<ClayModal.Header
+						closeButtonAriaLabel={Liferay.Language.get('close')}
+					>
 						{Liferay.Language.get('new-field')}
 					</ClayModal.Header>
 
@@ -189,6 +193,7 @@ export function ModalAddObjectField({
 								className="lfr-objects__modal-add-object-field-form-base"
 								errors={errors}
 								handleChange={handleChange}
+								hasDepotEntry={hasDepotEntry}
 								objectDefinition={
 									objectDefinition as ObjectDefinition
 								}
@@ -202,11 +207,7 @@ export function ModalAddObjectField({
 									<div className="lfr-objects__modal-add-object-field-enable-translations-toggle">
 										<Toggle
 											disabled={
-												!objectDefinition?.enableLocalization ||
-												(!Liferay.FeatureFlags[
-													'LPD-32050'
-												] &&
-													values.required)
+												!objectDefinition?.enableLocalization
 											}
 											label={Liferay.Language.get(
 												'enable-entry-translations'

@@ -106,6 +106,15 @@ public class ServletDataImpl implements ServletData {
 							KeywordResourceImpl.class,
 							"deleteSiteKeywordByExternalReferenceCode"));
 					put(
+						"mutation#patchSiteKeyword",
+						new ObjectValuePair<>(
+							KeywordResourceImpl.class, "patchSiteKeyword"));
+					put(
+						"mutation#patchSiteKeywordByExternalReferenceCode",
+						new ObjectValuePair<>(
+							KeywordResourceImpl.class,
+							"patchSiteKeywordByExternalReferenceCode"));
+					put(
 						"mutation#createAssetLibraryKeyword",
 						new ObjectValuePair<>(
 							KeywordResourceImpl.class,
@@ -120,19 +129,6 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							KeywordResourceImpl.class,
 							"postAssetLibraryKeywordsPageExportBatch"));
-					put(
-						"mutation#createKeyword",
-						new ObjectValuePair<>(
-							KeywordResourceImpl.class, "postKeyword"));
-					put(
-						"mutation#createKeywordBatch",
-						new ObjectValuePair<>(
-							KeywordResourceImpl.class, "postKeywordBatch"));
-					put(
-						"mutation#createKeywordsPageExportBatch",
-						new ObjectValuePair<>(
-							KeywordResourceImpl.class,
-							"postKeywordsPageExportBatch"));
 					put(
 						"mutation#createSiteKeyword",
 						new ObjectValuePair<>(
@@ -353,21 +349,6 @@ public class ServletDataImpl implements ServletData {
 							TaxonomyVocabularyResourceImpl.class,
 							"postSiteTaxonomyVocabularyBatch"));
 					put(
-						"mutation#createTaxonomyVocabulariesPageExportBatch",
-						new ObjectValuePair<>(
-							TaxonomyVocabularyResourceImpl.class,
-							"postTaxonomyVocabulariesPageExportBatch"));
-					put(
-						"mutation#createTaxonomyVocabulary",
-						new ObjectValuePair<>(
-							TaxonomyVocabularyResourceImpl.class,
-							"postTaxonomyVocabulary"));
-					put(
-						"mutation#createTaxonomyVocabularyBatch",
-						new ObjectValuePair<>(
-							TaxonomyVocabularyResourceImpl.class,
-							"postTaxonomyVocabularyBatch"));
-					put(
 						"mutation#updateAssetLibraryTaxonomyVocabularyByExternalReferenceCode",
 						new ObjectValuePair<>(
 							TaxonomyVocabularyResourceImpl.class,
@@ -423,10 +404,6 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							KeywordResourceImpl.class, "getKeyword"));
 					put(
-						"query#keywords",
-						new ObjectValuePair<>(
-							KeywordResourceImpl.class, "getKeywordsPage"));
-					put(
 						"query#keywordsRanked",
 						new ObjectValuePair<>(
 							KeywordResourceImpl.class,
@@ -442,7 +419,7 @@ public class ServletDataImpl implements ServletData {
 							KeywordResourceImpl.class,
 							"getSiteKeywordPermissionsPage"));
 					put(
-						"query#siteKeywords",
+						"query#keywords",
 						new ObjectValuePair<>(
 							KeywordResourceImpl.class, "getSiteKeywordsPage"));
 					put(
@@ -511,7 +488,7 @@ public class ServletDataImpl implements ServletData {
 							TaxonomyVocabularyResourceImpl.class,
 							"getAssetLibraryTaxonomyVocabularyPermissionsPage"));
 					put(
-						"query#siteTaxonomyVocabularies",
+						"query#taxonomyVocabularies",
 						new ObjectValuePair<>(
 							TaxonomyVocabularyResourceImpl.class,
 							"getSiteTaxonomyVocabulariesPage"));
@@ -526,11 +503,6 @@ public class ServletDataImpl implements ServletData {
 							TaxonomyVocabularyResourceImpl.class,
 							"getSiteTaxonomyVocabularyPermissionsPage"));
 					put(
-						"query#taxonomyVocabularies",
-						new ObjectValuePair<>(
-							TaxonomyVocabularyResourceImpl.class,
-							"getTaxonomyVocabulariesPage"));
-					put(
 						"query#taxonomyVocabulary",
 						new ObjectValuePair<>(
 							TaxonomyVocabularyResourceImpl.class,
@@ -542,20 +514,20 @@ public class ServletDataImpl implements ServletData {
 							"getTaxonomyVocabularyPermissionsPage"));
 
 					put(
-						"query#TaxonomyVocabulary.taxonomyCategories",
+						"query#TaxonomyCategory.taxonomyVocabulary",
 						new ObjectValuePair<>(
-							TaxonomyCategoryResourceImpl.class,
-							"getTaxonomyVocabularyTaxonomyCategoriesPage"));
+							TaxonomyVocabularyResourceImpl.class,
+							"getTaxonomyVocabulary"));
 					put(
 						"query#TaxonomyCategory.taxonomyCategories",
 						new ObjectValuePair<>(
 							TaxonomyCategoryResourceImpl.class,
 							"getTaxonomyCategoryTaxonomyCategoriesPage"));
 					put(
-						"query#TaxonomyCategory.taxonomyVocabulary",
+						"query#TaxonomyVocabulary.taxonomyCategories",
 						new ObjectValuePair<>(
-							TaxonomyVocabularyResourceImpl.class,
-							"getTaxonomyVocabulary"));
+							TaxonomyCategoryResourceImpl.class,
+							"getTaxonomyVocabularyTaxonomyCategoriesPage"));
 					put(
 						"query#TaxonomyVocabulary.taxonomyCategoryByExternalReferenceCode",
 						new ObjectValuePair<>(
@@ -577,3 +549,4 @@ public class ServletDataImpl implements ServletData {
 		_taxonomyVocabularyResourceComponentServiceObjects;
 
 }
+// LIFERAY-REST-BUILDER-HASH:635809614

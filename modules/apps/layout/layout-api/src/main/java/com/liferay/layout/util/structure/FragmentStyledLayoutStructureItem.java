@@ -7,7 +7,6 @@ package com.liferay.layout.util.structure;
 
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
-import com.liferay.fragment.service.FragmentEntryLocalServiceUtil;
 import com.liferay.layout.util.constants.LayoutDataItemTypeConstants;
 import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringPool;
@@ -153,9 +152,7 @@ public class FragmentStyledLayoutStructureItem
 			return PortletIdCodec.decodePortletName(portletId);
 		}
 
-		FragmentEntry fragmentEntry =
-			FragmentEntryLocalServiceUtil.fetchFragmentEntry(
-				fragmentEntryLink.getFragmentEntryId());
+		FragmentEntry fragmentEntry = fragmentEntryLink.fetchFragmentEntry();
 
 		if (fragmentEntry != null) {
 			return fragmentEntry.getFragmentEntryKey();

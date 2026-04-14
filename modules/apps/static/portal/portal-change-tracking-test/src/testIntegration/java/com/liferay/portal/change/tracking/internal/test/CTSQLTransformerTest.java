@@ -82,7 +82,7 @@ public class CTSQLTransformerTest {
 				"create table MainTable (mainTableId LONG not null, ",
 				"ctCollectionId LONG not null, companyId LONG, groupId LONG, ",
 				"name VARCHAR(20), primary key (mainTableId, ",
-				"ctCollectionId));"));
+				"ctCollectionId))"));
 
 		_db.runSQL("insert into MainTable values (1, 0, 2, 3, 'mt1 v1')");
 		_db.runSQL("insert into MainTable values (2, 0, 2, 3, 'mt2 v1')");
@@ -1124,8 +1124,10 @@ public class CTSQLTransformerTest {
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				sql);
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			unsafeConsumer.accept(resultSet);

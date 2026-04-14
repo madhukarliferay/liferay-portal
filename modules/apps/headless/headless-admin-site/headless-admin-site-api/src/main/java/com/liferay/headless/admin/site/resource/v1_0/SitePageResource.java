@@ -25,6 +25,7 @@ import jakarta.annotation.Generated;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.util.Collections;
@@ -46,22 +47,14 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface SitePageResource {
 
-	public void deleteSiteSiteByExternalReferenceCodeSitePage(
+	public void deleteSiteSitePage(
 			String siteExternalReferenceCode,
 			String sitePageExternalReferenceCode)
 		throws Exception;
 
-	public SitePage getSiteSiteByExternalReferenceCodeSitePage(
+	public SitePage getSiteSitePage(
 			String siteExternalReferenceCode,
 			String sitePageExternalReferenceCode)
-		throws Exception;
-
-	public Page<SitePage> getSiteSiteByExternalReferenceCodeSitePagesPage(
-			String siteExternalReferenceCode, String search,
-			com.liferay.portal.vulcan.aggregation.Aggregation aggregation,
-			com.liferay.portal.kernel.search.filter.Filter filter,
-			Pagination pagination,
-			com.liferay.portal.kernel.search.Sort[] sorts)
 		throws Exception;
 
 	public Page<com.liferay.portal.vulcan.permission.Permission>
@@ -70,25 +63,49 @@ public interface SitePageResource {
 				String sitePageExternalReferenceCode, String roleNames)
 		throws Exception;
 
-	public SitePage patchSiteSiteByExternalReferenceCodeSitePage(
+	public Page<SitePage> getSiteSitePagesPage(
+			String siteExternalReferenceCode, Boolean privateLayout,
+			String search,
+			com.liferay.portal.vulcan.aggregation.Aggregation aggregation,
+			com.liferay.portal.kernel.search.filter.Filter filter,
+			Pagination pagination,
+			com.liferay.portal.kernel.search.Sort[] sorts)
+		throws Exception;
+
+	public SitePage patchSiteSitePage(
 			String siteExternalReferenceCode,
-			String sitePageExternalReferenceCode, SitePage sitePage)
+			String sitePageExternalReferenceCode, Boolean privateLayout,
+			SitePage sitePage)
 		throws Exception;
 
-	public SitePage postByExternalReferenceCodeSitePage(
-			String siteExternalReferenceCode, SitePage sitePage)
+	public SitePage postSiteSitePage(
+			String siteExternalReferenceCode, Boolean privateLayout,
+			SitePage sitePage)
 		throws Exception;
 
-	public ContentPageSpecification
-			postSiteSiteByExternalReferenceCodeSitePagePageSpecification(
-				String siteExternalReferenceCode,
-				String sitePageExternalReferenceCode,
-				ContentPageSpecification contentPageSpecification)
+	public Response postSiteSitePageBatch(
+			String siteExternalReferenceCode, Boolean privateLayout,
+			String callbackURL, Object object)
 		throws Exception;
 
-	public SitePage putSiteSiteByExternalReferenceCodeSitePage(
+	public ContentPageSpecification postSiteSitePagePageSpecification(
 			String siteExternalReferenceCode,
-			String sitePageExternalReferenceCode, SitePage sitePage)
+			String sitePageExternalReferenceCode,
+			ContentPageSpecification contentPageSpecification)
+		throws Exception;
+
+	public Response postSiteSitePagesPageExportBatch(
+			String siteExternalReferenceCode, Boolean privateLayout,
+			String search,
+			com.liferay.portal.kernel.search.filter.Filter filter,
+			com.liferay.portal.kernel.search.Sort[] sorts, String callbackURL,
+			String contentType, String fieldNames)
+		throws Exception;
+
+	public SitePage putSiteSitePage(
+			String siteExternalReferenceCode,
+			String sitePageExternalReferenceCode, Boolean privateLayout,
+			SitePage sitePage)
 		throws Exception;
 
 	public Page<com.liferay.portal.vulcan.permission.Permission>
@@ -194,3 +211,4 @@ public interface SitePageResource {
 	}
 
 }
+// LIFERAY-REST-BUILDER-HASH:987087450

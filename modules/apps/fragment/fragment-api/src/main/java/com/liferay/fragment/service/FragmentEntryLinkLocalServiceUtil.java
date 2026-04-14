@@ -55,16 +55,18 @@ public class FragmentEntryLinkLocalServiceUtil {
 
 	public static FragmentEntryLink addFragmentEntryLink(
 			String externalReferenceCode, long userId, long groupId,
-			long originalFragmentEntryLinkId, long fragmentEntryId,
-			long segmentsExperienceId, long plid, String css, String html,
-			String js, String configuration, String editableValues,
-			String namespace, int position, String rendererKey, int type,
+			String originalFragmentEntryLinkERC, String fragmentEntryERC,
+			String fragmentEntryScopeERC, long segmentsExperienceId, long plid,
+			String css, String html, String js, String configuration,
+			String editableValues, String namespace, int position,
+			String rendererKey, int type,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addFragmentEntryLink(
-			externalReferenceCode, userId, groupId, originalFragmentEntryLinkId,
-			fragmentEntryId, segmentsExperienceId, plid, css, html, js,
+			externalReferenceCode, userId, groupId,
+			originalFragmentEntryLinkERC, fragmentEntryERC,
+			fragmentEntryScopeERC, segmentsExperienceId, plid, css, html, js,
 			configuration, editableValues, namespace, position, rendererKey,
 			type, serviceContext);
 	}
@@ -149,17 +151,13 @@ public class FragmentEntryLinkLocalServiceUtil {
 		getService().deleteFragmentEntryLinks(fragmentEntryLinkIds);
 	}
 
-	public static void deleteFragmentEntryLinksByFragmentEntryId(
-		long fragmentEntryId) {
+	public static void deleteFragmentEntryLinksByFragmentEntry(
+			com.liferay.fragment.model.FragmentEntry fragmentEntry,
+			boolean deleted)
+		throws PortalException {
 
-		getService().deleteFragmentEntryLinksByFragmentEntryId(fragmentEntryId);
-	}
-
-	public static void deleteFragmentEntryLinksByFragmentEntryId(
-		long fragmentEntryId, boolean deleted) {
-
-		getService().deleteFragmentEntryLinksByFragmentEntryId(
-			fragmentEntryId, deleted);
+		getService().deleteFragmentEntryLinksByFragmentEntry(
+			fragmentEntry, deleted);
 	}
 
 	public static List<FragmentEntryLink>
@@ -321,19 +319,22 @@ public class FragmentEntryLinkLocalServiceUtil {
 	}
 
 	public static List<FragmentEntryLink>
-		getAllFragmentEntryLinksByFragmentEntryId(
-			long groupId, long fragmentEntryId, int start, int end,
-			OrderByComparator<FragmentEntryLink> orderByComparator) {
+			getAllFragmentEntryLinksByFragmentEntry(
+				com.liferay.fragment.model.FragmentEntry fragmentEntry,
+				int start, int end,
+				OrderByComparator<FragmentEntryLink> orderByComparator)
+		throws PortalException {
 
-		return getService().getAllFragmentEntryLinksByFragmentEntryId(
-			groupId, fragmentEntryId, start, end, orderByComparator);
+		return getService().getAllFragmentEntryLinksByFragmentEntry(
+			fragmentEntry, start, end, orderByComparator);
 	}
 
-	public static int getAllFragmentEntryLinksCountByFragmentEntryId(
-		long groupId, long fragmentEntryId) {
+	public static int getAllFragmentEntryLinksCountByFragmentEntry(
+			com.liferay.fragment.model.FragmentEntry fragmentEntry)
+		throws PortalException {
 
-		return getService().getAllFragmentEntryLinksCountByFragmentEntryId(
-			groupId, fragmentEntryId);
+		return getService().getAllFragmentEntryLinksCountByFragmentEntry(
+			fragmentEntry);
 	}
 
 	/**
@@ -371,10 +372,10 @@ public class FragmentEntryLinkLocalServiceUtil {
 	}
 
 	public static FragmentEntryLink getFragmentEntryLink(
-		long groupId, long originalFragmentEntryLinkId, long plid) {
+		long groupId, String originalFragmentEntryLinkERC, long plid) {
 
 		return getService().getFragmentEntryLink(
-			groupId, originalFragmentEntryLinkId, plid);
+			groupId, originalFragmentEntryLinkERC, plid);
 	}
 
 	public static FragmentEntryLink getFragmentEntryLinkByExternalReferenceCode(
@@ -455,19 +456,13 @@ public class FragmentEntryLinkLocalServiceUtil {
 		return getService().getFragmentEntryLinks(rendererKey);
 	}
 
-	public static List<FragmentEntryLink>
-		getFragmentEntryLinksByFragmentEntryId(long fragmentEntryId) {
+	public static List<FragmentEntryLink> getFragmentEntryLinksByFragmentEntry(
+			long groupId,
+			com.liferay.fragment.model.FragmentEntry fragmentEntry)
+		throws PortalException {
 
-		return getService().getFragmentEntryLinksByFragmentEntryId(
-			fragmentEntryId);
-	}
-
-	public static List<FragmentEntryLink>
-		getFragmentEntryLinksByFragmentEntryId(
-			long fragmentEntryId, boolean deleted) {
-
-		return getService().getFragmentEntryLinksByFragmentEntryId(
-			fragmentEntryId, deleted);
+		return getService().getFragmentEntryLinksByFragmentEntry(
+			groupId, fragmentEntry);
 	}
 
 	public static List<FragmentEntryLink> getFragmentEntryLinksByPlid(
@@ -561,25 +556,14 @@ public class FragmentEntryLinkLocalServiceUtil {
 		return getService().getFragmentEntryLinksCount();
 	}
 
-	public static int getFragmentEntryLinksCountByFragmentEntryId(
-		long fragmentEntryId) {
+	public static int getFragmentEntryLinksCountByFragmentEntry(
+			long groupId,
+			com.liferay.fragment.model.FragmentEntry fragmentEntry,
+			boolean deleted)
+		throws PortalException {
 
-		return getService().getFragmentEntryLinksCountByFragmentEntryId(
-			fragmentEntryId);
-	}
-
-	public static int getFragmentEntryLinksCountByFragmentEntryId(
-		long fragmentEntryId, boolean deleted) {
-
-		return getService().getFragmentEntryLinksCountByFragmentEntryId(
-			fragmentEntryId, deleted);
-	}
-
-	public static int getFragmentEntryLinksCountByFragmentEntryId(
-		long groupId, long fragmentEntryId, boolean deleted) {
-
-		return getService().getFragmentEntryLinksCountByFragmentEntryId(
-			groupId, fragmentEntryId, deleted);
+		return getService().getFragmentEntryLinksCountByFragmentEntry(
+			groupId, fragmentEntry, deleted);
 	}
 
 	public static int getFragmentEntryLinksCountByPlid(
@@ -596,40 +580,50 @@ public class FragmentEntryLinkLocalServiceUtil {
 	}
 
 	public static List<FragmentEntryLink>
-		getLayoutFragmentEntryLinksByFragmentEntryId(
-			long groupId, long fragmentEntryId, int start, int end,
-			OrderByComparator<FragmentEntryLink> orderByComparator) {
+			getLayoutFragmentEntryLinksByFragmentEntry(
+				long groupId,
+				com.liferay.fragment.model.FragmentEntry fragmentEntry,
+				int start, int end,
+				OrderByComparator<FragmentEntryLink> orderByComparator)
+		throws PortalException {
 
-		return getService().getLayoutFragmentEntryLinksByFragmentEntryId(
-			groupId, fragmentEntryId, start, end, orderByComparator);
+		return getService().getLayoutFragmentEntryLinksByFragmentEntry(
+			groupId, fragmentEntry, start, end, orderByComparator);
 	}
 
-	public static int getLayoutFragmentEntryLinksCountByFragmentEntryId(
-		long groupId, long fragmentEntryId) {
+	public static int getLayoutFragmentEntryLinksCountByFragmentEntry(
+			long groupId,
+			com.liferay.fragment.model.FragmentEntry fragmentEntry)
+		throws PortalException {
 
-		return getService().getLayoutFragmentEntryLinksCountByFragmentEntryId(
-			groupId, fragmentEntryId);
+		return getService().getLayoutFragmentEntryLinksCountByFragmentEntry(
+			groupId, fragmentEntry);
 	}
 
 	public static List<FragmentEntryLink>
-		getLayoutPageTemplateFragmentEntryLinksByFragmentEntryId(
-			long groupId, long fragmentEntryId, int layoutPageTemplateType,
-			int start, int end,
-			OrderByComparator<FragmentEntryLink> orderByComparator) {
+			getLayoutPageTemplateFragmentEntryLinksByFragmentEntry(
+				long groupId,
+				com.liferay.fragment.model.FragmentEntry fragmentEntry,
+				int layoutPageTemplateType, int start, int end,
+				OrderByComparator<FragmentEntryLink> orderByComparator)
+		throws PortalException {
 
 		return getService().
-			getLayoutPageTemplateFragmentEntryLinksByFragmentEntryId(
-				groupId, fragmentEntryId, layoutPageTemplateType, start, end,
+			getLayoutPageTemplateFragmentEntryLinksByFragmentEntry(
+				groupId, fragmentEntry, layoutPageTemplateType, start, end,
 				orderByComparator);
 	}
 
 	public static int
-		getLayoutPageTemplateFragmentEntryLinksCountByFragmentEntryId(
-			long groupId, long fragmentEntryId, int layoutPageTemplateType) {
+			getLayoutPageTemplateFragmentEntryLinksCountByFragmentEntry(
+				long groupId,
+				com.liferay.fragment.model.FragmentEntry fragmentEntry,
+				int layoutPageTemplateType)
+		throws PortalException {
 
 		return getService().
-			getLayoutPageTemplateFragmentEntryLinksCountByFragmentEntryId(
-				groupId, fragmentEntryId, layoutPageTemplateType);
+			getLayoutPageTemplateFragmentEntryLinksCountByFragmentEntry(
+				groupId, fragmentEntry, layoutPageTemplateType);
 	}
 
 	/**
@@ -650,8 +644,8 @@ public class FragmentEntryLinkLocalServiceUtil {
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
-	public static void updateClassedModel(long plid) {
-		getService().updateClassedModel(plid);
+	public static void updateClassedModel(long userId, long plid) {
+		getService().updateClassedModel(userId, plid);
 	}
 
 	public static FragmentEntryLink updateDeleted(
@@ -678,42 +672,28 @@ public class FragmentEntryLinkLocalServiceUtil {
 	}
 
 	public static FragmentEntryLink updateFragmentEntryLink(
-			long userId, long fragmentEntryLinkId, int position)
-		throws PortalException {
-
-		return getService().updateFragmentEntryLink(
-			userId, fragmentEntryLinkId, position);
-	}
-
-	public static FragmentEntryLink updateFragmentEntryLink(
-			long userId, long fragmentEntryLinkId,
-			long originalFragmentEntryLinkId, long fragmentEntryId, long plid,
-			String css, String html, String js, String configuration,
-			String editableValues, String namespace, int position, int type,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().updateFragmentEntryLink(
-			userId, fragmentEntryLinkId, originalFragmentEntryLinkId,
-			fragmentEntryId, plid, css, html, js, configuration, editableValues,
-			namespace, position, type, serviceContext);
-	}
-
-	public static FragmentEntryLink updateFragmentEntryLink(
-			long userId, long fragmentEntryLinkId, String editableValues)
-		throws PortalException {
-
-		return getService().updateFragmentEntryLink(
-			userId, fragmentEntryLinkId, editableValues);
-	}
-
-	public static FragmentEntryLink updateFragmentEntryLink(
 			long userId, long fragmentEntryLinkId, String editableValues,
 			boolean updateClassedModel)
 		throws PortalException {
 
 		return getService().updateFragmentEntryLink(
 			userId, fragmentEntryLinkId, editableValues, updateClassedModel);
+	}
+
+	public static FragmentEntryLink updateFragmentEntryLink(
+			long userId, long fragmentEntryLinkId,
+			String originalFragmentEntryLinkERC, String fragmentEntryERC,
+			String fragmentEntryScopeERC, long plid, String css, String html,
+			String js, String configuration, String editableValues,
+			String namespace, int position, int type,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().updateFragmentEntryLink(
+			userId, fragmentEntryLinkId, originalFragmentEntryLinkERC,
+			fragmentEntryERC, fragmentEntryScopeERC, plid, css, html, js,
+			configuration, editableValues, namespace, position, type,
+			serviceContext);
 	}
 
 	public static void updateLatestChanges(
@@ -740,3 +720,4 @@ public class FragmentEntryLinkLocalServiceUtil {
 			FragmentEntryLinkLocalService.class);
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-1703836549

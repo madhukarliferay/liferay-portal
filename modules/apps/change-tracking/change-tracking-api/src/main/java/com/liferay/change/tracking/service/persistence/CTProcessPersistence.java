@@ -119,47 +119,6 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 			orderByComparator);
 
 	/**
-	 * Returns the last ct process in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process
-	 * @throws NoSuchProcessException if a matching ct process could not be found
-	 */
-	public CTProcess findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
-
-	/**
-	 * Returns the last ct process in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process, or <code>null</code> if a matching ct process could not be found
-	 */
-	public CTProcess fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-			orderByComparator);
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set where companyId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	public CTProcess[] findByCompanyId_PrevAndNext(
-			long ctProcessId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
-
-	/**
 	 * Returns all the ct processes that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -199,21 +158,6 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 		long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
 			orderByComparator);
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set of ct processes that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	public CTProcess[] filterFindByCompanyId_PrevAndNext(
-			long ctProcessId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
 
 	/**
 	 * Removes all the ct processes where companyId = &#63; from the database.
@@ -326,47 +270,6 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 			orderByComparator);
 
 	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process
-	 * @throws NoSuchProcessException if a matching ct process could not be found
-	 */
-	public CTProcess findByCtCollectionId_Last(
-			long ctCollectionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
-
-	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process, or <code>null</code> if a matching ct process could not be found
-	 */
-	public CTProcess fetchByCtCollectionId_Last(
-		long ctCollectionId,
-		com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-			orderByComparator);
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set where ctCollectionId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	public CTProcess[] findByCtCollectionId_PrevAndNext(
-			long ctProcessId, long ctCollectionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
-
-	/**
 	 * Returns all the ct processes that the user has permission to view where ctCollectionId = &#63;.
 	 *
 	 * @param ctCollectionId the ct collection ID
@@ -407,21 +310,6 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 		long ctCollectionId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
 			orderByComparator);
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set of ct processes that the user has permission to view where ctCollectionId = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	public CTProcess[] filterFindByCtCollectionId_PrevAndNext(
-			long ctProcessId, long ctCollectionId,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
 
 	/**
 	 * Removes all the ct processes where ctCollectionId = &#63; from the database.
@@ -540,50 +428,6 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 			orderByComparator);
 
 	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process
-	 * @throws NoSuchProcessException if a matching ct process could not be found
-	 */
-	public CTProcess findByC_T_Last(
-			long ctCollectionId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
-
-	/**
-	 * Returns the last ct process in the ordered set where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching ct process, or <code>null</code> if a matching ct process could not be found
-	 */
-	public CTProcess fetchByC_T_Last(
-		long ctCollectionId, int type,
-		com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-			orderByComparator);
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	public CTProcess[] findByC_T_PrevAndNext(
-			long ctProcessId, long ctCollectionId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
-
-	/**
 	 * Returns all the ct processes that the user has permission to view where ctCollectionId = &#63; and type = &#63;.
 	 *
 	 * @param ctCollectionId the ct collection ID
@@ -627,22 +471,6 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 		long ctCollectionId, int type, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
 			orderByComparator);
-
-	/**
-	 * Returns the ct processes before and after the current ct process in the ordered set of ct processes that the user has permission to view where ctCollectionId = &#63; and type = &#63;.
-	 *
-	 * @param ctProcessId the primary key of the current ct process
-	 * @param ctCollectionId the ct collection ID
-	 * @param type the type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next ct process
-	 * @throws NoSuchProcessException if a ct process with the primary key could not be found
-	 */
-	public CTProcess[] filterFindByC_T_PrevAndNext(
-			long ctProcessId, long ctCollectionId, int type,
-			com.liferay.portal.kernel.util.OrderByComparator<CTProcess>
-				orderByComparator)
-		throws NoSuchProcessException;
 
 	/**
 	 * Removes all the ct processes where ctCollectionId = &#63; and type = &#63; from the database.
@@ -790,3 +618,4 @@ public interface CTProcessPersistence extends BasePersistence<CTProcess> {
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:206535871

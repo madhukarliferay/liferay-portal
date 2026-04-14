@@ -61,7 +61,7 @@ public class FriendlyUrlHistoryResourceTest
 
 	@Override
 	@Test
-	public void testGetSiteSiteByExternalReferenceCodeDisplayPageTemplateFriendlyUrlHistory()
+	public void testGetSiteDisplayPageTemplateFriendlyUrlHistory()
 		throws Exception {
 
 		ServiceContext serviceContext =
@@ -79,7 +79,7 @@ public class FriendlyUrlHistoryResourceTest
 
 		FriendlyUrlHistory friendlyUrlHistory =
 			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeDisplayPageTemplateFriendlyUrlHistory(
+				getSiteDisplayPageTemplateFriendlyUrlHistory(
 					testGroup.getExternalReferenceCode(),
 					layoutPageTemplateEntry.getExternalReferenceCode());
 
@@ -92,7 +92,7 @@ public class FriendlyUrlHistoryResourceTest
 
 		friendlyUrlHistory =
 			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeDisplayPageTemplateFriendlyUrlHistory(
+				getSiteDisplayPageTemplateFriendlyUrlHistory(
 					testGroup.getExternalReferenceCode(),
 					layoutPageTemplateEntry.getExternalReferenceCode());
 
@@ -103,54 +103,60 @@ public class FriendlyUrlHistoryResourceTest
 			friendlyURLs);
 
 		_assertProblemException(
+			"The display page template type does not match the display page " +
+				"type",
 			LayoutPageTemplateEntryTestUtil.getBasicLayoutPageTemplateEntry(
 				serviceContext));
 		_assertProblemException(
+			"The display page template type does not match the display page " +
+				"type",
 			LayoutPageTemplateEntryTestUtil.getMasterLayoutPageTemplateEntry(
 				serviceContext, WorkflowConstants.STATUS_DRAFT));
 	}
 
 	@Override
 	@Test
-	public void testGetSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory()
-		throws Exception {
-
+	public void testGetSiteSitePageFriendlyUrlHistory() throws Exception {
 		Layout layout = LayoutTestUtil.addTypePortletLayout(
 			testGroup.getGroupId());
 
-		_testGetSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory(
-			layout);
+		_testGetSiteSitePageFriendlyUrlHistory(layout);
 
 		layout = LayoutTestUtil.addTypeContentLayout(testGroup);
 
-		_testGetSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory(
-			layout);
+		_testGetSiteSitePageFriendlyUrlHistory(layout);
 
-		_assertProblemException(layout.fetchDraftLayout());
+		_assertProblemException(
+			"This page type cannot be modified through this endpoint",
+			layout.fetchDraftLayout());
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
 				testGroup.getGroupId(), TestPropsValues.getUserId());
 
 		_assertProblemException(
+			"The provided page external reference code belongs to a page " +
+				"template and cannot be used",
 			LayoutPageTemplateEntryTestUtil.
 				getBasicLayoutPageTemplateEntryLayout(serviceContext));
 		_assertProblemException(
-			LayoutPageTemplateEntryTestUtil.
-				getDisplayPageLayoutPageTemplateEntryLayout(serviceContext));
-		_assertProblemException(
+			"The provided page external reference code belongs to a page " +
+				"template and cannot be used",
 			LayoutPageTemplateEntryTestUtil.
 				getMasterLayoutPageTemplateEntryLayout(serviceContext));
 		_assertProblemException(
+			"This page type cannot be modified through this endpoint",
+			LayoutPageTemplateEntryTestUtil.
+				getDisplayPageLayoutPageTemplateEntryLayout(serviceContext));
+		_assertProblemException(
+			"This page type cannot be modified through this endpoint",
 			LayoutUtilityPageEntryTestUtil.getLayoutUtilityPageEntryLayout(
 				serviceContext));
 	}
 
 	@Override
 	@Test
-	public void testGetSiteSiteByExternalReferenceCodeUtilityPageFriendlyUrlHistory()
-		throws Exception {
-
+	public void testGetSiteUtilityPageFriendlyUrlHistory() throws Exception {
 		LayoutUtilityPageEntry layoutUtilityPageEntry =
 			LayoutUtilityPageEntryTestUtil.getLayoutUtilityPageEntry(
 				ServiceContextTestUtil.getServiceContext(
@@ -162,10 +168,9 @@ public class FriendlyUrlHistoryResourceTest
 		List<String> friendlyURLs = _updateLayout(layout);
 
 		FriendlyUrlHistory friendlyUrlHistory =
-			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeUtilityPageFriendlyUrlHistory(
-					testGroup.getExternalReferenceCode(),
-					layoutUtilityPageEntry.getExternalReferenceCode());
+			friendlyUrlHistoryResource.getSiteUtilityPageFriendlyUrlHistory(
+				testGroup.getExternalReferenceCode(),
+				layoutUtilityPageEntry.getExternalReferenceCode());
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			GetterUtil.getString(friendlyUrlHistory.getFriendlyUrlPath_i18n()));
@@ -175,10 +180,9 @@ public class FriendlyUrlHistoryResourceTest
 		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
 
 		friendlyUrlHistory =
-			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeUtilityPageFriendlyUrlHistory(
-					testGroup.getExternalReferenceCode(),
-					layoutUtilityPageEntry.getExternalReferenceCode());
+			friendlyUrlHistoryResource.getSiteUtilityPageFriendlyUrlHistory(
+				testGroup.getExternalReferenceCode(),
+				layoutUtilityPageEntry.getExternalReferenceCode());
 
 		_assertFriendlyUrlHistoryJSONObject(
 			_jsonFactory.createJSONObject(
@@ -208,12 +212,13 @@ public class FriendlyUrlHistoryResourceTest
 		}
 	}
 
-	private void _assertProblemException(Layout layout) throws Exception {
+	private void _assertProblemException(String expectedTitle, Layout layout)
+		throws Exception {
+
 		try {
-			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory(
-					testGroup.getExternalReferenceCode(),
-					layout.getExternalReferenceCode());
+			friendlyUrlHistoryResource.getSiteSitePageFriendlyUrlHistory(
+				testGroup.getExternalReferenceCode(),
+				layout.getExternalReferenceCode());
 
 			Assert.fail();
 		}
@@ -221,17 +226,18 @@ public class FriendlyUrlHistoryResourceTest
 			Problem problem = problemException.getProblem();
 
 			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
-			Assert.assertNull(problem.getTitle());
+			Assert.assertEquals(expectedTitle, problem.getTitle());
 		}
 	}
 
 	private void _assertProblemException(
+			String expectedTitle,
 			LayoutPageTemplateEntry layoutPageTemplateEntry)
 		throws Exception {
 
 		try {
 			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeDisplayPageTemplateFriendlyUrlHistory(
+				getSiteDisplayPageTemplateFriendlyUrlHistory(
 					testGroup.getExternalReferenceCode(),
 					layoutPageTemplateEntry.getExternalReferenceCode());
 
@@ -241,22 +247,19 @@ public class FriendlyUrlHistoryResourceTest
 			Problem problem = problemException.getProblem();
 
 			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
-			Assert.assertNull(problem.getTitle());
+			Assert.assertEquals(expectedTitle, problem.getTitle());
 		}
 	}
 
-	private void
-			_testGetSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory(
-				Layout layout)
+	private void _testGetSiteSitePageFriendlyUrlHistory(Layout layout)
 		throws Exception {
 
 		List<String> friendlyURLs = _updateLayout(layout);
 
 		FriendlyUrlHistory friendlyUrlHistory =
-			friendlyUrlHistoryResource.
-				getSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory(
-					testGroup.getExternalReferenceCode(),
-					layout.getExternalReferenceCode());
+			friendlyUrlHistoryResource.getSiteSitePageFriendlyUrlHistory(
+				testGroup.getExternalReferenceCode(),
+				layout.getExternalReferenceCode());
 
 		if (!layout.isPublished()) {
 			JSONObject jsonObject = _jsonFactory.createJSONObject(
@@ -269,10 +272,9 @@ public class FriendlyUrlHistoryResourceTest
 				layout.fetchDraftLayout(), layout);
 
 			friendlyUrlHistory =
-				friendlyUrlHistoryResource.
-					getSiteSiteByExternalReferenceCodeSitePageFriendlyUrlHistory(
-						testGroup.getExternalReferenceCode(),
-						layout.getExternalReferenceCode());
+				friendlyUrlHistoryResource.getSiteSitePageFriendlyUrlHistory(
+					testGroup.getExternalReferenceCode(),
+					layout.getExternalReferenceCode());
 		}
 
 		_assertFriendlyUrlHistoryJSONObject(

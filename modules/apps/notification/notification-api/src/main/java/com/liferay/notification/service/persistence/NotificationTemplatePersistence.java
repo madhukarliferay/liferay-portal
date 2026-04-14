@@ -120,47 +120,6 @@ public interface NotificationTemplatePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last notification template in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification template
-	 * @throws NoSuchNotificationTemplateException if a matching notification template could not be found
-	 */
-	public NotificationTemplate findByUuid_Last(
-			String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
-
-	/**
-	 * Returns the last notification template in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification template, or <code>null</code> if a matching notification template could not be found
-	 */
-	public NotificationTemplate fetchByUuid_Last(
-		String uuid,
-		com.liferay.portal.kernel.util.OrderByComparator<NotificationTemplate>
-			orderByComparator);
-
-	/**
-	 * Returns the notification templates before and after the current notification template in the ordered set where uuid = &#63;.
-	 *
-	 * @param notificationTemplateId the primary key of the current notification template
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification template
-	 * @throws NoSuchNotificationTemplateException if a notification template with the primary key could not be found
-	 */
-	public NotificationTemplate[] findByUuid_PrevAndNext(
-			long notificationTemplateId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
-
-	/**
 	 * Returns all the notification templates that the user has permission to view where uuid = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -200,21 +159,6 @@ public interface NotificationTemplatePersistence
 		String uuid, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<NotificationTemplate>
 			orderByComparator);
-
-	/**
-	 * Returns the notification templates before and after the current notification template in the ordered set of notification templates that the user has permission to view where uuid = &#63;.
-	 *
-	 * @param notificationTemplateId the primary key of the current notification template
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification template
-	 * @throws NoSuchNotificationTemplateException if a notification template with the primary key could not be found
-	 */
-	public NotificationTemplate[] filterFindByUuid_PrevAndNext(
-			long notificationTemplateId, String uuid,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
 
 	/**
 	 * Removes all the notification templates where uuid = &#63; from the database.
@@ -334,50 +278,6 @@ public interface NotificationTemplatePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last notification template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification template
-	 * @throws NoSuchNotificationTemplateException if a matching notification template could not be found
-	 */
-	public NotificationTemplate findByUuid_C_Last(
-			String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
-
-	/**
-	 * Returns the last notification template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification template, or <code>null</code> if a matching notification template could not be found
-	 */
-	public NotificationTemplate fetchByUuid_C_Last(
-		String uuid, long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<NotificationTemplate>
-			orderByComparator);
-
-	/**
-	 * Returns the notification templates before and after the current notification template in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param notificationTemplateId the primary key of the current notification template
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification template
-	 * @throws NoSuchNotificationTemplateException if a notification template with the primary key could not be found
-	 */
-	public NotificationTemplate[] findByUuid_C_PrevAndNext(
-			long notificationTemplateId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
-
-	/**
 	 * Returns all the notification templates that the user has permission to view where uuid = &#63; and companyId = &#63;.
 	 *
 	 * @param uuid the uuid
@@ -421,22 +321,6 @@ public interface NotificationTemplatePersistence
 		String uuid, long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<NotificationTemplate>
 			orderByComparator);
-
-	/**
-	 * Returns the notification templates before and after the current notification template in the ordered set of notification templates that the user has permission to view where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param notificationTemplateId the primary key of the current notification template
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification template
-	 * @throws NoSuchNotificationTemplateException if a notification template with the primary key could not be found
-	 */
-	public NotificationTemplate[] filterFindByUuid_C_PrevAndNext(
-			long notificationTemplateId, String uuid, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
 
 	/**
 	 * Removes all the notification templates where uuid = &#63; and companyId = &#63; from the database.
@@ -552,47 +436,6 @@ public interface NotificationTemplatePersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last notification template in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification template
-	 * @throws NoSuchNotificationTemplateException if a matching notification template could not be found
-	 */
-	public NotificationTemplate findByCompanyId_Last(
-			long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
-
-	/**
-	 * Returns the last notification template in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching notification template, or <code>null</code> if a matching notification template could not be found
-	 */
-	public NotificationTemplate fetchByCompanyId_Last(
-		long companyId,
-		com.liferay.portal.kernel.util.OrderByComparator<NotificationTemplate>
-			orderByComparator);
-
-	/**
-	 * Returns the notification templates before and after the current notification template in the ordered set where companyId = &#63;.
-	 *
-	 * @param notificationTemplateId the primary key of the current notification template
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification template
-	 * @throws NoSuchNotificationTemplateException if a notification template with the primary key could not be found
-	 */
-	public NotificationTemplate[] findByCompanyId_PrevAndNext(
-			long notificationTemplateId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
-
-	/**
 	 * Returns all the notification templates that the user has permission to view where companyId = &#63;.
 	 *
 	 * @param companyId the company ID
@@ -633,21 +476,6 @@ public interface NotificationTemplatePersistence
 		long companyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<NotificationTemplate>
 			orderByComparator);
-
-	/**
-	 * Returns the notification templates before and after the current notification template in the ordered set of notification templates that the user has permission to view where companyId = &#63;.
-	 *
-	 * @param notificationTemplateId the primary key of the current notification template
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next notification template
-	 * @throws NoSuchNotificationTemplateException if a notification template with the primary key could not be found
-	 */
-	public NotificationTemplate[] filterFindByCompanyId_PrevAndNext(
-			long notificationTemplateId, long companyId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<NotificationTemplate> orderByComparator)
-		throws NoSuchNotificationTemplateException;
 
 	/**
 	 * Removes all the notification templates where companyId = &#63; from the database.
@@ -848,3 +676,4 @@ public interface NotificationTemplatePersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-439874661

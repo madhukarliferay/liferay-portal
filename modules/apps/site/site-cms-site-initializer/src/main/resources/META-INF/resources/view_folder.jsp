@@ -14,13 +14,6 @@ ViewFolderSectionDisplayContext viewFolderSectionDisplayContext = (ViewFolderSec
 <div class="cms-section">
 	<div>
 		<react:component
-			module="{Toolbar} from site-cms-site-initializer"
-			props="<%= viewFolderSectionDisplayContext.getToolbarProps() %>"
-		/>
-	</div>
-
-	<div>
-		<react:component
 			module="{Breadcrumb} from site-cms-site-initializer"
 			props="<%= viewFolderSectionDisplayContext.getBreadcrumbProps() %>"
 		/>
@@ -34,12 +27,11 @@ ViewFolderSectionDisplayContext viewFolderSectionDisplayContext = (ViewFolderSec
 		emptyState="<%= viewFolderSectionDisplayContext.getEmptyState() %>"
 		fdsActionDropdownItems="<%= viewFolderSectionDisplayContext.getFDSActionDropdownItems() %>"
 		formName="fm"
-		id="<%= CMSSiteInitializerFDSNames.VIEW_FOLDER %>"
+		id="<%= viewFolderSectionDisplayContext.getCMSSiteInitializerFDSName() %>"
 		itemsPerPage="<%= 20 %>"
-		propsTransformer="{FolderFDSPropsTransformer} from site-cms-site-initializer"
+		propsTransformer="<%= viewFolderSectionDisplayContext.getPropsTransformerModule() %>"
 		selectedItemsKey="embedded.id"
 		selectionType="multiple"
 		showSelectAll="<%= true %>"
-		style="fluid"
 	/>
 </div>

@@ -247,7 +247,9 @@ public class MillerColumnsDisplayContext {
 				).put(
 					"hasDuplicatedFriendlyURL",
 					() -> {
-						if (!FeatureFlagManagerUtil.isEnabled("LPS-174417")) {
+						if (!FeatureFlagManagerUtil.isEnabled(
+								layout.getCompanyId(), "LPS-174417")) {
+
 							return false;
 						}
 
@@ -598,6 +600,15 @@ public class MillerColumnsDisplayContext {
 					"id", "pending"
 				).put(
 					"label", LanguageUtil.get(_httpServletRequest, "pending")
+				));
+		}
+
+		if (layout.isTypeEmpty()) {
+			jsonArray.put(
+				JSONUtil.put(
+					"id", "empty"
+				).put(
+					"label", LanguageUtil.get(_httpServletRequest, "empty")
 				));
 		}
 

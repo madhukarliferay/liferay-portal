@@ -15,8 +15,8 @@ import com.liferay.portal.search.engine.adapter.search.SearchSearchRequest;
 import com.liferay.portal.search.engine.adapter.search.SearchSearchResponse;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
-import com.liferay.portal.search.internal.document.DocumentBuilderImpl;
 import com.liferay.portal.search.query.MoreLikeThisQuery;
+import com.liferay.portal.search.query.QueriesUtil;
 import com.liferay.portal.search.test.util.indexing.BaseIndexingTestCase;
 import com.liferay.portal.search.test.util.indexing.DocumentCreationHelpers;
 
@@ -41,7 +41,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 		com.liferay.portal.kernel.search.generic.MoreLikeThisQuery
 			moreLikeThisQuery =
 				new com.liferay.portal.kernel.search.generic.MoreLikeThisQuery(
-					getCompanyId());
+					getIndexName());
 
 		moreLikeThisQuery.addField(_FIELD_TITLE);
 		moreLikeThisQuery.setLikeText("java");
@@ -60,10 +60,10 @@ public abstract class BaseMoreLikeThisQueryTestCase
 				"java eclipse", "eclipse liferay", "java liferay eclipse");
 
 			MoreLikeThisQuery.DocumentIdentifier documentIdentifier =
-				queries.documentIdentifier(
+				QueriesUtil.documentIdentifier(
 					String.valueOf(getCompanyId()), "_doc", id);
 
-			MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+			MoreLikeThisQuery moreLikeThisQuery = QueriesUtil.moreLikeThis(
 				Collections.singleton(documentIdentifier));
 
 			assertSearch(
@@ -79,7 +79,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 	public void testMoreLikeThisWithFieldAndLikeText() throws Exception {
 		addDocuments("java eclipse", "eclipse liferay", "java liferay eclipse");
 
-		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+		MoreLikeThisQuery moreLikeThisQuery = QueriesUtil.moreLikeThis(
 			Collections.singletonList(_FIELD_TITLE), "java");
 
 		assertSearch(
@@ -91,7 +91,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 	public void testMoreLikeThisWithMinDocFreq() throws Exception {
 		addDocuments("Red Blue", "Red Dog", "Red Blue Color", "Color");
 
-		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+		MoreLikeThisQuery moreLikeThisQuery = QueriesUtil.moreLikeThis(
 			Collections.singletonList(_FIELD_TITLE), "Red Blue Color");
 
 		moreLikeThisQuery.setMinDocFrequency(1);
@@ -123,7 +123,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 			addDocuments(text);
 		}
 
-		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+		MoreLikeThisQuery moreLikeThisQuery = QueriesUtil.moreLikeThis(
 			new String[] {_FIELD_TITLE}, texts[0]);
 
 		for (int i = 0; i <= 10; i++) {
@@ -155,7 +155,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 				_FIELD_DESCRIPTION, value),
 			"bravo charlie");
 
-		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+		MoreLikeThisQuery moreLikeThisQuery = QueriesUtil.moreLikeThis(
 			new String[] {_FIELD_TITLE}, "alpha", "bravo");
 
 		moreLikeThisQuery.addField(_FIELD_DESCRIPTION);
@@ -168,7 +168,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 	public void testMoreLikeThisWithoutFields() throws Exception {
 		addDocuments("java eclipse", "eclipse liferay", "java liferay eclipse");
 
-		MoreLikeThisQuery moreLikeThisQuery = queries.moreLikeThis(
+		MoreLikeThisQuery moreLikeThisQuery = QueriesUtil.moreLikeThis(
 			Collections.emptyList(), "java");
 
 		assertSearch(moreLikeThisQuery, Collections.emptyList());
@@ -280,7 +280,7 @@ public abstract class BaseMoreLikeThisQueryTestCase
 	protected String indexDocumentWithNoFieldsExceptTitle(String title) {
 		SearchEngineAdapter searchEngineAdapter = getSearchEngineAdapter();
 
-		DocumentBuilder documentBuilder = new DocumentBuilderImpl();
+		DocumentBuilder documentBuilder = new DocumentBuilder();
 
 		documentBuilder.setString(_FIELD_TITLE, title);
 

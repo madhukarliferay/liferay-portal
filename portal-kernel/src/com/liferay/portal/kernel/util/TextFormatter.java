@@ -6,6 +6,7 @@
 package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 
 import java.text.NumberFormat;
@@ -81,6 +82,10 @@ public class TextFormatter {
 
 	public static final int Q = 16;
 
+	// formatId --> FORMAT_ID, friendlyURLMapper --> FRIENDLY_URL_MAPPER
+
+	public static final int R = 17;
+
 	public static String format(String s, int style) {
 		if (Validator.isNull(s)) {
 			return null;
@@ -135,6 +140,9 @@ public class TextFormatter {
 		}
 		else if (style == Q) {
 			return _formatQ(s);
+		}
+		else if (style == R) {
+			return _formatR(s);
 		}
 
 		return s;
@@ -420,6 +428,13 @@ public class TextFormatter {
 		}
 
 		return sb.toString();
+	}
+
+	private static String _formatR(String s) {
+		s = _formatH(s);
+		s = _formatA(s);
+
+		return s;
 	}
 
 	private static final double _STORAGE_SIZE_DENOMINATOR = 1024.0;

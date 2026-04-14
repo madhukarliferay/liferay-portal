@@ -1252,9 +1252,7 @@ public class ProductConfiguration implements Serializable {
 			sb.append("\"entityType\": ");
 
 			sb.append("\"");
-
 			sb.append(entityType);
-
 			sb.append("\"");
 		}
 
@@ -1543,3 +1541,4 @@ public class ProductConfiguration implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
+// LIFERAY-REST-BUILDER-HASH:-743980005

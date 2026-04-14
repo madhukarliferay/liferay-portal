@@ -279,6 +279,7 @@ public class UserResourceDTOConverter
 					});
 				setLanguageId(user::getLanguageId);
 				setLastLoginDate(user::getLastLoginDate);
+				setLoginDate(user::getLoginDate);
 				setName(user::getFullName);
 				setOrganizationBriefs(
 					() -> TransformUtil.transformToArray(
@@ -305,8 +306,7 @@ public class UserResourceDTOConverter
 					});
 				setRoleBriefs(
 					() -> {
-						UserBag userBag = UserBagFactoryUtil.create(
-							user.getUserId());
+						UserBag userBag = UserBagFactoryUtil.create(user);
 
 						return _toRoleBriefs(
 							dtoConverterContext, userBag.getRoles());

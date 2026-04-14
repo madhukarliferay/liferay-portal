@@ -21,8 +21,10 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.search.Field;
@@ -129,13 +131,20 @@ public abstract class BaseSegmentsEntryProvider
 		long groupId, String className, long classPK, Context context,
 		long[] filterSegmentsEntryIds, long[] segmentsEntryIds) {
 
+		if (!FeatureFlagManagerUtil.isEnabled(
+				CompanyConstants.SYSTEM, "LPD-78863")) {
+
+			return new long[0];
+		}
+
 		List<SegmentsEntry> segmentsEntries = new ArrayList<>();
 
 		if (ArrayUtil.isNotEmpty(filterSegmentsEntryIds)) {
 			segmentsEntries = segmentsEntryLocalService.getSegmentsEntries(
 				filterSegmentsEntryIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 		}
-		else {
+
+		if (segmentsEntries.isEmpty()) {
 			segmentsEntries = segmentsEntryLocalService.getSegmentsEntries(
 				groupId, getSource(), QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 				null);

@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.ChecksumUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -85,6 +86,7 @@ import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SessionParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -96,7 +98,6 @@ import com.liferay.portal.theme.ThemeDisplayFactory;
 import com.liferay.portal.util.LayoutClone;
 import com.liferay.portal.util.LayoutCloneFactory;
 import com.liferay.portal.util.LayoutTypeAccessPolicyTracker;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.sites.kernel.util.SitesUtil;
 
 import jakarta.portlet.PortletMode;
@@ -311,7 +312,7 @@ public class ServicePreAction extends Action {
 				0, StringUtil.split(portletIds), columnId, false);
 		}
 
-		LayoutLocalServiceUtil.updateLayout(
+		LayoutLocalServiceUtil.updateTypeSettings(
 			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
 			layout.getTypeSettings());
 
@@ -398,7 +399,7 @@ public class ServicePreAction extends Action {
 				0, StringUtil.split(portletIds), columnId, false);
 		}
 
-		LayoutLocalServiceUtil.updateLayout(
+		LayoutLocalServiceUtil.updateTypeSettings(
 			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
 			layout.getTypeSettings());
 
@@ -1096,8 +1097,17 @@ public class ServicePreAction extends Action {
 		}
 
 		long doAsGroupId = ParamUtil.getLong(httpServletRequest, "doAsGroupId");
+
 		String doAsUserId = ParamUtil.getString(
 			httpServletRequest, "doAsUserId");
+
+		if (!PropsValues.PORTAL_IMPERSONATION_ENABLE ||
+			!Validator.isHex(doAsUserId) ||
+			!ChecksumUtil.isValid(StringUtil.hexStringToBytes(doAsUserId))) {
+
+			doAsUserId = StringPool.BLANK;
+		}
+
 		String doAsUserLanguageId = ParamUtil.getString(
 			httpServletRequest, "doAsUserLanguageId");
 		Group group = null;
@@ -1754,7 +1764,9 @@ public class ServicePreAction extends Action {
 			themeDisplay.setShowPageSettingsIcon(false);
 		}
 
-		if ((layout != null) && layout.isLayoutPrototypeLinkActive()) {
+		if ((layout != null) &&
+			layout.isPortletLayoutPageTemplateEntryLinkActive()) {
+
 			themeDisplay.setShowPageCustomizationIcon(false);
 		}
 

@@ -332,230 +332,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset vocabulary in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary
-	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary findByUuid_Last(
-			String uuid, OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = fetchByUuid_Last(
-			uuid, orderByComparator);
-
-		if (assetVocabulary != null) {
-			return assetVocabulary;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append("}");
-
-		throw new NoSuchVocabularyException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary fetchByUuid_Last(
-		String uuid, OrderByComparator<AssetVocabulary> orderByComparator) {
-
-		int count = countByUuid(uuid);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetVocabulary> list = findByUuid(
-			uuid, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where uuid = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param uuid the uuid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] findByUuid_PrevAndNext(
-			long vocabularyId, String uuid,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		uuid = Objects.toString(uuid, "");
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = getByUuid_PrevAndNext(
-				session, assetVocabulary, uuid, orderByComparator, true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = getByUuid_PrevAndNext(
-				session, assetVocabulary, uuid, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary getByUuid_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, String uuid,
-		OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ASSETVOCABULARY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_UUID_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetVocabularyModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the asset vocabularies where uuid = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1103,244 +879,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset vocabulary in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary
-	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary findByUuid_C_Last(
-			String uuid, long companyId,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = fetchByUuid_C_Last(
-			uuid, companyId, orderByComparator);
-
-		if (assetVocabulary != null) {
-			return assetVocabulary;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("uuid=");
-		sb.append(uuid);
-
-		sb.append(", companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchVocabularyException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary fetchByUuid_C_Last(
-		String uuid, long companyId,
-		OrderByComparator<AssetVocabulary> orderByComparator) {
-
-		int count = countByUuid_C(uuid, companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetVocabulary> list = findByUuid_C(
-			uuid, companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where uuid = &#63; and companyId = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param uuid the uuid
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] findByUuid_C_PrevAndNext(
-			long vocabularyId, String uuid, long companyId,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		uuid = Objects.toString(uuid, "");
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = getByUuid_C_PrevAndNext(
-				session, assetVocabulary, uuid, companyId, orderByComparator,
-				true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = getByUuid_C_PrevAndNext(
-				session, assetVocabulary, uuid, companyId, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary getByUuid_C_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, String uuid,
-		long companyId, OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETVOCABULARY_WHERE);
-
-		boolean bindUuid = false;
-
-		if (uuid.isEmpty()) {
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_3);
-		}
-		else {
-			bindUuid = true;
-
-			sb.append(_FINDER_COLUMN_UUID_C_UUID_2);
-		}
-
-		sb.append(_FINDER_COLUMN_UUID_C_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetVocabularyModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		if (bindUuid) {
-			queryPos.add(uuid);
-		}
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Removes all the asset vocabularies where uuid = &#63; and companyId = &#63; from the database.
 	 *
 	 * @param uuid the uuid
@@ -1666,217 +1204,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset vocabulary in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary
-	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary findByGroupId_Last(
-			long groupId, OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = fetchByGroupId_Last(
-			groupId, orderByComparator);
-
-		if (assetVocabulary != null) {
-			return assetVocabulary;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append("}");
-
-		throw new NoSuchVocabularyException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where groupId = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary fetchByGroupId_Last(
-		long groupId, OrderByComparator<AssetVocabulary> orderByComparator) {
-
-		int count = countByGroupId(groupId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetVocabulary> list = findByGroupId(
-			groupId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where groupId = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] findByGroupId_PrevAndNext(
-			long vocabularyId, long groupId,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = getByGroupId_PrevAndNext(
-				session, assetVocabulary, groupId, orderByComparator, true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = getByGroupId_PrevAndNext(
-				session, assetVocabulary, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary getByGroupId_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long groupId,
-		OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ASSETVOCABULARY_WHERE);
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetVocabularyModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset vocabularies that the user has permission to view where groupId = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -1927,6 +1254,16 @@ public class AssetVocabularyPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByGroupId(groupId, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -2010,207 +1347,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set of asset vocabularies that the user has permission to view where groupId = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param groupId the group ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] filterFindByGroupId_PrevAndNext(
-			long vocabularyId, long groupId,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByGroupId_PrevAndNext(
-				vocabularyId, groupId, orderByComparator);
-		}
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = filterGetByGroupId_PrevAndNext(
-				session, assetVocabulary, groupId, orderByComparator, true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = filterGetByGroupId_PrevAndNext(
-				session, assetVocabulary, groupId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary filterGetByGroupId_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long groupId,
-		OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETVOCABULARY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETVOCABULARY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_GROUPID_GROUPID_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETVOCABULARY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					AssetVocabularyModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetVocabularyModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetVocabulary.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetVocabularyImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetVocabularyImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset vocabularies that the user has permission to view where groupId = any &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -2261,6 +1397,16 @@ public class AssetVocabularyPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return findByGroupId(groupIds, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByGroupId(
+					groupIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -2691,6 +1837,15 @@ public class AssetVocabularyPersistenceImpl
 			return countByGroupId(groupId);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetVocabulary> assetVocabularies = findByGroupId(groupId);
+
+			assetVocabularies = InlineSQLHelperUtil.filter(
+				assetVocabularies, groupId);
+
+			return assetVocabularies.size();
+		}
+
 		StringBundler sb = new StringBundler(2);
 
 		sb.append(_FILTER_SQL_COUNT_ASSETVOCABULARY_WHERE);
@@ -2737,6 +1892,13 @@ public class AssetVocabularyPersistenceImpl
 	public int filterCountByGroupId(long[] groupIds) {
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByGroupId(groupIds);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetVocabulary> assetVocabularies =
+				InlineSQLHelperUtil.filter(findByGroupId(groupIds), groupIds);
+
+			return assetVocabularies.size();
 		}
 
 		if (groupIds == null) {
@@ -3021,218 +2183,6 @@ public class AssetVocabularyPersistenceImpl
 		}
 
 		return null;
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary
-	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary findByCompanyId_Last(
-			long companyId,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = fetchByCompanyId_Last(
-			companyId, orderByComparator);
-
-		if (assetVocabulary != null) {
-			return assetVocabulary;
-		}
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("companyId=");
-		sb.append(companyId);
-
-		sb.append("}");
-
-		throw new NoSuchVocabularyException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary fetchByCompanyId_Last(
-		long companyId, OrderByComparator<AssetVocabulary> orderByComparator) {
-
-		int count = countByCompanyId(companyId);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetVocabulary> list = findByCompanyId(
-			companyId, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where companyId = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] findByCompanyId_PrevAndNext(
-			long vocabularyId, long companyId,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = getByCompanyId_PrevAndNext(
-				session, assetVocabulary, companyId, orderByComparator, true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = getByCompanyId_PrevAndNext(
-				session, assetVocabulary, companyId, orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary getByCompanyId_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long companyId,
-		OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				4 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(3);
-		}
-
-		sb.append(_SQL_SELECT_ASSETVOCABULARY_WHERE);
-
-		sb.append(_FINDER_COLUMN_COMPANYID_COMPANYID_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetVocabularyModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(companyId);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
 	}
 
 	/**
@@ -3759,244 +2709,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset vocabulary in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary
-	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary findByG_LikeN_Last(
-			long groupId, String name,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = fetchByG_LikeN_Last(
-			groupId, name, orderByComparator);
-
-		if (assetVocabulary != null) {
-			return assetVocabulary;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", nameLIKE");
-		sb.append(name);
-
-		sb.append("}");
-
-		throw new NoSuchVocabularyException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary fetchByG_LikeN_Last(
-		long groupId, String name,
-		OrderByComparator<AssetVocabulary> orderByComparator) {
-
-		int count = countByG_LikeN(groupId, name);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetVocabulary> list = findByG_LikeN(
-			groupId, name, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] findByG_LikeN_PrevAndNext(
-			long vocabularyId, long groupId, String name,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		name = Objects.toString(name, "");
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = getByG_LikeN_PrevAndNext(
-				session, assetVocabulary, groupId, name, orderByComparator,
-				true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = getByG_LikeN_PrevAndNext(
-				session, assetVocabulary, groupId, name, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary getByG_LikeN_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long groupId,
-		String name, OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETVOCABULARY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_LIKEN_GROUPID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKEN_NAME_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetVocabularyModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset vocabularies that the user has permission to view where groupId = &#63; and name LIKE &#63;.
 	 *
 	 * @param groupId the group ID
@@ -4052,6 +2764,16 @@ public class AssetVocabularyPersistenceImpl
 
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_LikeN(groupId, name, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_LikeN(
+					groupId, name, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					orderByComparator),
+				groupId);
 		}
 
 		name = Objects.toString(name, "");
@@ -4148,227 +2870,6 @@ public class AssetVocabularyPersistenceImpl
 		}
 		finally {
 			closeSession(session);
-		}
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set of asset vocabularies that the user has permission to view where groupId = &#63; and name LIKE &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] filterFindByG_LikeN_PrevAndNext(
-			long vocabularyId, long groupId, String name,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_LikeN_PrevAndNext(
-				vocabularyId, groupId, name, orderByComparator);
-		}
-
-		name = Objects.toString(name, "");
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = filterGetByG_LikeN_PrevAndNext(
-				session, assetVocabulary, groupId, name, orderByComparator,
-				true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = filterGetByG_LikeN_PrevAndNext(
-				session, assetVocabulary, groupId, name, orderByComparator,
-				false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary filterGetByG_LikeN_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long groupId,
-		String name, OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETVOCABULARY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETVOCABULARY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_LIKEN_GROUPID_2);
-
-		boolean bindName = false;
-
-		if (name.isEmpty()) {
-			sb.append(_FINDER_COLUMN_G_LIKEN_NAME_3);
-		}
-		else {
-			bindName = true;
-
-			sb.append(_FINDER_COLUMN_G_LIKEN_NAME_2);
-		}
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETVOCABULARY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					AssetVocabularyModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetVocabularyModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetVocabulary.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetVocabularyImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetVocabularyImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		if (bindName) {
-			queryPos.add(StringUtil.toLowerCase(name));
-		}
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
 		}
 	}
 
@@ -4473,6 +2974,16 @@ public class AssetVocabularyPersistenceImpl
 	public int filterCountByG_LikeN(long groupId, String name) {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByG_LikeN(groupId, name);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetVocabulary> assetVocabularies = findByG_LikeN(
+				groupId, name);
+
+			assetVocabularies = InlineSQLHelperUtil.filter(
+				assetVocabularies, groupId);
+
+			return assetVocabularies.size();
 		}
 
 		name = Objects.toString(name, "");
@@ -4784,232 +3295,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the last asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param visibilityType the visibility type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary
-	 * @throws NoSuchVocabularyException if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary findByG_V_Last(
-			long groupId, int visibilityType,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = fetchByG_V_Last(
-			groupId, visibilityType, orderByComparator);
-
-		if (assetVocabulary != null) {
-			return assetVocabulary;
-		}
-
-		StringBundler sb = new StringBundler(6);
-
-		sb.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-		sb.append("groupId=");
-		sb.append(groupId);
-
-		sb.append(", visibilityType=");
-		sb.append(visibilityType);
-
-		sb.append("}");
-
-		throw new NoSuchVocabularyException(sb.toString());
-	}
-
-	/**
-	 * Returns the last asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param visibilityType the visibility type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching asset vocabulary, or <code>null</code> if a matching asset vocabulary could not be found
-	 */
-	@Override
-	public AssetVocabulary fetchByG_V_Last(
-		long groupId, int visibilityType,
-		OrderByComparator<AssetVocabulary> orderByComparator) {
-
-		int count = countByG_V(groupId, visibilityType);
-
-		if (count == 0) {
-			return null;
-		}
-
-		List<AssetVocabulary> list = findByG_V(
-			groupId, visibilityType, count - 1, count, orderByComparator);
-
-		if (!list.isEmpty()) {
-			return list.get(0);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set where groupId = &#63; and visibilityType = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param groupId the group ID
-	 * @param visibilityType the visibility type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] findByG_V_PrevAndNext(
-			long vocabularyId, long groupId, int visibilityType,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = getByG_V_PrevAndNext(
-				session, assetVocabulary, groupId, visibilityType,
-				orderByComparator, true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = getByG_V_PrevAndNext(
-				session, assetVocabulary, groupId, visibilityType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary getByG_V_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long groupId,
-		int visibilityType,
-		OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				5 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(4);
-		}
-
-		sb.append(_SQL_SELECT_ASSETVOCABULARY_WHERE);
-
-		sb.append(_FINDER_COLUMN_G_V_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_V_VISIBILITYTYPE_2);
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByConditionFields[i]);
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				sb.append(_ORDER_BY_ENTITY_ALIAS);
-				sb.append(orderByFields[i]);
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			sb.append(AssetVocabularyModelImpl.ORDER_BY_JPQL);
-		}
-
-		String sql = sb.toString();
-
-		Query query = session.createQuery(sql);
-
-		query.setFirstResult(0);
-		query.setMaxResults(2);
-
-		QueryPos queryPos = QueryPos.getInstance(query);
-
-		queryPos.add(groupId);
-
-		queryPos.add(visibilityType);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = query.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset vocabularies that the user has permission to view where groupId = &#63; and visibilityType = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -5067,6 +3352,16 @@ public class AssetVocabularyPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return findByG_V(
 				groupId, visibilityType, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_V(
+					groupId, visibilityType, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupId);
 		}
 
 		StringBundler sb = null;
@@ -5154,215 +3449,6 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 	/**
-	 * Returns the asset vocabularies before and after the current asset vocabulary in the ordered set of asset vocabularies that the user has permission to view where groupId = &#63; and visibilityType = &#63;.
-	 *
-	 * @param vocabularyId the primary key of the current asset vocabulary
-	 * @param groupId the group ID
-	 * @param visibilityType the visibility type
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next asset vocabulary
-	 * @throws NoSuchVocabularyException if a asset vocabulary with the primary key could not be found
-	 */
-	@Override
-	public AssetVocabulary[] filterFindByG_V_PrevAndNext(
-			long vocabularyId, long groupId, int visibilityType,
-			OrderByComparator<AssetVocabulary> orderByComparator)
-		throws NoSuchVocabularyException {
-
-		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
-			return findByG_V_PrevAndNext(
-				vocabularyId, groupId, visibilityType, orderByComparator);
-		}
-
-		AssetVocabulary assetVocabulary = findByPrimaryKey(vocabularyId);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AssetVocabulary[] array = new AssetVocabularyImpl[3];
-
-			array[0] = filterGetByG_V_PrevAndNext(
-				session, assetVocabulary, groupId, visibilityType,
-				orderByComparator, true);
-
-			array[1] = assetVocabulary;
-
-			array[2] = filterGetByG_V_PrevAndNext(
-				session, assetVocabulary, groupId, visibilityType,
-				orderByComparator, false);
-
-			return array;
-		}
-		catch (Exception exception) {
-			throw processException(exception);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	protected AssetVocabulary filterGetByG_V_PrevAndNext(
-		Session session, AssetVocabulary assetVocabulary, long groupId,
-		int visibilityType,
-		OrderByComparator<AssetVocabulary> orderByComparator,
-		boolean previous) {
-
-		StringBundler sb = null;
-
-		if (orderByComparator != null) {
-			sb = new StringBundler(
-				6 + (orderByComparator.getOrderByConditionFields().length * 3) +
-					(orderByComparator.getOrderByFields().length * 3));
-		}
-		else {
-			sb = new StringBundler(5);
-		}
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sb.append(_FILTER_SQL_SELECT_ASSETVOCABULARY_WHERE);
-		}
-		else {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETVOCABULARY_NO_INLINE_DISTINCT_WHERE_1);
-		}
-
-		sb.append(_FINDER_COLUMN_G_V_GROUPID_2);
-
-		sb.append(_FINDER_COLUMN_G_V_VISIBILITYTYPE_2);
-
-		if (!getDB().isSupportsInlineDistinct()) {
-			sb.append(
-				_FILTER_SQL_SELECT_ASSETVOCABULARY_NO_INLINE_DISTINCT_WHERE_2);
-		}
-
-		if (orderByComparator != null) {
-			String[] orderByConditionFields =
-				orderByComparator.getOrderByConditionFields();
-
-			if (orderByConditionFields.length > 0) {
-				sb.append(WHERE_AND);
-			}
-
-			for (int i = 0; i < orderByConditionFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByConditionFields[i],
-							true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByConditionFields[i],
-							true));
-				}
-
-				if ((i + 1) < orderByConditionFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN_HAS_NEXT);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(WHERE_GREATER_THAN);
-					}
-					else {
-						sb.append(WHERE_LESSER_THAN);
-					}
-				}
-			}
-
-			sb.append(ORDER_BY_CLAUSE);
-
-			String[] orderByFields = orderByComparator.getOrderByFields();
-
-			for (int i = 0; i < orderByFields.length; i++) {
-				if (getDB().isSupportsInlineDistinct()) {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_ALIAS, orderByFields[i], true));
-				}
-				else {
-					sb.append(
-						getColumnName(
-							_ORDER_BY_ENTITY_TABLE, orderByFields[i], true));
-				}
-
-				if ((i + 1) < orderByFields.length) {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC_HAS_NEXT);
-					}
-					else {
-						sb.append(ORDER_BY_DESC_HAS_NEXT);
-					}
-				}
-				else {
-					if (orderByComparator.isAscending() ^ previous) {
-						sb.append(ORDER_BY_ASC);
-					}
-					else {
-						sb.append(ORDER_BY_DESC);
-					}
-				}
-			}
-		}
-		else {
-			if (getDB().isSupportsInlineDistinct()) {
-				sb.append(
-					AssetVocabularyModelImpl.ORDER_BY_SQL_INLINE_DISTINCT);
-			}
-			else {
-				sb.append(AssetVocabularyModelImpl.ORDER_BY_SQL);
-			}
-		}
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(
-			sb.toString(), AssetVocabulary.class.getName(),
-			_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
-
-		SQLQuery sqlQuery = session.createSynchronizedSQLQuery(sql);
-
-		sqlQuery.setFirstResult(0);
-		sqlQuery.setMaxResults(2);
-
-		if (getDB().isSupportsInlineDistinct()) {
-			sqlQuery.addEntity(_FILTER_ENTITY_ALIAS, AssetVocabularyImpl.class);
-		}
-		else {
-			sqlQuery.addEntity(_FILTER_ENTITY_TABLE, AssetVocabularyImpl.class);
-		}
-
-		QueryPos queryPos = QueryPos.getInstance(sqlQuery);
-
-		queryPos.add(groupId);
-
-		queryPos.add(visibilityType);
-
-		if (orderByComparator != null) {
-			for (Object orderByConditionValue :
-					orderByComparator.getOrderByConditionValues(
-						assetVocabulary)) {
-
-				queryPos.add(orderByConditionValue);
-			}
-		}
-
-		List<AssetVocabulary> list = sqlQuery.list();
-
-		if (list.size() == 2) {
-			return list.get(1);
-		}
-		else {
-			return null;
-		}
-	}
-
-	/**
 	 * Returns all the asset vocabularies that the user has permission to view where groupId = any &#63; and visibilityType = any &#63;.
 	 *
 	 * @param groupIds the group IDs
@@ -5420,6 +3506,16 @@ public class AssetVocabularyPersistenceImpl
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return findByG_V(
 				groupIds, visibilityTypes, start, end, orderByComparator);
+		}
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+			isPermissionsInMemoryFilterEnabled()) {
+
+			return InlineSQLHelperUtil.filter(
+				findByG_V(
+					groupIds, visibilityTypes, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS, orderByComparator),
+				groupIds);
 		}
 
 		if (groupIds == null) {
@@ -5940,6 +4036,16 @@ public class AssetVocabularyPersistenceImpl
 			return countByG_V(groupId, visibilityType);
 		}
 
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetVocabulary> assetVocabularies = findByG_V(
+				groupId, visibilityType);
+
+			assetVocabularies = InlineSQLHelperUtil.filter(
+				assetVocabularies, groupId);
+
+			return assetVocabularies.size();
+		}
+
 		StringBundler sb = new StringBundler(3);
 
 		sb.append(_FILTER_SQL_COUNT_ASSETVOCABULARY_WHERE);
@@ -5991,6 +4097,14 @@ public class AssetVocabularyPersistenceImpl
 	public int filterCountByG_V(long[] groupIds, int[] visibilityTypes) {
 		if (!InlineSQLHelperUtil.isEnabled(groupIds)) {
 			return countByG_V(groupIds, visibilityTypes);
+		}
+
+		if (isPermissionsInMemoryFilterEnabled()) {
+			List<AssetVocabulary> assetVocabularies =
+				InlineSQLHelperUtil.filter(
+					findByG_V(groupIds, visibilityTypes), groupIds);
+
+			return assetVocabularies.size();
 		}
 
 		if (groupIds == null) {
@@ -7451,3 +5565,4 @@ public class AssetVocabularyPersistenceImpl
 	}
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:-848608151

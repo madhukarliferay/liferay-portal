@@ -115,9 +115,9 @@ public class UpgradeDocumentLibrary extends UpgradeProcess {
 		throws Exception {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select count(*) from DLFileEntry where groupId = ? and " +
-					"folderId = ? and ((fileEntryId <> ? and title = ?) or " +
-						"fileName = ?)")) {
+				"select count(*) as count from DLFileEntry where groupId = ? " +
+					"and folderId = ? and ((fileEntryId <> ? and title = ?) " +
+						"or fileName = ?)")) {
 
 			preparedStatement.setLong(1, groupId);
 			preparedStatement.setLong(2, folderId);
@@ -127,9 +127,7 @@ public class UpgradeDocumentLibrary extends UpgradeProcess {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
-					int count = resultSet.getInt(1);
-
-					if (count > 0) {
+					if (resultSet.getLong("count") > 0) {
 						return true;
 					}
 				}
@@ -194,8 +192,8 @@ public class UpgradeDocumentLibrary extends UpgradeProcess {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
-					long companyId = resultSet.getLong(1);
-					long groupId = resultSet.getLong(2);
+					long companyId = resultSet.getLong("companyId");
+					long groupId = resultSet.getLong("groupId");
 
 					updateFileEntryTypeNamesAndDescriptions(companyId, groupId);
 				}
@@ -250,9 +248,9 @@ public class UpgradeDocumentLibrary extends UpgradeProcess {
 					return;
 				}
 
-				long fileEntryTypeId = resultSet.getLong(1);
-				String name = resultSet.getString(2);
-				String description = resultSet.getString(3);
+				long fileEntryTypeId = resultSet.getLong("fileEntryTypeId");
+				String name = resultSet.getString("name");
+				String description = resultSet.getString("description");
 
 				if (resultSet.next()) {
 					throw new IllegalStateException(
@@ -402,6 +400,7 @@ public class UpgradeDocumentLibrary extends UpgradeProcess {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select groupId, folderId, fileName from DLFileEntry group " +
 					"by groupId, folderId, fileName having count(*) > 1");
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {

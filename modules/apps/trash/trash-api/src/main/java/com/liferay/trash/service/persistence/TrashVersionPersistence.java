@@ -121,47 +121,6 @@ public interface TrashVersionPersistence
 			orderByComparator);
 
 	/**
-	 * Returns the last trash version in the ordered set where entryId = &#63;.
-	 *
-	 * @param entryId the entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching trash version
-	 * @throws NoSuchVersionException if a matching trash version could not be found
-	 */
-	public TrashVersion findByEntryId_Last(
-			long entryId,
-			com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
-				orderByComparator)
-		throws NoSuchVersionException;
-
-	/**
-	 * Returns the last trash version in the ordered set where entryId = &#63;.
-	 *
-	 * @param entryId the entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching trash version, or <code>null</code> if a matching trash version could not be found
-	 */
-	public TrashVersion fetchByEntryId_Last(
-		long entryId,
-		com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
-			orderByComparator);
-
-	/**
-	 * Returns the trash versions before and after the current trash version in the ordered set where entryId = &#63;.
-	 *
-	 * @param versionId the primary key of the current trash version
-	 * @param entryId the entry ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next trash version
-	 * @throws NoSuchVersionException if a trash version with the primary key could not be found
-	 */
-	public TrashVersion[] findByEntryId_PrevAndNext(
-			long versionId, long entryId,
-			com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
-				orderByComparator)
-		throws NoSuchVersionException;
-
-	/**
 	 * Removes all the trash versions where entryId = &#63; from the database.
 	 *
 	 * @param entryId the entry ID
@@ -269,50 +228,6 @@ public interface TrashVersionPersistence
 		long entryId, long classNameId,
 		com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
 			orderByComparator);
-
-	/**
-	 * Returns the last trash version in the ordered set where entryId = &#63; and classNameId = &#63;.
-	 *
-	 * @param entryId the entry ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching trash version
-	 * @throws NoSuchVersionException if a matching trash version could not be found
-	 */
-	public TrashVersion findByE_CN_Last(
-			long entryId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
-				orderByComparator)
-		throws NoSuchVersionException;
-
-	/**
-	 * Returns the last trash version in the ordered set where entryId = &#63; and classNameId = &#63;.
-	 *
-	 * @param entryId the entry ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the last matching trash version, or <code>null</code> if a matching trash version could not be found
-	 */
-	public TrashVersion fetchByE_CN_Last(
-		long entryId, long classNameId,
-		com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
-			orderByComparator);
-
-	/**
-	 * Returns the trash versions before and after the current trash version in the ordered set where entryId = &#63; and classNameId = &#63;.
-	 *
-	 * @param versionId the primary key of the current trash version
-	 * @param entryId the entry ID
-	 * @param classNameId the class name ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the previous, current, and next trash version
-	 * @throws NoSuchVersionException if a trash version with the primary key could not be found
-	 */
-	public TrashVersion[] findByE_CN_PrevAndNext(
-			long versionId, long entryId, long classNameId,
-			com.liferay.portal.kernel.util.OrderByComparator<TrashVersion>
-				orderByComparator)
-		throws NoSuchVersionException;
 
 	/**
 	 * Removes all the trash versions where entryId = &#63; and classNameId = &#63; from the database.
@@ -501,3 +416,4 @@ public interface TrashVersionPersistence
 	public int countAll();
 
 }
+// LIFERAY-SERVICE-BUILDER-HASH:487402803

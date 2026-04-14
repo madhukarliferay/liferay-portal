@@ -7,6 +7,7 @@ package com.liferay.exportimport.kernel.empty.model;
 
 import com.liferay.petra.function.UnsafeBiFunction;
 import com.liferay.petra.function.UnsafeSupplier;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -72,7 +73,7 @@ public class EmptyModelManagerUtilTest {
 				Mockito.any(), Mockito.anyLong(),
 				Mockito.any(UnsafeSupplier.class), Mockito.anyString(),
 				Mockito.any(BiFunction.class),
-				Mockito.any(UnsafeBiFunction.class))
+				Mockito.any(UnsafeBiFunction.class), Mockito.anyString())
 		).thenReturn(
 			user
 		);
@@ -81,22 +82,22 @@ public class EmptyModelManagerUtilTest {
 			User.class);
 		long companyId = RandomTestUtil.randomLong();
 		String externalReferenceCode = RandomTestUtil.randomString();
-		UnsafeBiFunction<String, Long, User, Exception> unsafeBiFunction =
+		UnsafeBiFunction<String, Long, User, PortalException> unsafeBiFunction =
 			(a, b) -> Mockito.mock(User.class);
-		UnsafeSupplier<User, Exception> unsafeSupplier = () -> Mockito.mock(
-			User.class);
+		UnsafeSupplier<User, PortalException> unsafeSupplier =
+			() -> Mockito.mock(User.class);
 
 		Assert.assertSame(
 			user,
 			EmptyModelManagerUtil.getOrAddEmptyModel(
 				User.class, companyId, externalReferenceCode, biFunction,
-				unsafeBiFunction, unsafeSupplier));
+				unsafeBiFunction, unsafeSupplier, User.class.getName()));
 
 		Mockito.verify(
 			_emptyModelManager
 		).getOrAddEmptyModel(
 			User.class, companyId, unsafeSupplier, externalReferenceCode,
-			biFunction, unsafeBiFunction
+			biFunction, unsafeBiFunction, User.class.getName()
 		);
 	}
 
@@ -108,9 +109,11 @@ public class EmptyModelManagerUtilTest {
 
 		Mockito.when(
 			_emptyModelManager.getOrAddEmptyModel(
-				Mockito.any(), Mockito.any(UnsafeSupplier.class),
-				Mockito.anyString(), Mockito.any(BiFunction.class),
-				Mockito.any(UnsafeBiFunction.class), Mockito.anyLong())
+				Mockito.anyString(), Mockito.any(),
+				Mockito.any(UnsafeSupplier.class), Mockito.anyString(),
+				Mockito.any(BiFunction.class),
+				Mockito.any(UnsafeBiFunction.class), Mockito.anyLong(),
+				Mockito.anyString())
 		).thenReturn(
 			user
 		);
@@ -119,22 +122,22 @@ public class EmptyModelManagerUtilTest {
 			User.class);
 		String externalReferenceCode = RandomTestUtil.randomString();
 		long groupId = RandomTestUtil.randomLong();
-		UnsafeBiFunction<String, Long, User, Exception> unsafeBiFunction =
+		UnsafeBiFunction<String, Long, User, PortalException> unsafeBiFunction =
 			(a, b) -> Mockito.mock(User.class);
-		UnsafeSupplier<User, Exception> unsafeSupplier = () -> Mockito.mock(
-			User.class);
+		UnsafeSupplier<User, PortalException> unsafeSupplier =
+			() -> Mockito.mock(User.class);
 
 		Assert.assertSame(
 			user,
 			EmptyModelManagerUtil.getOrAddEmptyModel(
 				User.class, unsafeSupplier, externalReferenceCode, biFunction,
-				unsafeBiFunction, groupId));
+				unsafeBiFunction, groupId, User.class.getName()));
 
 		Mockito.verify(
 			_emptyModelManager
 		).getOrAddEmptyModel(
-			User.class, unsafeSupplier, externalReferenceCode, biFunction,
-			unsafeBiFunction, groupId
+			User.class.getName(), null, unsafeSupplier, externalReferenceCode,
+			biFunction, unsafeBiFunction, groupId, User.class.getName()
 		);
 	}
 
@@ -145,7 +148,7 @@ public class EmptyModelManagerUtilTest {
 		Assert.assertThrows(
 			NullPointerException.class,
 			() -> EmptyModelManagerUtil.getOrAddEmptyModel(
-				null, 0L, null, null, null, null));
+				null, 0L, null, null, null, null, null));
 	}
 
 	@Test
